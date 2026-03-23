@@ -166,11 +166,9 @@ const ExclusiveContractPage = () => {
                                 <div className="flex"><span className="w-20 text-gray-500 font-bold">연락처:</span> 010-5543-9674</div>
                             </div>
                             <div className="mt-6 text-right">
-                                <div className="inline-block relative pr-10">
-                                    <span className="font-serif italic text-3xl text-black mr-2 font-black tracking-widest py-2">김 대 희</span>
-                                    <div className="absolute top-1/2 -translate-y-1/2 right-0 w-14 h-14 flex items-center justify-center opacity-90 mix-blend-multiply">
-                                        <img src="/company-stamp.png" alt="직인" className="w-full h-full object-contain" />
-                                    </div>
+                                <div className="inline-flex items-center justify-end gap-3">
+                                    <span className="text-2xl font-black text-black tracking-widest">김 대 희</span>
+                                    <img src="/company-stamp.png" alt="직인" className="w-20 h-20 object-contain opacity-100" />
                                 </div>
                             </div>
                         </div>

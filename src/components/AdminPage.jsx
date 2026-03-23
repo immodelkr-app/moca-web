@@ -999,7 +999,7 @@ const AdminPage = () => {
                                             : 'bg-white/5 border-white/10 text-white/40 hover:text-white'
                                             }`}
                                     >
-                                        {g === 'ALL' ? '전체' : `${GRADE_EMOJI[g]} ${g}`}
+                                        {g === 'ALL' ? '전체' : `${GRADE_EMOJI[g]} ${g === 'VIP' ? '전속모델' : g}`}
                                     </button>
                                 ))}
                             </div>
@@ -1149,7 +1149,7 @@ const AdminPage = () => {
                                                                     }
                                                                     return (
                                                                         <option key={g} value={g} className="bg-[#1a1a24]">
-                                                                            {GRADE_EMOJI[g]} {g}
+                                                                            {GRADE_EMOJI[g]} {g === 'VIP' ? '전속모델' : g}
                                                                         </option>
                                                                     );
                                                                 })}
