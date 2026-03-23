@@ -23,6 +23,7 @@ import MocaShop from './components/MocaShop';
 import BenefitsHub from './components/BenefitsHub';
 import CertificationFeed from './components/CertificationFeed';
 import SmartProfile from './components/SmartProfile';
+import ExclusiveContractPage from './components/ExclusiveContractPage';
 import { usePageView } from './hooks/usePageView';
 import { useAutoLogout } from './hooks/useAutoLogout';
 import PopupBanner from './components/PopupBanner';
@@ -62,6 +63,7 @@ function AppContent() {
                         <Route path="benefits" element={<BenefitsHub />} />
                         <Route path="cert" element={<CertificationFeed />} />
                         <Route path="smart-profile" element={<SmartProfile />} />
+                        <Route path="contract" element={<ExclusiveContractPage />} />
                     </Route>
                 </Route>
 

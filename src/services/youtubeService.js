@@ -84,8 +84,8 @@ export const fetchKimDaepyoVideos = async () => {
         // 최신순 (pubDate 내림차순) 정렬
         allVideos.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
-        // 최근 15개만 리턴
-        return allVideos.slice(0, 15);
+        // 최근 20개만 리턴
+        return allVideos.slice(0, 20);
     } catch (error) {
         console.error('Error fetching YouTube XML:', error);
         return [];

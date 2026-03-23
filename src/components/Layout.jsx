@@ -17,7 +17,7 @@ const navGroups = [
             { to: '/home/cert', icon: 'photo_camera', label: '투어스타그램' },
             { to: '/home/diary', icon: 'event_note', label: '투어일지 모아보기' },
             { to: '/home/calendar', icon: 'calendar_month', label: '투어 캘린더' },
-            { to: '/home/tv', icon: 'smart_display', label: '유튜브강의 시청' }
+            { to: '/home/tv', icon: 'smart_display', label: '모카TV 시청' }
         ]
     },
     {

@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { fetchKimDaepyoVideos } from '../services/youtubeService';
+import { fetchFeaturedVideos } from '../services/mocaTVService';
+
+const PLATFORM_BADGE = {
+    instagram: { label: 'Reels', color: 'bg-gradient-to-r from-[#E1306C] to-[#F77737]' },
+    tiktok: { label: 'TikTok', color: 'bg-black border border-white/20' },
+    youtube: { label: 'Shorts', color: 'bg-red-500' },
+};
 
 const KimDaepyoTV = () => {
     const [videos, setVideos] = useState([]);
@@ -11,11 +18,22 @@ const KimDaepyoTV = () => {
     const tabs = ['전체보기', '에이전시투어', '광고프로필', '표정&포즈', '광고Q&A'];
 
     useEffect(() => {
-        fetchKimDaepyoVideos().then(data => {
-            setVideos(data);
-            setFilteredVideos(data);
+        const loadAll = async () => {
+            const [youtubeVideos, featuredVideos] = await Promise.all([
+                fetchKimDaepyoVideos(),
+                fetchFeaturedVideos(),
+            ]);
+
+            // 유튜브 + 릴스/틱톡 합산 후 최신순 정렬
+            const merged = [...youtubeVideos, ...featuredVideos].sort(
+                (a, b) => new Date(b.pubDate) - new Date(a.pubDate)
+            );
+
+            setVideos(merged);
+            setFilteredVideos(merged);
             setLoading(false);
-        });
+        };
+        loadAll();
     }, []);
 
     useEffect(() => {
@@ -26,9 +44,26 @@ const KimDaepyoTV = () => {
         }
     }, [activeTab, videos]);
 
+    const handleVideoClick = (video) => {
+        // 피처드 영상(릴스/틱톡)이고 embedUrl 없으면 새 탭으로
+        if (video.isFeatured && !video.embedUrl) {
+            window.open(video.link, '_blank', 'noopener,noreferrer');
+            return;
+        }
+        setSelectedVideo(video);
+    };
+
+    const getPlatformBadge = (video) => {
+        if (video.isFeatured) {
+            return PLATFORM_BADGE[video.platform] || PLATFORM_BADGE.youtube;
+        }
+        if (video.isShorts) return PLATFORM_BADGE.youtube;
+        return null;
+    };
+
     return (
         <div className="min-h-screen bg-[#0a0a0f] flex flex-col relative overflow-hidden">
-            {/* Ambient background blobs (Agency Landing과 동일) */}
+            {/* Ambient background */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-64 bg-[#6C63FF]/10 blur-[120px]" />
                 <div className="absolute top-1/2 -right-32 w-80 h-80 rounded-full bg-[#A78BFA]/5 blur-[120px]" />
@@ -36,17 +71,16 @@ const KimDaepyoTV = () => {
 
             {/* Header */}
             <div className="relative z-10 px-5 pt-10 pb-4 max-w-7xl mx-auto w-full">
-                {/* Title and Filter Tabs Layout */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-6">
                     <div>
                         <div className="flex items-center gap-3">
                             <div className="w-1 h-7 rounded-full bg-gradient-to-b from-[#6C63FF] to-[#A78BFA]" />
-                            <h1 className="text-2xl font-black text-white tracking-tight">아임모델 유튜브강의</h1>
+                            <h1 className="text-2xl font-black text-white tracking-tight">모카TV</h1>
                         </div>
-                        <p className="text-white/40 text-xs ml-4 pl-3 mt-1">현직 에이전시 대표가 전하는 생생한 캐스팅 노하우</p>
+                        <p className="text-white/40 text-xs ml-4 pl-3 mt-1">유튜브 · 릴스 · 틱톡 영상을 한곳에서</p>
                     </div>
 
-                    {/* Horizontal Scrollable Tabs */}
+                    {/* Scrollable Tabs */}
                     <div className="w-full md:w-auto overflow-x-auto hide-scrollbar mt-4 md:mt-0 pb-2 md:pb-0">
                         <div className="flex gap-2 min-w-max justify-start md:justify-end">
                             {tabs.map(tab => (
@@ -66,7 +100,7 @@ const KimDaepyoTV = () => {
                 </div>
             </div>
 
-            {/* Masonry Grid Area */}
+            {/* Video Grid */}
             <div className="relative z-10 px-5 pb-20 max-w-7xl mx-auto w-full flex-1">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -79,65 +113,82 @@ const KimDaepyoTV = () => {
                         <p className="text-white/30 text-sm">해당 카테고리의 영상이 없습니다.</p>
                     </div>
                 ) : (
-                    /* 스마트폰: 안정적인 세로 목록(Flex), 태블릿 이상: 핀터레스트(Masonry) */
                     <div className="flex flex-col sm:block sm:columns-2 md:columns-3 lg:columns-4 gap-5 sm:gap-4">
-                        {filteredVideos.map((video, idx) => (
-                            <div
-                                key={idx}
-                                onClick={() => setSelectedVideo(video)}
-                                className="break-inside-avoid relative rounded-2xl overflow-hidden bg-[#1a1a24] border border-[#6C63FF]/20 group cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:shadow-[#6C63FF]/10 transition-all duration-300 sm:mb-4 inline-block w-full"
-                            >
-                                {/* Thumbnail Image (isShorts 여부에 따라 aspect ratio 다름) */}
-                                <div className={`relative w-full ${video.isShorts ? 'aspect-[9/16]' : 'aspect-video'} bg-black overflow-hidden`}>
-                                    <img
-                                        src={video.thumbnail}
-                                        alt={video.title}
-                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                    />
+                        {filteredVideos.map((video, idx) => {
+                            const badge = getPlatformBadge(video);
+                            return (
+                                <div
+                                    key={idx}
+                                    onClick={() => handleVideoClick(video)}
+                                    className="break-inside-avoid relative rounded-2xl overflow-hidden bg-[#1a1a24] border border-[#6C63FF]/20 group cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:shadow-[#6C63FF]/10 transition-all duration-300 sm:mb-4 inline-block w-full"
+                                >
+                                    {/* Thumbnail */}
+                                    <div className={`relative w-full ${video.isShorts ? 'aspect-[9/16]' : 'aspect-video'} bg-black overflow-hidden`}>
+                                        {video.thumbnail ? (
+                                            <img
+                                                src={video.thumbnail}
+                                                alt={video.title}
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                            />
+                                        ) : (
+                                            /* 썸네일 없을 때 플랫폼 아이콘 placeholder */
+                                            <div className="w-full h-full flex items-center justify-center bg-[#0f0f1a]">
+                                                <span className="material-symbols-outlined text-[64px] text-white/10">
+                                                    {video.platform === 'instagram' ? 'photo_camera' : video.platform === 'tiktok' ? 'music_note' : 'smart_display'}
+                                                </span>
+                                            </div>
+                                        )}
 
-                                    {/* Bottom Gradient Overlay for Text Readability */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+                                        {/* Bottom Gradient */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
-                                    {/* Play Icon - Center Overlay */}
-                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <div className="w-12 h-12 rounded-full bg-[#6C63FF]/80 backdrop-blur-sm flex items-center justify-center pl-1 shadow-[0_0_15px_rgba(108,99,255,0.5)]">
-                                            <span className="material-symbols-outlined text-white text-[28px]">play_arrow</span>
+                                        {/* Play Icon */}
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                            <div className="w-12 h-12 rounded-full bg-[#6C63FF]/80 backdrop-blur-sm flex items-center justify-center pl-1 shadow-[0_0_15px_rgba(108,99,255,0.5)]">
+                                                <span className="material-symbols-outlined text-white text-[28px]">play_arrow</span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Badges (Top Left) */}
-                                    {video.isShorts && (
-                                        <div className="absolute top-3 left-3 px-2 py-1 rounded bg-red-500 text-white text-[10px] font-black tracking-wider uppercase flex items-center gap-1 shadow-lg">
-                                            <span className="material-symbols-outlined text-[12px]">bolt</span>
-                                            Shorts
+                                        {/* Platform Badge (Top Left) */}
+                                        {badge && (
+                                            <div className={`absolute top-3 left-3 px-2 py-1 rounded ${badge.color} text-white text-[10px] font-black tracking-wider uppercase flex items-center gap-1 shadow-lg`}>
+                                                <span className="material-symbols-outlined text-[12px]">bolt</span>
+                                                {badge.label}
+                                            </div>
+                                        )}
+
+                                        {/* Duration Badge (Top Right, 일반 유튜브만) */}
+                                        {!video.isShorts && video.duration && (
+                                            <div className="absolute top-3 right-3 px-2 py-1 rounded bg-black/60 backdrop-blur-md text-white text-[10px] font-bold">
+                                                {video.duration}
+                                            </div>
+                                        )}
+
+                                        {/* Title */}
+                                        <div className="absolute bottom-3 left-3 right-3">
+                                            <h3 className="text-white font-bold text-sm leading-snug line-clamp-2 drop-shadow-md">
+                                                {video.title}
+                                            </h3>
                                         </div>
-                                    )}
-
-                                    {/* Duration Badge (Bottom Right) */}
-                                    {!video.isShorts && video.duration && (
-                                        <div className="absolute top-3 right-3 px-2 py-1 rounded bg-black/60 backdrop-blur-md text-white text-[10px] font-bold">
-                                            {video.duration}
-                                        </div>
-                                    )}
-
-                                    {/* Title Text (Bottom Left) */}
-                                    <div className="absolute bottom-3 left-3 right-3">
-                                        <h3 className="text-white font-bold text-sm leading-snug line-clamp-2 drop-shadow-md">
-                                            {video.title}
-                                        </h3>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
 
             {/* Video Player Modal */}
             {selectedVideo && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-lg p-0 sm:p-4 lg:p-10 animation-fadeIn" onClick={() => setSelectedVideo(null)}>
-                    <div className="relative flex items-center justify-center w-full h-full max-w-6xl mx-auto" onClick={(e) => e.stopPropagation()}>
-                        {/* Close Button */}
+                <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-lg p-0 sm:p-4 lg:p-10"
+                    onClick={() => setSelectedVideo(null)}
+                >
+                    <div
+                        className="relative flex items-center justify-center w-full h-full max-w-6xl mx-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Close */}
                         <button
                             onClick={() => setSelectedVideo(null)}
                             className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/50 sm:bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-colors border border-white/20 sm:border-transparent"
@@ -145,10 +196,14 @@ const KimDaepyoTV = () => {
                             <span className="material-symbols-outlined text-[20px]">close</span>
                         </button>
 
-                        {/* YouTube iframe overlay / actual iframe */}
+                        {/* iframe */}
                         <div className={`relative flex justify-center items-center w-full h-full sm:h-auto ${selectedVideo.isShorts ? 'max-w-full' : 'max-w-5xl'}`}>
                             <iframe
-                                src={`https://www.youtube.com/embed/${selectedVideo.id}?autoplay=1&mute=0`}
+                                src={
+                                    selectedVideo.isFeatured
+                                        ? selectedVideo.embedUrl
+                                        : `https://www.youtube.com/embed/${selectedVideo.id}?autoplay=1&mute=0`
+                                }
                                 title={selectedVideo.title}
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen

@@ -168,3 +168,78 @@ export const fetchCouponsByGrade = async (userGrade) => {
         .order('created_at', { ascending: false });
     return { data: data || [], error };
 };
+
+// ── 전속모델 계약서 관리 ──────────────────────────────────────────────────────
+
+/**
+ * 계약서 서명 데이터를 DB에 저장합니다.
+ * Supabase에 'exclusive_contracts' 테이블이 필요합니다.
+ * 컬럼: id, member_name, member_id_num, member_address, member_phone,
+ *       start_date, end_date, fee, sign_date, signature_image (text/base64),
+ *       status ('pending' | 'approved'), created_at
+ */
+export const saveContract = async (contractData) => {
+    if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+    const payload = {
+        member_name: contractData.memberName,
+        member_id_num: contractData.memberIdNum,
+        member_address: contractData.memberAddress,
+        member_phone: contractData.memberPhone,
+        start_date: `${contractData.startYear}-${String(contractData.startMonth).padStart(2, '0')}-${String(contractData.startDay).padStart(2, '0')}`,
+        end_date: `${contractData.endYear}-${String(contractData.endMonth).padStart(2, '0')}-${String(contractData.endDay).padStart(2, '0')}`,
+        fee: contractData.fee,
+        sign_date: `${contractData.signYear}-${String(contractData.signMonth).padStart(2, '0')}-${String(contractData.signDay).padStart(2, '0')}`,
+        signature_image: contractData.signature, // base64 data URL
+        status: 'pending',
+        created_at: new Date().toISOString(),
+    };
+    const { data, error } = await supabase.from('exclusive_contracts').insert([payload]).select();
+    return { data, error };
+};
+
+/**
+ * 모든 계약서 목록을 조회합니다. (어드민 전용)
+ */
+export const fetchContracts = async () => {
+    if (!supabase) return { data: [], error: new Error('Supabase not configured') };
+    const { data, error } = await supabase
+        .from('exclusive_contracts')
+        .select('*')
+        .order('created_at', { ascending: false });
+    return { data: data || [], error };
+};
+
+/**
+ * 계약서를 승인(approved)으로 변경 & 해당 회원의 등급을 VIP로 업그레이드합니다.
+ */
+export const approveContract = async (contractId, memberPhone) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+
+    // 1. 계약서 상태를 'approved'로 업데이트
+    const { error: contractError } = await supabase
+        .from('exclusive_contracts')
+        .update({ status: 'approved', approved_at: new Date().toISOString() })
+        .eq('id', contractId);
+
+    if (contractError) return { error: contractError };
+
+    // 2. 해당 모델의 등급을 VIP로 승급 (전화번호로 회원 식별)
+    const { error: gradeError } = await supabase
+        .from('users')
+        .update({ grade: 'VIP' })
+        .eq('phone', memberPhone);
+
+    return { error: gradeError };
+};
+
+/**
+ * 계약서를 반려(rejected) 처리합니다.
+ */
+export const rejectContract = async (contractId) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+    const { error } = await supabase
+        .from('exclusive_contracts')
+        .update({ status: 'rejected' })
+        .eq('id', contractId);
+    return { error };
+};
