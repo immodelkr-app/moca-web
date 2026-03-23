@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-display text-white antialiased bg-[#0a0a0f] min-h-screen;
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .circular-progress {
+    background: conic-gradient(#1241a1 306deg, #EEEEEE 0deg);
+  }
+
+  .fill-1 {
+    font-variation-settings: 'FILL' 1;
+  }
+}

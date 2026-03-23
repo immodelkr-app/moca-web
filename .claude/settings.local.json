@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cd:*)",
+      "Bash(which npx:*)",
+      "Bash(where npx:*)",
+      "Bash(vercel --version)",
+      "Bash(vercel --prod)",
+      "Bash(npm run:*)",
+      "Bash(xargs ls:*)",
+      "Bash(wc:*)",
+      "Bash(npx supabase:*)"
+    ]
+  }
+}

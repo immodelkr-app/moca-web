@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">아임모델 모카 (MOCA)</string>
+    <string name="title_activity_main">아임모델 모카 (MOCA)</string>
+    <string name="package_name">com.immodel.moca</string>
+    <string name="custom_url_scheme">com.immodel.moca</string>
+</resources>
