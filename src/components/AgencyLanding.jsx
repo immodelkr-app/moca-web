@@ -1006,7 +1006,8 @@ const AgencyLanding = () => {
                         <p>글로벌아임 | 대표 : 김대희 | 사업자등록번호 : 365-22-00947</p>
                         <p>통신판매업 신고번호 : 제2021-서울강남-05756호</p>
                         <p>주소 : 서울시 영등포구 영중로 159, 7층 글로벌아임</p>
-                        <p>이메일 : immodelkr@gmail.com | 호스팅서비스 : Vercel Inc.</p>
+                        <p>대표전화 : 010-5543-9674 | 이메일 : immodelkr@gmail.com</p>
+                        <p>호스팅서비스 : Vercel Inc.</p>
                         <p className="pt-1">© 2026 글로벌아임(IMMOCA). All rights reserved.</p>
                     </div>
                 </div>
