@@ -1,6 +1,57 @@
 import React, { useState, useRef, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 
+// ── 필드 팝업 입력 컴포넌트 ──────────────────────────────────────────
+const FieldInputPopup = ({ label, value, onChange, onClose, placeholder, type = 'text', hint }) => {
+    const [localValue, setLocalValue] = useState(value);
+    const inputRef = useRef(null);
+
+    useEffect(() => {
+        setTimeout(() => inputRef.current?.focus(), 80);
+    }, []);
+
+    const handleSave = () => {
+        onChange(localValue);
+        onClose();
+    };
+
+    return (
+        <div
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={(e) => e.target === e.currentTarget && onClose()}
+        >
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-fadeIn">
+                <h3 className="text-lg font-black text-gray-900 mb-1">{label} 입력</h3>
+                {hint && <p className="text-xs text-gray-400 mb-4">{hint}</p>}
+                <input
+                    ref={inputRef}
+                    type={type}
+                    value={localValue}
+                    onChange={(e) => setLocalValue(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                    placeholder={placeholder}
+                    className="w-full border-2 border-blue-300 focus:border-blue-500 rounded-xl px-4 py-3 text-base outline-none transition-colors mb-5 font-medium"
+                />
+                <div className="flex gap-3">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors"
+                    >
+                        취소
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-colors"
+                    >
+                        저장
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ── 메인 계약서 모달 ─────────────────────────────────────────────────
 const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = '', onComplete }) => {
     const [contractData, setContractData] = useState({
         startYear: '2026', startMonth: '', startDay: '',
@@ -14,6 +65,9 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
         memberAddress: '',
         memberPhone: userPhone || '',
     });
+
+    // 팝업 상태: null이면 닫힘, 필드명 문자열이면 해당 필드 팝업 열림
+    const [activePopup, setActivePopup] = useState(null);
 
     const sigCanvas = useRef(null);
     const [signatureImg, setSignatureImg] = useState(null);
@@ -63,6 +117,14 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
 
     if (!isOpen) return null;
 
+    // 팝업 필드 정의
+    const popupFields = [
+        { key: 'memberName',    label: '성명',    hint: '계약서에 표시될 실명을 입력해주세요.',         placeholder: '홍길동',               type: 'text' },
+        { key: 'memberIdNum',   label: '주민번호', hint: '예: 900101-2****** (뒷자리 마스킹 가능)',     placeholder: '000000-0000000',       type: 'text' },
+        { key: 'memberAddress', label: '주소',     hint: '현재 거주지 주소를 입력해주세요.',            placeholder: '서울특별시 강남구 …',   type: 'text' },
+        { key: 'memberPhone',   label: '연락처',   hint: '휴대폰 번호를 입력해주세요.',                 placeholder: '010-0000-0000',        type: 'tel'  },
+    ];
+
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-fadeIn">
             <div className="bg-[#f0f0f5] w-full max-w-3xl rounded-3xl shadow-2xl flex flex-col h-[90vh] sm:h-[85vh] overflow-hidden text-[#1a1a24]">
@@ -91,7 +153,7 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
                         <div className="space-y-6 text-[15px] sm:text-[16px] leading-[1.8] text-gray-800 break-keep">
                             <div>
                                 <h3 className="font-extrabold text-black text-lg mb-2">제1조 [목적]</h3>
-                                <p>본 협약은 "갑"이 "을"을 ‘아임 광고모델 크루’의 일원으로 발탁하여, 전문적인 실무 교육과 캐스팅 매니지먼트 서비스를 동시에 제공하고, "을"은 이에 대한 성실한 활동하여 광고모델로서의 수익을 창출함을 목적으로 한다.</p>
+                                <p>본 협약은 "갑"이 "을"을 '아임 광고모델 크루'의 일원으로 발탁하여, 전문적인 실무 교육과 캐스팅 매니지먼트 서비스를 동시에 제공하고, "을"은 이에 대한 성실한 활동하여 광고모델로서의 수익을 창출함을 목적으로 한다.</p>
                             </div>
 
                             <div>
@@ -179,44 +241,54 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
                                     <div className="flex"><span className="w-20 text-gray-500">연락처:</span> 02-3443-4672</div>
                                 </div>
                                 <div className="mt-6 text-right">
-                                    <div className="inline-block relative">
-                                        <span className="font-serif italic text-2xl text-red-600/80 mr-4 font-black tracking-widest p-2">김 대 희</span>
-                                        <div className="absolute top-0 right-0 w-12 h-12 border-2 text-red-600 border-red-600 rounded-full flex items-center justify-center -rotate-12 opacity-80 text-xs font-black">
-                                            (印)
-                                        </div>
+                                    <div className="inline-flex items-center justify-end gap-3">
+                                        <span className="text-2xl font-black text-black tracking-widest">김 대 희</span>
+                                        <img src="/company-stamp.png" alt="직인" className="w-20 h-20 object-contain opacity-100" />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 을 (회원) - 서명 입력부 */}
-                            <div className="flex-1 p-5 rounded-xl border-2 border-blue-200 bg-blue-50 relative">
-                                <h4 className="font-extrabold text-lg mb-4 text-blue-900">("을") 소속 모델</h4>
-                                <div className="space-y-4 font-medium text-sm">
-                                    <div className="flex items-center">
-                                        <span className="w-20 text-gray-600 whitespace-nowrap">성 명:</span>
-                                        <input type="text" name="memberName" value={contractData.memberName} onChange={handleInput} className="flex-1 border-b border-gray-400 bg-transparent outline-none px-1" />
-                                    </div>
-                                    <div className="flex items-center">
-                                        <span className="w-20 text-gray-600 whitespace-nowrap">주민번호:</span>
-                                        <input type="text" name="memberIdNum" value={contractData.memberIdNum} onChange={handleInput} placeholder="예: 900101-2******" className="flex-1 border-b border-gray-400 bg-transparent outline-none px-1" />
-                                    </div>
-                                    <div className="flex items-center">
-                                        <span className="w-20 text-gray-600 whitespace-nowrap">주 소:</span>
-                                        <input type="text" name="memberAddress" value={contractData.memberAddress} onChange={handleInput} className="flex-1 border-b border-gray-400 bg-transparent outline-none px-1" />
-                                    </div>
-                                    <div className="flex items-center">
-                                        <span className="w-20 text-gray-600 whitespace-nowrap">연 락 처:</span>
-                                        <input type="text" name="memberPhone" value={contractData.memberPhone} onChange={handleInput} className="flex-1 border-b border-gray-400 bg-transparent outline-none px-1" />
-                                    </div>
+                            {/* 을 (회원) - 팝업 방식 입력 */}
+                            <div className="flex-1 p-5 rounded-xl border-2 border-blue-200 bg-blue-50">
+                                <h4 className="font-extrabold text-lg mb-1 text-blue-900">("을") 소속 모델</h4>
+                                <p className="text-xs text-blue-400 mb-4 font-semibold">각 항목을 터치하면 입력창이 열립니다 ✏️</p>
+
+                                {/* 팝업 방식 필드 목록 */}
+                                <div className="space-y-3 font-medium text-sm mb-6">
+                                    {popupFields.map(({ key, label }) => (
+                                        <div key={key} className="flex items-center gap-2">
+                                            <span className="w-20 text-gray-500 whitespace-nowrap shrink-0">{label}:</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setActivePopup(key)}
+                                                className={`flex-1 text-left border-b-2 px-2 py-1 rounded-t-md transition-all ${
+                                                    contractData[key]
+                                                        ? 'border-blue-500 text-gray-900 font-semibold'
+                                                        : 'border-dashed border-gray-300 text-gray-400'
+                                                } hover:border-blue-400 hover:bg-blue-100/30`}
+                                            >
+                                                {contractData[key] || `${label} 터치하여 입력`}
+                                            </button>
+                                            {contractData[key] && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActivePopup(key)}
+                                                    className="text-xs text-blue-500 font-bold hover:text-blue-700 whitespace-nowrap"
+                                                >
+                                                    수정
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
 
                                 {/* 서명 캔버스 */}
-                                <div className="mt-6 border-2 border-blue-400 bg-white rounded-lg relative overflow-hidden group">
+                                <div className="border-2 border-blue-400 bg-white rounded-lg relative overflow-hidden">
                                     <div className="absolute top-2 left-3 text-xs font-bold text-gray-400 pointer-events-none">여기에 정자로 서명해주세요</div>
                                     <SignatureCanvas 
                                         ref={sigCanvas}
                                         penColor="black"
-                                        canvasProps={{className: 'signature-canvas w-full h-32 md:h-40 cursor-crosshair'}} 
+                                        canvasProps={{ className: 'signature-canvas w-full h-32 md:h-40 cursor-crosshair' }} 
                                     />
                                     <button 
                                         onClick={clearSignature}
@@ -237,7 +309,10 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
                         disabled={loading}
                         className="w-full bg-[#1D996D] hover:bg-[#15805a] text-white font-black text-lg py-4 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2"
                     >
-                        {loading ? <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <span className="material-symbols-outlined">edit_square</span>}
+                        {loading
+                            ? <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            : <span className="material-symbols-outlined">edit_square</span>
+                        }
                         동의 및 전자 서명 제출하기
                     </button>
                     <p className="text-center text-xs text-gray-400 mt-3 font-bold">
@@ -245,6 +320,23 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
                     </p>
                 </div>
             </div>
+
+            {/* 필드별 팝업 */}
+            {activePopup && (() => {
+                const field = popupFields.find(f => f.key === activePopup);
+                if (!field) return null;
+                return (
+                    <FieldInputPopup
+                        label={field.label}
+                        value={contractData[field.key]}
+                        hint={field.hint}
+                        onChange={(v) => setContractData(p => ({ ...p, [field.key]: v }))}
+                        onClose={() => setActivePopup(null)}
+                        placeholder={field.placeholder}
+                        type={field.type}
+                    />
+                );
+            })()}
         </div>
     );
 };

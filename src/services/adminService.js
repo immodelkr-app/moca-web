@@ -243,3 +243,15 @@ export const rejectContract = async (contractId) => {
         .eq('id', contractId);
     return { error };
 };
+
+/**
+ * 계약서를 리스트에서 삭제합니다.
+ */
+export const deleteContract = async (contractId) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+    const { error } = await supabase
+        .from('exclusive_contracts')
+        .delete()
+        .eq('id', contractId);
+    return { error };
+};

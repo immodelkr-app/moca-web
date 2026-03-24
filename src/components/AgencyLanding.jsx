@@ -992,9 +992,24 @@ const AgencyLanding = () => {
                 </div>
             </div>
 
-            {/* Bottom hint */}
-            <div className="absolute bottom-8 left-0 right-0 flex justify-center z-10">
-                <span className="text-white/20 font-black tracking-tighter text-sm">MOCA</span>
+            {/* Footer with legal & business info */}
+            <div className="relative z-10 w-full mt-auto pt-8 pb-6 border-t border-white/5">
+                <div className="max-w-2xl mx-auto px-6 text-center space-y-3">
+                    {/* Legal links */}
+                    <div className="flex items-center justify-center gap-3 flex-wrap">
+                        <a href="/privacy" className="text-white/30 text-[11px] font-bold hover:text-white/60 transition-colors">개인정보처리방침</a>
+                        <span className="text-white/10 text-[11px]">|</span>
+                        <a href="/terms" className="text-white/30 text-[11px] font-bold hover:text-white/60 transition-colors">서비스 이용약관</a>
+                    </div>
+                    {/* Business info */}
+                    <div className="text-white/15 text-[10px] leading-relaxed space-y-0.5">
+                        <p>글로벌아임 | 대표 : 김대희 | 사업자등록번호 : 365-22-00947</p>
+                        <p>통신판매업 신고번호 : 제2021-서울강남-05756호</p>
+                        <p>주소 : 서울시 영등포구 영중로 159, 7층 글로벌아임</p>
+                        <p>이메일 : immodelkr@gmail.com | 호스팅서비스 : Vercel Inc.</p>
+                        <p className="pt-1">© 2026 글로벌아임(IMMOCA). All rights reserved.</p>
+                    </div>
+                </div>
             </div>
 
             {/* ── Daum Postcode Modal ── */}

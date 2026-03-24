@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { GRADE_INFO, GRADE_EMOJI, logoutUser } from '../services/userService';
-import { fetchPartners, fetchContracts, approveContract, rejectContract } from '../services/adminService';
+import { fetchPartners, fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
 import { fetchLatestAnnouncement } from '../services/chatService';
 import { postMessage, fetchMessagesList, deleteMessage, updateMessage } from '../services/messageService';
 import { sendBulkMessage, sendAlimtalk, sendFriendtalk } from '../services/aligoService';
 import AdminPartners from './AdminPartners';
 import AdminShop from './AdminShop';
 import AdminPopups from './AdminPopups';
+import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost } from '../services/certificationService';
 import { fetchAllFeaturedVideosForAdmin, addFeaturedVideo, updateFeaturedVideo, deleteFeaturedVideo } from '../services/mocaTVService';
 import * as XLSX from 'xlsx';
@@ -36,6 +37,7 @@ const AdminPage = () => {
     const [successMsg, setSuccessMsg] = useState('');
     const [contracts, setContracts] = useState([]);
     const [selectedContract, setSelectedContract] = useState(null);
+    const [isContractViewerOpen, setIsContractViewerOpen] = useState(false);
 
     // Lounge Announcement State
     const [announcementTitle, setAnnouncementTitle] = useState('');
@@ -1532,7 +1534,15 @@ const AdminPage = () => {
                             /* 상세 계약서 뷰 */
                             <div className="bg-white rounded-2xl p-6 sm:p-10 text-gray-800 shadow-2xl">
                                 <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-xl font-black text-black">계약서 상세 조회</h3>
+                                    <h3 className="text-xl font-black text-black flex items-center gap-3">
+                                        계약서 상세 조회
+                                        <button 
+                                            onClick={() => setIsContractViewerOpen(true)}
+                                            className="ml-4 text-xs bg-[#6C63FF]/10 text-[#6C63FF] border border-[#6C63FF]/30 px-3 py-1.5 rounded-lg hover:bg-[#6C63FF]/20 transition-colors"
+                                        >
+                                            📄 계약서 전문 보기
+                                        </button>
+                                    </h3>
                                     <button onClick={() => setSelectedContract(null)} className="text-sm text-gray-500 underline">← 목록으로</button>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
@@ -1589,6 +1599,25 @@ const AdminPage = () => {
                                         </button>
                                     </div>
                                 )}
+                                {selectedContract.status === 'rejected' && (
+                                    <div className="flex gap-4 mt-6">
+                                        <button
+                                            onClick={async () => {
+                                                if (!window.confirm('반려된 계약서를 영구적으로 삭제하시겠습니까?')) return;
+                                                const { error } = await deleteContract(selectedContract.id);
+                                                if (error) { alert('삭제 중 오류: ' + error.message); return; }
+                                                const { data: updated } = await fetchContracts();
+                                                if (updated) setContracts(updated);
+                                                setSelectedContract(null);
+                                                setSuccessMsg('반려된 계약서가 영구 삭제되었습니다.');
+                                                setTimeout(() => setSuccessMsg(''), 3000);
+                                            }}
+                                            className="flex-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 font-black py-4 rounded-xl transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <span className="material-symbols-outlined">delete</span> 반려된 계약서 영구 삭제
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             /* 계약서 목록 테이블 */
@@ -1635,6 +1664,13 @@ const AdminPage = () => {
                                     ))}
                                 </div>
                             )
+                        )}
+
+                        {isContractViewerOpen && selectedContract && (
+                            <AdminContractViewerModal
+                                contract={selectedContract}
+                                onClose={() => setIsContractViewerOpen(false)}
+                            />
                         )}
                     </div>
                 )}
