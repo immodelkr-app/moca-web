@@ -143,20 +143,25 @@ const Layout = () => {
                     <Outlet />
 
                     {/* ── Footer ── */}
-                    <footer className="w-full border-t border-white/20 bg-[#07070d] px-6 py-8 mt-8">
+                    <footer className="w-full border-t border-white/10 bg-[#07070d] px-6 py-8 mt-8">
                         <div className="max-w-4xl mx-auto space-y-3">
-                            <p className="text-white/80 text-sm font-black tracking-widest uppercase">글로벌아임</p>
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-white/55 text-[12px]">
-                                <span>서울시 영등포구 영중로 159, 7층</span>
-                                <span className="text-white/20">|</span>
-                                <span>사업자등록번호 : 365-22-00947</span>
-                                <span className="text-white/20">|</span>
-                                <span>카카오상담 : @immodel</span>
-                                <span className="text-white/20">|</span>
-                                <span>E-MAIL : immodelent@gmail.com</span>
+                            {/* 약관 링크 */}
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                                <a href="/privacy" className="text-white/30 text-[11px] font-bold hover:text-white/60 transition-colors">개인정보처리방침</a>
+                                <span className="text-white/10 text-[11px]">|</span>
+                                <a href="/terms" className="text-white/30 text-[11px] font-bold hover:text-white/60 transition-colors">서비스 이용약관</a>
                             </div>
-                            <p className="text-white/35 text-[11px] tracking-widest pt-1">
-                                © 2026 Copyright by Global IM Model. All rights reserved.
+                            {/* 사업자 정보 */}
+                            <p className="text-white/80 text-sm font-black tracking-widest uppercase">글로벌아임</p>
+                            <div className="text-white/35 text-[11px] leading-relaxed space-y-0.5">
+                                <p>대표 : 김대희 | 사업자등록번호 : 365-22-00947</p>
+                                <p>통신판매업 신고번호 : 제2021-서울강남-05756호</p>
+                                <p>주소 : 서울시 영등포구 영중로 159, 7층 글로벌아임</p>
+                                <p>대표전화 : 010-5543-9674 | 이메일 : immodelkr@gmail.com</p>
+                                <p>호스팅서비스 : Vercel Inc.</p>
+                            </div>
+                            <p className="text-white/20 text-[10px] tracking-widest pt-1">
+                                © 2026 글로벌아임(IMMOCA). All rights reserved.
                             </p>
                         </div>
                     </footer>

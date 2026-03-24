@@ -327,7 +327,7 @@ const AgencyLanding = () => {
     };
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0f]">
+        <div className="relative min-h-screen flex flex-col overflow-hidden bg-[#0a0a0f]">
             {/* Animated background blobs */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#6C63FF]/30 blur-[100px] animate-pulse" />
@@ -870,7 +870,7 @@ const AgencyLanding = () => {
             {/* ── 반응형 콘텐츠 래퍼 ── */}
             <div
                 className={`relative z-10 w-full max-w-6xl mx-auto px-6 py-4 transition-all duration-700
-                    flex flex-col lg:flex-row lg:items-center lg:gap-20 mt-0 lg:mt-4
+                    flex flex-col lg:flex-row lg:items-start lg:gap-20 mt-0 lg:mt-4 flex-grow items-center justify-center
                     ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
             >
                 {/* ── 왼쪽: 텍스트 영역 ── */}
