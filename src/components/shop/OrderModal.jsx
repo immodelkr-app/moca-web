@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
+import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 import { verifyCouponCode } from '../../services/shopService';
+import { getUser } from '../../services/userService';
+
+const TOSS_CLIENT_KEY = 'test_ck_kYG57Eba3GKqdLeLzebw3pWDOxmA';
 
 const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) => {
+    const user = getUser();
     const [form, setForm] = useState({
-        recipientName: '',
-        phone: '',
-        address: '',
+        recipientName: user?.name || '',
+        phone: user?.phone || '',
+        address: user?.address || '',
         addressDetail: '',
         memo: '',
     });
@@ -14,7 +19,7 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
 
     // 쿠폰 상태
     const [couponInput, setCouponInput] = useState('');
-    const [appliedCoupon, setAppliedCoupon] = useState(null); // { coupon, discountAmount, finalPrice }
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [couponError, setCouponError] = useState('');
     const [couponLoading, setCouponLoading] = useState(false);
 
@@ -28,27 +33,17 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
 
-    // 쿠폰 적용
     const handleApplyCoupon = async () => {
-        if (!couponInput.trim()) {
-            setCouponError('쿠폰 코드를 입력해주세요.');
-            return;
-        }
+        if (!couponInput.trim()) { setCouponError('쿠폰 코드를 입력해주세요.'); return; }
         setCouponLoading(true);
         setCouponError('');
         setAppliedCoupon(null);
-
         const result = await verifyCouponCode(couponInput, userGrade, basePrice);
-        if (result.error) {
-            setCouponError(result.error.message);
-        } else {
-            setAppliedCoupon(result);
-            setCouponInput(result.coupon.code); // 정규화된 코드로 교체
-        }
+        if (result.error) { setCouponError(result.error.message); }
+        else { setAppliedCoupon(result); setCouponInput(result.coupon.code); }
         setCouponLoading(false);
     };
 
-    // 쿠폰 취소
     const handleRemoveCoupon = () => {
         setAppliedCoupon(null);
         setCouponInput('');
@@ -68,17 +63,57 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
     const handleSubmit = async () => {
         if (!validate()) return;
         setLoading(true);
-        await onConfirm({
-            product,
-            form,
-            finalPrice,
-            couponCode: appliedCoupon?.coupon?.code || null,
-            couponId: appliedCoupon?.coupon?.id || null,
-            couponDiscount: discountAmount,
-            userGrade,
-            userNickname,
-        });
-        setLoading(false);
+
+        try {
+            // 주문 ID 생성 (영문+숫자, 최대 64자)
+            const orderId = `MOCA-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+
+            // 주문 정보를 localStorage에 임시 저장 (결제 콜백에서 사용)
+            const pendingOrder = {
+                orderId,
+                productId: product.id,
+                productTitle: product.title,
+                finalPrice,
+                couponCode: appliedCoupon?.coupon?.code || null,
+                couponId: appliedCoupon?.coupon?.id || null,
+                couponDiscount: discountAmount,
+                userGrade,
+                userNickname,
+                recipientName: form.recipientName,
+                phone: form.phone,
+                address: form.address + (form.addressDetail ? ` ${form.addressDetail}` : ''),
+                memo: form.memo,
+            };
+            localStorage.setItem('moca_pending_order', JSON.stringify(pendingOrder));
+
+            // 토스페이먼츠 SDK 로드 및 결제창 호출
+            const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
+            const payment = tossPayments.payment({
+                customerKey: userNickname || 'ANONYMOUS',
+            });
+
+            await payment.requestPayment({
+                method: 'CARD',
+                amount: {
+                    currency: 'KRW',
+                    value: finalPrice,
+                },
+                orderId,
+                orderName: product.title,
+                successUrl: `${window.location.origin}/payment/success`,
+                failUrl: `${window.location.origin}/payment/fail`,
+                customerEmail: user?.email || undefined,
+                customerName: form.recipientName,
+                customerMobilePhone: form.phone.replace(/-/g, ''),
+            });
+        } catch (err) {
+            // 사용자가 결제창을 닫은 경우 등
+            if (err?.code !== 'USER_CANCEL') {
+                alert('결제 중 오류가 발생했습니다: ' + (err?.message || '알 수 없는 오류'));
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -87,10 +122,8 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                 className="w-full max-w-md bg-[#0f0f1a] border border-white/15 rounded-t-3xl p-5 pb-8 max-h-[92vh] overflow-y-auto"
                 onClick={e => e.stopPropagation()}
             >
-                {/* 핸들 */}
                 <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
 
-                {/* 헤더 */}
                 <div className="flex items-center gap-2 mb-5">
                     <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
                         <span className="material-symbols-outlined text-purple-400">shopping_bag</span>
@@ -109,11 +142,7 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                     <Row label="정가" value={`${product.original_price.toLocaleString()}원`} muted />
                     <Row label="특가" value={`${basePrice.toLocaleString()}원`} highlight="orange" />
                     {appliedCoupon && (
-                        <Row
-                            label={`쿠폰 (${appliedCoupon.coupon.code})`}
-                            value={`-${discountAmount.toLocaleString()}원`}
-                            highlight="purple"
-                        />
+                        <Row label={`쿠폰 (${appliedCoupon.coupon.code})`} value={`-${discountAmount.toLocaleString()}원`} highlight="purple" />
                     )}
                     <div className="border-t border-white/10 pt-2 flex justify-between items-center">
                         <span className="text-white/60 text-sm">최종 결제금액</span>
@@ -121,10 +150,9 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                     </div>
                 </div>
 
-                {/* 쿠폰 코드 입력 */}
+                {/* 쿠폰 코드 */}
                 <div className="mb-5">
                     {appliedCoupon ? (
-                        // 적용된 쿠폰 표시
                         <div className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 rounded-xl px-4 py-3">
                             <span className="text-purple-400 text-lg">🎟</span>
                             <div className="flex-1">
@@ -132,16 +160,11 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                                 <p className="text-purple-400/60 text-xs">{appliedCoupon.coupon.description}</p>
                             </div>
                             <span className="text-purple-300 font-black text-sm">-{discountAmount.toLocaleString()}원</span>
-                            <button
-                                type="button"
-                                onClick={handleRemoveCoupon}
-                                className="text-white/30 hover:text-red-400 transition-colors ml-1"
-                            >
+                            <button type="button" onClick={handleRemoveCoupon} className="text-white/30 hover:text-red-400 transition-colors ml-1">
                                 <span className="material-symbols-outlined text-sm">close</span>
                             </button>
                         </div>
                     ) : (
-                        // 쿠폰 입력 폼
                         <div>
                             <label className="text-white/50 text-xs mb-1.5 block flex items-center gap-1">
                                 <span>🎟</span> 쿠폰 코드 <span className="text-white/20">(선택)</span>
@@ -188,20 +211,23 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                 <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white font-black text-base shadow-lg shadow-purple-500/25 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white font-black text-base shadow-lg shadow-purple-500/25 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                     {loading ? (
-                        <span className="flex items-center justify-center gap-2">
+                        <>
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            처리 중...
-                        </span>
+                            결제창 열는 중...
+                        </>
                     ) : (
-                        `토스페이먼츠로 ${finalPrice.toLocaleString()}원 결제`
+                        <>
+                            <span className="material-symbols-outlined text-[20px]">credit_card</span>
+                            토스페이먼츠로 {finalPrice.toLocaleString()}원 결제
+                        </>
                     )}
                 </button>
 
                 <p className="text-center text-white/25 text-[10px] mt-3">
-                    결제 진행 시 개인정보 제3자 제공에 동의한 것으로 간주됩니다.
+                    결제 진행 시 서비스 이용약관 및 개인정보 처리방침에 동의한 것으로 간주됩니다.
                 </p>
             </div>
         </div>
