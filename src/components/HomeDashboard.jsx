@@ -28,8 +28,8 @@ const GRADE_COLOR = {
 const MODEL_SUPPORT_ITEMS = [
     { icon: 'apartment', label: '에이전시 리스트', route: '/agencies', color: 'from-[#6C63FF] to-[#A78BFA]', glow: 'shadow-[#6C63FF]/30' },
     { icon: 'event_note', label: '투어일지', route: '/home/diary', color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/30' },
-    { icon: 'calendar_month', label: '투어 캘린더', route: '/home/calendar', color: 'from-[#10B981] to-[#34D399]', glow: 'shadow-[#10B981]/30' },
-    { icon: 'forward_to_inbox', label: '프로필 메일발송', route: '/home/smart-profile', color: 'from-[#10B981] to-[#34D399]', glow: 'shadow-[#10B981]/30', badge: 'NEW' },
+    { icon: 'forward_to_inbox', label: '프로필 메일발송', route: '/home/smart-profile', color: 'from-[#10B981] to-[#34D399]', glow: 'shadow-[#10B981]/30' },
+    { icon: 'calendar_month', label: '투어 캘린더', route: '/home/calendar', color: 'from-[#F59E0B] to-[#FCD34D]', glow: 'shadow-[#F59E0B]/30' },
     { icon: 'photo_camera', label: '투어스타그램', route: '/home/cert', color: 'from-[#EC4899] to-[#F472B6]', glow: 'shadow-[#EC4899]/30' },
     { icon: 'smart_display', label: '모카TV', route: '/home/tv', color: 'from-[#EF4444] to-[#F87171]', glow: 'shadow-[#EF4444]/30' },
 ];
