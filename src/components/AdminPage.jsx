@@ -12,7 +12,6 @@ import AdminSubscriptions from './AdminSubscriptions';
 import AdminPopups from './AdminPopups';
 import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost } from '../services/certificationService';
-import { fetchAllFeaturedVideosForAdmin, addFeaturedVideo, updateFeaturedVideo, deleteFeaturedVideo } from '../services/mocaTVService';
 import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '../services/currentPhotosService';
 import * as XLSX from 'xlsx';
 
@@ -68,13 +67,6 @@ const AdminPage = () => {
     const [currentPhotosLoading, setCurrentPhotosLoading] = useState(false);
     const [currentPhotosFilter, setCurrentPhotosFilter] = useState('all'); // 'all' | 'pending' | 'approved' | 'needs_more'
     const [currentPhotosSearch, setCurrentPhotosSearch] = useState('');
-
-    // 모카TV 관리 State
-    const [mocaTVVideos, setMocaTVVideos] = useState([]);
-    const [mocaTVLoading, setMocaTVLoading] = useState(false);
-    const [mocaTVForm, setMocaTVForm] = useState({ title: '', url: '', embed_url: '', thumbnail_url: '', platform: 'instagram', category: '전체보기', is_active: true });
-    const [mocaTVSaving, setMocaTVSaving] = useState(false);
-    const [mocaTVEditId, setMocaTVEditId] = useState(null);
 
     const handleLogout = () => {
         logoutUser();
@@ -701,12 +693,6 @@ const AdminPage = () => {
                         회원 관리
                     </button>
                     <button
-                        onClick={() => setActiveTab('subscriptions')}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'subscriptions' ? 'border-[#FCD34D] text-[#FCD34D]' : 'border-transparent text-white/40 hover:text-white'}`}
-                    >
-                        👑 구독 관리
-                    </button>
-                    <button
                         onClick={() => setActiveTab('stats')}
                         className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'stats' ? 'border-[#6C63FF] text-[#818CF8]' : 'border-transparent text-white/40 hover:text-white'
                             }`}
@@ -769,16 +755,10 @@ const AdminPage = () => {
                         📝 전속계약 관리
                     </button>
                     <button
-                        onClick={async () => {
-                            setActiveTab('mocatv');
-                            setMocaTVLoading(true);
-                            const data = await fetchAllFeaturedVideosForAdmin();
-                            setMocaTVVideos(data);
-                            setMocaTVLoading(false);
-                        }}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'mocatv' ? 'border-red-400 text-red-300' : 'border-transparent text-white/40 hover:text-white'}`}
+                        onClick={() => setActiveTab('subscriptions')}
+                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'subscriptions' ? 'border-[#FCD34D] text-[#FCD34D]' : 'border-transparent text-white/40 hover:text-white'}`}
                     >
-                        📺 모카TV 관리
+                        👑 구독 관리
                     </button>
                     <button
                         onClick={async () => {
@@ -2031,208 +2011,6 @@ const AdminPage = () => {
                         </div>
                     );
                 })()}
-
-                {/* ── 📺 모카TV 관리 탭 ── */}
-                {activeTab === 'mocatv' && (
-                    <div className="animate-fadeIn space-y-8">
-                        <div>
-                            <h2 className="text-2xl font-black text-white">📺 모카TV 관리</h2>
-                            <p className="text-white/40 text-sm mt-1">릴스·틱톡·유튜브 영상 링크를 등록하면 모카TV 피드에 9:16으로 노출됩니다.</p>
-                        </div>
-
-                        {/* Supabase 테이블 안내 */}
-                        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 text-yellow-300 text-sm">
-                            <p className="font-black mb-1">📌 Supabase 테이블 생성 필요 (최초 1회)</p>
-                            <code className="text-xs text-yellow-200/80 whitespace-pre-wrap block bg-black/30 rounded-lg p-3 mt-2">{`CREATE TABLE moca_featured_videos (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title TEXT NOT NULL,
-  url TEXT NOT NULL,
-  embed_url TEXT,
-  thumbnail_url TEXT,
-  platform TEXT NOT NULL DEFAULT 'instagram',
-  category TEXT DEFAULT '전체보기',
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);`}</code>
-                        </div>
-
-                        {/* 등록 / 수정 폼 */}
-                        <div className="bg-[#1a1a24] border border-white/10 rounded-2xl p-6 space-y-4">
-                            <h3 className="text-white font-black">{mocaTVEditId ? '✏️ 영상 수정' : '➕ 새 영상 등록'}</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-white/50 text-xs font-bold mb-1 block">제목 *</label>
-                                    <input
-                                        type="text"
-                                        value={mocaTVForm.title}
-                                        onChange={e => setMocaTVForm(f => ({ ...f, title: e.target.value }))}
-                                        placeholder="영상 제목"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#6C63FF]/60 transition"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-white/50 text-xs font-bold mb-1 block">플랫폼 *</label>
-                                    <select
-                                        value={mocaTVForm.platform}
-                                        onChange={e => setMocaTVForm(f => ({ ...f, platform: e.target.value }))}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#6C63FF]/60 transition"
-                                    >
-                                        <option value="instagram">Instagram Reels</option>
-                                        <option value="tiktok">TikTok</option>
-                                        <option value="youtube">YouTube Shorts</option>
-                                    </select>
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <label className="text-white/50 text-xs font-bold mb-1 block">원본 URL * (영상 링크)</label>
-                                    <input
-                                        type="url"
-                                        value={mocaTVForm.url}
-                                        onChange={e => setMocaTVForm(f => ({ ...f, url: e.target.value }))}
-                                        placeholder="https://www.instagram.com/reel/..."
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#6C63FF]/60 transition"
-                                    />
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <label className="text-white/50 text-xs font-bold mb-1 block">임베드 URL (인앱 재생용, 없으면 새 탭으로 열림)</label>
-                                    <input
-                                        type="url"
-                                        value={mocaTVForm.embed_url}
-                                        onChange={e => setMocaTVForm(f => ({ ...f, embed_url: e.target.value }))}
-                                        placeholder="예: https://www.instagram.com/reel/XXXX/embed/"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#6C63FF]/60 transition"
-                                    />
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <label className="text-white/50 text-xs font-bold mb-1 block">썸네일 URL (없으면 아이콘 표시)</label>
-                                    <input
-                                        type="url"
-                                        value={mocaTVForm.thumbnail_url}
-                                        onChange={e => setMocaTVForm(f => ({ ...f, thumbnail_url: e.target.value }))}
-                                        placeholder="https://..."
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#6C63FF]/60 transition"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-white/50 text-xs font-bold mb-1 block">카테고리</label>
-                                    <select
-                                        value={mocaTVForm.category}
-                                        onChange={e => setMocaTVForm(f => ({ ...f, category: e.target.value }))}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#6C63FF]/60 transition"
-                                    >
-                                        {['전체보기', '에이전시투어', '광고프로필', '표정&포즈', '광고Q&A'].map(c => (
-                                            <option key={c} value={c}>{c}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="flex items-center gap-3 pt-5">
-                                    <label className="text-white/50 text-xs font-bold">공개 여부</label>
-                                    <button
-                                        onClick={() => setMocaTVForm(f => ({ ...f, is_active: !f.is_active }))}
-                                        className={`relative w-12 h-6 rounded-full transition-colors ${mocaTVForm.is_active ? 'bg-[#6C63FF]' : 'bg-white/10'}`}
-                                    >
-                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${mocaTVForm.is_active ? 'left-7' : 'left-1'}`} />
-                                    </button>
-                                    <span className="text-white/60 text-xs">{mocaTVForm.is_active ? '공개' : '비공개'}</span>
-                                </div>
-                            </div>
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    disabled={mocaTVSaving || !mocaTVForm.title || !mocaTVForm.url}
-                                    onClick={async () => {
-                                        setMocaTVSaving(true);
-                                        if (mocaTVEditId) {
-                                            await updateFeaturedVideo(mocaTVEditId, mocaTVForm);
-                                        } else {
-                                            await addFeaturedVideo(mocaTVForm);
-                                        }
-                                        const data = await fetchAllFeaturedVideosForAdmin();
-                                        setMocaTVVideos(data);
-                                        setMocaTVForm({ title: '', url: '', embed_url: '', thumbnail_url: '', platform: 'instagram', category: '전체보기', is_active: true });
-                                        setMocaTVEditId(null);
-                                        setMocaTVSaving(false);
-                                    }}
-                                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white font-black text-sm disabled:opacity-40 transition-all hover:shadow-lg hover:shadow-[#6C63FF]/30"
-                                >
-                                    {mocaTVSaving ? '저장 중...' : mocaTVEditId ? '수정 저장' : '등록하기'}
-                                </button>
-                                {mocaTVEditId && (
-                                    <button
-                                        onClick={() => {
-                                            setMocaTVEditId(null);
-                                            setMocaTVForm({ title: '', url: '', embed_url: '', thumbnail_url: '', platform: 'instagram', category: '전체보기', is_active: true });
-                                        }}
-                                        className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 font-bold text-sm hover:bg-white/10 transition-all"
-                                    >
-                                        취소
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* 영상 목록 */}
-                        <div className="bg-[#1a1a24] border border-white/10 rounded-2xl overflow-hidden">
-                            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-                                <h3 className="text-white font-black">등록된 영상 ({mocaTVVideos.length}개)</h3>
-                                {mocaTVLoading && <div className="w-5 h-5 rounded-full border-2 border-[#6C63FF] border-t-transparent animate-spin" />}
-                            </div>
-                            {mocaTVVideos.length === 0 ? (
-                                <div className="flex flex-col items-center py-16 text-white/30">
-                                    <span className="material-symbols-outlined text-[40px] mb-3">smart_display</span>
-                                    <p>등록된 영상이 없습니다.</p>
-                                </div>
-                            ) : (
-                                <div className="divide-y divide-white/5">
-                                    {mocaTVVideos.map(v => (
-                                        <div key={v.id} className="flex items-center gap-4 px-6 py-4 hover:bg-white/5 transition-colors">
-                                            <div className="w-12 h-20 rounded-lg bg-black overflow-hidden flex-shrink-0">
-                                                {v.thumbnail_url ? (
-                                                    <img src={v.thumbnail_url} alt={v.title} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <span className="material-symbols-outlined text-white/20 text-[24px]">smart_display</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-white font-bold text-sm truncate">{v.title}</p>
-                                                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded ${v.platform === 'instagram' ? 'bg-pink-500/20 text-pink-300' : v.platform === 'tiktok' ? 'bg-white/10 text-white/60' : 'bg-red-500/20 text-red-300'}`}>
-                                                        {v.platform === 'instagram' ? 'Reels' : v.platform === 'tiktok' ? 'TikTok' : 'Shorts'}
-                                                    </span>
-                                                    <span className="text-white/30 text-[11px]">{v.category}</span>
-                                                    <span className={`text-[10px] font-bold ${v.is_active ? 'text-green-400' : 'text-white/30'}`}>{v.is_active ? '공개' : '비공개'}</span>
-                                                </div>
-                                                <a href={v.url} target="_blank" rel="noopener noreferrer" className="text-[#6C63FF] text-[11px] truncate block mt-0.5 hover:underline">{v.url}</a>
-                                            </div>
-                                            <div className="flex gap-2 flex-shrink-0">
-                                                <button
-                                                    onClick={() => {
-                                                        setMocaTVEditId(v.id);
-                                                        setMocaTVForm({ title: v.title, url: v.url, embed_url: v.embed_url || '', thumbnail_url: v.thumbnail_url || '', platform: v.platform, category: v.category || '전체보기', is_active: v.is_active });
-                                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                                    }}
-                                                    className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all"
-                                                >
-                                                    <span className="material-symbols-outlined text-[16px]">edit</span>
-                                                </button>
-                                                <button
-                                                    onClick={async () => {
-                                                        if (!window.confirm(`"${v.title}" 영상을 삭제할까요?`)) return;
-                                                        await deleteFeaturedVideo(v.id);
-                                                        setMocaTVVideos(prev => prev.filter(item => item.id !== v.id));
-                                                    }}
-                                                    className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all"
-                                                >
-                                                    <span className="material-symbols-outlined text-[16px]">delete</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
 
                 {/* ── 현재모습 사진 탭 ── */}
                 {activeTab === 'currentphotos' && (() => {
