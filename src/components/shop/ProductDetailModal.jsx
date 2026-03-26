@@ -248,10 +248,12 @@ const ProductDetailModal = ({ product, onClose, onBuyClick }) => {
                             {/* 반품 / 교환 */}
                             <PolicyAccordion icon="swap_horiz" title="반품 · 교환" color="emerald">
                                 <ul className="space-y-1.5 mt-2">
-                                    <PolicyItem mark="①">상품 수령 후 <strong className="text-white">3일 이내</strong> 반품·교환 신청이 가능합니다.</PolicyItem>
-                                    <PolicyItem mark="②">단순 변심 반품: 미개봉·미사용 상태에 한하며, <strong className="text-white">왕복 배송비는 고객 부담</strong>입니다.</PolicyItem>
-                                    <PolicyItem mark="③">상품 하자·오배송: 수령 후 3일 이내 사진 첨부 후 고객센터 접수 시 <strong className="text-white">배송비 전액 회사 부담</strong>으로 교환 또는 환불 처리합니다.</PolicyItem>
-                                    <PolicyItem mark="④">개봉 후 사용한 상품은 단순 변심으로 인한 반품·교환이 불가합니다.</PolicyItem>
+                                    <PolicyItem mark="①">배송 서비스: <strong className="text-white">롯데택배 또는 CJ택배</strong> (배송지역: 전국)</PolicyItem>
+                                    <PolicyItem mark="②">상품 수령 후 <strong className="text-white">3일 이내</strong> 반품·교환 신청이 가능합니다.</PolicyItem>
+                                    <PolicyItem mark="③">단순 변심 반품: 미개봉·미사용 상태에 한하며, <strong className="text-white">왕복 배송비는 고객 부담</strong>입니다.</PolicyItem>
+                                    <PolicyItem mark="④">반품 주소: <strong className="text-white">서울시 영등포구 영중로159, 7층 글로벌아임</strong></PolicyItem>
+                                    <PolicyItem mark="⑤">상품 하자·오배송: 수령 후 3일 이내 사진 첨부 후 고객센터 접수 시 <strong className="text-white">배송비 전액 회사 부담</strong>으로 교환 또는 환불 처리합니다.</PolicyItem>
+                                    <PolicyItem mark="⑥">개봉 후 사용한 상품은 단순 변심으로 인한 반품·교환이 불가합니다.</PolicyItem>
                                 </ul>
                             </PolicyAccordion>
 

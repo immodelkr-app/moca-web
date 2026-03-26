@@ -224,10 +224,15 @@ export const approveContract = async (contractId, memberPhone) => {
     if (contractError) return { error: contractError };
 
     // 2. 해당 모델의 등급을 VIP로 승급 (전화번호로 회원 식별)
+    // 전화번호 포맷 유연화 (하이픈 제거 버전과 원본 모두 시도)
+    const cleanedPhone = memberPhone.replace(/-/g, '').trim();
+    const formattedPhone = cleanedPhone.replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3');
+
+    // Supabase .or() 필터 사용 (전화번호가 01012345678 또는 010-1234-5678 또는 원본과 일치하는 경우)
     const { error: gradeError } = await supabase
         .from('users')
         .update({ grade: 'VIP' })
-        .eq('phone', memberPhone);
+        .or(`phone.eq.${cleanedPhone},phone.eq.${formattedPhone},phone.eq.${memberPhone}`);
 
     return { error: gradeError };
 };

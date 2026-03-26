@@ -80,8 +80,9 @@ const TermsOfService = () => {
                         <Li mark="②">결제는 <strong className="text-white">토스페이먼츠</strong>를 통해 처리됩니다.</Li>
                         <Li mark="③">단건 결제 최고가는 <strong className="text-white">200,000원</strong>입니다.</Li>
                         <Li mark="④">멤버십 월 구독료는 <strong className="text-white">10,000원/월</strong>이며, 서비스 제공 기간은 1개월(30일)입니다.</Li>
-                        <Li mark="⑤">실물 상품의 최대 배송 기간은 결제 후 <strong className="text-white">14일(영업일 기준 5일 내 발송)</strong>입니다.</Li>
-                        <Li mark="⑥">재고 소진 및 판매 시간 종료 후에는 구매가 불가합니다.</Li>
+                        <Li mark="⑤">실물 상품(모카 에디트) 배송: <strong className="text-white">롯데택배</strong> 또는 <strong className="text-white">CJ택배</strong>를 통해 배송되며, 배송 지역은 <strong className="text-white">전국</strong>입니다.</Li>
+                        <Li mark="⑥">실물 상품의 최대 배송 기간은 결제 후 <strong className="text-white">14일(영업일 기준 5일 내 발송)</strong>입니다.</Li>
+                        <Li mark="⑦">재고 소진 및 판매 시간 종료 후에는 구매가 불가합니다.</Li>
                     </ul>
                 </Section>
 
@@ -113,9 +114,10 @@ const TermsOfService = () => {
                             <ul className="space-y-2">
                                 <Li mark="①">배송 전 취소: <strong className="text-white">100% 전액 환불</strong></Li>
                                 <Li mark="②">상품 수령 후 <strong className="text-white">3일 이내</strong> 환불 신청 가능합니다.</Li>
-                                <Li mark="③">단순 변심 반품: 미개봉·미사용 상태에 한하며, 왕복 배송비는 고객 부담입니다.</Li>
-                                <Li mark="④">상품 하자·오배송: 수령 후 3일 이내 사진 첨부 후 고객센터 접수 시 100% 환불 또는 재발송 처리합니다.</Li>
-                                <Li mark="⑤">개봉 후 사용한 상품은 단순 변심으로 인한 환불이 불가합니다.</Li>
+                                <Li mark="③">단순 변심 반품: 미개봉·미사용 상태에 한하며, <strong className="text-white">왕복 배송비는 고객 부담</strong>입니다.</Li>
+                                <Li mark="④">반품 주소: <strong className="text-white">서울시 영등포구 영중로159, 7층 글로벌아임</strong></Li>
+                                <Li mark="⑤">상품 하자·오배송: 수령 후 3일 이내 사진 첨부 후 고객센터 접수 시 100% 환불 또는 재발송 처리합니다.</Li>
+                                <Li mark="⑥">개봉 후 사용한 상품은 단순 변심으로 인한 환불이 불가합니다.</Li>
                             </ul>
                         </div>
 

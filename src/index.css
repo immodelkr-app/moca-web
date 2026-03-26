@@ -25,4 +25,24 @@
   .fill-1 {
     font-variation-settings: 'FILL' 1;
   }
+
+  /* Admin tab scrollbar - visible on PC for discoverability */
+  .admin-tab-scrollbar::-webkit-scrollbar {
+    height: 4px;
+  }
+  .admin-tab-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+  }
+  .admin-tab-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+  .admin-tab-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+  }
+  .admin-tab-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+  }
 }

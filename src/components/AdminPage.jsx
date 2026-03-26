@@ -692,13 +692,19 @@ const AdminPage = () => {
             <div className="max-w-6xl mx-auto px-6 py-8">
 
                 {/* 탭 네비게이션 */}
-                <div className="flex gap-4 mb-8 border-b border-white/10 overflow-x-auto hide-scrollbar whitespace-nowrap">
+                <div className="flex gap-4 mb-8 border-b border-white/10 overflow-x-auto admin-tab-scrollbar whitespace-nowrap">
                     <button
                         onClick={() => setActiveTab('users')}
                         className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'users' ? 'border-[#6C63FF] text-[#818CF8]' : 'border-transparent text-white/40 hover:text-white'
                             }`}
                     >
                         회원 관리
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('subscriptions')}
+                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'subscriptions' ? 'border-[#FCD34D] text-[#FCD34D]' : 'border-transparent text-white/40 hover:text-white'}`}
+                    >
+                        👑 구독 관리
                     </button>
                     <button
                         onClick={() => setActiveTab('stats')}
@@ -786,12 +792,7 @@ const AdminPage = () => {
                     >
                         📸 현재모습 사진
                     </button>
-                    <button
-                        onClick={() => setActiveTab('subscriptions')}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'subscriptions' ? 'border-[#FCD34D] text-[#FCD34D]' : 'border-transparent text-white/40 hover:text-white'}`}
-                    >
-                        👑 구독 관리
-                    </button>
+
                 </div>
 
                 {activeTab === 'stats' && (
