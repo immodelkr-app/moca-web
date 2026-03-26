@@ -41,7 +41,7 @@ const TermsOfService = () => {
                         본 약관은 <strong className="text-white">아임모카(IMMOCA)</strong>가 제공하는 모든 서비스
                         (웹사이트, 앱, 모카 에디트 쇼핑, 멤버십 등)의 이용에 관한 사항을 규정합니다.
                     </p>
-                    <p className="text-white/30 text-xs mt-2">시행일: 2026년 3월 1일 | 최종 수정: 2026년 3월 25일</p>
+                    <p className="text-white/30 text-xs mt-2">시행일: 2026년 3월 1일 | 최종 수정: 2026년 3월 26일</p>
                 </div>
 
                 {/* 제1조 목적 */}
