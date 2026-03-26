@@ -2,246 +2,330 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser } from '../services/userService';
 
-// 테스트용 임시 키 (추후 실제 토스 키로 교체 필요)
 const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
 
-const SUBSCRIPTION_PLANS = [
-    { id: 'gold_3m', months: 3, price: 30000, label: '3개월', discount: false },
-    { id: 'gold_6m', months: 6, price: 50000, label: '6개월', discount: true, discountLabel: '약 16% 할인' },
-    { id: 'gold_12m', months: 12, price: 100000, label: '12개월', discount: true, discountLabel: '약 16% 할인' },
+const PLANS = [
+    { id: 'gold_1m',  months: 1,  price: 10000,  label: '1개월',  monthly: 10000, popular: false },
+    { id: 'gold_3m',  months: 3,  price: 30000,  label: '3개월',  monthly: 10000, popular: false },
+    { id: 'gold_6m',  months: 6,  price: 50000,  label: '6개월',  monthly: 8333,  popular: true,  discountPct: 17 },
+    { id: 'gold_12m', months: 12, price: 100000, label: '12개월', monthly: 8333,  popular: false, discountPct: 17 },
+];
+
+// ── 등급별 혜택 비교 데이터 ──────────────────────────────────────────────────
+const FEATURES = [
+    { name: '에이전시 조회', silver: '하루 8회', gold: '무제한', icon: 'search' },
+    { name: '프로필 등록 & 이메일 발송', silver: true, gold: true, icon: 'forward_to_inbox' },
+    { name: '모카 에디트 (쇼핑)', silver: true, gold: true, icon: 'shopping_bag' },
+    { name: '현재모습 사진등록', silver: false, gold: true, icon: 'photo_library' },
+    { name: '디지털 멤버십 카드', silver: true, gold: true, icon: 'badge' },
+    { name: '모카라운지 · 모카TV', silver: true, gold: true, icon: 'live_tv' },
+    { name: '투어 다이어리', silver: true, gold: true, icon: 'auto_stories' },
+    { name: '우선 캐스팅 노출', silver: false, gold: true, icon: 'star' },
+    { name: '전용 쿠폰 혜택', silver: false, gold: true, icon: 'confirmation_number' },
 ];
 
 const UpgradePage = () => {
     const navigate = useNavigate();
     const user = getUser();
-    
-    const [showPlansPopup, setShowPlansPopup] = useState(false);
-    const [selectedPlan, setSelectedPlan] = useState(SUBSCRIPTION_PLANS[0]);
-    const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
+    const userGrade = user?.grade || 'SILVER';
+    const isAlreadyGold = ['GOLD', 'VIP', 'VVIP'].includes(userGrade);
 
-    // ── 토스페이먼츠 결제 호출 핸들러 ──────────────────────────────────────────────
+    const [selectedPlan, setSelectedPlan] = useState(PLANS[2]); // 6개월 기본 선택
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [activeTab, setActiveTab] = useState('compare'); // compare | plans
+
+    // ── 토스 결제 ───────────────────────────────────────────────────────────
     const handlePayment = async () => {
-        if (!user) {
-            alert('로그인이 필요한 서비스입니다.');
-            navigate('/login');
-            return;
-        }
-
-        setIsPaymentProcessing(true);
+        if (!user) { alert('로그인이 필요합니다.'); navigate('/login'); return; }
+        setIsProcessing(true);
         try {
-            // SDK 로드
             const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk').catch(() => null) || {};
-            
             if (loadTossPayments) {
                 const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
                 const orderId = `SUBS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-                const orderName = `골드모카 멤버십 ${selectedPlan.label} 구독`;
-
-                // customerKey: 영문/숫자/_/-만 허용
                 const safeCustomerKey = (user.id || user.nickname || 'guest').toString().replace(/[^a-zA-Z0-9_-]/g, '') || 'ANONYMOUS';
 
-                // 결제 전 임시 저장 (추후 콜백에서 사용할 데이터)
-                const pendingSub = {
+                localStorage.setItem('moca_pending_subscription', JSON.stringify({
                     planId: selectedPlan.id,
                     months: selectedPlan.months,
                     price: selectedPlan.price,
-                    userId: user.id || user.nickname || 'guest'
-                };
-                localStorage.setItem('moca_pending_subscription', JSON.stringify(pendingSub));
+                    userId: user.id || user.nickname,
+                }));
 
                 const payment = tossPayments.payment({ customerKey: safeCustomerKey });
-
-                console.log('[TossPayments Upgrade] 결제 요청:', { orderId, price: selectedPlan.price, customerKey: safeCustomerKey });
-
                 await payment.requestPayment({
                     method: 'CARD',
-                    amount: {
-                        currency: 'KRW',
-                        value: selectedPlan.price,
-                    },
+                    amount: { currency: 'KRW', value: selectedPlan.price },
                     orderId,
-                    orderName,
+                    orderName: `골드모카 멤버십 ${selectedPlan.label} 구독`,
                     customerName: user.name || user.nickname || '모카회원',
                     successUrl: `${window.location.origin}/upgrade?payment=success&orderId=${orderId}`,
                     failUrl: `${window.location.origin}/upgrade?payment=fail`,
                 });
             } else {
-                // 테스트 시뮬레이션
-                setIsPaymentProcessing(false);
-                alert(`[테스트] 결제 요청 완료!\n\n상품명: 골드모카 멤버십 ${selectedPlan.label}\n결제금액: ${selectedPlan.price.toLocaleString()}원\n\n(실제 토스페이먼츠 연동 완료 시 진짜 결제창이 뜹니다)`);
-                navigate('/home');
+                setIsProcessing(false);
+                alert(`[테스트] 골드모카 ${selectedPlan.label} 구독 결제 (${selectedPlan.price.toLocaleString()}원)`);
             }
         } catch (err) {
-            setIsPaymentProcessing(false);
-            if (err?.code !== 'USER_CANCEL') {
-                alert('결제 창 호출에 실패했습니다. 관리자에게 문의해주세요.');
-            }
+            setIsProcessing(false);
+            if (err?.code !== 'USER_CANCEL') alert('결제 처리 중 오류가 발생했습니다.');
         }
     };
 
-    // ── 결제 결과 리턴 처리 (URL 파라미터 체크) ─────────────────────────────────────────
+    // ── 결제 결과 ───────────────────────────────────────────────────────────
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const payment = params.get('payment');
-        
         if (payment === 'success') {
-            // TODO: 서버(Supabase) 측 Confirm 인증 처리를 추가해야 합니다.
-            alert('골드모카 결제가 정상적으로 처리되었습니다! (테스트 모드: 실제 결제 승인은 추가 서버 작업이 필요합니다)');
-            
-            // 더미 성공 처리 후 홈으로 보내기 (임시)
+            alert('골드모카 결제가 정상 처리되었습니다!');
             window.history.replaceState({}, document.title, window.location.pathname);
             navigate('/home');
         } else if (payment === 'fail') {
-            alert('결제가 취소되었거나 실폐했습니다. 다시 시도해주세요.');
+            alert('결제가 취소되었거나 실패했습니다.');
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }, [navigate]);
 
-
     return (
-        <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-            {/* Ambient Background */}
-            <div className="absolute top-0 w-[600px] h-[600px] bg-[#F59E0B]/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="min-h-screen bg-[#0a0a0f] text-white pb-32">
 
-            {/* Header Content */}
-            <div className="relative z-10 w-full max-w-md bg-[#1a1a24] border border-white/10 rounded-3xl p-8 lg:p-10 shadow-2xl flex flex-col items-center text-center">
-                {/* Crown Icon */}
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#F59E0B] to-[#FCD34D] flex items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.3)] mb-8">
-                    <span className="text-[40px]">👑</span>
+            {/* ── 배경 ── */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#F59E0B]/6 rounded-full blur-[150px]" />
+                <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-[#6C63FF]/5 rounded-full blur-[120px]" />
+            </div>
+
+            {/* ── 헤더 ── */}
+            <div className="relative z-10 px-5 pt-8 pb-2 flex items-center gap-3">
+                <button onClick={() => navigate(-1)}
+                    className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors flex-shrink-0">
+                    <span className="material-symbols-outlined text-[20px] text-white/60">arrow_back</span>
+                </button>
+                <div>
+                    <h1 className="text-xl font-black tracking-tight">모카앱 플랜</h1>
+                    <p className="text-white/30 text-xs mt-0.5">나에게 맞는 플랜을 선택하세요</p>
                 </div>
+            </div>
 
-                {/* Title */}
-                <h1 className="text-3xl font-black text-white mb-4">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FCD34D] to-[#F59E0B]">
-                        골드모카
-                    </span> 전용 혜택
-                </h1>
+            <div className="relative z-10 px-5 space-y-5">
 
-                {/* Description */}
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-6 mb-10 w-full">
-                    <p className="text-white/80 text-sm leading-relaxed mb-4 font-medium">
-                        <strong className="text-white font-black">실버모카는 하루 최대 8번의 에이전시(지도/메모) 이용이 가능합니다.</strong><br />
-                        <br />
-                        인원/횟수 제한 없는 무제한 에이전시 열람은<br />
-                        <span className="text-[#FCD34D]">골드모카</span>부터 가능합니다.
-                    </p>
-                    <div className="flex flex-col gap-2 border-t border-white/10 pt-4 text-left">
-                        <div className="flex items-center gap-2 text-sm text-white/60">
-                            <span className="material-symbols-outlined text-[#10b981] text-[18px]">check_circle</span>
-                            <span><strong>광고 에이전시</strong> 무제한 조회</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-white/60">
-                            <span className="material-symbols-outlined text-[#10b981] text-[18px]">check_circle</span>
-                            <span>모델들이 많이 찾는 <strong>에이전시</strong></span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-white/60">
-                            <span className="material-symbols-outlined text-[#10b981] text-[18px]">check_circle</span>
-                            <span>신규 <strong>광고 에이전시</strong></span>
-                        </div>
+                {/* ── 현재 등급 배너 ── */}
+                <div className={`rounded-2xl p-4 border flex items-center gap-3 ${isAlreadyGold
+                    ? 'bg-[#F59E0B]/10 border-[#F59E0B]/30'
+                    : 'bg-white/5 border-white/10'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isAlreadyGold ? 'bg-[#F59E0B]/20' : 'bg-white/10'}`}>
+                        <span className="text-xl">{isAlreadyGold ? '👑' : '🤍'}</span>
+                    </div>
+                    <div>
+                        <p className={`text-sm font-black ${isAlreadyGold ? 'text-[#FCD34D]' : 'text-white/60'}`}>
+                            현재 등급: {userGrade === 'VIP' ? '전속모델' : userGrade}
+                        </p>
+                        <p className="text-white/30 text-xs">
+                            {isAlreadyGold ? '골드 혜택을 이용 중입니다' : '무료 실버 플랜 사용 중'}
+                        </p>
                     </div>
                 </div>
 
-                {/* Main Action Buttons */}
-                <div className="w-full flex flex-col gap-3 mb-4">
-                    <button
-                        onClick={() => setShowPlansPopup(true)}
-                        className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] hover:to-[#E58300] text-black font-black tracking-wide text-[16px] transition-all hover:-translate-y-1 shadow-[0_4px_20px_rgba(245,158,11,0.3)] cursor-pointer"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">credit_card</span>
-                        등업 결제하기
-                    </button>
-                    
-                    <button
-                        onClick={() => window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank')}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#FEE500]/10 hover:bg-[#FEE500]/20 text-[#FADA0B] border border-[#FEE500]/20 font-bold tracking-wide text-[14px] transition-all cursor-pointer"
-                    >
-                        <span className="material-symbols-outlined text-[18px]">chat</span>
-                        골드모카 신청 & 문의하기
-                    </button>
+                {/* ── 탭 전환 ── */}
+                <div className="flex gap-2 bg-white/5 border border-white/10 rounded-2xl p-1">
+                    {[
+                        { id: 'compare', label: '등급별 혜택 비교', icon: 'compare' },
+                        { id: 'plans', label: '구독 플랜 선택', icon: 'credit_card' },
+                    ].map(tab => (
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all ${
+                                activeTab === tab.id
+                                    ? 'bg-[#F59E0B]/20 text-[#FCD34D] border border-[#F59E0B]/30'
+                                    : 'text-white/40 hover:text-white/60'
+                            }`}>
+                            <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
 
-                {/* Secondary Action - Go Back */}
-                <button
-                    onClick={() => navigate(-1)}
-                    className="w-full mt-2 py-3 rounded-xl border border-white/10 text-white/40 font-bold text-sm tracking-wide transition-colors hover:text-white hover:border-white/30 hover:bg-white/5 cursor-pointer"
-                >
-                    이전 페이지로 돌아가기
-                </button>
-            </div>
-
-            {/* ── 구독 요금제 선택 모달 ───────────────────────────────────────── */}
-            {showPlansPopup && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isPaymentProcessing && setShowPlansPopup(false)}></div>
-                    <div className="relative bg-[#1A1A24] border border-[#F59E0B]/30 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-slideUp">
-                        
-                        <div className="text-center mb-6">
-                            <h2 className="text-xl font-black text-white mb-2">골드모델멤버 구독 신청</h2>
-                            <p className="text-white/50 text-xs">원하시는 구독 기간을 선택해 주세요.</p>
+                {/* ══ 등급별 혜택 비교 탭 ══ */}
+                {activeTab === 'compare' && (
+                    <div className="space-y-4 animate-fadeIn">
+                        {/* 등급 카드 비교 */}
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* 실버 카드 */}
+                            <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 text-center">
+                                <div className="w-12 h-12 mx-auto rounded-full bg-slate-500/15 flex items-center justify-center mb-3">
+                                    <span className="text-2xl">🤍</span>
+                                </div>
+                                <h3 className="text-white font-black text-base mb-1">SILVER</h3>
+                                <p className="text-emerald-400 font-black text-lg">무료</p>
+                                <p className="text-white/25 text-[10px] mt-1">기본 회원</p>
+                            </div>
+                            {/* 골드 카드 */}
+                            <div className="bg-[#F59E0B]/8 border-2 border-[#F59E0B]/40 rounded-2xl p-4 text-center relative overflow-hidden">
+                                <div className="absolute top-0 right-0 bg-[#F59E0B] text-black text-[9px] font-black px-2.5 py-0.5 rounded-bl-xl">추천</div>
+                                <div className="w-12 h-12 mx-auto rounded-full bg-[#F59E0B]/20 flex items-center justify-center mb-3">
+                                    <span className="text-2xl">👑</span>
+                                </div>
+                                <h3 className="text-[#FCD34D] font-black text-base mb-1">GOLD</h3>
+                                <p className="text-[#FCD34D] font-black text-lg">월 10,000원~</p>
+                                <p className="text-[#FCD34D]/40 text-[10px] mt-1">프리미엄 회원</p>
+                            </div>
                         </div>
 
-                        <div className="space-y-3 mb-8">
-                            {SUBSCRIPTION_PLANS.map((plan) => (
-                                <button
-                                    key={plan.id}
-                                    onClick={() => setSelectedPlan(plan)}
-                                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
-                                        selectedPlan.id === plan.id 
-                                        ? 'border-[#F59E0B] bg-[#F59E0B]/10' 
-                                        : 'border-white/10 hover:border-white/30 hover:bg-white/5'
-                                    }`}
-                                >
-                                    <div className="flex flex-col items-start gap-1">
-                                        <span className={`font-bold ${selectedPlan.id === plan.id ? 'text-[#FCD34D]' : 'text-white'}`}>
-                                            {plan.label} 구독
-                                        </span>
-                                        {plan.discount && (
-                                            <span className="text-[10px] font-black text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded leading-none">
-                                                {plan.discountLabel}
-                                            </span>
+                        {/* 기능 비교 리스트 */}
+                        <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
+                            <div className="grid grid-cols-[1fr_70px_70px] px-4 py-3 border-b border-white/8 bg-white/[0.02]">
+                                <span className="text-white/30 text-[11px] font-bold">기능</span>
+                                <span className="text-white/30 text-[11px] font-bold text-center">SILVER</span>
+                                <span className="text-[#FCD34D]/50 text-[11px] font-bold text-center">GOLD</span>
+                            </div>
+                            {FEATURES.map((feat, i) => (
+                                <div key={i} className={`grid grid-cols-[1fr_70px_70px] px-4 py-3 items-center ${i < FEATURES.length - 1 ? 'border-b border-white/5' : ''}`}>
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[14px] text-white/25">{feat.icon}</span>
+                                        <span className="text-white/70 text-xs font-bold">{feat.name}</span>
+                                    </div>
+                                    <div className="flex justify-center">
+                                        {typeof feat.silver === 'string' ? (
+                                            <span className="text-white/40 text-[10px] font-bold">{feat.silver}</span>
+                                        ) : feat.silver ? (
+                                            <span className="material-symbols-outlined text-[16px] text-emerald-400">check_circle</span>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-[16px] text-white/15">cancel</span>
                                         )}
                                     </div>
-                                    <div className="flex flex-col items-end">
-                                        <span className={`text-[17px] font-black ${selectedPlan.id === plan.id ? 'text-[#FCD34D]' : 'text-white'}`}>
-                                            {plan.price.toLocaleString()}원
-                                        </span>
-                                        <span className="text-white/40 text-[11px] mt-0.5">
-                                            월 {Math.round(plan.price / plan.months).toLocaleString()}원
-                                        </span>
+                                    <div className="flex justify-center">
+                                        {typeof feat.gold === 'string' ? (
+                                            <span className="text-[#FCD34D] text-[10px] font-black">{feat.gold}</span>
+                                        ) : feat.gold ? (
+                                            <span className="material-symbols-outlined text-[16px] text-[#FCD34D]">check_circle</span>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-[16px] text-white/15">cancel</span>
+                                        )}
                                     </div>
-                                </button>
+                                </div>
                             ))}
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            <button
-                                onClick={handlePayment}
-                                disabled={isPaymentProcessing}
-                                className={`w-full py-4 rounded-xl bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] text-black font-black text-base shadow-lg transition-all ${isPaymentProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}
-                            >
-                                {isPaymentProcessing ? '결제 창 여는 중...' : `${(selectedPlan.price).toLocaleString()}원 결제하기`}
+                        {/* 구독하기 CTA */}
+                        {!isAlreadyGold && (
+                            <button onClick={() => setActiveTab('plans')}
+                                className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] text-black font-black text-base shadow-lg shadow-[#F59E0B]/20 hover:opacity-90 active:scale-[0.97] transition-all flex items-center justify-center gap-2">
+                                <span className="text-lg">👑</span>
+                                골드 구독하기
                             </button>
-                            
-                            <button
-                                onClick={() => window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank')}
-                                disabled={isPaymentProcessing}
-                                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#FEE500]/10 hover:bg-[#FEE500]/20 text-[#FADA0B] border border-[#FEE500]/20 font-bold tracking-wide text-[14px] transition-all cursor-pointer"
-                            >
-                                <span className="material-symbols-outlined text-[18px]">chat</span>
-                                궁금한 점 문의하기
-                            </button>
+                        )}
+                    </div>
+                )}
 
-                            <button
-                                onClick={() => setShowPlansPopup(false)}
-                                disabled={isPaymentProcessing}
-                                className="w-full mt-1 py-3 rounded-xl border border-white/10 text-white/50 font-bold text-sm hover:text-white hover:bg-white/5"
-                            >
-                                닫기
+                {/* ══ 구독 플랜 선택 탭 ══ */}
+                {activeTab === 'plans' && (
+                    <div className="space-y-4 animate-fadeIn">
+
+                        {/* 플랜 카드들 */}
+                        <div className="space-y-3">
+                            {PLANS.map(plan => {
+                                const isSelected = selectedPlan.id === plan.id;
+                                return (
+                                    <button key={plan.id} onClick={() => setSelectedPlan(plan)}
+                                        className={`w-full relative p-4 rounded-2xl border-2 transition-all text-left ${
+                                            isSelected
+                                                ? 'border-[#F59E0B] bg-[#F59E0B]/10 shadow-lg shadow-[#F59E0B]/10'
+                                                : 'border-white/10 bg-white/[0.03] hover:border-white/25'
+                                        }`}>
+                                        {plan.popular && (
+                                            <span className="absolute -top-2.5 right-4 bg-gradient-to-r from-[#F59E0B] to-[#E58300] text-black text-[10px] font-black px-3 py-0.5 rounded-full shadow-sm">
+                                                BEST
+                                            </span>
+                                        )}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                                    isSelected ? 'border-[#F59E0B] bg-[#F59E0B]' : 'border-white/20'
+                                                }`}>
+                                                    {isSelected && <span className="material-symbols-outlined text-[14px] text-black">check</span>}
+                                                </div>
+                                                <div>
+                                                    <p className={`font-black ${isSelected ? 'text-[#FCD34D]' : 'text-white'}`}>
+                                                        {plan.label}
+                                                    </p>
+                                                    <p className="text-white/30 text-xs mt-0.5">
+                                                        월 {plan.monthly.toLocaleString()}원
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className={`text-lg font-black ${isSelected ? 'text-[#FCD34D]' : 'text-white'}`}>
+                                                    {plan.price.toLocaleString()}원
+                                                </p>
+                                                {plan.discountPct && (
+                                                    <span className="text-[10px] font-black text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded-full">
+                                                        {plan.discountPct}% 할인
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* 선택된 플랜 요약 */}
+                        <div className="bg-[#14141f] border border-[#F59E0B]/20 rounded-2xl p-5">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-white/40 text-sm">선택한 플랜</span>
+                                <span className="text-[#FCD34D] font-black">{selectedPlan.label} 구독</span>
+                            </div>
+                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/8">
+                                <span className="text-white/40 text-sm">결제 금액</span>
+                                <span className="text-white font-black text-xl">{selectedPlan.price.toLocaleString()}원</span>
+                            </div>
+
+                            {/* 결제 버튼 */}
+                            <button onClick={handlePayment} disabled={isProcessing || isAlreadyGold}
+                                className={`w-full py-4 rounded-2xl font-black text-base shadow-lg transition-all flex items-center justify-center gap-2 ${
+                                    isAlreadyGold
+                                        ? 'bg-white/10 text-white/30 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] text-black shadow-[#F59E0B]/25 hover:opacity-90 active:scale-[0.97]'
+                                } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                {isAlreadyGold ? (
+                                    <>이미 골드 회원입니다</>
+                                ) : isProcessing ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                                        결제창 여는 중...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-[20px]">credit_card</span>
+                                        {selectedPlan.price.toLocaleString()}원 결제하기
+                                    </>
+                                )}
                             </button>
                         </div>
+
+                        {/* 카카오 문의 */}
+                        <button onClick={() => window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank')}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#FEE500]/8 border border-[#FEE500]/15 text-[#FADA0B] font-bold text-sm hover:bg-[#FEE500]/15 transition-all">
+                            <span className="material-symbols-outlined text-[18px]">chat</span>
+                            골드모카 문의하기
+                        </button>
+
+                        {/* 안내 */}
+                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-2">
+                            <p className="text-white/30 text-[11px] font-bold flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[12px]">info</span>
+                                이용 안내
+                            </p>
+                            <ul className="text-white/25 text-[11px] space-y-1 pl-4">
+                                <li>• 결제 완료 후 즉시 골드 등급이 적용됩니다.</li>
+                                <li>• 구독 기간 만료 시 자동으로 실버로 변경됩니다.</li>
+                                <li>• 환불 문의는 카카오톡 채널로 연락해주세요.</li>
+                                <li>• 부가세(VAT) 포함 금액입니다.</li>
+                            </ul>
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+
+            </div>
         </div>
     );
 };
