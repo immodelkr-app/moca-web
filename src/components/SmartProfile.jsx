@@ -34,6 +34,7 @@ const SmartProfile = () => {
     const [currentPhotoUploading, setCurrentPhotoUploading] = useState(false);
     const [currentPhotoMsg, setCurrentPhotoMsg] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
+    const [showGradePopup, setShowGradePopup] = useState(false);
 
     useEffect(() => {
         if (!user) return;
@@ -179,6 +180,18 @@ const SmartProfile = () => {
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
         setErrorMsg('');
+    };
+
+    // 등급 체크: GOLD 이상만 현재모습 사진 사용 가능
+    const ALLOWED_GRADES = ['GOLD', 'VIP', 'VVIP'];
+    const isPhotoAllowed = ALLOWED_GRADES.includes(user?.grade);
+
+    const handleCurrentPhotoClick = () => {
+        if (!isPhotoAllowed) {
+            setShowGradePopup(true);
+            return;
+        }
+        currentPhotoInputRef.current?.click();
     };
 
     const handleCurrentPhotoChange = async (e) => {
@@ -520,7 +533,7 @@ const SmartProfile = () => {
                     </p>
 
                     <button
-                        onClick={() => currentPhotoInputRef.current?.click()}
+                        onClick={handleCurrentPhotoClick}
                         disabled={currentPhotoUploading || currentPhotos.length >= 10}
                         className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-[#10B981]/40 bg-[#10B981]/8 hover:bg-[#10B981]/15 hover:border-[#10B981]/60 transition-all active:scale-[0.98] mb-4 disabled:opacity-40"
                     >
@@ -683,6 +696,34 @@ const SmartProfile = () => {
                 </div>
             );
         })()}
+
+        {/* ── 등급 제한 안내 팝업 ── */}
+        {showGradePopup && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm px-6" onClick={() => setShowGradePopup(false)}>
+                <div
+                    className="w-full max-w-sm bg-[#14141f] border border-[#F59E0B]/30 rounded-3xl p-6 text-center shadow-2xl shadow-[#F59E0B]/10 animate-fadeIn"
+                    onClick={e => e.stopPropagation()}
+                >
+                    <div className="w-16 h-16 bg-[#F59E0B]/15 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="material-symbols-outlined text-4xl text-[#FCD34D]">lock</span>
+                    </div>
+                    <h3 className="text-white font-black text-lg mb-2">GOLD 회원 전용 기능</h3>
+                    <p className="text-white/50 text-sm leading-relaxed mb-2">
+                        <span className="text-[#FCD34D] font-bold">현재모습 사진등록</span>은<br />
+                        <span className="text-[#FCD34D] font-black">GOLD 회원</span>부터 사용 가능합니다.
+                    </p>
+                    <p className="text-white/30 text-xs mb-6">
+                        등급 업그레이드 후 이용해 주세요.
+                    </p>
+                    <button
+                        onClick={() => setShowGradePopup(false)}
+                        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white font-black text-base shadow-lg shadow-[#F59E0B]/25 hover:opacity-90 active:scale-[0.97] transition-all"
+                    >
+                        확인
+                    </button>
+                </div>
+            </div>
+        )}
     </>
     );
 };
