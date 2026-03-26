@@ -24,6 +24,29 @@ const StarRating = ({ value, onChange, readonly = false }) => (
     </div>
 );
 
+const PolicyAccordion = ({ icon, title, children, color = 'white' }) => {
+    const [open, setOpen] = useState(false);
+    return (
+        <div className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.02]">
+            <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors">
+                <div className="flex items-center gap-2">
+                    <span className={`material-symbols-outlined text-[16px] text-${color}-400`}>{icon}</span>
+                    <span className="text-white/80 text-sm font-bold">{title}</span>
+                </div>
+                <span className={`material-symbols-outlined text-white/30 text-[18px] transition-transform ${open ? 'rotate-180' : ''}`}>expand_more</span>
+            </button>
+            {open && <div className="px-4 pb-4 pt-1 border-t border-white/5">{children}</div>}
+        </div>
+    );
+};
+
+const PolicyItem = ({ mark = '•', children }) => (
+    <li className="flex gap-2 text-white/55 text-xs leading-relaxed">
+        <span className="text-white/30 shrink-0">{mark}</span>
+        <span>{children}</span>
+    </li>
+);
+
 const ProductDetailModal = ({ product, onClose, onBuyClick }) => {
     const [iframeError, setIframeError] = useState(false);
     const [reviews, setReviews] = useState([]);
@@ -206,7 +229,87 @@ const ProductDetailModal = ({ product, onClose, onBuyClick }) => {
 
                     <div className="w-full h-2 bg-black/40"></div>
 
-                    {/* 4. 구매 리뷰 - 임시 비활성화 (나중에 활용) */}
+                    {/* 4. 교환 · 반품 · 취소 · 환불 정책 */}
+                    <div className="px-5 py-6 bg-[#0f0f1a]">
+                        <div className="px-0 mb-4 border-l-2 border-orange-500 pl-3">
+                            <h2 className="text-white font-bold text-base">교환 · 반품 · 취소 · 환불 정책</h2>
+                            <p className="text-white/30 text-[11px] mt-0.5">전자상거래법에 따른 소비자 권리 안내</p>
+                        </div>
+                        <div className="space-y-2">
+                            {/* 결제 취소 */}
+                            <PolicyAccordion icon="cancel" title="결제 취소" color="blue">
+                                <ul className="space-y-1.5 mt-2">
+                                    <PolicyItem mark="①">배송 시작 전: 주문 완료 후 배송 준비 전까지 100% 전액 취소 가능합니다.</PolicyItem>
+                                    <PolicyItem mark="②">이용약관 신청 후 회사로부터 상담이 제공되지 않은 경우 결제 취소가 가능합니다.</PolicyItem>
+                                    <PolicyItem mark="③">취소 신청은 고객센터(immodelkr@gmail.com)로 주문번호를 포함하여 연락 주세요.</PolicyItem>
+                                </ul>
+                            </PolicyAccordion>
+
+                            {/* 반품 / 교환 */}
+                            <PolicyAccordion icon="swap_horiz" title="반품 · 교환" color="emerald">
+                                <ul className="space-y-1.5 mt-2">
+                                    <PolicyItem mark="①">상품 수령 후 <strong className="text-white">3일 이내</strong> 반품·교환 신청이 가능합니다.</PolicyItem>
+                                    <PolicyItem mark="②">단순 변심 반품: 미개봉·미사용 상태에 한하며, <strong className="text-white">왕복 배송비는 고객 부담</strong>입니다.</PolicyItem>
+                                    <PolicyItem mark="③">상품 하자·오배송: 수령 후 3일 이내 사진 첨부 후 고객센터 접수 시 <strong className="text-white">배송비 전액 회사 부담</strong>으로 교환 또는 환불 처리합니다.</PolicyItem>
+                                    <PolicyItem mark="④">개봉 후 사용한 상품은 단순 변심으로 인한 반품·교환이 불가합니다.</PolicyItem>
+                                </ul>
+                            </PolicyAccordion>
+
+                            {/* 환불 정책 */}
+                            <PolicyAccordion icon="payments" title="환불 정책" color="yellow">
+                                <div className="space-y-3 mt-2">
+                                    <div>
+                                        <p className="text-blue-300 text-[11px] font-bold mb-1.5">📦 실물 상품 (모카 에디트)</p>
+                                        <ul className="space-y-1.5">
+                                            <PolicyItem mark="①">배송 전 취소: <strong className="text-white">100% 전액 환불</strong></PolicyItem>
+                                            <PolicyItem mark="②">상품 수령 후 3일 이내 신청: 미사용·미개봉 시 환불 가능 (왕복 배송비 고객 부담)</PolicyItem>
+                                            <PolicyItem mark="③">상품 하자·오배송: 수령 후 3일 이내 접수 시 100% 환불</PolicyItem>
+                                        </ul>
+                                    </div>
+                                    <hr className="border-white/10" />
+                                    <div>
+                                        <p className="text-emerald-300 text-[11px] font-bold mb-1.5">👑 멤버십 (월정액 구독)</p>
+                                        <ul className="space-y-1.5">
+                                            <PolicyItem mark="①">정기결제 회원: 이용한 일수를 제외하고 일할 계산으로 환불됩니다. 월 기준 30일, 결제 시간으로부터 24시간 이후 ~ 15일까지 남은 일 수에 대해 일할 계산 처리됩니다.</PolicyItem>
+                                            <PolicyItem mark="②">연간결제 회원: 연 기준 12개월이며, 잔여 이용료는 전체 연간결제 이용료를 12로 나눈 하루 일대를 기준으로 환불됩니다.</PolicyItem>
+                                            <PolicyItem mark="③">회원이 상담 후 상대 프로필카드를 2회 이상 수령한 경우, 잔여 횟수가 남은 회원에 한하여 이용 금액과 위약금 10%를 제외한 부분 환불이 가능합니다.</PolicyItem>
+                                        </ul>
+                                    </div>
+                                    <hr className="border-white/10" />
+                                    <div>
+                                        <p className="text-white/40 text-[11px] font-bold mb-1.5">※ 회사 귀책사유</p>
+                                        <ul className="space-y-1.5">
+                                            <PolicyItem mark="②">회사의 귀책사유로 결제 오류가 발생한 경우 — 전액 환불</PolicyItem>
+                                            <PolicyItem mark="③">회사의 귀책사유로 서비스가 중단되는 경우 — 전액 환불</PolicyItem>
+                                        </ul>
+                                        <p className="text-white/30 text-[10px] mt-2">※ 본 조의 환불 금액 기준은 연간결제 회원이라 하더라도 정기결제 금액으로 계산 후 진행됩니다.</p>
+                                    </div>
+                                </div>
+                            </PolicyAccordion>
+
+                            {/* 환불 불가 */}
+                            <PolicyAccordion icon="block" title="환불 불가 항목" color="red">
+                                <ul className="space-y-1.5 mt-2">
+                                    <PolicyItem>멤버십 결제 후 7일을 초과한 경우</PolicyItem>
+                                    <PolicyItem>상품 수령 후 3일을 초과한 경우</PolicyItem>
+                                    <PolicyItem>콘텐츠를 다운로드하거나 실질적으로 이용한 경우</PolicyItem>
+                                    <PolicyItem>고객의 사용·훼손으로 상품 가치가 현저히 감소한 경우</PolicyItem>
+                                    <PolicyItem>개봉 후 사용한 상품의 단순 변심</PolicyItem>
+                                </ul>
+                            </PolicyAccordion>
+                        </div>
+
+                        {/* 문의처 */}
+                        <div className="mt-4 bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-3">
+                            <p className="text-orange-300 text-xs font-bold">📞 교환·반품·환불 문의</p>
+                            <p className="text-white/50 text-[11px] mt-1">immodelkr@gmail.com</p>
+                            <p className="text-white/30 text-[10px] mt-0.5">주문번호, 결제일자, 사유를 함께 보내주세요. (영업일 기준 1~2일 내 답변)</p>
+                        </div>
+                    </div>
+
+                    <div className="w-full h-2 bg-black/40"></div>
+
+                    {/* 5. 구매 리뷰 - 임시 비활성화 (나중에 활용) */}
                     {false && <div className="px-5 py-8 bg-[#0f0f1a]">
                         <div className="flex items-center gap-2 mb-5">
                             <h2 className="text-white font-bold text-lg">구매 리뷰</h2>

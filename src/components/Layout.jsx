@@ -1,6 +1,69 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { logoutUser, getUser } from '../services/userService';
+
+const RefundPolicyModal = ({ onClose }) => (
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+        <div className="bg-[#13131f] border border-white/10 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-[#13131f] border-b border-white/10 px-5 py-4 flex items-center justify-between">
+                <h2 className="text-white font-black text-base">교환 · 반품 · 취소 · 환불 정책</h2>
+                <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><span className="material-symbols-outlined">close</span></button>
+            </div>
+            <div className="px-5 py-5 space-y-5 text-xs text-white/60 leading-relaxed">
+                <div>
+                    <p className="text-blue-300 font-bold mb-2">🚫 결제 취소</p>
+                    <ul className="space-y-1.5 list-none">
+                        <li>① 배송 시작 전(배송 준비 전)까지 100% 전액 취소 가능합니다.</li>
+                        <li>② 이용약관 신청 후 회사로부터 상담이 미제공된 경우 취소 가능합니다.</li>
+                        <li>③ 취소 신청: immodelkr@gmail.com (주문번호 포함)</li>
+                    </ul>
+                </div>
+                <hr className="border-white/10" />
+                <div>
+                    <p className="text-emerald-300 font-bold mb-2">🔄 반품 · 교환</p>
+                    <ul className="space-y-1.5 list-none">
+                        <li>① 상품 수령 후 <strong className="text-white">3일 이내</strong> 반품·교환 신청 가능</li>
+                        <li>② 단순 변심: 미개봉·미사용 상태 한정, 왕복 배송비 고객 부담</li>
+                        <li>③ 상품 하자·오배송: 3일 이내 사진 첨부 접수 시 배송비 회사 부담으로 교환·환불</li>
+                        <li>④ 개봉 후 사용 상품은 단순 변심 반품 불가</li>
+                    </ul>
+                </div>
+                <hr className="border-white/10" />
+                <div>
+                    <p className="text-yellow-300 font-bold mb-2">💰 환불 정책</p>
+                    <p className="text-white/40 text-[11px] font-bold mb-1">📦 실물 상품</p>
+                    <ul className="space-y-1 mb-3 list-none">
+                        <li>① 배송 전 취소: 100% 전액 환불</li>
+                        <li>② 수령 후 3일 이내·미사용: 환불 가능 (왕복 배송비 고객 부담)</li>
+                        <li>③ 상품 하자·오배송: 수령 후 3일 이내 100% 환불</li>
+                    </ul>
+                    <p className="text-white/40 text-[11px] font-bold mb-1">👑 멤버십 구독</p>
+                    <ul className="space-y-1 list-none">
+                        <li>① 정기결제: 이용일수 제외 일할 계산 환불 (결제 후 24시간 이후 ~ 15일까지)</li>
+                        <li>② 연간결제: 전체 연간금액 ÷ 12 × 잔여개월 기준 환불</li>
+                        <li>③ 프로필카드 2회 이상 수령 시 위약금 10% 제외 후 부분 환불</li>
+                        <li>④ 회사 귀책사유(오류·서비스 중단): 전액 환불</li>
+                    </ul>
+                </div>
+                <hr className="border-white/10" />
+                <div>
+                    <p className="text-red-300 font-bold mb-2">🚫 환불 불가 항목</p>
+                    <ul className="space-y-1 list-none">
+                        <li>• 멤버십 결제 후 7일 초과</li>
+                        <li>• 상품 수령 후 3일 초과</li>
+                        <li>• 콘텐츠 다운로드·실질 이용 후</li>
+                        <li>• 고객 사용·훼손으로 가치 감소</li>
+                        <li>• 개봉 후 사용 상품의 단순 변심</li>
+                    </ul>
+                </div>
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-3 mt-2">
+                    <p className="text-orange-300 font-bold">📞 문의: immodelkr@gmail.com</p>
+                    <p className="text-white/40 mt-1">주문번호, 결제일자, 사유를 포함해 주세요. (영업일 1~2일 내 답변)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+);
 
 const navGroups = [
     {
@@ -39,6 +102,7 @@ const navGroups = [
 ];
 
 const Layout = () => {
+    const [showRefundPolicy, setShowRefundPolicy] = useState(false);
     const navigate = useNavigate();
     const user = getUser();
     const userGrade = user?.grade || 'BASIC';
@@ -150,7 +214,10 @@ const Layout = () => {
                                 <a href="/privacy" className="text-white/70 text-[11px] font-bold hover:text-white transition-colors">개인정보처리방침</a>
                                 <span className="text-white/40 text-[11px]">|</span>
                                 <a href="/terms" className="text-white/70 text-[11px] font-bold hover:text-white transition-colors">서비스 이용약관</a>
+                                <span className="text-white/40 text-[11px]">|</span>
+                                <button onClick={() => setShowRefundPolicy(true)} className="text-orange-300/80 text-[11px] font-bold hover:text-orange-300 transition-colors">교환·반품·환불 정책</button>
                             </div>
+                            {showRefundPolicy && <RefundPolicyModal onClose={() => setShowRefundPolicy(false)} />}
                             {/* 사업자 정보 */}
                             <p className="text-white/80 text-[11px] font-black tracking-widest uppercase">글로벌아임</p>
                             <div className="text-white/60 text-[10px] leading-loose space-y-0">
