@@ -40,25 +40,32 @@ const PaymentSuccess = () => {
                     throw new Error(confirmData?.error || '결제 승인에 실패했습니다.');
                 }
 
-                // DB에 주문 저장
+                // DB에 주문 저장 (shop_orders 테이블 컬럼에 정확히 맞춤)
                 const orderPayload = {
                     order_id: orderId,
                     product_id: pending.productId,
                     user_nickname: pending.userNickname,
                     user_grade: pending.userGrade,
-                    price: amount,
-                    coupon_code: pending.couponCode,
-                    coupon_discount: pending.couponDiscount || 0,
+                    original_price: pending.originalPrice || 0,
+                    sale_price: pending.salePrice || 0,
+                    final_price: amount,
                     recipient_name: pending.recipientName,
-                    phone: pending.phone,
+                    recipient_phone: pending.phone,
                     address: pending.address,
-                    memo: pending.memo,
+                    address_detail: pending.addressDetail || '',
+                    delivery_memo: pending.memo || '',
                     payment_key: paymentKey,
                     status: 'paid',
                 };
 
+                console.log('[PaymentSuccess] 주문 저장 시도:', orderPayload);
+
                 const { data: savedOrder, error: saveError } = await createOrder(orderPayload);
-                if (saveError) throw new Error('주문 저장에 실패했습니다.');
+                if (saveError) {
+                    console.error('[PaymentSuccess] 주문 저장 에러:', saveError);
+                    throw new Error('주문 저장에 실패했습니다: ' + (saveError.message || JSON.stringify(saveError)));
+                }
+                console.log('[PaymentSuccess] 주문 저장 성공:', savedOrder);
 
                 // 재고 차감
                 await decreaseStock(pending.productId);

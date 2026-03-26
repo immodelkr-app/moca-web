@@ -664,8 +664,9 @@ const AdminShop = ({ successMsg, setSuccessMsg }) => {
                                             <span>{order.recipient_name} | {order.recipient_phone}</span>
                                             <span className="text-white/20">{formatDate(order.created_at)}</span>
                                         </div>
-                                        {order.coupon_code && <p className="text-purple-400/70 text-[11px] mt-1">🎟 쿠폰: {order.coupon_code} (-{formatPrice(order.coupon_discount)})</p>}
-                                        {order.address && <p className="text-white/30 text-[11px] mt-1">📦 {order.address} {order.address_detail}</p>}
+                                        {order.order_id && <p className="text-white/20 text-[10px] mt-1 font-mono">주문번호: {order.order_id}</p>}
+                                        {order.address && <p className="text-white/30 text-[11px] mt-1">📦 {order.address} {order.address_detail || ''}</p>}
+                                        {order.delivery_memo && <p className="text-white/25 text-[11px]">📝 {order.delivery_memo}</p>}
                                     </div>
                                     <select value={order.status} onChange={e => handleOrderStatus(order.id, e.target.value)}
                                         className="bg-black/40 border border-white/15 rounded-xl px-2 py-1.5 text-white text-xs focus:outline-none focus:border-orange-400 shrink-0">

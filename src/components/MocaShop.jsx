@@ -89,12 +89,28 @@ const MocaShop = () => {
                 // customerKey: 영문/숫자/_/-만 허용 (한글 등 특수문자 제거)
                 const safeCustomerKey = (userNickname || 'ANONYMOUS').replace(/[^a-zA-Z0-9_-]/g, '') || 'ANONYMOUS';
 
-                // 결제창 넘어가기 전 정보 임시 저장 (알림톡용)
+                // 결제창 넘어가기 전 정보 임시 저장 (PaymentSuccess에서 DB 저장 시 필요)
                 const pendingOrder = {
+                    orderId,
+                    productId: product.id,
+                    productTitle: product.title,
+                    originalPrice: product.original_price,
+                    salePrice: product.sale_price,
+                    finalPrice,
+                    couponCode: couponCode || null,
+                    couponId: couponId || null,
+                    couponDiscount: couponDiscount || 0,
+                    userGrade,
+                    userNickname,
+                    recipientName: form.recipientName,
+                    phone: form.phone,
+                    address: form.address,
+                    addressDetail: form.addressDetail || '',
+                    memo: form.memo || '',
+                    // 알림톡용 호환 필드
                     title: product.title,
                     price: finalPrice,
                     name: form.recipientName,
-                    phone: form.phone,
                 };
                 localStorage.setItem('moca_pending_order', JSON.stringify(pendingOrder));
 

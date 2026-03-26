@@ -105,6 +105,8 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                 orderId,
                 productId: product.id,
                 productTitle: product.title,
+                originalPrice: product.original_price,
+                salePrice: basePrice,
                 finalPrice,
                 couponCode: appliedCoupon?.coupon?.code || null,
                 couponId: appliedCoupon?.coupon?.id || null,
@@ -113,8 +115,13 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                 userNickname,
                 recipientName: form.recipientName,
                 phone: form.phone,
-                address: form.address + (form.addressDetail ? ` ${form.addressDetail}` : ''),
+                address: form.address,
+                addressDetail: form.addressDetail || '',
                 memo: form.memo,
+                // 알림톡용 호환 필드
+                title: product.title,
+                price: finalPrice,
+                name: form.recipientName,
             };
             localStorage.setItem('moca_pending_order', JSON.stringify(pendingOrder));
 
