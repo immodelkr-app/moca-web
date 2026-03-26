@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
     created_at timestamptz DEFAULT now()
 );
 
+-- anon 및 authenticated 역할에 테이블 권한 부여 (필수!)
+GRANT SELECT, INSERT, UPDATE ON public.subscriptions TO anon;
+GRANT SELECT, INSERT, UPDATE ON public.subscriptions TO authenticated;
+
 -- RLS 정책
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 

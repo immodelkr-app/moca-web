@@ -19,13 +19,20 @@ export const fetchShopProducts = async () => {
 // ── 주문 저장 ────────────────────────────────────────────────────────────────
 export const createOrder = async (orderData) => {
     if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+    console.log('[shopService] createOrder 시도:', orderData);
     const { data, error } = await supabase
         .from('shop_orders')
         .insert([orderData])
         .select()
         .single();
+    if (error) {
+        console.error('[shopService] createOrder 실패:', error, error?.message, error?.details, error?.hint, error?.code);
+    } else {
+        console.log('[shopService] createOrder 성공:', data);
+    }
     return { data, error };
 };
+
 
 // ── 재고 차감 ─────────────────────────────────────────────────────────────────
 export const decreaseStock = async (productId, quantity = 1) => {

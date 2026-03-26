@@ -32,12 +32,20 @@ const PaymentSuccess = () => {
                 }
 
                 // 토스페이먼츠 결제 승인 (Supabase Edge Function 경유)
+                console.log('[PaymentSuccess] toss-confirm 호출:', { paymentKey, orderId, amount });
                 const { data: confirmData, error: confirmError } = await supabase.functions.invoke('toss-confirm', {
                     body: { paymentKey, orderId, amount },
                 });
 
-                if (confirmError || confirmData?.error) {
-                    throw new Error(confirmData?.error || '결제 승인에 실패했습니다.');
+                console.log('[PaymentSuccess] toss-confirm 결과:', { confirmData, confirmError });
+
+                if (confirmError) {
+                    console.error('[PaymentSuccess] toss-confirm Edge Function 에러:', confirmError, confirmError?.message, confirmError?.context);
+                    throw new Error('결제 승인 Edge Function 호출 실패: ' + (confirmError.message || JSON.stringify(confirmError)));
+                }
+                if (confirmData?.error) {
+                    console.error('[PaymentSuccess] 토스 결제 승인 거부:', confirmData.error);
+                    throw new Error('토스페이먼츠 결제 승인 실패: ' + confirmData.error);
                 }
 
                 // DB에 주문 저장 (shop_orders 테이블 컬럼에 정확히 맞춤)
