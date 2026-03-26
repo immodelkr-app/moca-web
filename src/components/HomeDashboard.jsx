@@ -28,6 +28,7 @@ const GRADE_COLOR = {
 const MODEL_SUPPORT_ITEMS = [
     { icon: 'apartment', label: '에이전시 리스트', route: '/agencies', color: 'from-[#6C63FF] to-[#A78BFA]', glow: 'shadow-[#6C63FF]/30' },
     { icon: 'event_note', label: '투어일지', route: '/home/diary', color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/30' },
+    { icon: 'manage_accounts', label: '모델프로필 관리', route: '/home/smart-profile', badge: 'NEW', color: 'from-[#8B5CF6] to-[#C4B5FD]', glow: 'shadow-[#8B5CF6]/30' },
     { icon: 'forward_to_inbox', label: '프로필 메일발송', route: '/home/smart-profile', color: 'from-[#10B981] to-[#34D399]', glow: 'shadow-[#10B981]/30' },
     { icon: 'calendar_month', label: '투어 캘린더', route: '/home/calendar', color: 'from-[#F59E0B] to-[#FCD34D]', glow: 'shadow-[#F59E0B]/30' },
     { icon: 'photo_camera', label: '투어스타그램', route: '/home/cert', color: 'from-[#EC4899] to-[#F472B6]', glow: 'shadow-[#EC4899]/30' },
