@@ -177,6 +177,8 @@ export const sendCastingEmail = async ({ modelData, agencyName, agencyEmail, cur
                     modelAge: modelData.age || '',
                     modelShoeSize: modelData.shoe_size || '',
                     portfolioLink: modelData.portfolio_link,
+                    careerAd: modelData.career_ad || '',
+                    careerOther: modelData.career_other || '',
                     currentPhotoUrls,
                     agencyName,
                     agencyEmail,

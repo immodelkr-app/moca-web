@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser, updateSmartProfile, uploadProfilePhoto } from '../services/userService';
+import { getUser, updateSmartProfile } from '../services/userService';
 import { uploadCurrentPhoto, fetchUserCurrentPhotos, deleteCurrentPhoto } from '../services/currentPhotosService';
 
 const GOOGLE_API_KEY = 'AIzaSyDHL15S2cq0umttfXh2ka6TFddamWJ9byI';
@@ -9,7 +9,6 @@ const GOOGLE_CLIENT_ID = '1035713999053-4i9a5k0gsn0457uroib1eef93cjssedo.apps.go
 const SmartProfile = () => {
     const navigate = useNavigate();
     const user = getUser();
-    const fileInputRef = useRef(null);
     const pickerInited = useRef(false);
     const gisInited = useRef(false);
     const tokenClient = useRef(null);
@@ -21,14 +20,12 @@ const SmartProfile = () => {
         age: '',
         shoe_size: '',
         portfolio_link: '',
-        photo_base64: '',
-        photo_url: '',
+        career_ad: '',       // 광고모델 경력
+        career_other: '',    // 그외 경력사항
     });
-    const [photoUploading, setPhotoUploading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
-    const [photoPreview, setPhotoPreview] = useState(null);
     const [pickerLoading, setPickerLoading] = useState(false);
 
     // 현재모습 사진 관련
@@ -36,7 +33,7 @@ const SmartProfile = () => {
     const [currentPhotos, setCurrentPhotos] = useState([]);
     const [currentPhotoUploading, setCurrentPhotoUploading] = useState(false);
     const [currentPhotoMsg, setCurrentPhotoMsg] = useState('');
-    const [selectedPhoto, setSelectedPhoto] = useState(null); // 크게 보기 모달
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
 
     useEffect(() => {
         if (!user) return;
@@ -46,13 +43,10 @@ const SmartProfile = () => {
             age: user.age || '',
             shoe_size: user.shoe_size || '',
             portfolio_link: user.portfolio_link || '',
-            photo_base64: user.photo_base64 || '',
-            photo_url: user.photo_url || '',
+            career_ad: user.career_ad || '',
+            career_other: user.career_other || '',
         });
-        if (user.photo_url) setPhotoPreview(user.photo_url);
-        else if (user.photo_base64) setPhotoPreview(user.photo_base64);
 
-        // 현재모습 사진 불러오기 (id 또는 nickname 기준)
         if (user.id || user.nickname) {
             fetchUserCurrentPhotos(user.id, user.nickname).then(setCurrentPhotos);
         }
@@ -77,11 +71,10 @@ const SmartProfile = () => {
 
     const loadScript = (id, src, onload) => {
         if (document.getElementById(id)) {
-            // 이미 스크립트 태그 있음 — 로드 완료 여부 폴링
             const interval = setInterval(() => {
                 if (onload()) clearInterval(interval);
             }, 200);
-            setTimeout(() => clearInterval(interval), 10000); // 10초 타임아웃
+            setTimeout(() => clearInterval(interval), 10000);
         } else {
             const script = document.createElement('script');
             script.id = id;
@@ -93,9 +86,7 @@ const SmartProfile = () => {
         }
     };
 
-    // Google API 스크립트 로드
     useEffect(() => {
-        // gapi
         if (window.gapi) {
             window.gapi.load('picker', () => { pickerInited.current = true; });
         } else {
@@ -108,7 +99,6 @@ const SmartProfile = () => {
             });
         }
 
-        // gis
         if (window.google?.accounts?.oauth2) {
             initTokenClient();
         } else {
@@ -162,12 +152,10 @@ const SmartProfile = () => {
     const handlePickerClick = () => {
         setPickerLoading(true);
 
-        // 아직 초기화 안됐으면 재시도
         if (!gisInited.current || !tokenClient.current) {
             if (window.google?.accounts?.oauth2) {
                 initTokenClient();
             }
-            // 최대 5초 대기 후 재시도
             let attempts = 0;
             const retry = setInterval(() => {
                 attempts++;
@@ -191,33 +179,6 @@ const SmartProfile = () => {
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
         setErrorMsg('');
-    };
-
-    const handlePhotoChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-            setErrorMsg('사진 파일은 2MB 이하만 가능합니다.');
-            return;
-        }
-        // 로컬 미리보기 (base64)
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            setPhotoPreview(evt.target.result);
-            setFormData(prev => ({ ...prev, photo_base64: evt.target.result }));
-        };
-        reader.readAsDataURL(file);
-
-        // Supabase Storage 업로드 → 공개 URL 저장
-        setPhotoUploading(true);
-        const nickname = user?.nickname || user?.name || 'unknown';
-        const { url, error } = await uploadProfilePhoto(file, nickname);
-        setPhotoUploading(false);
-        if (url) {
-            setFormData(prev => ({ ...prev, photo_url: url }));
-        } else if (error) {
-            setErrorMsg(`사진 업로드 실패: ${error}`);
-        }
     };
 
     const handleCurrentPhotoChange = async (e) => {
@@ -348,68 +309,28 @@ const SmartProfile = () => {
                     </div>
                 </div>
 
-                {/* ── 대표 사진 ── */}
-                <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="w-7 h-7 rounded-lg bg-[#EC4899]/20 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[15px] text-[#F472B6]">photo_camera</span>
-                        </div>
-                        <h2 className="font-black text-white text-base">대표 사진</h2>
-                        <span className="text-white/30 text-[11px] ml-1">에이전시가 보는 첫인상</span>
-                    </div>
-                    <div className="flex items-center gap-5">
-                        <div
-                            className="w-24 h-24 rounded-2xl bg-white/5 border-2 border-dashed border-white/15 flex items-center justify-center overflow-hidden cursor-pointer hover:border-[#6C63FF]/50 transition-colors flex-shrink-0 active:scale-95"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            {photoPreview ? (
-                                <img src={photoPreview} alt="프로필" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="flex flex-col items-center gap-1.5">
-                                    <span className="material-symbols-outlined text-[28px] text-white/15">add_photo_alternate</span>
-                                    <span className="text-white/20 text-[10px] font-bold">사진 등록</span>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-white/40 text-sm font-medium leading-relaxed">
-                                깔끔한 반신 또는<br />전신 사진 권장
-                            </p>
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={photoUploading}
-                                className="mt-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/50 text-sm font-bold hover:bg-white/10 hover:text-white/70 transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                {photoUploading ? '업로드 중...' : photoPreview ? '사진 변경' : '사진 선택'}
-                            </button>
-                            {formData.photo_url && (
-                                <p className="mt-1.5 text-emerald-400 text-[10px] font-bold">✓ 메일 발송 시 사진 포함</p>
-                            )}
-                        </div>
-                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-                    </div>
-                </div>
-
-                {/* ── 기본 스펙 ── */}
+                {/* ── 모델 프로필 ── */}
                 <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-7 h-7 rounded-lg bg-[#F59E0B]/20 flex items-center justify-center">
                             <span className="material-symbols-outlined text-[15px] text-[#FCD34D]">straighten</span>
                         </div>
-                        <h2 className="font-black text-white text-base">기본 스펙</h2>
+                        <h2 className="font-black text-white text-base">모델 프로필</h2>
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+
+                    {/* 신체 스펙 */}
+                    <div className="grid grid-cols-2 gap-3 mb-5">
                         {[
-                            { name: 'age', label: '출생년도', unit: '년생', placeholder: '1999' },
-                            { name: 'height', label: '키', unit: 'cm', placeholder: '170' },
-                            { name: 'weight', label: '몸무게', unit: 'kg', placeholder: '55' },
-                            { name: 'shoe_size', label: '신발사이즈', unit: 'mm', placeholder: '270' },
+                            { name: 'age', label: '출생년도', unit: '년생', placeholder: '1999', type: 'number' },
+                            { name: 'height', label: '키', unit: 'cm', placeholder: '170', type: 'number' },
+                            { name: 'weight', label: '몸무게', unit: 'kg', placeholder: '55', type: 'number' },
+                            { name: 'shoe_size', label: '신발사이즈', unit: 'mm', placeholder: '270', type: 'number' },
                         ].map(field => (
                             <div key={field.name} className="space-y-1.5">
                                 <label className="text-white/40 text-[11px] font-bold ml-1">{field.label}</label>
                                 <div className="relative">
                                     <input
-                                        type="number"
+                                        type={field.type}
                                         name={field.name}
                                         value={formData[field.name]}
                                         onChange={handleChange}
@@ -421,9 +342,43 @@ const SmartProfile = () => {
                             </div>
                         ))}
                     </div>
+
+                    {/* 경력 섹션 구분선 */}
+                    <div className="flex items-center gap-2 mb-4 pt-1 border-t border-white/8">
+                        <div className="w-6 h-6 rounded-lg bg-[#818CF8]/20 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[13px] text-[#818CF8]">workspace_premium</span>
+                        </div>
+                        <span className="text-white/60 text-xs font-black tracking-wide uppercase">경력</span>
+                    </div>
+
+                    {/* 광고모델 경력 */}
+                    <div className="space-y-1.5 mb-3">
+                        <label className="text-white/40 text-[11px] font-bold ml-1">광고모델 경력</label>
+                        <textarea
+                            name="career_ad"
+                            value={formData.career_ad}
+                            onChange={handleChange}
+                            placeholder="예) 삼성전자 갤럭시 광고, 롯데백화점 시즌 광고, KB국민은행 TV CF..."
+                            rows={3}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#6C63FF] transition-colors resize-none leading-relaxed"
+                        />
+                    </div>
+
+                    {/* 그외 경력사항 */}
+                    <div className="space-y-1.5">
+                        <label className="text-white/40 text-[11px] font-bold ml-1">그외 경력사항 <span className="text-white/25 font-normal">(방송·연극·패션쇼 대표작 기재)</span></label>
+                        <textarea
+                            name="career_other"
+                            value={formData.career_other}
+                            onChange={handleChange}
+                            placeholder="예) KBS 드라마 OOO 출연, 서울컬렉션 패션쇼, 예술의전당 연극 OOO..."
+                            rows={3}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#6C63FF] transition-colors resize-none leading-relaxed"
+                        />
+                    </div>
                 </div>
 
-                {/* ── 프로필 링크 (Google Drive Picker) ── */}
+                {/* ── 프로필 링크 ── */}
                 <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-7 h-7 rounded-lg bg-[#4285F4]/20 flex items-center justify-center">
@@ -436,7 +391,6 @@ const SmartProfile = () => {
                         구글드라이브에서 파일 또는 폴더를 선택하면<br />링크가 자동으로 입력됩니다.
                     </p>
 
-                    {/* 구글드라이브 선택 버튼 */}
                     <button
                         onClick={handlePickerClick}
                         disabled={pickerLoading}
@@ -449,7 +403,6 @@ const SmartProfile = () => {
                             </>
                         ) : (
                             <>
-                                {/* 구글 드라이브 컬러 아이콘 */}
                                 <svg width="22" height="22" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
                                     <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
                                     <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
@@ -463,7 +416,6 @@ const SmartProfile = () => {
                         )}
                     </button>
 
-                    {/* 선택된 링크 표시 */}
                     {formData.portfolio_link && (
                         <div className={`flex items-center gap-2 p-3 rounded-xl border ${isDriveUrl(formData.portfolio_link)
                             ? 'bg-emerald-500/10 border-emerald-500/20'
@@ -481,7 +433,6 @@ const SmartProfile = () => {
                         </div>
                     )}
 
-                    {/* 직접 입력 (대체 수단) */}
                     {!formData.portfolio_link && (
                         <div className="mt-2">
                             <p className="text-white/60 text-sm text-center mb-2">또는 직접 링크 입력</p>
@@ -497,7 +448,6 @@ const SmartProfile = () => {
                     )}
                 </div>
 
-
                 {/* ── 이메일 미리보기 ── */}
                 {hasProfile && (
                     <div className="space-y-2.5">
@@ -509,27 +459,32 @@ const SmartProfile = () => {
                             <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02]">
                                 <p className="text-white/25 text-[11px] mb-0.5">발신: casting@immoca.kr</p>
                                 <p className="text-white text-sm font-black">
-                                    {user?.name || user?.nickname}모델님 프로필입니다.
+                                    광고모델 {user?.name || user?.nickname}님의 프로필 정보입니다.
                                 </p>
                             </div>
-                            <div className="px-5 py-4 space-y-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-[60px] h-[60px] rounded-xl bg-white/8 overflow-hidden flex-shrink-0">
-                                        {photoPreview
-                                            ? <img src={photoPreview} alt="" className="w-full h-full object-cover" />
-                                            : <div className="w-full h-full flex items-center justify-center"><span className="material-symbols-outlined text-[26px] text-white/15">person</span></div>
-                                        }
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-black text-white text-base leading-tight">{user?.name || user?.nickname}</p>
-                                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                                            {formData.age && <span className="text-white/40 text-xs">{formData.age}년생</span>}
-                                            {formData.height && <span className="text-white/40 text-xs">키 {formData.height}cm</span>}
-                                            {formData.weight && <span className="text-white/40 text-xs">{formData.weight}kg</span>}
-                                            {user?.phone && <span className="text-white/40 text-xs">{user.phone}</span>}
-                                        </div>
+                            <div className="px-5 py-4 space-y-3">
+                                <div>
+                                    <p className="font-black text-white text-base">{user?.name || user?.nickname}</p>
+                                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                                        {formData.age && <span className="text-white/40 text-xs">{formData.age}년생</span>}
+                                        {formData.height && <span className="text-white/40 text-xs">키 {formData.height}cm</span>}
+                                        {formData.weight && <span className="text-white/40 text-xs">{formData.weight}kg</span>}
+                                        {formData.shoe_size && <span className="text-white/40 text-xs">신발 {formData.shoe_size}mm</span>}
+                                        {user?.phone && <span className="text-white/40 text-xs">{user.phone}</span>}
                                     </div>
                                 </div>
+                                {formData.career_ad && (
+                                    <div>
+                                        <p className="text-[#818CF8] text-[10px] font-black uppercase mb-0.5">광고모델 경력</p>
+                                        <p className="text-white/50 text-xs leading-relaxed">{formData.career_ad}</p>
+                                    </div>
+                                )}
+                                {formData.career_other && (
+                                    <div>
+                                        <p className="text-[#818CF8] text-[10px] font-black uppercase mb-0.5">그외 경력사항</p>
+                                        <p className="text-white/50 text-xs leading-relaxed">{formData.career_other}</p>
+                                    </div>
+                                )}
                                 <a
                                     href={formData.portfolio_link}
                                     target="_blank"
@@ -564,7 +519,6 @@ const SmartProfile = () => {
                         운영자와 함께 사진을 관리하고 공유할 수 있습니다.
                     </p>
 
-                    {/* 업로드 버튼 */}
                     <button
                         onClick={() => currentPhotoInputRef.current?.click()}
                         disabled={currentPhotoUploading || currentPhotos.length >= 10}
@@ -592,32 +546,27 @@ const SmartProfile = () => {
                         onChange={handleCurrentPhotoChange}
                     />
 
-                    {/* 상태 메시지 */}
                     {currentPhotoMsg && (
                         <p className={`text-xs font-bold mb-3 text-center ${currentPhotoMsg.includes('실패') || currentPhotoMsg.includes('최대') ? 'text-red-400' : 'text-emerald-400'}`}>
                             {currentPhotoMsg}
                         </p>
                     )}
 
-                    {/* 사진 그리드 */}
                     {currentPhotos.length > 0 ? (
                         <div className="grid grid-cols-3 gap-3">
                             {currentPhotos.map((photo) => {
                                 const sl = STATUS_LABEL[photo.status] || STATUS_LABEL.pending;
                                 return (
                                     <div key={photo.id} className="relative">
-                                        {/* 사진 클릭 → 크게 보기 */}
                                         <img
                                             src={photo.photo_url}
                                             alt="현재모습"
                                             onClick={() => setSelectedPhoto(photo)}
                                             className="w-full aspect-square object-cover rounded-xl border border-white/15 cursor-pointer active:scale-95 transition-transform"
                                         />
-                                        {/* 상태 뱃지 */}
                                         <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black ${sl.bg} ${sl.color}`}>
                                             {sl.text}
                                         </span>
-                                        {/* 삭제 버튼 */}
                                         <button
                                             onClick={() => handleDeleteCurrentPhoto(photo)}
                                             className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
@@ -687,7 +636,6 @@ const SmartProfile = () => {
                     className="fixed inset-0 z-50 bg-black/92 flex flex-col"
                     onClick={() => setSelectedPhoto(null)}
                 >
-                    {/* 상단 */}
                     <div className="flex items-center justify-between px-5 pt-10 pb-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
                         <span className={`px-2.5 py-1 rounded-full text-xs font-black border ${sl.bg} ${sl.color}`}>
                             {sl.text}
@@ -700,7 +648,6 @@ const SmartProfile = () => {
                         </button>
                     </div>
 
-                    {/* 사진 */}
                     <div className="flex-1 flex items-center justify-center px-5 overflow-hidden" onClick={e => e.stopPropagation()}>
                         <img
                             src={selectedPhoto.photo_url}
@@ -709,7 +656,6 @@ const SmartProfile = () => {
                         />
                     </div>
 
-                    {/* 하단 버튼 */}
                     <div className="px-5 pb-12 pt-4 flex gap-3 flex-shrink-0" onClick={e => e.stopPropagation()}>
                         <button
                             onClick={() => {

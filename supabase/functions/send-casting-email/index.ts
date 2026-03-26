@@ -20,7 +20,8 @@ serve(async (req) => {
             modelAge,
             modelShoeSize,
             portfolioLink,
-            currentPhotoUrls = [],
+            careerAd = "",
+            careerOther = "",
             agencyName,
             agencyEmail,
         } = await req.json();
@@ -30,7 +31,7 @@ serve(async (req) => {
         if (!agencyEmail) throw new Error("에이전시 이메일이 없습니다.");
         if (!portfolioLink) throw new Error("프로필 링크가 없습니다.");
 
-        const subject = `${modelName}모델님 프로필입니다.`;
+        const subject = `광고모델 ${modelName}님의 프로필 정보입니다.`;
 
         const currentYear = new Date().getFullYear();
         const manAge = modelAge ? currentYear - parseInt(modelAge) : null;
@@ -44,36 +45,41 @@ serve(async (req) => {
   <title>${subject}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f0f5; padding: 24px 16px; width: 100% !important; }
-    .wrap { width: 100%; max-width: 600px; margin: 0 auto; }
-    .card { background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
-    .header { background: linear-gradient(135deg, #6C63FF 0%, #A78BFA 100%); padding: 28px 32px 24px; }
-    .header-badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 12px; font-size: 11px; color: rgba(255,255,255,0.9); font-weight: 700; letter-spacing: 0.5px; margin-bottom: 12px; }
-    .header h1 { color: #ffffff; font-size: 22px; font-weight: 800; line-height: 1.3; }
-    .header h1 span { opacity: 0.75; font-size: 14px; font-weight: 500; display: block; margin-bottom: 4px; }
-    .body { padding: 28px 32px; }
-    .greeting { font-size: 14px; color: #555; line-height: 1.8; margin-bottom: 24px; border-left: 3px solid #A78BFA; padding-left: 14px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif; background: #f0f0f5; padding: 32px 24px; width: 100% !important; }
+    .wrap { width: 100%; max-width: 720px; margin: 0 auto; }
+    .card { background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 12px 48px rgba(0,0,0,0.14); }
+    .header { background: linear-gradient(135deg, #6C63FF 0%, #A78BFA 100%); padding: 36px 48px 30px; }
+    .header-badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 5px 14px; font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 700; letter-spacing: 0.5px; margin-bottom: 14px; }
+    .header h1 { color: #ffffff; font-size: 26px; font-weight: 800; line-height: 1.3; }
+    .header h1 span { opacity: 0.75; font-size: 15px; font-weight: 500; display: block; margin-bottom: 6px; }
+    .body { padding: 36px 48px; }
+    .greeting { font-size: 15px; color: #555; line-height: 1.9; margin-bottom: 28px; border-left: 4px solid #A78BFA; padding-left: 16px; }
     .greeting strong { color: #222; }
-    .specs { margin-bottom: 24px; font-size: 0; }
-    .current-photos { margin-bottom: 24px; }
-    .current-photos-title { font-size: 11px; color: #7C3AED; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
-    .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    .photos-grid img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 8px; display: block; }
-    @media only screen and (max-width: 480px) { .photos-grid { grid-template-columns: repeat(2, 1fr); } }
-    .spec-item { display: inline-block; vertical-align: top; background: #ede9ff; border: 1px solid #c4b5fd; border-radius: 10px; padding: 10px 16px; margin: 0 8px 8px 0; min-width: 110px; }
-    .spec-label { font-size: 10px; color: #7C3AED; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
-    .spec-value { font-size: 16px; font-weight: 800; color: #111827; }
-    .portfolio-btn { display: block; background: linear-gradient(135deg, #6C63FF, #818CF8); color: #ffffff !important; text-decoration: none; padding: 18px 24px; border-radius: 14px; text-align: center; font-weight: 800; font-size: 15px; letter-spacing: -0.3px; margin-bottom: 20px; }
+    /* 스펙 섹션 */
+    .section-title { font-size: 11px; color: #7C3AED; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: #ede9ff; }
+    .specs { margin-bottom: 28px; }
+    .specs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .spec-item { background: #ede9ff; border: 1px solid #c4b5fd; border-radius: 12px; padding: 12px 16px; }
+    .spec-label { font-size: 10px; color: #7C3AED; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .spec-value { font-size: 17px; font-weight: 800; color: #111827; }
+    /* 경력 섹션 */
+    .career { margin-bottom: 28px; }
+    .career-item { background: #f8f7ff; border: 1px solid #e0d9ff; border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
+    .career-label { font-size: 10px; color: #7C3AED; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .career-value { font-size: 14px; color: #333; line-height: 1.75; white-space: pre-wrap; }
+    /* 버튼 */
+    .portfolio-btn { display: block; background: linear-gradient(135deg, #6C63FF, #818CF8); color: #ffffff !important; text-decoration: none; padding: 20px 28px; border-radius: 16px; text-align: center; font-weight: 800; font-size: 17px; letter-spacing: -0.3px; margin-bottom: 20px; }
     .portfolio-btn:hover { opacity: 0.92; }
-    .footer { background: #fafafa; border-top: 1px solid #f0f0f0; padding: 18px 32px; text-align: center; }
-    .footer p { font-size: 11px; color: #C0C0C0; line-height: 1.7; }
+    .footer { background: #fafafa; border-top: 1px solid #f0f0f0; padding: 20px 48px; text-align: center; }
+    .footer p { font-size: 12px; color: #C0C0C0; line-height: 1.7; }
     .footer strong { color: #A78BFA; }
-    @media only screen and (max-width: 480px) {
+    @media only screen and (max-width: 600px) {
       body { padding: 12px 8px !important; }
-      .body { padding: 20px 16px !important; }
-      .header { padding: 20px 16px 18px !important; }
-      .footer { padding: 14px 16px !important; }
-      .spec-item { min-width: 100px; }
+      .body { padding: 24px 20px !important; }
+      .header { padding: 24px 20px 20px !important; }
+      .footer { padding: 16px 20px !important; }
+      .specs-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
@@ -84,7 +90,7 @@ serve(async (req) => {
         <div class="header-badge">🎯 아임모카 · 스마트 캐스팅</div>
         <h1>
           <span>${agencyName} 담당자님께</span>
-          ${modelName}모델님의 프로필
+          광고모델 ${modelName}님의 프로필 정보입니다.
         </h1>
       </div>
 
@@ -92,25 +98,37 @@ serve(async (req) => {
         <p class="greeting">
           안녕하세요, <strong>${agencyName}</strong> 담당자님!<br>
           광고모델 <strong>${modelName}</strong>입니다.<br>
-          아래 링크는 저의 최신 프로필입니다. 확인 부탁드립니다.<br>
+          아래는 저의 프로필 정보입니다. 확인 부탁드립니다.<br>
           앞으로 좋은 광고건으로 함께하고 싶습니다. 🙏✨
         </p>
 
+        <!-- 모델 프로필 스펙 -->
         <div class="specs">
-          ${modelAge ? `<div class="spec-item"><div class="spec-label">출생년도</div><div class="spec-value">${modelAge}년생${manAge ? ` (만 ${manAge}세)` : ''}</div></div>` : ""}
-          ${modelHeight ? `<div class="spec-item"><div class="spec-label">키</div><div class="spec-value">${modelHeight}cm</div></div>` : ""}
-          ${modelWeight ? `<div class="spec-item"><div class="spec-label">몸무게</div><div class="spec-value">${modelWeight}kg</div></div>` : ""}
-          ${modelShoeSize ? `<div class="spec-item"><div class="spec-label">신발사이즈</div><div class="spec-value">${modelShoeSize}mm</div></div>` : ""}
-          ${modelPhone ? `<div class="spec-item"><div class="spec-label">연락처</div><div class="spec-value">${modelPhone}</div></div>` : ""}
+          <div class="section-title">모델 프로필</div>
+          <div class="specs-grid">
+            ${modelAge ? `<div class="spec-item"><div class="spec-label">출생년도</div><div class="spec-value">${modelAge}년생${manAge ? ` (만 ${manAge}세)` : ''}</div></div>` : ""}
+            ${modelHeight ? `<div class="spec-item"><div class="spec-label">키</div><div class="spec-value">${modelHeight}cm</div></div>` : ""}
+            ${modelWeight ? `<div class="spec-item"><div class="spec-label">몸무게</div><div class="spec-value">${modelWeight}kg</div></div>` : ""}
+            ${modelShoeSize ? `<div class="spec-item"><div class="spec-label">신발사이즈</div><div class="spec-value">${modelShoeSize}mm</div></div>` : ""}
+            ${modelPhone ? `<div class="spec-item"><div class="spec-label">연락처</div><div class="spec-value">${modelPhone}</div></div>` : ""}
+          </div>
         </div>
 
-        ${currentPhotoUrls.length > 0 ? `
-        <div class="current-photos">
-          <div class="current-photos-title">📸 현재모습</div>
-          <div class="photos-grid">
-            ${currentPhotoUrls.slice(0, 9).map(url => `<img src="${url}" alt="현재모습" />`).join('')}
-          </div>
-        </div>` : ''}
+        <!-- 경력 -->
+        ${careerAd || careerOther ? `
+        <div class="career">
+          <div class="section-title">경력</div>
+          ${careerAd ? `
+          <div class="career-item">
+            <div class="career-label">광고모델 경력</div>
+            <div class="career-value">${careerAd}</div>
+          </div>` : ""}
+          ${careerOther ? `
+          <div class="career-item">
+            <div class="career-label">그외 경력사항 (방송·연극·패션쇼)</div>
+            <div class="career-value">${careerOther}</div>
+          </div>` : ""}
+        </div>` : ""}
 
         <a href="${portfolioLink}" class="portfolio-btn">
           📁 ${modelName}모델님 프로필 다운받기
@@ -129,7 +147,7 @@ serve(async (req) => {
 </body>
 </html>`;
 
-        console.log("[send-casting-email] 요청 시작:", { agencyEmail, agencyName, modelName, photoCount: currentPhotoUrls.length });
+        console.log("[send-casting-email] 요청 시작:", { agencyEmail, agencyName, modelName });
 
         const resendResponse = await fetch("https://api.resend.com/emails", {
             method: "POST",
