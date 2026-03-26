@@ -230,7 +230,8 @@ const AgencyLanding = () => {
                 name: signupForm.name,
                 phone: signupForm.phone,
                 email: signupForm.email || null,
-                address: `${signupForm.address} ${signupForm.detailAddress}`.trim(),
+                address: signupForm.address,
+                address_detail: signupForm.detailAddress || null,
                 referralSource: signupForm.referralSource,
                 grade: 'SILVER',
                 termsAgreed: signupForm.agreed
@@ -327,7 +328,7 @@ const AgencyLanding = () => {
     };
 
     return (
-        <div className="relative min-h-screen flex flex-col overflow-hidden bg-[#0a0a0f]">
+        <div className="relative min-h-screen flex flex-col overflow-x-hidden bg-[#0a0a0f]">
             {/* Animated background blobs */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#6C63FF]/30 blur-[100px] animate-pulse" />
@@ -345,7 +346,7 @@ const AgencyLanding = () => {
             />
 
             {/* ── Header: Login / Signup ── */}
-            <header className="absolute top-0 left-0 right-0 z-50 px-6 py-6 flex justify-center text-right">
+            <header className="absolute top-0 left-0 right-0 z-50 px-6 py-6 flex justify-center">
                 <div className="w-full max-w-6xl flex justify-between items-center">
                     {/* Left: Desktop MOCA Logo */}
                     <div className="flex items-center">
@@ -869,7 +870,7 @@ const AgencyLanding = () => {
 
             {/* ── 반응형 콘텐츠 래퍼 ── */}
             <div
-                className={`relative z-10 w-full max-w-6xl mx-auto px-6 py-4 transition-all duration-700
+                className={`relative z-10 w-full max-w-6xl mx-auto px-4 py-4 transition-all duration-700
                     flex flex-col lg:flex-row lg:items-start lg:gap-20 mt-0 lg:mt-4 flex-grow items-center justify-center
                     ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
             >
@@ -994,22 +995,25 @@ const AgencyLanding = () => {
 
             {/* Footer with legal & business info */}
             <div className="relative z-10 w-full mt-auto pt-8 pb-6 border-t border-white/5">
-                <div className="max-w-2xl mx-auto px-6 text-center space-y-3">
+                <div className="w-full max-w-6xl mx-auto px-4 flex flex-col items-center text-center space-y-3">
                     {/* Legal links */}
                     <div className="flex items-center justify-center gap-3 flex-wrap">
-                        <a href="/privacy" className="text-white/30 text-[11px] font-bold hover:text-white/60 transition-colors">개인정보처리방침</a>
-                        <span className="text-white/10 text-[11px]">|</span>
-                        <a href="/terms" className="text-white/30 text-[11px] font-bold hover:text-white/60 transition-colors">서비스 이용약관</a>
+                        <a href="/privacy" className="text-white/70 text-[11px] font-bold hover:text-white transition-colors">개인정보처리방침</a>
+                        <span className="text-white/40 text-[11px]">|</span>
+                        <a href="/terms" className="text-white/70 text-[11px] font-bold hover:text-white transition-colors">서비스 이용약관</a>
                     </div>
                     {/* Business info */}
-                    <div className="text-white/15 text-[10px] leading-relaxed space-y-0.5">
-                        <p>글로벌아임 | 대표 : 김대희 | 사업자등록번호 : 365-22-00947</p>
+                    <p className="text-white/80 text-[11px] font-black tracking-widest uppercase">글로벌아임</p>
+                    <div className="text-white/60 text-[10px] leading-loose space-y-0">
+                        <p>대표 : 김대희 | 사업자등록번호 : 365-22-00947</p>
                         <p>통신판매업 신고번호 : 제2021-서울강남-05756호</p>
                         <p>주소 : 서울시 영등포구 영중로 159, 7층 글로벌아임</p>
-                        <p>대표전화 : 010-5543-9674 | 이메일 : immodelkr@gmail.com</p>
+                        <p>이메일 : immodelkr@gmail.com</p>
                         <p>호스팅서비스 : Vercel Inc.</p>
-                        <p className="pt-1">© 2026 글로벌아임(IMMOCA). All rights reserved.</p>
                     </div>
+                    <p className="text-white/40 text-[10px] tracking-widest pt-1">
+                        © 2026 글로벌아임(IMMOCA). All rights reserved.
+                    </p>
                 </div>
             </div>
 

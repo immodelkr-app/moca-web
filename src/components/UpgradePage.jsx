@@ -37,6 +37,9 @@ const UpgradePage = () => {
                 const orderId = `SUBS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
                 const orderName = `골드모카 멤버십 ${selectedPlan.label} 구독`;
 
+                // customerKey: 영문/숫자/_/-만 허용
+                const safeCustomerKey = (user.id || user.nickname || 'guest').toString().replace(/[^a-zA-Z0-9_-]/g, '') || 'ANONYMOUS';
+
                 // 결제 전 임시 저장 (추후 콜백에서 사용할 데이터)
                 const pendingSub = {
                     planId: selectedPlan.id,
@@ -46,12 +49,19 @@ const UpgradePage = () => {
                 };
                 localStorage.setItem('moca_pending_subscription', JSON.stringify(pendingSub));
 
-                await tossPayments.requestPayment('카드', {
-                    amount: selectedPlan.price,
+                const payment = tossPayments.payment({ customerKey: safeCustomerKey });
+
+                console.log('[TossPayments Upgrade] 결제 요청:', { orderId, price: selectedPlan.price, customerKey: safeCustomerKey });
+
+                await payment.requestPayment({
+                    method: 'CARD',
+                    amount: {
+                        currency: 'KRW',
+                        value: selectedPlan.price,
+                    },
                     orderId,
                     orderName,
                     customerName: user.name || user.nickname || '모카회원',
-                    // 성공/실패 시 돌아올 위치
                     successUrl: `${window.location.origin}/upgrade?payment=success&orderId=${orderId}`,
                     failUrl: `${window.location.origin}/upgrade?payment=fail`,
                 });

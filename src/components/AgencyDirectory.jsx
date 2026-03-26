@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchAgencies } from '../services/agencyService';
 import { getUser, getUserGrade } from '../services/userService';
+
 import { fetchMessagesList } from '../services/messageService';
 import {
     getCastingSends,
@@ -291,9 +292,11 @@ const AgencyDirectory = () => {
                 modelData: currentUser,
                 agencyName: agency.name,
                 agencyEmail,
+                currentPhotoUrls: [],  // 현재모습 사진 미첨부
             });
 
             if (!success) {
+                console.error('[프로필발송 오류]', error);
                 showToast(error || '발송 중 오류가 발생했습니다.', 'error');
                 return;
             }
@@ -310,6 +313,7 @@ const AgencyDirectory = () => {
             showToast(`✅ ${agency.name}에 프로필을 발송했습니다! (이번 달 ${remaining})`, 'success');
             setCastingModal(null);
         } catch (err) {
+            console.error('[프로필발송 예외]', err);
             showToast('발송 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
         } finally {
             setSending(false);

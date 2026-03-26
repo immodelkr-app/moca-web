@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 import { verifyCouponCode } from '../../services/shopService';
 import { getUser } from '../../services/userService';
+import { supabase } from '../../services/supabaseClient';
 
-const TOSS_CLIENT_KEY = 'test_ck_kYG57Eba3GKqdLeLzebw3pWDOxmA';
+const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
 
 const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) => {
     const user = getUser();
@@ -11,11 +12,42 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
         recipientName: user?.name || '',
         phone: user?.phone || '',
         address: user?.address || '',
-        addressDetail: '',
+        addressDetail: user?.address_detail || '',
         memo: '',
     });
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [autoFilled, setAutoFilled] = useState(false);  // 자동기입 완료 표시
+
+    // 모달 오픈 시 Supabase에서 최신 유저 정보 가져와 자동 기입
+    useEffect(() => {
+        const fetchLatestUser = async () => {
+            if (!supabase || !user?.id) return;
+            try {
+                const { data } = await supabase
+                    .from('users')
+                    .select('name, phone, address, address_detail')
+                    .eq('id', user.id)
+                    .single();
+                if (data) {
+                    setForm(prev => ({
+                        ...prev,
+                        recipientName: data.name || prev.recipientName,
+                        phone: data.phone || prev.phone,
+                        address: data.address || prev.address,
+                        addressDetail: data.address_detail || prev.addressDetail,
+                    }));
+                    if (data.name || data.phone || data.address) {
+                        setAutoFilled(true);
+                    }
+                }
+            } catch (e) {
+                // 실패해도 localStorage 값으로 기입됨
+            }
+        };
+        fetchLatestUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // 쿠폰 상태
     const [couponInput, setCouponInput] = useState('');
@@ -88,9 +120,15 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
 
             // 토스페이먼츠 SDK 로드 및 결제창 호출
             const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
+
+            // customerKey: 영문/숫자/_/-만 허용 (한글 등 특수문자 제거)
+            const safeCustomerKey = (userNickname || 'ANONYMOUS').replace(/[^a-zA-Z0-9_-]/g, '') || 'ANONYMOUS';
+
             const payment = tossPayments.payment({
-                customerKey: userNickname || 'ANONYMOUS',
+                customerKey: safeCustomerKey,
             });
+
+            console.log('[TossPayments] 결제 요청:', { orderId, finalPrice, customerKey: safeCustomerKey });
 
             await payment.requestPayment({
                 method: 'CARD',
@@ -107,9 +145,10 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                 customerMobilePhone: form.phone.replace(/-/g, ''),
             });
         } catch (err) {
+            console.error('[TossPayments] 결제 오류:', err);
             // 사용자가 결제창을 닫은 경우 등
             if (err?.code !== 'USER_CANCEL') {
-                alert('결제 중 오류가 발생했습니다: ' + (err?.message || '알 수 없는 오류'));
+                alert('결제 중 오류가 발생했습니다: ' + (err?.message || JSON.stringify(err)));
             }
         } finally {
             setLoading(false);
@@ -199,7 +238,15 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
 
                 {/* 배송지 입력 */}
                 <div className="space-y-3 mb-5">
-                    <h4 className="text-white/70 text-sm font-bold">배송지 정보</h4>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-white/70 text-sm font-bold">배송지 정보</h4>
+                        {autoFilled && (
+                            <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
+                                <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                                회원정보 자동 기입
+                            </span>
+                        )}
+                    </div>
                     <Field label="수령인 이름" name="recipientName" value={form.recipientName} onChange={handleChange} error={errors.recipientName} placeholder="홍길동" />
                     <Field label="휴대폰 번호" name="phone" type="tel" value={form.phone} onChange={handleChange} error={errors.phone} placeholder="010-0000-0000" />
                     <Field label="주소" name="address" value={form.address} onChange={handleChange} error={errors.address} placeholder="도로명 주소" />

@@ -13,6 +13,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
         name: '',
         phone: '',
         address: '',
+        address_detail: '',
         password: '',
     });
 
@@ -24,6 +25,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                 name: currentUser.name || '',
                 phone: currentUser.phone || '',
                 address: currentUser.address || '',
+                address_detail: currentUser.address_detail || '',
                 password: '', // 비밀번호는 기본 비워둠
             });
         }
@@ -43,6 +45,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                 name: formData.name,
                 phone: formData.phone,
                 address: formData.address,
+                address_detail: formData.address_detail || null,
             };
 
             if (formData.password.trim()) {
@@ -136,6 +139,19 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                 onChange={handleChange}
                                 required
                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] transition-colors"
+                            />
+                        </div>
+
+                        {/* 상세 주소 */}
+                        <div className="space-y-1.5">
+                            <label className="text-white/60 text-xs font-bold ml-1">상세 주소</label>
+                            <input
+                                type="text"
+                                name="address_detail"
+                                value={formData.address_detail}
+                                onChange={handleChange}
+                                placeholder="상세 주소 입력 (동/호수 등)"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#6C63FF] transition-colors"
                             />
                         </div>
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { GRADE_INFO, GRADE_EMOJI, logoutUser } from '../services/userService';
@@ -12,6 +12,7 @@ import AdminPopups from './AdminPopups';
 import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost } from '../services/certificationService';
 import { fetchAllFeaturedVideosForAdmin, addFeaturedVideo, updateFeaturedVideo, deleteFeaturedVideo } from '../services/mocaTVService';
+import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '../services/currentPhotosService';
 import * as XLSX from 'xlsx';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
@@ -60,6 +61,12 @@ const AdminPage = () => {
     const [msgContent, setMsgContent] = useState('');
     const [msgType, setMsgType] = useState('kakao'); // 'kakao' (알림톡/친구톡), 'sms' (문자)
     const [isSendingMsg, setIsSendingMsg] = useState(false);
+
+    // 현재모습 사진 관리 State
+    const [currentPhotos, setCurrentPhotos] = useState([]);
+    const [currentPhotosLoading, setCurrentPhotosLoading] = useState(false);
+    const [currentPhotosFilter, setCurrentPhotosFilter] = useState('all'); // 'all' | 'pending' | 'approved' | 'needs_more'
+    const [currentPhotosSearch, setCurrentPhotosSearch] = useState('');
 
     // 모카TV 관리 State
     const [mocaTVVideos, setMocaTVVideos] = useState([]);
@@ -765,6 +772,18 @@ const AdminPage = () => {
                         className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'mocatv' ? 'border-red-400 text-red-300' : 'border-transparent text-white/40 hover:text-white'}`}
                     >
                         📺 모카TV 관리
+                    </button>
+                    <button
+                        onClick={async () => {
+                            setActiveTab('currentphotos');
+                            setCurrentPhotosLoading(true);
+                            const data = await fetchAllCurrentPhotos();
+                            setCurrentPhotos(data);
+                            setCurrentPhotosLoading(false);
+                        }}
+                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'currentphotos' ? 'border-emerald-400 text-emerald-300' : 'border-transparent text-white/40 hover:text-white'}`}
+                    >
+                        📸 현재모습 사진
                     </button>
                 </div>
 
@@ -2013,7 +2032,7 @@ const AdminPage = () => {
                         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 text-yellow-300 text-sm">
                             <p className="font-black mb-1">📌 Supabase 테이블 생성 필요 (최초 1회)</p>
                             <code className="text-xs text-yellow-200/80 whitespace-pre-wrap block bg-black/30 rounded-lg p-3 mt-2">{`CREATE TABLE moca_featured_videos (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
   url TEXT NOT NULL,
   embed_url TEXT,
@@ -2202,6 +2221,175 @@ const AdminPage = () => {
                         </div>
                     </div>
                 )}
+
+                {/* ── 현재모습 사진 탭 ── */}
+                {activeTab === 'currentphotos' && (() => {
+                    const STATUS_LABEL = {
+                        pending: { text: '검토중', color: 'text-yellow-400', bg: 'bg-yellow-500/15', border: 'border-yellow-500/30' },
+                        approved: { text: '승인', color: 'text-emerald-400', bg: 'bg-emerald-500/15', border: 'border-emerald-500/30' },
+                        needs_more: { text: '추가요청', color: 'text-red-400', bg: 'bg-red-500/15', border: 'border-red-500/30' },
+                    };
+
+                    // 필터 + 검색 적용
+                    const filtered = currentPhotos.filter(p => {
+                        const matchStatus = currentPhotosFilter === 'all' || p.status === currentPhotosFilter;
+                        const q = currentPhotosSearch.trim().toLowerCase();
+                        const matchSearch = !q || (p.user_name || '').toLowerCase().includes(q) || (p.user_nickname || '').toLowerCase().includes(q);
+                        return matchStatus && matchSearch;
+                    });
+
+                    // 모델별 그룹핑
+                    const groups = {};
+                    filtered.forEach(p => {
+                        const key = p.user_nickname || p.user_id || 'unknown';
+                        if (!groups[key]) groups[key] = { name: p.user_name, nickname: p.user_nickname, photos: [] };
+                        groups[key].photos.push(p);
+                    });
+
+                    return (
+                        <div className="animate-fadeIn space-y-6">
+                            <div>
+                                <h2 className="text-2xl font-black text-white">📸 현재모습 사진 관리</h2>
+                                <p className="text-white/40 text-sm mt-1">모델이 업로드한 현재모습 사진을 확인하고 상태를 관리합니다.</p>
+                            </div>
+
+                            {/* Supabase 테이블 안내 */}
+                            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 text-emerald-300 text-sm">
+                                <p className="font-black mb-1">📌 Supabase 테이블 생성 필요 (최초 1회)</p>
+                                <code className="text-xs text-emerald-200/80 whitespace-pre-wrap block bg-black/30 rounded-lg p-3 mt-2">{`CREATE TABLE model_current_photos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  user_nickname TEXT,
+  user_name TEXT,
+  photo_url TEXT NOT NULL,
+  storage_path TEXT,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);`}</code>
+                            </div>
+
+                            {/* 필터 + 검색 */}
+                            <div className="flex flex-wrap gap-3 items-center">
+                                <input
+                                    type="text"
+                                    value={currentPhotosSearch}
+                                    onChange={e => setCurrentPhotosSearch(e.target.value)}
+                                    placeholder="모델 이름/닉네임 검색"
+                                    className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-sm outline-none focus:border-emerald-500/60 transition w-48"
+                                />
+                                {['all', 'pending', 'approved', 'needs_more'].map(f => (
+                                    <button
+                                        key={f}
+                                        onClick={() => setCurrentPhotosFilter(f)}
+                                        className={`px-3 py-2 rounded-xl text-xs font-black border transition-all ${currentPhotosFilter === f ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' : 'bg-white/5 border-white/10 text-white/40 hover:text-white'}`}
+                                    >
+                                        {{ all: '전체', pending: '검토중', approved: '승인', needs_more: '추가요청' }[f]}
+                                    </button>
+                                ))}
+                                <span className="text-white/30 text-xs ml-auto">총 {filtered.length}장</span>
+                            </div>
+
+                            {currentPhotosLoading ? (
+                                <div className="text-center py-12 text-white/30">불러오는 중...</div>
+                            ) : Object.keys(groups).length === 0 ? (
+                                <div className="text-center py-12 text-white/20">
+                                    <span className="material-symbols-outlined text-[48px] mb-2 block">collections</span>
+                                    <p>업로드된 사진이 없습니다.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-8">
+                                    {Object.entries(groups).map(([key, group]) => (
+                                        <div key={key} className="bg-[#1a1a24] border border-white/10 rounded-2xl p-5">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-[18px] text-emerald-400">person</span>
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-white">{group.name || group.nickname}</p>
+                                                    <p className="text-white/30 text-xs">@{group.nickname} · {group.photos.length}장</p>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                                                {group.photos.map(photo => {
+                                                    const sl = STATUS_LABEL[photo.status] || STATUS_LABEL.pending;
+                                                    return (
+                                                        <div key={photo.id} className="relative group">
+                                                            <img
+                                                                src={photo.photo_url}
+                                                                alt="현재모습"
+                                                                className="w-full aspect-square object-cover rounded-xl border border-white/10"
+                                                            />
+                                                            {/* 상태 뱃지 */}
+                                                            <span className={`absolute top-1 left-1 px-1.5 py-0.5 rounded-full text-[9px] font-black border ${sl.bg} ${sl.color} ${sl.border}`}>
+                                                                {sl.text}
+                                                            </span>
+                                                            {/* 액션 버튼들 */}
+                                                            <div className="absolute bottom-0 left-0 right-0 rounded-b-xl bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-around py-1.5 gap-1 px-1">
+                                                                {/* 승인 */}
+                                                                <button
+                                                                    title="승인"
+                                                                    onClick={async () => {
+                                                                        await updatePhotoStatus(photo.id, 'approved');
+                                                                        setCurrentPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'approved' } : p));
+                                                                    }}
+                                                                    className="flex-1 py-1 rounded-lg bg-emerald-500/30 text-emerald-300 text-[10px] font-black hover:bg-emerald-500/50 transition"
+                                                                >
+                                                                    ✓승인
+                                                                </button>
+                                                                {/* 추가요청 */}
+                                                                <button
+                                                                    title="추가요청"
+                                                                    onClick={async () => {
+                                                                        await updatePhotoStatus(photo.id, 'needs_more');
+                                                                        setCurrentPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'needs_more' } : p));
+                                                                    }}
+                                                                    className="flex-1 py-1 rounded-lg bg-red-500/30 text-red-300 text-[10px] font-black hover:bg-red-500/50 transition"
+                                                                >
+                                                                    +요청
+                                                                </button>
+                                                                {/* 링크복사 */}
+                                                                <button
+                                                                    title="링크 복사"
+                                                                    onClick={() => navigator.clipboard.writeText(photo.photo_url)}
+                                                                    className="w-7 h-7 rounded-lg bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[14px]">link</span>
+                                                                </button>
+                                                                {/* 다운로드 */}
+                                                                <a
+                                                                    href={photo.photo_url}
+                                                                    download
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="w-7 h-7 rounded-lg bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition"
+                                                                    title="다운로드"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[14px]">download</span>
+                                                                </a>
+                                                                {/* 삭제 */}
+                                                                <button
+                                                                    title="삭제"
+                                                                    onClick={async () => {
+                                                                        if (!window.confirm('이 사진을 삭제할까요?')) return;
+                                                                        await deleteCurrentPhoto(photo.id, photo.storage_path);
+                                                                        setCurrentPhotos(prev => prev.filter(p => p.id !== photo.id));
+                                                                    }}
+                                                                    className="w-7 h-7 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/30 flex items-center justify-center transition"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[14px]">delete</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
             </div>
         </div>
     );

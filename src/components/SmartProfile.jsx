@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser, updateSmartProfile, uploadProfilePhoto } from '../services/userService';
+import { uploadCurrentPhoto, fetchUserCurrentPhotos, deleteCurrentPhoto } from '../services/currentPhotosService';
 
 const GOOGLE_API_KEY = 'AIzaSyDHL15S2cq0umttfXh2ka6TFddamWJ9byI';
 const GOOGLE_CLIENT_ID = '1035713999053-4i9a5k0gsn0457uroib1eef93cjssedo.apps.googleusercontent.com';
@@ -30,6 +31,13 @@ const SmartProfile = () => {
     const [photoPreview, setPhotoPreview] = useState(null);
     const [pickerLoading, setPickerLoading] = useState(false);
 
+    // 현재모습 사진 관련
+    const currentPhotoInputRef = useRef(null);
+    const [currentPhotos, setCurrentPhotos] = useState([]);
+    const [currentPhotoUploading, setCurrentPhotoUploading] = useState(false);
+    const [currentPhotoMsg, setCurrentPhotoMsg] = useState('');
+    const [selectedPhoto, setSelectedPhoto] = useState(null); // 크게 보기 모달
+
     useEffect(() => {
         if (!user) return;
         setFormData({
@@ -43,6 +51,11 @@ const SmartProfile = () => {
         });
         if (user.photo_url) setPhotoPreview(user.photo_url);
         else if (user.photo_base64) setPhotoPreview(user.photo_base64);
+
+        // 현재모습 사진 불러오기 (id 또는 nickname 기준)
+        if (user.id || user.nickname) {
+            fetchUserCurrentPhotos(user.id, user.nickname).then(setCurrentPhotos);
+        }
     }, []);
 
     const initTokenClient = () => {
@@ -207,6 +220,57 @@ const SmartProfile = () => {
         }
     };
 
+    const handleCurrentPhotoChange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+
+        if (currentPhotos.length + files.length > 10) {
+            setCurrentPhotoMsg('사진은 최대 10장까지 저장할 수 있습니다.');
+            setTimeout(() => setCurrentPhotoMsg(''), 3000);
+            return;
+        }
+
+        setCurrentPhotoUploading(true);
+        setCurrentPhotoMsg('');
+
+        for (const file of files) {
+            if (file.size > 10 * 1024 * 1024) {
+                setCurrentPhotoMsg('사진 파일은 10MB 이하만 가능합니다.');
+                continue;
+            }
+            const { url, error } = await uploadCurrentPhoto(file, user);
+            if (url) {
+                setCurrentPhotos(prev => [{
+                    id: Date.now() + Math.random(),
+                    photo_url: url,
+                    status: 'pending',
+                    created_at: new Date().toISOString(),
+                }, ...prev]);
+            } else if (error) {
+                setCurrentPhotoMsg(`업로드 실패: ${error}`);
+            }
+        }
+
+        setCurrentPhotoUploading(false);
+        setCurrentPhotoMsg('저장 완료!');
+        setTimeout(() => setCurrentPhotoMsg(''), 3000);
+        e.target.value = '';
+    };
+
+    const handleDeleteCurrentPhoto = async (photo) => {
+        if (!window.confirm('이 사진을 삭제할까요?')) return;
+        const { success } = await deleteCurrentPhoto(photo.id, photo.storage_path);
+        if (success) {
+            setCurrentPhotos(prev => prev.filter(p => p.id !== photo.id));
+        }
+    };
+
+    const STATUS_LABEL = {
+        pending: { text: '검토중', color: 'text-yellow-400', bg: 'bg-yellow-500/15' },
+        approved: { text: '승인', color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+        needs_more: { text: '추가요청', color: 'text-red-400', bg: 'bg-red-500/15' },
+    };
+
     const isValidUrl = (url) => {
         if (!url) return false;
         try { new URL(url); return true; } catch { return false; }
@@ -241,6 +305,7 @@ const SmartProfile = () => {
     };
 
     return (
+        <>
         <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col">
 
             {/* Ambient */}
@@ -485,6 +550,92 @@ const SmartProfile = () => {
                     </div>
                 )}
 
+                {/* ── 현재모습 사진저장 ── */}
+                <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="w-7 h-7 rounded-lg bg-[#10B981]/20 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[15px] text-[#34D399]">photo_library</span>
+                        </div>
+                        <h2 className="font-black text-white text-base">현재모습 사진저장</h2>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black">최대 10장</span>
+                    </div>
+                    <p className="text-white/35 text-xs leading-relaxed mb-4">
+                        광고 에이전시 요청 시 공유할 현재 사진을 저장해두세요.<br />
+                        운영자와 함께 사진을 관리하고 공유할 수 있습니다.
+                    </p>
+
+                    {/* 업로드 버튼 */}
+                    <button
+                        onClick={() => currentPhotoInputRef.current?.click()}
+                        disabled={currentPhotoUploading || currentPhotos.length >= 10}
+                        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-[#10B981]/40 bg-[#10B981]/8 hover:bg-[#10B981]/15 hover:border-[#10B981]/60 transition-all active:scale-[0.98] mb-4 disabled:opacity-40"
+                    >
+                        {currentPhotoUploading ? (
+                            <>
+                                <div className="w-5 h-5 rounded-full border-2 border-[#10B981] border-t-transparent animate-spin" />
+                                <span className="text-[#34D399] font-black text-sm">업로드 중...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span className="material-symbols-outlined text-[22px] text-[#34D399]">add_a_photo</span>
+                                <span className="text-white font-black text-sm">현재모습 사진저장</span>
+                                <span className="text-white/30 text-xs">({currentPhotos.length}/10)</span>
+                            </>
+                        )}
+                    </button>
+                    <input
+                        ref={currentPhotoInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleCurrentPhotoChange}
+                    />
+
+                    {/* 상태 메시지 */}
+                    {currentPhotoMsg && (
+                        <p className={`text-xs font-bold mb-3 text-center ${currentPhotoMsg.includes('실패') || currentPhotoMsg.includes('최대') ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {currentPhotoMsg}
+                        </p>
+                    )}
+
+                    {/* 사진 그리드 */}
+                    {currentPhotos.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-3">
+                            {currentPhotos.map((photo) => {
+                                const sl = STATUS_LABEL[photo.status] || STATUS_LABEL.pending;
+                                return (
+                                    <div key={photo.id} className="relative">
+                                        {/* 사진 클릭 → 크게 보기 */}
+                                        <img
+                                            src={photo.photo_url}
+                                            alt="현재모습"
+                                            onClick={() => setSelectedPhoto(photo)}
+                                            className="w-full aspect-square object-cover rounded-xl border border-white/15 cursor-pointer active:scale-95 transition-transform"
+                                        />
+                                        {/* 상태 뱃지 */}
+                                        <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black ${sl.bg} ${sl.color}`}>
+                                            {sl.text}
+                                        </span>
+                                        {/* 삭제 버튼 */}
+                                        <button
+                                            onClick={() => handleDeleteCurrentPhoto(photo)}
+                                            className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
+                                        >
+                                            <span className="material-symbols-outlined text-[13px] text-red-400">close</span>
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center py-6 text-white/20">
+                            <span className="material-symbols-outlined text-[40px] mb-2">collections</span>
+                            <p className="text-xs font-bold">아직 저장된 사진이 없어요</p>
+                        </div>
+                    )}
+                </div>
+
                 {/* Error */}
                 {errorMsg && (
                     <div className="flex items-center gap-2 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20">
@@ -526,6 +677,67 @@ const SmartProfile = () => {
 
             </div>
         </div>
+
+        {/* ── 사진 크게 보기 모달 ── */}
+        {selectedPhoto && (() => {
+            const sl = STATUS_LABEL[selectedPhoto.status] || STATUS_LABEL.pending;
+            return (
+                <div
+                    key="photo-modal"
+                    className="fixed inset-0 z-50 bg-black/92 flex flex-col"
+                    onClick={() => setSelectedPhoto(null)}
+                >
+                    {/* 상단 */}
+                    <div className="flex items-center justify-between px-5 pt-10 pb-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-black border ${sl.bg} ${sl.color}`}>
+                            {sl.text}
+                        </span>
+                        <button
+                            onClick={() => setSelectedPhoto(null)}
+                            className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
+                        >
+                            <span className="material-symbols-outlined text-[20px] text-white">close</span>
+                        </button>
+                    </div>
+
+                    {/* 사진 */}
+                    <div className="flex-1 flex items-center justify-center px-5 overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <img
+                            src={selectedPhoto.photo_url}
+                            alt="현재모습"
+                            className="max-w-full max-h-full object-contain rounded-2xl"
+                        />
+                    </div>
+
+                    {/* 하단 버튼 */}
+                    <div className="px-5 pb-12 pt-4 flex gap-3 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(selectedPhoto.photo_url);
+                                setCurrentPhotoMsg('링크 복사됨!');
+                                setTimeout(() => setCurrentPhotoMsg(''), 2000);
+                                setSelectedPhoto(null);
+                            }}
+                            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-black text-sm active:scale-95 transition-transform"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">link</span>
+                            링크 복사
+                        </button>
+                        <button
+                            onClick={async () => {
+                                setSelectedPhoto(null);
+                                await handleDeleteCurrentPhoto(selectedPhoto);
+                            }}
+                            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-400 font-black text-sm active:scale-95 transition-transform"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                            삭제
+                        </button>
+                    </div>
+                </div>
+            );
+        })()}
+    </>
     );
 };
 

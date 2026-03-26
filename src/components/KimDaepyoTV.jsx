@@ -3,46 +3,46 @@ import { fetchKimDaepyoVideos } from '../services/youtubeService';
 import { fetchFeaturedVideos } from '../services/mocaTVService';
 
 const PLATFORM_BADGE = {
-    instagram: { label: 'Reels', color: 'bg-gradient-to-r from-[#E1306C] to-[#F77737]' },
-    tiktok: { label: 'TikTok', color: 'bg-black border border-white/20' },
-    youtube: { label: 'Shorts', color: 'bg-red-500' },
+    instagram: { label: 'Reels', color: 'bg-gradient-to-r from-[#E1306C] to-[#F77737]', icon: 'photo_camera' },
+    tiktok: { label: 'TikTok', color: 'bg-black border border-white/20', icon: 'music_note' },
+    youtube: { label: 'Shorts', color: 'bg-red-500', icon: 'smart_display' },
 };
 
 const KimDaepyoTV = () => {
     const [videos, setVideos] = useState([]);
-    const [filteredVideos, setFilteredVideos] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('전체보기');
     const [selectedVideo, setSelectedVideo] = useState(null);
-
-    const tabs = ['전체보기', '에이전시투어', '광고프로필', '표정&포즈', '광고Q&A'];
 
     useEffect(() => {
         const loadAll = async () => {
-            const [youtubeVideos, featuredVideos] = await Promise.all([
-                fetchKimDaepyoVideos(),
-                fetchFeaturedVideos(),
-            ]);
+            let youtubeVideos = [];
+            let featuredVideos = [];
 
-            // 유튜브 + 릴스/틱톡 합산 후 최신순 정렬
-            const merged = [...youtubeVideos, ...featuredVideos].sort(
-                (a, b) => new Date(b.pubDate) - new Date(a.pubDate)
-            );
+            try {
+                [youtubeVideos, featuredVideos] = await Promise.all([
+                    fetchKimDaepyoVideos().catch(e => { console.warn('[MocaTV] 유튜브 로드 실패:', e); return []; }),
+                    fetchFeaturedVideos().catch(e => { console.warn('[MocaTV] 피처드 로드 실패:', e); return []; }),
+                ]);
+            } catch (e) {
+                console.error('[MocaTV] 전체 로드 실패:', e);
+            }
 
-            setVideos(merged);
-            setFilteredVideos(merged);
+            console.log(`[MocaTV] 유튜브: ${youtubeVideos.length}개, 피처드: ${featuredVideos.length}개`);
+
+            // 콜라주 효과: 유튜브와 인스타를 번갈아 배치
+            const collage = [];
+            let yi = 0, fi = 0;
+            while (yi < youtubeVideos.length || fi < featuredVideos.length) {
+                if (yi < youtubeVideos.length) collage.push(youtubeVideos[yi++]);
+                if (fi < featuredVideos.length) collage.push(featuredVideos[fi++]);
+                if (yi < youtubeVideos.length) collage.push(youtubeVideos[yi++]);
+            }
+
+            setVideos(collage);
             setLoading(false);
         };
         loadAll();
     }, []);
-
-    useEffect(() => {
-        if (activeTab === '전체보기') {
-            setFilteredVideos(videos);
-        } else {
-            setFilteredVideos(videos.filter(v => v.category === activeTab));
-        }
-    }, [activeTab, videos]);
 
     const handleVideoClick = (video) => {
         // 피처드 영상(릴스/틱톡)이고 embedUrl 없으면 새 탭으로
@@ -71,7 +71,7 @@ const KimDaepyoTV = () => {
 
             {/* Header */}
             <div className="relative z-10 px-5 pt-10 pb-4 max-w-7xl mx-auto w-full">
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-6">
+                <div className="flex items-end justify-between mb-6">
                     <div>
                         <div className="flex items-center gap-3">
                             <div className="w-1 h-7 rounded-full bg-gradient-to-b from-[#6C63FF] to-[#A78BFA]" />
@@ -79,51 +79,38 @@ const KimDaepyoTV = () => {
                         </div>
                         <p className="text-white/40 text-xs ml-4 pl-3 mt-1">유튜브 · 릴스 · 틱톡 영상을 한곳에서</p>
                     </div>
-
-                    {/* Scrollable Tabs */}
-                    <div className="w-full md:w-auto overflow-x-auto hide-scrollbar mt-4 md:mt-0 pb-2 md:pb-0">
-                        <div className="flex gap-2 min-w-max justify-start md:justify-end">
-                            {tabs.map(tab => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`px-5 py-2 rounded-full text-[13px] font-bold transition-all duration-300 ${activeTab === tab
-                                        ? 'bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white shadow-lg shadow-[#6C63FF]/30 border border-transparent'
-                                        : 'bg-white/5 border border-white/10 text-white/50 hover:bg-white/10 hover:text-white'
-                                        }`}
-                                >
-                                    {tab}
-                                </button>
-                            ))}
-                        </div>
+                    <div className="flex items-center gap-2 text-white/30 text-xs">
+                        <span className="material-symbols-outlined text-[16px]">grid_view</span>
+                        <span className="font-bold">{videos.length}개 영상</span>
                     </div>
                 </div>
             </div>
 
-            {/* Video Grid */}
+            {/* Collage Video Grid */}
             <div className="relative z-10 px-5 pb-20 max-w-7xl mx-auto w-full flex-1">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-3">
                         <div className="w-8 h-8 rounded-full border-2 border-[#6C63FF] border-t-transparent animate-spin" />
                         <p className="text-white/30 text-sm">영상을 불러오는 중...</p>
                     </div>
-                ) : filteredVideos.length === 0 ? (
+                ) : videos.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-3">
                         <span className="material-symbols-outlined text-[48px] text-white/20">videocam_off</span>
-                        <p className="text-white/30 text-sm">해당 카테고리의 영상이 없습니다.</p>
+                        <p className="text-white/30 text-sm">등록된 영상이 없습니다.</p>
                     </div>
                 ) : (
-                    <div className="flex flex-col sm:block sm:columns-2 md:columns-3 lg:columns-4 gap-5 sm:gap-4">
-                        {filteredVideos.map((video, idx) => {
+                    <div className="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-4">
+                        {videos.map((video, idx) => {
                             const badge = getPlatformBadge(video);
+                            const isVertical = video.isShorts || video.isFeatured;
                             return (
                                 <div
-                                    key={idx}
+                                    key={`${video.id || video.link}-${idx}`}
                                     onClick={() => handleVideoClick(video)}
-                                    className="break-inside-avoid relative rounded-2xl overflow-hidden bg-[#1a1a24] border border-[#6C63FF]/20 group cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:shadow-[#6C63FF]/10 transition-all duration-300 sm:mb-4 inline-block w-full"
+                                    className="break-inside-avoid relative rounded-2xl overflow-hidden bg-[#1a1a24] border border-white/10 group cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:shadow-[#6C63FF]/10 transition-all duration-300 mb-3 sm:mb-4 inline-block w-full"
                                 >
                                     {/* Thumbnail */}
-                                    <div className={`relative w-full ${video.isShorts ? 'aspect-[9/16]' : 'aspect-video'} bg-black overflow-hidden`}>
+                                    <div className={`relative w-full ${isVertical ? 'aspect-[9/16]' : 'aspect-video'} bg-black overflow-hidden`}>
                                         {video.thumbnail ? (
                                             <img
                                                 src={video.thumbnail}
@@ -131,7 +118,6 @@ const KimDaepyoTV = () => {
                                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                             />
                                         ) : (
-                                            /* 썸네일 없을 때 플랫폼 아이콘 placeholder */
                                             <div className="w-full h-full flex items-center justify-center bg-[#0f0f1a]">
                                                 <span className="material-symbols-outlined text-[64px] text-white/10">
                                                     {video.platform === 'instagram' ? 'photo_camera' : video.platform === 'tiktok' ? 'music_note' : 'smart_display'}
@@ -154,6 +140,14 @@ const KimDaepyoTV = () => {
                                             <div className={`absolute top-3 left-3 px-2 py-1 rounded ${badge.color} text-white text-[10px] font-black tracking-wider uppercase flex items-center gap-1 shadow-lg`}>
                                                 <span className="material-symbols-outlined text-[12px]">bolt</span>
                                                 {badge.label}
+                                            </div>
+                                        )}
+
+                                        {/* YouTube Long-form badge */}
+                                        {!video.isShorts && !video.isFeatured && (
+                                            <div className="absolute top-3 left-3 px-2 py-1 rounded bg-red-600 text-white text-[10px] font-black tracking-wider uppercase flex items-center gap-1 shadow-lg">
+                                                <span className="material-symbols-outlined text-[12px]">smart_display</span>
+                                                YouTube
                                             </div>
                                         )}
 
@@ -197,7 +191,7 @@ const KimDaepyoTV = () => {
                         </button>
 
                         {/* iframe */}
-                        <div className={`relative flex justify-center items-center w-full h-full sm:h-auto ${selectedVideo.isShorts ? 'max-w-full' : 'max-w-5xl'}`}>
+                        <div className={`relative flex justify-center items-center w-full h-full sm:h-auto ${selectedVideo.isShorts || selectedVideo.isFeatured ? 'max-w-full' : 'max-w-5xl'}`}>
                             <iframe
                                 src={
                                     selectedVideo.isFeatured
@@ -207,7 +201,7 @@ const KimDaepyoTV = () => {
                                 title={selectedVideo.title}
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
-                                className={`bg-black shadow-2xl border-none ${selectedVideo.isShorts
+                                className={`bg-black shadow-2xl border-none ${selectedVideo.isShorts || selectedVideo.isFeatured
                                     ? 'w-full h-full sm:max-w-[400px] sm:h-[90vh] aspect-[9/16] sm:rounded-3xl'
                                     : 'w-full aspect-video sm:rounded-3xl'
                                     }`}

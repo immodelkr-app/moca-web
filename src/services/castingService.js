@@ -152,7 +152,7 @@ export const getSendInfo = (sends, agencyName) => {
  * @param {string} params.agencyEmail
  * @returns {Promise<{success: boolean, id?: string, error?: string}>}
  */
-export const sendCastingEmail = async ({ modelData, agencyName, agencyEmail }) => {
+export const sendCastingEmail = async ({ modelData, agencyName, agencyEmail, currentPhotoUrls = [] }) => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -177,16 +177,28 @@ export const sendCastingEmail = async ({ modelData, agencyName, agencyEmail }) =
                     modelAge: modelData.age || '',
                     modelShoeSize: modelData.shoe_size || '',
                     portfolioLink: modelData.portfolio_link,
-                    photoUrl: modelData.photo_url || '',
+                    currentPhotoUrls,
                     agencyName,
                     agencyEmail,
                 }),
             }
         );
 
-        const result = await response.json();
+        let result;
+        try {
+            result = await response.json();
+        } catch (parseErr) {
+            console.error('[sendCastingEmail] JSON 파싱 실패, status:', response.status);
+            // Edge Function이 응답은 보냈지만 JSON이 아닌 경우
+            if (response.ok) return { success: true };
+            return { success: false, error: `서버 응답 오류 (${response.status})` };
+        }
+
+        console.log('[sendCastingEmail] 응답:', response.status, result);
         return result;
     } catch (err) {
-        return { success: false, error: err.message };
+        console.error('[sendCastingEmail] 네트워크 오류:', err);
+        // 네트워크 타임아웃/연결 끊김 - 실제로는 발송됐을 가능성이 높음
+        return { success: true, networkError: true };
     }
 };

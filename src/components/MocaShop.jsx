@@ -81,10 +81,13 @@ const MocaShop = () => {
             const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk').catch(() => null) || {};
 
             if (loadTossPayments) {
-                // SDK 방식 (정식)
+                // SDK v2 방식 (정식)
                 const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
                 const orderId = `MOCA-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
                 const orderName = product.title;
+
+                // customerKey: 영문/숫자/_/-만 허용 (한글 등 특수문자 제거)
+                const safeCustomerKey = (userNickname || 'ANONYMOUS').replace(/[^a-zA-Z0-9_-]/g, '') || 'ANONYMOUS';
 
                 // 결제창 넘어가기 전 정보 임시 저장 (알림톡용)
                 const pendingOrder = {
@@ -95,14 +98,22 @@ const MocaShop = () => {
                 };
                 localStorage.setItem('moca_pending_order', JSON.stringify(pendingOrder));
 
-                await tossPayments.requestPayment('카드', {
-                    amount: finalPrice,
+                const payment = tossPayments.payment({ customerKey: safeCustomerKey });
+
+                console.log('[TossPayments MocaShop] 결제 요청:', { orderId, finalPrice, customerKey: safeCustomerKey });
+
+                await payment.requestPayment({
+                    method: 'CARD',
+                    amount: {
+                        currency: 'KRW',
+                        value: finalPrice,
+                    },
                     orderId,
                     orderName,
                     customerName: form.recipientName,
                     customerMobilePhone: form.phone.replace(/-/g, ''),
-                    successUrl: `${window.location.origin}/home/shop?payment=success&orderId=${orderId}`,
-                    failUrl: `${window.location.origin}/home/shop?payment=fail`,
+                    successUrl: `${window.location.origin}/payment/success`,
+                    failUrl: `${window.location.origin}/payment/fail`,
                 });
             } else {
                 // SDK 미설치 시 시뮬레이션 (개발/테스트용)

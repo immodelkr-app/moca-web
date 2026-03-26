@@ -42,6 +42,7 @@ export const saveUserToSupabase = async (userData) => {
             phone: userData.phone,
             email: userData.email || null,
             address: userData.address,
+            address_detail: userData.address_detail || null,
             referral_source: userData.referralSource || [],
             grade: userData.grade || 'SILVER',
         }])

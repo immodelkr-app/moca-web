@@ -20,7 +20,7 @@ serve(async (req) => {
             modelAge,
             modelShoeSize,
             portfolioLink,
-            photoUrl,
+            currentPhotoUrls = [],
             agencyName,
             agencyEmail,
         } = await req.json();
@@ -55,9 +55,11 @@ serve(async (req) => {
     .greeting { font-size: 14px; color: #555; line-height: 1.8; margin-bottom: 24px; border-left: 3px solid #A78BFA; padding-left: 14px; }
     .greeting strong { color: #222; }
     .specs { margin-bottom: 24px; font-size: 0; }
-    .photo-wrap { margin: -28px -32px 24px; }
-    .photo-wrap img { width: 100%; height: 320px; object-fit: cover; display: block; }
-    @media only screen and (max-width: 480px) { .photo-wrap img { height: 240px; } }
+    .current-photos { margin-bottom: 24px; }
+    .current-photos-title { font-size: 11px; color: #7C3AED; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .photos-grid img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 8px; display: block; }
+    @media only screen and (max-width: 480px) { .photos-grid { grid-template-columns: repeat(2, 1fr); } }
     .spec-item { display: inline-block; vertical-align: top; background: #ede9ff; border: 1px solid #c4b5fd; border-radius: 10px; padding: 10px 16px; margin: 0 8px 8px 0; min-width: 110px; }
     .spec-label { font-size: 10px; color: #7C3AED; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
     .spec-value { font-size: 16px; font-weight: 800; color: #111827; }
@@ -87,7 +89,6 @@ serve(async (req) => {
       </div>
 
       <div class="body">
-        ${photoUrl ? `<div class="photo-wrap"><img src="${photoUrl}" alt="${modelName} 프로필 사진" /></div>` : ""}
         <p class="greeting">
           안녕하세요, <strong>${agencyName}</strong> 담당자님!<br>
           광고모델 <strong>${modelName}</strong>입니다.<br>
@@ -102,6 +103,14 @@ serve(async (req) => {
           ${modelShoeSize ? `<div class="spec-item"><div class="spec-label">신발사이즈</div><div class="spec-value">${modelShoeSize}mm</div></div>` : ""}
           ${modelPhone ? `<div class="spec-item"><div class="spec-label">연락처</div><div class="spec-value">${modelPhone}</div></div>` : ""}
         </div>
+
+        ${currentPhotoUrls.length > 0 ? `
+        <div class="current-photos">
+          <div class="current-photos-title">📸 현재모습</div>
+          <div class="photos-grid">
+            ${currentPhotoUrls.slice(0, 9).map(url => `<img src="${url}" alt="현재모습" />`).join('')}
+          </div>
+        </div>` : ''}
 
         <a href="${portfolioLink}" class="portfolio-btn">
           📁 ${modelName}모델님 프로필 다운받기
@@ -120,6 +129,8 @@ serve(async (req) => {
 </body>
 </html>`;
 
+        console.log("[send-casting-email] 요청 시작:", { agencyEmail, agencyName, modelName, photoCount: currentPhotoUrls.length });
+
         const resendResponse = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
@@ -135,6 +146,7 @@ serve(async (req) => {
         });
 
         const result = await resendResponse.json();
+        console.log("[send-casting-email] Resend 응답:", resendResponse.status, JSON.stringify(result));
 
         if (!resendResponse.ok) {
             throw new Error(result.message || "Resend API 오류");
