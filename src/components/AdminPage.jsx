@@ -8,6 +8,7 @@ import { postMessage, fetchMessagesList, deleteMessage, updateMessage } from '..
 import { sendBulkMessage, sendAlimtalk, sendFriendtalk } from '../services/aligoService';
 import AdminPartners from './AdminPartners';
 import AdminShop from './AdminShop';
+import AdminSubscriptions from './AdminSubscriptions';
 import AdminPopups from './AdminPopups';
 import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost } from '../services/certificationService';
@@ -785,6 +786,12 @@ const AdminPage = () => {
                     >
                         📸 현재모습 사진
                     </button>
+                    <button
+                        onClick={() => setActiveTab('subscriptions')}
+                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'subscriptions' ? 'border-[#FCD34D] text-[#FCD34D]' : 'border-transparent text-white/40 hover:text-white'}`}
+                    >
+                        👑 구독 관리
+                    </button>
                 </div>
 
                 {activeTab === 'stats' && (
@@ -1534,6 +1541,10 @@ const AdminPage = () => {
 
                 {activeTab === 'shop' && (
                     <AdminShop successMsg={successMsg} setSuccessMsg={setSuccessMsg} />
+                )}
+
+                {activeTab === 'subscriptions' && (
+                    <AdminSubscriptions />
                 )}
 
                 {/* ── 📝 전속계약 관리 탭 ── */}

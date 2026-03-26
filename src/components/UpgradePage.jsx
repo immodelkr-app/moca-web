@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser } from '../services/userService';
+import { getUser, saveUser } from '../services/userService';
+import { supabase } from '../services/supabaseClient';
+import { createSubscription, upgradeUserToGold } from '../services/subscriptionService';
 
 const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
 
@@ -59,7 +61,7 @@ const UpgradePage = () => {
                     orderId,
                     orderName: `골드모카 멤버십 ${selectedPlan.label} 구독`,
                     customerName: user.name || user.nickname || '모카회원',
-                    successUrl: `${window.location.origin}/upgrade?payment=success&orderId=${orderId}`,
+                    successUrl: `${window.location.origin}/upgrade?payment=success`,
                     failUrl: `${window.location.origin}/upgrade?payment=fail`,
                 });
             } else {
@@ -72,18 +74,71 @@ const UpgradePage = () => {
         }
     };
 
-    // ── 결제 결과 ───────────────────────────────────────────────────────────
+    // ── 결제 결과 자동 처리 ─────────────────────────────────────────────────
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const payment = params.get('payment');
-        if (payment === 'success') {
-            alert('골드모카 결제가 정상 처리되었습니다!');
-            window.history.replaceState({}, document.title, window.location.pathname);
-            navigate('/home');
-        } else if (payment === 'fail') {
-            alert('결제가 취소되었거나 실패했습니다.');
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
+        const handlePaymentResult = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const payment = params.get('payment');
+
+            if (payment === 'success') {
+                const paymentKey = params.get('paymentKey');
+                const orderId = params.get('orderId');
+                const amount = Number(params.get('amount'));
+
+                // localStorage에서 구독 정보 복원
+                const pendingRaw = localStorage.getItem('moca_pending_subscription');
+                const pending = pendingRaw ? JSON.parse(pendingRaw) : null;
+
+                try {
+                    // 1) 토스 결제 승인
+                    if (paymentKey && orderId && amount) {
+                        const { data: confirmData, error: confirmError } = await supabase.functions.invoke('toss-confirm', {
+                            body: { paymentKey, orderId, amount },
+                        });
+                        if (confirmError || confirmData?.error) {
+                            console.error('[Upgrade] 결제 승인 실패:', confirmData?.error || confirmError);
+                        }
+                    }
+
+                    // 2) 구독 DB 저장
+                    if (pending && user) {
+                        await createSubscription({
+                            userId: user.id,
+                            userNickname: user.nickname,
+                            planId: pending.planId,
+                            months: pending.months,
+                            price: pending.price,
+                            paymentKey: paymentKey || '',
+                            orderId: orderId || '',
+                        });
+
+                        // 3) 유저 등급 GOLD로 업그레이드
+                        const { expiresAt } = await upgradeUserToGold(user.id, pending.months);
+
+                        // 4) localStorage 등급 갱신 (즉시 반영)
+                        const currentUser = getUser();
+                        if (currentUser) {
+                            saveUser({ ...currentUser, grade: 'GOLD', grade_expires_at: expiresAt });
+                        }
+
+                        localStorage.removeItem('moca_pending_subscription');
+                    }
+
+                    alert('🎉 골드모카 구독이 완료되었습니다! 지금부터 골드 혜택을 이용하실 수 있습니다.');
+                } catch (err) {
+                    console.error('[Upgrade] 구독 처리 오류:', err);
+                    alert('결제는 완료되었으나 등급 반영 중 오류가 발생했습니다. 관리자에게 문의해주세요.');
+                }
+
+                window.history.replaceState({}, document.title, window.location.pathname);
+                navigate('/home');
+            } else if (payment === 'fail') {
+                alert('결제가 취소되었거나 실패했습니다.');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        };
+
+        handlePaymentResult();
     }, [navigate]);
 
     return (
