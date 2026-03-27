@@ -73,30 +73,30 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
     if (!user) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-[#1a1a24] border border-white/10 rounded-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white border border-[#E8E0FA] rounded-3xl w-full max-w-sm max-h-[90vh] overflow-y-auto shadow-2xl relative">
 
                 {/* 닫기 버튼 */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
+                    className="absolute top-5 right-5 w-9 h-9 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#9333EA] hover:bg-[#EDE8FF] transition-colors"
                 >
-                    <span className="material-symbols-outlined text-[24px]">close</span>
+                    <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
 
-                <div className="p-6">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-full bg-[#6C63FF]/20 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[#818CF8]">person_edit</span>
+                <div className="p-8">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-12 h-12 rounded-2xl bg-[#9333EA]/10 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[#9333EA] text-[24px]">person_edit</span>
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white">회원 정보 수정</h2>
-                            <p className="text-white/40 text-[13px] font-medium">{user.nickname}님</p>
+                            <h2 className="text-xl font-black text-[#1F1235]">회원 정보 수정</h2>
+                            <p className="text-[#9CA3AF] text-[13px] font-bold">{user.nickname}님</p>
                         </div>
                     </div>
 
                     {errorMsg && (
-                        <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-bold text-center">
+                        <div className="mb-6 p-4 rounded-2xl bg-red-50 text-red-500 text-[13px] font-bold text-center border border-red-100 italic">
                             {errorMsg}
                         </div>
                     )}
@@ -104,20 +104,20 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* 이름 */}
                         <div className="space-y-1.5">
-                            <label className="text-white/60 text-xs font-bold ml-1">이름(실명)</label>
+                            <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">이름 (실명)</label>
                             <input
                                 type="text"
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] transition-colors"
+                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                             />
                         </div>
 
                         {/* 핸드폰 번호 */}
                         <div className="space-y-1.5">
-                            <label className="text-white/60 text-xs font-bold ml-1">연락처</label>
+                            <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">연락처</label>
                             <input
                                 type="tel"
                                 name="phone"
@@ -125,39 +125,39 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                 onChange={handleChange}
                                 required
                                 placeholder="010-0000-0000"
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#6C63FF] transition-colors"
+                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                             />
                         </div>
 
                         {/* 주소 */}
                         <div className="space-y-1.5">
-                            <label className="text-white/60 text-xs font-bold ml-1">주소</label>
+                            <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">주소</label>
                             <input
                                 type="text"
                                 name="address"
                                 value={formData.address}
                                 onChange={handleChange}
                                 required
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] transition-colors"
+                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                             />
                         </div>
 
                         {/* 상세 주소 */}
                         <div className="space-y-1.5">
-                            <label className="text-white/60 text-xs font-bold ml-1">상세 주소</label>
+                            <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">상세 주소</label>
                             <input
                                 type="text"
                                 name="address_detail"
                                 value={formData.address_detail}
                                 onChange={handleChange}
-                                placeholder="상세 주소 입력 (동/호수 등)"
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#6C63FF] transition-colors"
+                                placeholder="상세 주소 입력"
+                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                             />
                         </div>
 
                         {/* 비밀번호 변경 */}
-                        <div className="space-y-1.5 pt-2 border-t border-white/10">
-                            <label className="text-white/60 text-xs font-bold ml-1 flex justify-between items-center">
+                        <div className="space-y-1.5 pt-4 border-t border-[#E8E0FA] mt-2">
+                            <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">
                                 비밀번호 변경 (선택)
                             </label>
                             <div className="relative">
@@ -166,13 +166,13 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    placeholder="변경할 비밀번호 (기존 유지 시 빈칸)"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-4 pr-12 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#6C63FF] transition-colors"
+                                    placeholder="기존 유지 시 빈칸"
+                                    className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl pl-4 pr-12 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#9333EA] transition-colors"
                                 >
                                     <span className="material-symbols-outlined text-[18px]">
                                         {showPassword ? 'visibility_off' : 'visibility'}
@@ -184,10 +184,10 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-4 rounded-xl text-white font-black text-base shadow-lg transition-all ${loading
-                                ? 'bg-[#6C63FF]/50 cursor-not-allowed'
-                                : 'bg-[#6C63FF] hover:bg-[#5a52d5] active:scale-[0.98]'
-                                } mt-4`}
+                            className={`w-full py-4.5 rounded-[20px] text-white font-black text-base shadow-xl transition-all active:scale-[0.98] ${loading
+                                ? 'bg-[#9333EA]/50 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-[#9333EA] to-[#C084FC] hover:from-[#7C3AED] hover:to-[#9333EA] shadow-[#9333EA]/20'
+                                } mt-6`}
                         >
                             {loading ? '저장 중...' : '정보 저장하기'}
                         </button>

@@ -73,7 +73,7 @@ const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, o
     const isMyPost = post.user_nickname === myNickname;
 
     return (
-        <div className="bg-white/[0.03] border border-white/8 rounded-3xl overflow-hidden">
+        <div className="bg-white border border-[#E8E0FA] rounded-3xl overflow-hidden shadow-sm">
             {/* Post Header */}
             <div className="flex items-center justify-between px-4 pt-4 pb-3">
                 <div className="flex items-center gap-2.5">
@@ -83,8 +83,8 @@ const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, o
                         </span>
                     </div>
                     <div>
-                        <p className="text-white font-bold text-[13px] leading-tight">{post.user_nickname}</p>
-                        <p className="text-white/35 text-[11px]">{formatDate(post.created_at)}</p>
+                        <p className="text-[#1F1235] font-black text-[13px] leading-tight">{post.user_nickname}</p>
+                        <p className="text-[#9CA3AF] text-[11px]">{formatDate(post.created_at)}</p>
                     </div>
                 </div>
 
@@ -113,12 +113,12 @@ const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, o
                     className="flex items-center gap-1.5 transition-transform active:scale-90"
                 >
                     <span
-                        className={`material-symbols-outlined text-[24px] transition-colors ${liked ? 'text-red-400' : 'text-white/40'}`}
+                        className={`material-symbols-outlined text-[24px] transition-colors ${liked ? 'text-red-500' : 'text-[#9CA3AF]'}`}
                         style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
                     >
                         favorite
                     </span>
-                    <span className={`text-[13px] font-bold ${liked ? 'text-red-400' : 'text-white/40'}`}>
+                    <span className={`text-[13px] font-black ${liked ? 'text-red-500' : 'text-[#9CA3AF]'}`}>
                         {likesCount}
                     </span>
                 </button>
@@ -128,10 +128,10 @@ const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, o
                     onClick={handleToggleComments}
                     className="flex items-center gap-1.5 transition-transform active:scale-90"
                 >
-                    <span className={`material-symbols-outlined text-[22px] ${showComments ? 'text-[#A78BFA]' : 'text-white/40'}`}>
+                    <span className={`material-symbols-outlined text-[22px] ${showComments ? 'text-[#7C3AED]' : 'text-[#9CA3AF]'}`}>
                         chat_bubble_outline
                     </span>
-                    <span className={`text-[13px] font-bold ${showComments ? 'text-[#A78BFA]' : 'text-white/40'}`}>
+                    <span className={`text-[13px] font-black ${showComments ? 'text-[#7C3AED]' : 'text-[#9CA3AF]'}`}>
                         {comments.length}
                     </span>
                 </button>
@@ -159,7 +159,7 @@ const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, o
                 {isMyPost && (
                     <button
                         onClick={() => onDelete?.(post.id)}
-                        className="text-white/20 hover:text-red-400 transition-colors"
+                        className="text-[#E8E0FA] hover:text-red-500 transition-colors"
                     >
                         <span className="material-symbols-outlined text-[20px]">delete_outline</span>
                     </button>
@@ -170,41 +170,41 @@ const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, o
             {/* Tag & Caption */}
             <div className="px-4 pb-3 space-y-1">
                 {post.tag_label && (
-                    <p className="text-[13px] text-white/60">
-                        <span className={`font-bold ${cfg.text}`}>#{post.tag_label}</span>
+                    <p className="text-[13px] text-[#5B4E7A]">
+                        <span className={`font-black ${cfg.text}`}>#{post.tag_label}</span>
                     </p>
                 )}
                 {post.caption && (
-                    <p className="text-[14px] text-white/80 leading-relaxed break-words">{post.caption}</p>
+                    <p className="text-[14px] text-[#1F1235] leading-relaxed break-words font-medium">{post.caption}</p>
                 )}
             </div>
 
             {/* Comments Section */}
             {showComments && (
-                <div className="border-t border-white/5 px-4 pt-3 pb-4 space-y-3">
+                <div className="border-t border-[#E8E0FA] px-4 pt-3 pb-4 space-y-3 bg-[#F8F5FF]/50">
                     {isLoadingComments ? (
                         <div className="flex justify-center py-4">
-                            <span className="material-symbols-outlined text-white/30 text-[24px] animate-spin">progress_activity</span>
+                            <span className="material-symbols-outlined text-[#9CA3AF] text-[24px] animate-spin">progress_activity</span>
                         </div>
                     ) : (
                         <>
                             {comments.length === 0 && (
-                                <p className="text-white/25 text-sm text-center py-2">첫 댓글을 달아보세요 👋</p>
+                                <p className="text-[#9CA3AF] text-sm text-center py-2">첫 댓글을 달아보세요 👋</p>
                             )}
                             {comments.map(comment => (
                                 <div key={comment.id} className="flex items-start gap-2.5 group">
-                                    <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-white/60">
+                                    <div className="w-7 h-7 rounded-full bg-[#F3E8FF] flex items-center justify-center flex-shrink-0 text-xs font-black text-[#7C3AED]">
                                         {comment.user_nickname?.charAt(0)}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <span className="text-white font-bold text-[12px]">{comment.user_nickname} </span>
-                                        <span className="text-white/70 text-[13px] break-words">{comment.content}</span>
-                                        <p className="text-white/25 text-[10px] mt-0.5">{formatTime(comment.created_at)}</p>
+                                        <span className="text-[#1F1235] font-black text-[12px]">{comment.user_nickname} </span>
+                                        <span className="text-[#5B4E7A] text-[13px] break-words">{comment.content}</span>
+                                        <p className="text-[#9CA3AF] text-[10px] mt-0.5">{formatTime(comment.created_at)}</p>
                                     </div>
                                     {(comment.user_nickname === myNickname || isMyPost) && (
                                         <button
                                             onClick={() => handleDeleteComment(comment.id)}
-                                            className="opacity-0 group-hover:opacity-100 text-white/25 hover:text-red-400 transition-all flex-shrink-0 mt-0.5"
+                                            className="opacity-0 group-hover:opacity-100 text-[#E8E0FA] hover:text-red-500 transition-all flex-shrink-0 mt-0.5"
                                         >
                                             <span className="material-symbols-outlined text-[16px]">close</span>
                                         </button>
@@ -216,21 +216,21 @@ const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, o
 
                     {/* Comment Input */}
                     <form onSubmit={handleSubmitComment} className="flex items-center gap-2.5 pt-2">
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#6C63FF] to-[#A78BFA] flex items-center justify-center flex-shrink-0 text-xs font-black text-white">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#9333EA] to-[#C084FC] flex items-center justify-center flex-shrink-0 text-xs font-black text-white">
                             {myNickname?.charAt(0)}
                         </div>
-                        <div className="flex-1 flex items-center bg-white/5 border border-white/10 rounded-full px-3.5 pr-1.5 py-1.5 gap-2">
+                        <div className="flex-1 flex items-center bg-white border border-[#E8E0FA] rounded-full px-3.5 pr-1.5 py-1.5 gap-2 shadow-sm">
                             <input
                                 type="text"
                                 value={commentInput}
                                 onChange={e => setCommentInput(e.target.value)}
                                 placeholder="댓글 달기..."
-                                className="flex-1 bg-transparent border-none outline-none text-white/80 text-[13px] placeholder-white/25"
+                                className="flex-1 bg-transparent border-none outline-none text-[#1F1235] text-[13px] placeholder-[#9CA3AF] font-medium"
                             />
                             <button
                                 type="submit"
                                 disabled={!commentInput.trim() || isSubmittingComment}
-                                className="w-7 h-7 rounded-full bg-[#6C63FF] disabled:opacity-30 flex items-center justify-center flex-shrink-0 transition-opacity"
+                                className="w-7 h-7 rounded-full bg-[#9333EA] disabled:opacity-30 flex items-center justify-center flex-shrink-0 transition-opacity"
                             >
                                 <span className="material-symbols-outlined text-white text-[14px]">send</span>
                             </button>

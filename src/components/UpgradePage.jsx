@@ -142,7 +142,7 @@ const UpgradePage = () => {
     }, [navigate]);
 
     return (
-        <div className="min-h-screen pb-32" style={{backgroundColor:'var(--moca-bg)',color:'var(--moca-text)'}}>
+        <div className="min-h-screen pb-32 bg-[#F8F5FF]">
 
             {/* ── 헤더 ── */}
             <div className="relative z-10 px-5 pt-8 pb-2 flex items-center gap-3">
@@ -208,14 +208,14 @@ const UpgradePage = () => {
                                 <p className="text-[#9CA3AF] text-[10px] mt-1">기본 회원</p>
                             </div>
                             {/* 골드 카드 */}
-                            <div className="bg-[#F59E0B]/8 border-2 border-[#F59E0B]/40 rounded-2xl p-4 text-center relative overflow-hidden">
-                                <div className="absolute top-0 right-0 bg-[#F59E0B] text-black text-[9px] font-black px-2.5 py-0.5 rounded-bl-xl">추천</div>
-                                <div className="w-12 h-12 mx-auto rounded-full bg-[#F59E0B]/20 flex items-center justify-center mb-3">
+                            <div className="bg-white border-2 border-[#9333EA] rounded-2xl p-4 text-center relative overflow-hidden shadow-lg shadow-[#9333EA]/10">
+                                <div className="absolute top-0 right-0 bg-[#9333EA] text-white text-[9px] font-black px-2.5 py-0.5 rounded-bl-xl">추천</div>
+                                <div className="w-12 h-12 mx-auto rounded-full bg-[#F3E8FF] flex items-center justify-center mb-3">
                                     <span className="text-2xl">👑</span>
                                 </div>
-                                <h3 className="text-[#FCD34D] font-black text-base mb-1">GOLD</h3>
-                                <p className="text-[#FCD34D] font-black text-lg">월 10,000원~</p>
-                                <p className="text-[#FCD34D]/40 text-[10px] mt-1">프리미엄 회원</p>
+                                <h3 className="text-[#9333EA] font-black text-base mb-1">GOLD</h3>
+                                <p className="text-[#7C3AED] font-black text-lg">월 10,000원~</p>
+                                <p className="text-[#9CA3AF] text-[10px] mt-1">프리미엄 회원</p>
                             </div>
                         </div>
 
@@ -234,20 +234,20 @@ const UpgradePage = () => {
                                     </div>
                                     <div className="flex justify-center">
                                         {typeof feat.silver === 'string' ? (
-                                            <span className="text-white/40 text-[10px] font-bold">{feat.silver}</span>
+                                            <span className="text-[#9CA3AF] text-[10px] font-black">{feat.silver}</span>
                                         ) : feat.silver ? (
-                                            <span className="material-symbols-outlined text-[16px] text-emerald-400">check_circle</span>
+                                            <span className="material-symbols-outlined text-[16px] text-[#10B981]">check_circle</span>
                                         ) : (
-                                            <span className="material-symbols-outlined text-[16px] text-white/15">cancel</span>
+                                            <span className="material-symbols-outlined text-[16px] text-[#E8E0FA]">cancel</span>
                                         )}
                                     </div>
                                     <div className="flex justify-center">
                                         {typeof feat.gold === 'string' ? (
-                                            <span className="text-[#FCD34D] text-[10px] font-black">{feat.gold}</span>
+                                            <span className="text-[#9333EA] text-[10px] font-black">{feat.gold}</span>
                                         ) : feat.gold ? (
-                                            <span className="material-symbols-outlined text-[16px] text-[#FCD34D]">check_circle</span>
+                                            <span className="material-symbols-outlined text-[16px] text-[#9333EA]">check_circle</span>
                                         ) : (
-                                            <span className="material-symbols-outlined text-[16px] text-white/15">cancel</span>
+                                            <span className="material-symbols-outlined text-[16px] text-[#E8E0FA]">cancel</span>
                                         )}
                                     </div>
                                 </div>
@@ -257,8 +257,8 @@ const UpgradePage = () => {
                         {/* 구독하기 CTA */}
                         {!isAlreadyGold && (
                             <button onClick={() => setActiveTab('plans')}
-                                className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] text-black font-black text-base shadow-lg shadow-[#F59E0B]/20 hover:opacity-90 active:scale-[0.97] transition-all flex items-center justify-center gap-2">
-                                <span className="text-lg">👑</span>
+                                className="w-full py-5 rounded-3xl bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white font-black text-base shadow-xl shadow-[#9333EA]/20 hover:opacity-95 active:scale-[0.97] transition-all flex items-center justify-center gap-2">
+                                <span className="text-xl">👑</span>
                                 골드 구독하기
                             </button>
                         )}
@@ -275,38 +275,38 @@ const UpgradePage = () => {
                                 const isSelected = selectedPlan.id === plan.id;
                                 return (
                                     <button key={plan.id} onClick={() => setSelectedPlan(plan)}
-                                        className={`w-full relative p-4 rounded-2xl border-2 transition-all text-left ${
+                                        className={`w-full relative p-6 rounded-[32px] border-2 transition-all text-left overflow-hidden ${
                                             isSelected
-                                                ? 'border-[#F59E0B] bg-[#F59E0B]/10 shadow-lg shadow-[#F59E0B]/10'
-                                                : 'border-white/10 bg-white/[0.03] hover:border-white/25'
+                                                ? 'border-[#9333EA] bg-[#F3E8FF] shadow-lg shadow-[#9333EA]/10'
+                                                : 'border-[#E8E0FA] bg-white hover:border-[#9333EA]/30'
                                         }`}>
                                         {plan.popular && (
-                                            <span className="absolute -top-2.5 right-4 bg-gradient-to-r from-[#F59E0B] to-[#E58300] text-black text-[10px] font-black px-3 py-0.5 rounded-full shadow-sm">
+                                            <span className="absolute -top-0 right-0 bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white text-[10px] font-black px-4 py-1 rounded-bl-2xl shadow-sm">
                                                 BEST
                                             </span>
                                         )}
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                                                    isSelected ? 'border-[#F59E0B] bg-[#F59E0B]' : 'border-white/20'
+                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                                                    isSelected ? 'border-[#9333EA] bg-[#9333EA]' : 'border-[#E8E0FA]'
                                                 }`}>
-                                                    {isSelected && <span className="material-symbols-outlined text-[14px] text-black">check</span>}
+                                                    {isSelected && <span className="material-symbols-outlined text-[16px] text-white font-black">check</span>}
                                                 </div>
                                                 <div>
-                                                    <p className={`font-black ${isSelected ? 'text-[#FCD34D]' : 'text-white'}`}>
+                                                    <p className={`text-lg font-black ${isSelected ? 'text-[#9333EA]' : 'text-[#1F1235]'}`}>
                                                         {plan.label}
                                                     </p>
-                                                    <p className="text-white/30 text-xs mt-0.5">
+                                                    <p className="text-[#9CA3AF] text-[13px] font-bold mt-0.5">
                                                         월 {plan.monthly.toLocaleString()}원
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className={`text-lg font-black ${isSelected ? 'text-[#FCD34D]' : 'text-white'}`}>
+                                                <p className={`text-2xl font-black ${isSelected ? 'text-[#9333EA]' : 'text-[#1F1235]'}`}>
                                                     {plan.price.toLocaleString()}원
                                                 </p>
                                                 {plan.discountPct && (
-                                                    <span className="text-[10px] font-black text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded-full">
+                                                    <span className="text-[11px] font-black text-[#EC4899] bg-[#EC4899]/10 px-2 py-0.5 rounded-full">
                                                         {plan.discountPct}% 할인
                                                     </span>
                                                 )}
@@ -318,33 +318,33 @@ const UpgradePage = () => {
                         </div>
 
                         {/* 선택된 플랜 요약 */}
-                        <div className="bg-white border border-amber-200 rounded-2xl p-5">
+                        <div className="bg-white border border-[#E8E0FA] rounded-[32px] p-6 shadow-sm">
                             <div className="flex items-center justify-between mb-3">
-                                <span className="text-[#5B4E7A] text-sm">선택한 플랜</span>
-                                <span className="text-[#FCD34D] font-black">{selectedPlan.label} 구독</span>
+                                <span className="text-[#5B4E7A] text-[15px] font-bold">선택한 플랜</span>
+                                <span className="text-[#9333EA] font-black text-[15px]">{selectedPlan.label} 구독</span>
                             </div>
-                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/8">
-                                <span className="text-[#5B4E7A] text-sm">결제 금액</span>
-                                <span className="text-[#1F1235] font-black text-xl">{selectedPlan.price.toLocaleString()}원</span>
+                            <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#F8F5FF]">
+                                <span className="text-[#5B4E7A] text-sm font-medium">결제 금액</span>
+                                <span className="text-[#1F1235] font-black text-2xl">{selectedPlan.price.toLocaleString()}원</span>
                             </div>
 
                             {/* 결제 버튼 */}
                             <button onClick={handlePayment} disabled={isProcessing || isAlreadyGold}
-                                className={`w-full py-4 rounded-2xl font-black text-base shadow-lg transition-all flex items-center justify-center gap-2 ${
+                                className={`w-full py-5 rounded-[24px] font-black text-lg shadow-xl transition-all flex items-center justify-center gap-2.5 ${
                                     isAlreadyGold
-                                        ? 'bg-white/10 text-white/30 cursor-not-allowed'
-                                        : 'bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] text-black shadow-[#F59E0B]/25 hover:opacity-90 active:scale-[0.97]'
+                                        ? 'bg-[#F8F5FF] text-[#9CA3AF] cursor-not-allowed shadow-none border border-[#E8E0FA]'
+                                        : 'bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white shadow-[#9333EA]/25 hover:opacity-95 active:scale-[0.97]'
                                 } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                 {isAlreadyGold ? (
                                     <>이미 골드 회원입니다</>
                                 ) : isProcessing ? (
                                     <>
-                                        <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                         결제창 여는 중...
                                     </>
                                 ) : (
                                     <>
-                                        <span className="material-symbols-outlined text-[20px]">credit_card</span>
+                                        <span className="material-symbols-outlined text-[24px] font-black">credit_card</span>
                                         {selectedPlan.price.toLocaleString()}원 결제하기
                                     </>
                                 )}
@@ -353,8 +353,8 @@ const UpgradePage = () => {
 
                         {/* 카카오 문의 */}
                         <button onClick={() => window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank')}
-                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#FEE500]/8 border border-[#FEE500]/15 text-[#FADA0B] font-bold text-sm hover:bg-[#FEE500]/15 transition-all">
-                            <span className="material-symbols-outlined text-[18px]">chat</span>
+                            className="w-full flex items-center justify-center gap-2.5 py-4.5 rounded-[24px] bg-white border border-[#E8E0FA] text-[#5B4E7A] font-black text-sm hover:bg-[#F8F5FF] transition-all shadow-sm">
+                            <span className="material-symbols-outlined text-[20px] text-[#9333EA]">chat</span>
                             골드모카 문의하기
                         </button>
 

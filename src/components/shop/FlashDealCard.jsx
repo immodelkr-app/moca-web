@@ -3,10 +3,10 @@ import CountdownTimer from './CountdownTimer';
 import { canAccessProduct } from '../../services/shopService';
 
 const GRADE_COLORS = {
-    SILVER: { badge: 'text-slate-300 bg-slate-400/20 border-slate-400/30', glow: 'shadow-slate-400/10' },
-    GOLD: { badge: 'text-yellow-300 bg-yellow-500/20 border-yellow-400/30', glow: 'shadow-yellow-400/10' },
-    VIP: { badge: 'text-purple-300 bg-purple-500/20 border-purple-400/30', glow: 'shadow-purple-400/20' },
-    VVIP: { badge: 'text-pink-300 bg-pink-500/20 border-pink-400/30', glow: 'shadow-pink-400/20' },
+    SILVER: { badge: 'text-slate-500 bg-slate-100 border-slate-200', glow: 'shadow-slate-400/5' },
+    GOLD: { badge: 'text-amber-600 bg-amber-50 border-amber-200', glow: 'shadow-amber-400/5' },
+    VIP: { badge: 'text-purple-600 bg-purple-50 border-purple-200', glow: 'shadow-purple-400/10' },
+    VVIP: { badge: 'text-pink-600 bg-pink-50 border-pink-200', glow: 'shadow-pink-400/10' },
 };
 
 const BADGE_STYLES = {
@@ -19,10 +19,10 @@ const BADGE_STYLES = {
 };
 
 const PLACEHOLDER_GRADIENTS = [
-    'from-indigo-900 via-purple-900 to-pink-900',
-    'from-slate-900 via-blue-900 to-indigo-900',
-    'from-emerald-900 via-teal-900 to-cyan-900',
-    'from-rose-900 via-pink-900 to-fuchsia-900',
+    'from-[#F3E8FF] to-[#E8E0FA]',
+    'from-[#EBF5FF] to-[#DBEAFE]',
+    'from-[#F0FDF4] to-[#DCFCE7]',
+    'from-[#FFF1F2] to-[#FFE4E6]',
 ];
 
 const FlashDealCard = ({ product, userGrade, onBuyClick, onDetailClick, index = 0 }) => {
@@ -44,9 +44,9 @@ const FlashDealCard = ({ product, userGrade, onBuyClick, onDetailClick, index = 
             relative flex flex-col rounded-2xl overflow-hidden border
             transition-all duration-300 group
             ${isEnded || isSoldOut
-                ? 'border-white/10 opacity-60'
-                : 'border-white/15 hover:border-white/30 hover:shadow-2xl hover:-translate-y-0.5 ' + gradeColor.glow}
-            bg-[#0f0f1a]
+                ? 'border-[#E8E0FA] opacity-60'
+                : 'border-[#E8E0FA] hover:border-[#9333EA]/30 hover:shadow-xl hover:-translate-y-0.5 ' + gradeColor.glow}
+            bg-white
         `}>
             {/* 상품 이미지 — 클릭 시 상세 팝업 열기 */}
             <div
@@ -74,9 +74,9 @@ const FlashDealCard = ({ product, userGrade, onBuyClick, onDetailClick, index = 
 
                 {/* 상세 보기 버튼 */}
                 {product.detail_content && !isSoldOut && !isEnded && (
-                    <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm border border-white/20 rounded-lg px-2 py-1 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-white/80 text-xs">search</span>
-                        <span className="text-white/80 text-[10px] font-bold">상세보기</span>
+                    <div className="absolute bottom-2 right-2 bg-white/80 backdrop-blur-sm border border-[#E8E0FA] rounded-lg px-2 py-1 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[#1F1235]/60 text-xs">search</span>
+                        <span className="text-[#1F1235]/60 text-[10px] font-bold">상세보기</span>
                     </div>
                 )}
 
@@ -102,34 +102,34 @@ const FlashDealCard = ({ product, userGrade, onBuyClick, onDetailClick, index = 
             <div className="flex flex-col flex-1 p-3 gap-2">
                 {/* 상품명 */}
                 <div>
-                    <p className="text-white font-bold text-[13px] leading-snug line-clamp-2">{product.title}</p>
+                    <p className="text-[#1F1235] font-black text-[13px] leading-snug line-clamp-2">{product.title}</p>
                     {product.subtitle && (
-                        <p className="text-white/40 text-[11px] mt-0.5 line-clamp-1">{product.subtitle}</p>
+                        <p className="text-[#9CA3AF] text-[11px] mt-0.5 line-clamp-1">{product.subtitle}</p>
                     )}
                 </div>
 
                 {/* 가격 정보 */}
                 <div className="flex flex-col gap-0.5">
                     <div className="flex items-baseline gap-1.5">
-                        <span className="text-white/35 text-[11px] line-through">
+                        <span className="text-[#9CA3AF] text-[11px] line-through">
                             {product.original_price.toLocaleString()}원
                         </span>
-                        <span className="text-orange-400 text-[11px] font-bold">
+                        <span className="text-orange-500 text-[11px] font-bold">
                             -{Math.round((1 - product.sale_price / product.original_price) * 100)}%
                         </span>
                     </div>
                     <div className="flex items-baseline gap-1">
-                        <span className="text-white font-black text-base">
+                        <span className="text-[#1F1235] font-black text-base">
                             {salePrice.toLocaleString()}
                         </span>
-                        <span className="text-white/60 text-xs">원</span>
+                        <span className="text-[#5B4E7A] text-xs">원</span>
                     </div>
                 </div>
 
                 {/* 카운트다운 */}
                 {!isEnded && !isSoldOut && (
-                    <div className="bg-black/40 rounded-xl p-2 border border-white/10">
-                        <p className="text-white/40 text-[9px] mb-1.5 text-center">⏱ 판매 종료까지</p>
+                    <div className="bg-[#F8F5FF] rounded-xl p-2 border border-[#E8E0FA]">
+                        <p className="text-[#9CA3AF] text-[9px] mb-1.5 text-center">⏱ 판매 종료까지</p>
                         <div className="flex justify-center">
                             <CountdownTimer
                                 targetDate={product.sale_end}
@@ -150,8 +150,8 @@ const FlashDealCard = ({ product, userGrade, onBuyClick, onDetailClick, index = 
                     className={`
                         w-full py-2.5 rounded-xl font-black text-[13px] transition-all duration-200 mt-auto
                         ${access && !isSoldOut && !isEnded
-                            ? 'bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white hover:opacity-90 active:scale-95 shadow-lg shadow-purple-500/20'
-                            : 'bg-white/10 text-white/30 cursor-not-allowed'}
+                            ? 'bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-white hover:opacity-90 active:scale-95 shadow-lg shadow-purple-500/20'
+                            : 'bg-[#F3E8FF] text-[#7C3AED]/40 cursor-not-allowed'}
                     `}
                 >
                     {isSoldOut ? '매진' : isEnded ? '판매종료' : reason === 'early_only' ? '🔒 VVIP 얼리버드' : '구매하기'}

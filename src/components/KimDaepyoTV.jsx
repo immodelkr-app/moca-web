@@ -62,11 +62,11 @@ const KimDaepyoTV = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] flex flex-col relative overflow-hidden">
+        <div className="min-h-screen bg-[#F8F5FF] flex flex-col relative overflow-hidden">
             {/* Ambient background */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-64 bg-[#6C63FF]/10 blur-[120px]" />
-                <div className="absolute top-1/2 -right-32 w-80 h-80 rounded-full bg-[#A78BFA]/5 blur-[120px]" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-64 bg-[#9333EA]/5 blur-[120px]" />
+                <div className="absolute top-1/2 -right-32 w-80 h-80 rounded-full bg-[#EC4899]/5 blur-[120px]" />
             </div>
 
             {/* Header */}
@@ -74,14 +74,14 @@ const KimDaepyoTV = () => {
                 <div className="flex items-end justify-between mb-6">
                     <div>
                         <div className="flex items-center gap-3">
-                            <div className="w-1 h-7 rounded-full bg-gradient-to-b from-[#6C63FF] to-[#A78BFA]" />
-                            <h1 className="text-2xl font-black text-white tracking-tight">모카TV</h1>
+                            <div className="w-1.5 h-7 rounded-full bg-gradient-to-b from-[#9333EA] to-[#7C3AED]" />
+                            <h1 className="text-2xl font-black text-[#1F1235] tracking-tight">모카TV</h1>
                         </div>
-                        <p className="text-white/40 text-xs ml-4 pl-3 mt-1">유튜브 · 릴스 · 틱톡 영상을 한곳에서</p>
+                        <p className="text-[#9CA3AF] text-xs ml-4 pl-3 mt-1 font-bold">유튜브 · 릴스 · 틱톡 영상을 한곳에서</p>
                     </div>
-                    <div className="flex items-center gap-2 text-white/30 text-xs">
+                    <div className="flex items-center gap-2 text-[#9CA3AF] text-xs font-black">
                         <span className="material-symbols-outlined text-[16px]">grid_view</span>
-                        <span className="font-bold">{videos.length}개 영상</span>
+                        <span>{videos.length}개 영상</span>
                     </div>
                 </div>
             </div>
@@ -89,14 +89,16 @@ const KimDaepyoTV = () => {
             {/* Collage Video Grid */}
             <div className="relative z-10 px-5 pb-20 max-w-7xl mx-auto w-full flex-1">
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 gap-3">
-                        <div className="w-8 h-8 rounded-full border-2 border-[#6C63FF] border-t-transparent animate-spin" />
-                        <p className="text-white/30 text-sm">영상을 불러오는 중...</p>
+                    <div className="flex flex-col items-center justify-center py-24 gap-4">
+                        <div className="w-10 h-10 rounded-full border-4 border-[#E8E0FA] border-t-[#9333EA] animate-spin" />
+                        <p className="text-[#9CA3AF] text-sm font-bold">영상을 불러오는 중...</p>
                     </div>
                 ) : videos.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 gap-3">
-                        <span className="material-symbols-outlined text-[48px] text-white/20">videocam_off</span>
-                        <p className="text-white/30 text-sm">등록된 영상이 없습니다.</p>
+                    <div className="flex flex-col items-center justify-center py-24 gap-4">
+                        <div className="w-20 h-20 rounded-full bg-white border border-[#E8E0FA] flex items-center justify-center text-[#9CA3AF]">
+                            <span className="material-symbols-outlined text-[40px]">videocam_off</span>
+                        </div>
+                        <p className="text-[#9CA3AF] text-sm font-bold">등록된 영상이 없습니다.</p>
                     </div>
                 ) : (
                     <div className="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-4">
@@ -107,7 +109,7 @@ const KimDaepyoTV = () => {
                                 <div
                                     key={`${video.id || video.link}-${idx}`}
                                     onClick={() => handleVideoClick(video)}
-                                    className="break-inside-avoid relative rounded-2xl overflow-hidden bg-[#1a1a24] border border-white/10 group cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:shadow-[#6C63FF]/10 transition-all duration-300 mb-3 sm:mb-4 inline-block w-full"
+                                    className="break-inside-avoid relative rounded-[28px] overflow-hidden bg-white border border-[#E8E0FA] group cursor-pointer hover:scale-[1.02] hover:shadow-2xl hover:shadow-[#9333EA]/10 transition-all duration-500 mb-5 sm:mb-6 inline-block w-full shadow-sm"
                                 >
                                     {/* Thumbnail */}
                                     <div className={`relative w-full ${isVertical ? 'aspect-[9/16]' : 'aspect-video'} bg-black overflow-hidden`}>
@@ -130,8 +132,8 @@ const KimDaepyoTV = () => {
 
                                         {/* Play Icon */}
                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                            <div className="w-12 h-12 rounded-full bg-[#6C63FF]/80 backdrop-blur-sm flex items-center justify-center pl-1 shadow-[0_0_15px_rgba(108,99,255,0.5)]">
-                                                <span className="material-symbols-outlined text-white text-[28px]">play_arrow</span>
+                                            <div className="w-14 h-14 rounded-full bg-[#9333EA]/90 backdrop-blur-md flex items-center justify-center pl-1 shadow-[0_0_20px_rgba(147,51,234,0.4)]">
+                                                <span className="material-symbols-outlined text-white text-[32px] font-black">play_arrow</span>
                                             </div>
                                         </div>
 

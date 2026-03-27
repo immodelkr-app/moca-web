@@ -352,11 +352,11 @@ const MocaShop = () => {
 
 const EmptyState = () => (
     <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4">
-            <span className="material-symbols-outlined text-4xl text-white/20">storefront</span>
+        <div className="w-20 h-20 bg-[#F8F5FF] border border-[#E8E0FA] rounded-full flex items-center justify-center mb-4">
+            <span className="material-symbols-outlined text-4xl text-[#A78BFA]/40">storefront</span>
         </div>
-        <p className="text-white/40 font-bold text-base mb-1">판매 준비 중</p>
-        <p className="text-white/25 text-sm">곧 새로운 모카 에디트가 오픈됩니다!</p>
+        <p className="text-[#5B4E7A] font-black text-base mb-1">판매 준비 중</p>
+        <p className="text-[#9CA3AF] text-sm">곧 새로운 모카 에디트가 오픈됩니다!</p>
     </div>
 );
 
@@ -408,7 +408,7 @@ const GradeInfoBanner = ({ userGrade, coupons, copiedId, onCopy }) => {
                                         <span className="text-[9px] text-[#9CA3AF]">{coupon.min_price.toLocaleString()}원 이상</span>
                                     )}
                                     {coupon.expires_at && (
-                                        <span className="text-[9px] text-white/30">{formatExpiry(coupon.expires_at)}</span>
+                                        <span className="text-[9px] text-[#9CA3AF]">{formatExpiry(coupon.expires_at)}</span>
                                     )}
                                 </div>
                             </div>
@@ -416,10 +416,10 @@ const GradeInfoBanner = ({ userGrade, coupons, copiedId, onCopy }) => {
                             {/* 코드 복사 버튼 */}
                             <button
                                 onClick={() => onCopy(coupon)}
-                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all flex-shrink-0 ${copiedId === coupon.id ? 'border-[#10B981]/50 bg-[#10B981]/10' : 'border-[#6C63FF]/30 bg-[#6C63FF]/10 active:scale-95'}`}
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all flex-shrink-0 ${copiedId === coupon.id ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-[#9333EA]/30 bg-[#F3E8FF] hover:bg-[#EDE8FF] active:scale-95'}`}
                             >
-                                <span className="font-mono font-black text-xs text-white uppercase">{coupon.code}</span>
-                                <span className={`material-symbols-outlined text-[13px] ${copiedId === coupon.id ? 'text-[#10B981]' : 'text-[#818CF8]'}`}>
+                                <span className={`font-mono font-black text-xs uppercase ${copiedId === coupon.id ? 'text-emerald-600' : 'text-[#7C3AED]'}`}>{coupon.code}</span>
+                                <span className={`material-symbols-outlined text-[13px] ${copiedId === coupon.id ? 'text-emerald-600' : 'text-[#7C3AED]'}`}>
                                     {copiedId === coupon.id ? 'check' : 'content_copy'}
                                 </span>
                             </button>

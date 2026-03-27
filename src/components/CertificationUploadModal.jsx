@@ -58,25 +58,25 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
             />
 
             {/* Modal */}
-            <div className="relative w-full sm:max-w-md bg-[#12121A] border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden">
+            <div className="relative w-full sm:max-w-md bg-white border border-[#E8E0FA] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden">
                 {/* Handle bar */}
                 <div className="flex justify-center pt-3 pb-1 sm:hidden">
-                    <div className="w-10 h-1 bg-white/20 rounded-full" />
+                    <div className="w-10 h-1 bg-[#E8E0FA] rounded-full" />
                 </div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[#E8E0FA]">
                     <button
                         onClick={onClose}
-                        className="text-white/50 hover:text-white transition-colors text-sm font-medium"
+                        className="text-[#9CA3AF] hover:text-[#5B4E7A] transition-colors text-sm font-black"
                     >
                         취소
                     </button>
-                    <h2 className="text-white font-black text-[16px]">📸 투어스타그램</h2>
+                    <h2 className="text-[#1F1235] font-black text-[16px]">📸 투어스타그램</h2>
                     <button
                         onClick={handleSubmit}
                         disabled={isUploading || !imageFile}
-                        className="text-[#A78BFA] font-black text-sm disabled:opacity-30 transition-opacity"
+                        className="text-[#9333EA] font-black text-sm disabled:opacity-30 transition-opacity"
                     >
                         {isUploading ? '올리는 중...' : '완료'}
                     </button>
@@ -97,12 +97,12 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="w-full aspect-square rounded-2xl border-2 border-dashed border-white/20 bg-white/[0.03] flex flex-col items-center justify-center gap-3 hover:border-[#A78BFA]/60 hover:bg-[#A78BFA]/5 transition-all">
-                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#6C63FF] to-[#A78BFA] flex items-center justify-center shadow-lg shadow-[#6C63FF]/30">
+                            <div className="w-full aspect-square rounded-2xl border-2 border-dashed border-[#E8E0FA] bg-[#F8F5FF] flex flex-col items-center justify-center gap-3 hover:border-[#9333EA]/60 hover:bg-[#F3E8FF] transition-all">
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#9333EA] to-[#C084FC] flex items-center justify-center shadow-lg shadow-[#9333EA]/30">
                                     <span className="material-symbols-outlined text-white text-[30px]">add_photo_alternate</span>
                                 </div>
-                                <p className="text-white/50 text-sm font-medium">탭하여 사진 선택</p>
-                                <p className="text-white/25 text-xs">JPG, PNG, WEBP 지원</p>
+                                <p className="text-[#5B4E7A] text-sm font-black">탭하여 사진 선택</p>
+                                <p className="text-[#9CA3AF] text-xs font-medium">JPG, PNG, WEBP 지원</p>
                             </div>
                         )}
                         <input
@@ -116,15 +116,15 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
 
                     {/* 활동 유형 */}
                     <div>
-                        <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-2">활동 유형</p>
+                        <p className="text-[#5B4E7A] text-[11px] font-black uppercase tracking-widest mb-2 px-1">활동 유형</p>
                         <div className="grid grid-cols-2 gap-2">
                             {ACTIVITY_TYPES.map(type => (
                                 <button
                                     key={type}
                                     onClick={() => setActivityType(type)}
                                     className={`py-2.5 px-2 rounded-xl text-xs font-black transition-all ${activityType === type
-                                        ? `bg-gradient-to-br ${ACTIVITY_COLORS[type]} text-white shadow-lg`
-                                        : 'bg-white/5 border border-white/10 text-white/50 hover:bg-white/10'
+                                        ? `bg-gradient-to-br from-[#9333EA] to-[#C084FC] text-white shadow-lg`
+                                        : 'bg-[#F8F5FF] border border-[#E8E0FA] text-[#9CA3AF] hover:bg-[#F3E8FF]'
                                         }`}
                                 >
                                     {type}
@@ -135,25 +135,25 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
 
                     {/* 태그 입력 */}
                     <div>
-                        <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-2">태그</p>
+                        <p className="text-[#5B4E7A] text-[11px] font-black uppercase tracking-widest mb-2 px-1">태그</p>
                         <input
                             type="text"
                             value={tagLabel}
                             onChange={e => setTagLabel(e.target.value)}
                             placeholder={tagPlaceholders[activityType]}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/25 outline-none focus:border-[#A78BFA]/50 transition-colors"
+                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-sm placeholder-[#9CA3AF] outline-none focus:border-[#9333EA]/50 transition-colors font-medium"
                         />
                     </div>
 
                     {/* 코멘트 */}
                     <div>
-                        <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-2">한줄 코멘트</p>
+                        <p className="text-[#5B4E7A] text-[11px] font-black uppercase tracking-widest mb-2 px-1">한줄 코멘트</p>
                         <textarea
                             value={caption}
                             onChange={e => setCaption(e.target.value)}
                             placeholder="활동 소감을 한 줄로 남겨보세요 😊"
                             rows={3}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/25 outline-none focus:border-[#A78BFA]/50 transition-colors resize-none"
+                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-sm placeholder-[#9CA3AF] outline-none focus:border-[#9333EA]/50 transition-colors resize-none font-medium"
                         />
                     </div>
 

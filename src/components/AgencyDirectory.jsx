@@ -405,11 +405,11 @@ const AgencyDirectory = () => {
                 {/* Hero Banner — 아임모카 공지 CTA */}
                 <div
                     onClick={() => navigate('/home/message')}
-                    className="relative w-full rounded-2xl overflow-hidden mb-5 cursor-pointer group"
+                    className="relative w-full rounded-[32px] overflow-hidden mb-6 cursor-pointer group shadow-lg shadow-[#9333EA]/10 border border-[#E8E0FA]"
                 >
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#5B21B6] via-[#907FF8] to-[#C4B5FD] opacity-90" />
-                    <div className="absolute -right-6 -top-6 text-white/10 rotate-12 pointer-events-none">
-                        <span className="material-symbols-outlined text-[110px]">campaign</span>
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#9333EA] via-[#A855F7] to-[#C084FC] opacity-95" />
+                    <div className="absolute -right-8 -top-8 text-white/10 rotate-12 pointer-events-none group-hover:scale-110 transition-transform duration-500">
+                        <span className="material-symbols-outlined text-[140px]">campaign</span>
                     </div>
                     <div className="relative z-10 px-5 py-4 flex items-center justify-between">
                         <div className="flex-1 min-w-0 pr-4">
@@ -445,17 +445,19 @@ const AgencyDirectory = () => {
                 {/* 이력서 발송 현황 배너 */}
                 {grade !== 'GOLD' && (
                     <div
-                        className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#10B981]/8 border border-[#10B981]/20 mb-4 cursor-pointer hover:bg-[#10B981]/12 transition-colors"
+                        className="flex items-center gap-4 px-6 py-4 rounded-3xl bg-white border border-[#E8E0FA] mb-6 cursor-pointer hover:bg-[#F8F5FF] transition-all shadow-sm group"
                         onClick={() => navigate('/home/smart-profile')}
                     >
-                        <span className="material-symbols-outlined text-[18px] text-[#34D399] flex-shrink-0">forward_to_inbox</span>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[#34D399] font-black text-sm">
-                                이번 달 이력서 발송: {getMonthlyCount(sendHistory)}/{SILVER_MONTHLY_LIMIT}회 사용
-                            </p>
-                            <p className="text-white/30 text-xs mt-0.5">골드 멤버십 → 무제한 · 탭하여 내 프로필 설정</p>
+                        <div className="w-12 h-12 rounded-2xl bg-[#10B981]/10 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                            <span className="material-symbols-outlined text-[24px] text-[#10B981]">forward_to_inbox</span>
                         </div>
-                        <span className="material-symbols-outlined text-[16px] text-white/20">chevron_right</span>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[#1F1235] font-black text-[15px]">
+                                이번 달 이력서 발송: <span className="text-[#10B981]">{getMonthlyCount(sendHistory)}</span>/{SILVER_MONTHLY_LIMIT}회 사용
+                            </p>
+                            <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold">골드 멤버십 → 무제한 · 탭하여 내 프로필 설정</p>
+                        </div>
+                        <span className="material-symbols-outlined text-[20px] text-[#E8E0FA] group-hover:text-[#9333EA] transition-colors">chevron_right</span>
                     </div>
                 )}
 

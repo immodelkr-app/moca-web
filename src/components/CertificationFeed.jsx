@@ -98,8 +98,8 @@ const CertificationFeed = () => {
                     </button>
 
                     <div className="text-center">
-                        <h1 className="text-white font-black text-[17px] tracking-tight">📸 투어스타그램</h1>
-                        <p className="text-white/35 text-[11px] mt-0.5">활동 인증 & 커뮤니티</p>
+                        <h1 className="text-[#1F1235] font-black text-[17px] tracking-tight">📸 투어스타그램</h1>
+                        <p className="text-[#9CA3AF] text-[11px] mt-0.5">활동 인증 & 커뮤니티</p>
                     </div>
 
                     <button
@@ -135,18 +135,18 @@ const CertificationFeed = () => {
                     /* Skeleton Loading */
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="bg-[#F8F5FF] border border-[#E8E0FA] rounded-3xl overflow-hidden animate-pulse">
+                            <div key={i} className="bg-white border border-[#E8E0FA] rounded-3xl overflow-hidden animate-pulse">
                                 <div className="flex items-center gap-3 px-4 py-4">
-                                    <div className="w-9 h-9 rounded-full bg-[#E8E0FA]" />
+                                    <div className="w-9 h-9 rounded-full bg-[#F3E8FF]" />
                                     <div className="space-y-1.5">
-                                        <div className="w-24 h-3 bg-white/10 rounded-full" />
-                                        <div className="w-16 h-2.5 bg-white/5 rounded-full" />
+                                        <div className="w-24 h-3 bg-[#F3E8FF] rounded-full" />
+                                        <div className="w-16 h-2.5 bg-[#F8F5FF] rounded-full" />
                                     </div>
                                 </div>
-                                <div className="w-full aspect-square bg-white/5" />
+                                <div className="w-full aspect-square bg-[#F8F5FF]" />
                                 <div className="px-4 py-3 space-y-2">
-                                    <div className="w-20 h-3 bg-white/10 rounded-full" />
-                                    <div className="w-40 h-2.5 bg-white/5 rounded-full" />
+                                    <div className="w-20 h-3 bg-[#F3E8FF] rounded-full" />
+                                    <div className="w-40 h-2.5 bg-[#F8F5FF] rounded-full" />
                                 </div>
                             </div>
                         ))}

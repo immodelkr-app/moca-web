@@ -306,17 +306,17 @@ const SmartProfile = () => {
                 {/* Status Banner */}
                 <div className={`rounded-2xl p-4 border flex items-center gap-3 ${hasProfile
                     ? 'bg-emerald-500/10 border-emerald-500/20'
-                    : 'bg-[#6C63FF]/10 border-[#6C63FF]/20'}`}>
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${hasProfile ? 'bg-emerald-500/20' : 'bg-[#6C63FF]/20'}`}>
-                        <span className={`material-symbols-outlined text-[20px] ${hasProfile ? 'text-emerald-400' : 'text-[#818CF8]'}`}>
+                    : 'bg-[#9333EA]/10 border-[#9333EA]/20'}`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${hasProfile ? 'bg-emerald-500/20' : 'bg-[#9333EA]/20'}`}>
+                        <span className={`material-symbols-outlined text-[20px] ${hasProfile ? 'text-emerald-500' : 'text-[#9333EA]'}`}>
                             {hasProfile ? 'check_circle' : 'info'}
                         </span>
                     </div>
                     <div>
-                        <p className={`text-sm font-black ${hasProfile ? 'text-emerald-400' : 'text-[#A78BFA]'}`}>
+                        <p className={`text-sm font-black ${hasProfile ? 'text-emerald-500' : 'text-[#7C3AED]'}`}>
                             {hasProfile ? '프로필 등록 완료 · 프로필발송 활성화!' : '구글드라이브에서 프로필를 선택해주세요'}
                         </p>
-                        <p className={`text-xs mt-0.5 ${hasProfile ? 'text-emerald-400/60' : 'text-white/30'}`}>
+                        <p className={`text-xs mt-0.5 ${hasProfile ? 'text-emerald-500/60' : 'text-[#9CA3AF]'}`}>
                             {hasProfile ? '에이전시 리스트에서 \'프로필발송\' 버튼을 눌러보세요' : '아래 구글드라이브 버튼을 눌러 파일을 선택하세요'}
                         </p>
                     </div>
@@ -363,7 +363,7 @@ const SmartProfile = () => {
                                         placeholder={field.placeholder}
                                         className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-3 py-2.5 text-[#1F1235] text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-colors text-center"
                                     />
-                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-white/25 text-[10px] font-bold">{field.unit}</span>
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] text-[10px] font-bold">{field.unit}</span>
                                 </div>
                             </div>
                         ))}
@@ -399,7 +399,7 @@ const SmartProfile = () => {
                             onChange={handleChange}
                             placeholder="예) KBS 드라마 OOO 출연, 서울컬렉션 패션쇼, 예술의전당 연극 OOO..."
                             rows={3}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#6C63FF] transition-colors resize-none leading-relaxed"
+                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-colors resize-none leading-relaxed"
                         />
                     </div>
                 </div>
@@ -420,7 +420,7 @@ const SmartProfile = () => {
                     <button
                         onClick={handlePickerClick}
                         disabled={pickerLoading}
-                        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-[#4285F4]/40 bg-[#4285F4]/8 hover:bg-[#4285F4]/15 hover:border-[#4285F4]/60 transition-all active:scale-[0.98] mb-3"
+                        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-[#4285F4]/40 bg-[#4285F4]/5 hover:bg-[#4285F4]/10 hover:border-[#4285F4]/60 transition-all active:scale-[0.98] mb-3"
                     >
                         {pickerLoading ? (
                             <>
@@ -437,7 +437,7 @@ const SmartProfile = () => {
                                     <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
                                     <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 27h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
                                 </svg>
-                                <span className="text-white font-black text-sm">구글드라이브에서 파일 선택</span>
+                                <span className="text-[#4285F4] font-black text-sm">구글드라이브에서 파일 선택</span>
                             </>
                         )}
                     </button>
@@ -445,14 +445,14 @@ const SmartProfile = () => {
                     {formData.portfolio_link && (
                         <div className={`flex items-center gap-2 p-3 rounded-xl border ${isDriveUrl(formData.portfolio_link)
                             ? 'bg-emerald-500/10 border-emerald-500/20'
-                            : 'bg-white/5 border-white/10'}`}>
-                            <span className={`material-symbols-outlined text-[16px] flex-shrink-0 ${isDriveUrl(formData.portfolio_link) ? 'text-emerald-400' : 'text-white/30'}`}>
+                            : 'bg-[#F8F5FF] border-[#E8E0FA]'}`}>
+                            <span className={`material-symbols-outlined text-[16px] flex-shrink-0 ${isDriveUrl(formData.portfolio_link) ? 'text-emerald-500' : 'text-[#9CA3AF]'}`}>
                                 {isDriveUrl(formData.portfolio_link) ? 'check_circle' : 'link'}
                             </span>
-                            <p className="text-xs font-bold truncate flex-1 text-[#5B4E7A]">{formData.portfolio_link}</p>
+                            <p className="text-xs font-black truncate flex-1 text-[#5B4E7A]">{formData.portfolio_link}</p>
                             <button
                                 onClick={() => setFormData(prev => ({ ...prev, portfolio_link: '' }))}
-                                className="text-white/30 hover:text-white/60 flex-shrink-0"
+                                className="text-[#9CA3AF] hover:text-[#5B4E7A] flex-shrink-0"
                             >
                                 <span className="material-symbols-outlined text-[16px]">close</span>
                             </button>
@@ -478,52 +478,52 @@ const SmartProfile = () => {
                 {hasProfile && (
                     <div className="space-y-2.5">
                         <div className="flex items-center gap-2 px-1">
-                            <span className="material-symbols-outlined text-[15px] text-[#818CF8]">preview</span>
-                            <p className="font-black text-[#5B4E7A] text-xs tracking-wide uppercase">에이전시가 받을 이메일 미리보기</p>
+                            <span className="material-symbols-outlined text-[15px] text-[#9333EA]">preview</span>
+                            <p className="font-black text-[#5B4E7A] text-[11px] tracking-wide uppercase">에이전시가 받을 이메일 미리보기</p>
                         </div>
                         <div className="bg-white border border-[#E8E0FA] rounded-2xl overflow-hidden shadow-sm">
                             <div className="px-5 py-3 border-b border-[#E8E0FA] bg-[#F8F5FF]">
-                                <p className="text-[#9CA3AF] text-[11px] mb-0.5">발신: casting@immoca.kr</p>
-                                <p className="text-[#1F1235] text-sm font-black">
+                                <p className="text-[#9CA3AF] text-[10px] mb-0.5">발신: casting@immoca.kr</p>
+                                <p className="text-[#1F1235] text-[13px] font-black">
                                     광고모델 {formData.name || user?.name || user?.nickname}님의 프로필 정보입니다.
                                 </p>
                             </div>
-                            <div className="px-5 py-4 space-y-3">
+                            <div className="px-5 py-4 space-y-3.5">
                                 <div>
                                     <p className="font-black text-[#1F1235] text-base">{formData.name || user?.name || user?.nickname}</p>
                                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                                        {formData.age && <span className="text-white/40 text-xs">{formData.age}년생</span>}
-                                        {formData.height && <span className="text-white/40 text-xs">키 {formData.height}cm</span>}
-                                        {formData.weight && <span className="text-white/40 text-xs">{formData.weight}kg</span>}
-                                        {formData.shoe_size && <span className="text-white/40 text-xs">신발 {formData.shoe_size}mm</span>}
-                                        {user?.phone && <span className="text-white/40 text-xs">{user.phone}</span>}
+                                        {formData.age && <span className="text-[#5B4E7A] text-xs font-medium">{formData.age}년생</span>}
+                                        {formData.height && <span className="text-[#5B4E7A] text-xs font-medium">키 {formData.height}cm</span>}
+                                        {formData.weight && <span className="text-[#5B4E7A] text-xs font-medium">{formData.weight}kg</span>}
+                                        {formData.shoe_size && <span className="text-[#5B4E7A] text-xs font-medium">신발 {formData.shoe_size}mm</span>}
+                                        {user?.phone && <span className="text-[#5B4E7A] text-xs font-medium">{user.phone}</span>}
                                     </div>
                                 </div>
                                 {formData.career_ad && (
-                                    <div>
-                                        <p className="text-[#818CF8] text-[10px] font-black uppercase mb-0.5">광고모델 경력</p>
-                                        <p className="text-white/50 text-xs leading-relaxed">{formData.career_ad}</p>
+                                    <div className="bg-[#F8F5FF] p-3 rounded-xl border border-[#E8E0FA]">
+                                        <p className="text-[#9333EA] text-[10px] font-black uppercase mb-1">광고모델 경력</p>
+                                        <p className="text-[#5B4E7A] text-xs leading-relaxed font-medium whitespace-pre-wrap">{formData.career_ad}</p>
                                     </div>
                                 )}
                                 {formData.career_other && (
-                                    <div>
-                                        <p className="text-[#818CF8] text-[10px] font-black uppercase mb-0.5">그외 경력사항</p>
-                                        <p className="text-white/50 text-xs leading-relaxed">{formData.career_other}</p>
+                                    <div className="bg-[#F8F5FF] p-3 rounded-xl border border-[#E8E0FA]">
+                                        <p className="text-[#9333EA] text-[10px] font-black uppercase mb-1">그외 경력사항</p>
+                                        <p className="text-[#5B4E7A] text-xs leading-relaxed font-medium whitespace-pre-wrap">{formData.career_other}</p>
                                     </div>
                                 )}
                                 <a
                                     href={formData.portfolio_link}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#6C63FF]/15 border border-[#6C63FF]/25 hover:bg-[#6C63FF]/25 active:scale-[0.98] transition-all"
+                                    className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#9333EA] border border-[#9333EA] hover:opacity-90 active:scale-[0.98] transition-all"
                                 >
-                                    <span className="material-symbols-outlined text-[18px] text-[#A78BFA]">folder_open</span>
-                                    <span className="text-[#A78BFA] text-sm font-black flex-1 truncate">
+                                    <span className="material-symbols-outlined text-[18px] text-white">folder_open</span>
+                                    <span className="text-white text-sm font-black flex-1 truncate">
                                         {formData.name || user?.name || user?.nickname}모델님 프로필 다운받기
                                     </span>
-                                    <span className="material-symbols-outlined text-[14px] text-[#A78BFA]/60">open_in_new</span>
+                                    <span className="material-symbols-outlined text-[14px] text-white/70">open_in_new</span>
                                 </a>
-                                <p className="text-white/20 text-[10px] text-center">
+                                <p className="text-[#9CA3AF] text-[10px] text-center">
                                     Powered by 아임모카 · 광고모델 스마트 캐스팅
                                 </p>
                             </div>
@@ -548,18 +548,18 @@ const SmartProfile = () => {
                     <button
                         onClick={handleCurrentPhotoClick}
                         disabled={currentPhotoUploading || currentPhotos.length >= 10}
-                        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-[#10B981]/40 bg-[#10B981]/8 hover:bg-[#10B981]/15 hover:border-[#10B981]/60 transition-all active:scale-[0.98] mb-4 disabled:opacity-40"
+                        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-[#10B981]/40 bg-[#10B981]/5 hover:bg-[#10B981]/10 hover:border-[#10B981]/60 transition-all active:scale-[0.98] mb-4 disabled:opacity-40"
                     >
                         {currentPhotoUploading ? (
                             <>
                                 <div className="w-5 h-5 rounded-full border-2 border-[#10B981] border-t-transparent animate-spin" />
-                                <span className="text-[#34D399] font-black text-sm">업로드 중...</span>
+                                <span className="text-[#10B981] font-black text-sm">업로드 중...</span>
                             </>
                         ) : (
                             <>
-                                <span className="material-symbols-outlined text-[22px] text-[#34D399]">add_a_photo</span>
-                                <span className="text-white font-black text-sm">현재모습 사진저장</span>
-                                <span className="text-white/30 text-xs">({currentPhotos.length}/10)</span>
+                                <span className="material-symbols-outlined text-[22px] text-[#10B981]">add_a_photo</span>
+                                <span className="text-[#10B981] font-black text-sm">현재모습 사진저장</span>
+                                <span className="text-[#9CA3AF] text-xs font-bold">({currentPhotos.length}/10)</span>
                             </>
                         )}
                     </button>
@@ -573,7 +573,7 @@ const SmartProfile = () => {
                     />
 
                     {currentPhotoMsg && (
-                        <p className={`text-xs font-bold mb-3 text-center ${currentPhotoMsg.includes('실패') || currentPhotoMsg.includes('최대') ? 'text-red-400' : 'text-emerald-400'}`}>
+                        <p className={`text-xs font-black mb-3 text-center ${currentPhotoMsg.includes('실패') || currentPhotoMsg.includes('최대') ? 'text-red-500' : 'text-emerald-500'}`}>
                             {currentPhotoMsg}
                         </p>
                     )}
@@ -588,16 +588,16 @@ const SmartProfile = () => {
                                             src={photo.photo_url}
                                             alt="현재모습"
                                             onClick={() => setSelectedPhoto(photo)}
-                                            className="w-full aspect-square object-cover rounded-xl border border-white/15 cursor-pointer active:scale-95 transition-transform"
+                                            className="w-full aspect-square object-cover rounded-xl border border-[#E8E0FA] cursor-pointer active:scale-95 transition-transform"
                                         />
                                         <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black ${sl.bg} ${sl.color}`}>
                                             {sl.text}
                                         </span>
                                         <button
                                             onClick={() => handleDeleteCurrentPhoto(photo)}
-                                            className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
+                                            className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
                                         >
-                                            <span className="material-symbols-outlined text-[13px] text-red-400">close</span>
+                                            <span className="material-symbols-outlined text-[13px] text-red-100">close</span>
                                         </button>
                                     </div>
                                 );

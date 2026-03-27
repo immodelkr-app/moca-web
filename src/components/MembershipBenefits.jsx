@@ -75,34 +75,35 @@ const MembershipBenefits = () => {
     };
 
     return (
-        <div className="min-h-[100dvh] bg-gradient-to-br from-[#3A0C5C] via-[#1C0A35] to-[#0A0514] text-white flex flex-col items-center pb-20">
+        <div className="min-h-[100dvh] bg-[#F8F5FF] text-[#1F1235] flex flex-col items-center pb-20">
 
             {/* Top Navigation / Header */}
             <header className="w-full flex items-center justify-between p-4 z-10 sticky top-0">
                 <button
                     onClick={() => navigate(-1)}
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors backdrop-blur-sm"
+                    className="w-10 h-10 rounded-full bg-white/80 border border-[#E8E0FA] flex items-center justify-center hover:bg-white transition-colors backdrop-blur-sm shadow-sm"
                 >
-                    <span className="material-symbols-outlined text-[20px] text-white/80">arrow_back</span>
+                    <span className="material-symbols-outlined text-[20px] text-[#9333EA]">arrow_back</span>
                 </button>
             </header>
 
             {/* MOCA Logo Header */}
-            <div className="flex flex-col items-center justify-center mb-8 z-10 w-full px-6 text-center">
-                <h1 className="text-4xl font-light tracking-[0.2em] mb-2 text-white/90" style={{ letterSpacing: '0.25em' }}>MOCA</h1>
-                <p className="text-[9px] font-bold text-white/40 uppercase" style={{ letterSpacing: '0.15em' }}>Premium Modeling Agency</p>
+            <div className="flex flex-col items-center justify-center mb-10 z-10 w-full px-6 text-center">
+                <h1 className="text-4xl font-black tracking-[0.2em] mb-2 text-[#1F1235]" style={{ letterSpacing: '0.25em' }}>MOCA</h1>
+                <p className="text-[10px] font-black text-[#9333EA] uppercase tracking-widest">Premium Modeling Agency</p>
             </div>
 
             {/* Digital ID Container */}
-            <div className="relative w-[90%] max-w-[360px] bg-[#050505] rounded-[32px] p-6 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col z-10">
+            <div className="relative w-[92%] max-w-[380px] bg-white rounded-[48px] p-8 border border-[#E8E0FA] shadow-[0_30px_60px_rgba(147,51,234,0.12)] flex flex-col z-10 overflow-hidden">
 
-                {/* Glow behind the card */}
-                <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent rounded-[32px] pointer-events-none" />
+                {/* Background Pattern */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-[#9333EA]/5 blur-[60px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#00D4FF]/5 blur-[60px] rounded-full pointer-events-none" />
 
                 {/* ID Header */}
-                <div className="mb-2 relative z-10">
-                    <h2 className="text-2xl font-black bg-gradient-to-r from-[#9B8AFB] to-[#6052FF] bg-clip-text text-transparent tracking-tight">MOCA</h2>
-                    <p className="text-[10px] font-bold tracking-[0.2em] text-white/30 mt-1">DIGITAL ID</p>
+                <div className="mb-4 relative z-10">
+                    <h2 className="text-2xl font-black bg-gradient-to-r from-[#9333EA] to-[#7C3AED] bg-clip-text text-transparent tracking-tight">MOCA</h2>
+                    <p className="text-[10px] font-black tracking-[0.2em] text-[#9CA3AF] mt-1">DIGITAL ID</p>
                 </div>
 
                 {/* Center Graphic: Glowing Shield */}
@@ -115,42 +116,42 @@ const MembershipBenefits = () => {
                     </div>
                     {/* Glowing Center */}
                     <div className="relative z-10 flex items-center justify-center">
-                        <div className="absolute w-20 h-20 bg-[#1D996D]/30 blur-[30px] rounded-full animate-pulse" />
-                        <span className="material-symbols-outlined text-[48px] text-[#1D996D] drop-shadow-[0_0_15px_rgba(29,153,109,0.8)]">
+                        <div className="absolute w-24 h-24 bg-[#10B981]/15 blur-[40px] rounded-full animate-pulse" />
+                        <span className="material-symbols-outlined text-[64px] text-[#10B981] drop-shadow-sm">
                             local_police
                         </span>
                     </div>
                 </div>
 
                 {/* Verified Badge → 업체 확인하기 버튼 (클릭 가능) */}
-                <div className="relative z-10 flex justify-center mb-8">
+                <div className="relative z-10 flex justify-center mb-10">
                     <button
                         onClick={openPinModal}
-                        className="bg-[#1D996D] hover:bg-[#17806]  active:bg-[#16705C] rounded-[24px] px-8 py-3.5 flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(29,153,109,0.5)] border border-[#1D996D]/50 w-full max-w-[280px] transition-all"
+                        className="bg-[#10B981] hover:bg-[#059669] active:scale-[0.98] rounded-[24px] px-8 py-4.5 flex items-center justify-center gap-4 shadow-xl shadow-[#10B981]/25 border border-[#10B981]/20 w-full transition-all"
                     >
-                        <span className="material-symbols-outlined text-white text-[22px]">storefront</span>
-                        <div className="flex flex-col text-center leading-tight">
-                            <span className="text-white font-black text-[13px] tracking-widest uppercase">업체 확인하기</span>
-                            <span className="text-white/70 font-medium text-[10px] tracking-wide">업체 전용</span>
+                        <span className="material-symbols-outlined text-white text-[24px]">storefront</span>
+                        <div className="flex flex-col text-left leading-tight">
+                            <span className="text-white font-black text-[14px] tracking-widest uppercase">업체 확인하기</span>
+                            <span className="text-white/80 font-bold text-[10px] tracking-wide">직원 전용 인증 서비스</span>
                         </div>
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/90 animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                        <span className="w-2 h-2 rounded-full bg-white/90 animate-pulse ml-auto" />
                     </button>
                 </div>
 
                 {/* User Info Card */}
-                <div className="bg-[#0a0a0f] rounded-[20px] p-5 border border-white/5 relative z-10 shadow-inner">
-                    <div className="flex items-center justify-between mb-5">
-                        <div className="flex items-center gap-4">
+                <div className="bg-[#F8F5FF] rounded-[28px] p-6 border border-[#E8E0FA] relative z-10 shadow-inner">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-5">
                             {/* Grade Badge */}
-                            <div className={`w-[52px] h-[52px] rounded-full bg-gradient-to-br ${badgeColors} flex items-center justify-center shadow-lg border border-white/10 relative overflow-hidden`}>
+                            <div className={`w-[60px] h-[60px] rounded-full bg-gradient-to-br ${badgeColors} flex items-center justify-center shadow-lg border-2 border-white relative overflow-hidden`}>
                                 {/* Shine effect */}
-                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent -translate-x-[100%] hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
-                                <span className="font-black text-[11px] tracking-tight">{grade}</span>
+                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
+                                <span className="font-black text-[12px] tracking-tight">{grade}</span>
                             </div>
                             {/* Name & Title */}
-                            <div className="flex flex-col justify-center gap-0.5">
-                                <h3 className="text-lg font-black text-white">{userName}</h3>
-                                <p className="text-[11px] font-medium text-white/50">{isGold ? '모카 골드멤버' : '모카 실버멤버'}</p>
+                            <div className="flex flex-col justify-center gap-1">
+                                <h3 className="text-xl font-black text-[#1F1235]">{userName}</h3>
+                                <p className="text-[12px] font-bold text-[#5B4E7A]">{isGold ? '모카 골드멤버' : '모카 실버멤버'}</p>
                             </div>
                         </div>
 
@@ -168,10 +169,10 @@ const MembershipBenefits = () => {
                     </div>
 
                     {/* Footer: Live Clock */}
-                    <div className="flex items-center border-t border-white/[0.03] pt-4">
-                        <div className="flex items-center gap-1.5 text-[#1D996D]">
-                            <span className="material-symbols-outlined text-[13px]">schedule</span>
-                            <span className="text-[10px] font-mono tracking-wider font-bold">{currentTime}</span>
+                    <div className="flex items-center border-t border-[#E8E0FA] pt-5">
+                        <div className="flex items-center gap-2 text-[#10B981]">
+                            <span className="material-symbols-outlined text-[15px]">schedule</span>
+                            <span className="text-[12px] font-black tracking-widest">{currentTime}</span>
                         </div>
                     </div>
                 </div>
@@ -184,61 +185,61 @@ const MembershipBenefits = () => {
 
             {/* PIN 인증 모달 */}
             {showPinModal && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={closePinModal}>
-                    <div className="bg-[#1a1a24] border border-white/10 rounded-3xl p-6 w-full max-w-sm shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                        <button className="absolute top-4 right-4 text-white/40 hover:text-white" onClick={closePinModal}>
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={closePinModal}>
+                    <div className="bg-white border border-[#E8E0FA] rounded-[40px] p-8 w-full max-w-sm shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                        <button className="absolute top-5 right-5 text-[#9CA3AF] hover:text-[#9333EA] transition-colors" onClick={closePinModal}>
                             <span className="material-symbols-outlined">close</span>
                         </button>
 
                         {!verifiedPartner ? (
                             <>
-                                <div className="text-center mb-6">
-                                    <div className="w-16 h-16 bg-[#1D996D]/20 text-[#1D996D] rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <span className="material-symbols-outlined text-3xl">storefront</span>
+                                <div className="text-center mb-8">
+                                    <div className="w-20 h-20 bg-[#10B981]/10 text-[#10B981] rounded-full flex items-center justify-center mx-auto mb-5">
+                                        <span className="material-symbols-outlined text-4xl">storefront</span>
                                     </div>
-                                    <h4 className="text-xl font-bold text-white mb-2">업체 제휴 확인</h4>
-                                    <p className="text-sm text-white/60">
-                                        직원에게 <span className="text-[#1D996D] font-bold">인증코드</span>를 받아 입력해 주세요.
+                                    <h4 className="text-2xl font-black text-[#1F1235] mb-2 tracking-tight">업체 제휴 확인</h4>
+                                    <p className="text-sm text-[#5B4E7A] font-medium leading-relaxed">
+                                        직원에게 <span className="text-[#10B981] font-black">인증코드</span>를 받아<br />입력해 주세요.
                                     </p>
                                 </div>
-                                <div className="mb-4">
+                                <div className="mb-6">
                                     <input
                                         type="password"
                                         value={pinInput}
                                         onChange={(e) => { setPinInput(e.target.value); setPinError(''); }}
                                         onKeyDown={(e) => e.key === 'Enter' && handlePinSubmit()}
-                                        placeholder="인증코드 입력"
-                                        className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-center text-2xl tracking-[0.5em] text-white placeholder-white/20 focus:outline-none focus:border-[#1D996D] transition-colors"
+                                        placeholder="인증코드"
+                                        className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-4 text-center text-3xl tracking-[0.5em] text-[#1F1235] placeholder-[#9CA3AF]/30 focus:outline-none focus:border-[#10B981] transition-all font-black"
                                         maxLength={6}
                                         autoFocus
                                     />
                                     {pinError && (
-                                        <p className="text-red-400 text-sm mt-2 text-center animate-pulse">{pinError}</p>
+                                        <p className="text-red-500 text-sm mt-3 text-center font-bold animate-pulse">{pinError}</p>
                                     )}
                                 </div>
                                 <button
                                     onClick={handlePinSubmit}
                                     disabled={isVerifying || !pinInput.trim()}
-                                    className="w-full bg-gradient-to-r from-[#1D996D] to-[#34D399] text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-green-500/25 transition-all text-lg disabled:opacity-50"
+                                    className="w-full bg-[#10B981] text-white font-black py-4.5 rounded-[20px] shadow-xl shadow-[#10B981]/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg disabled:opacity-30"
                                 >
-                                    {isVerifying ? '확인 중...' : '확인하기'}
+                                    {isVerifying ? '인증 진행 중...' : '인증하기'}
                                 </button>
                             </>
                         ) : (
                             <div className="text-center py-4">
-                                <div className="w-20 h-20 bg-[#1D996D]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <span className="material-symbols-outlined text-[48px] text-[#1D996D]">check_circle</span>
+                                <div className="w-24 h-24 bg-[#10B981]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <span className="material-symbols-outlined text-[56px] text-[#10B981]">check_circle</span>
                                 </div>
-                                <h4 className="text-2xl font-black text-white mb-1">인증 완료!</h4>
-                                <p className="text-[#1D996D] font-bold text-lg mb-4">{verifiedPartner.name}</p>
-                                <p className="text-white/50 text-sm mb-6">
-                                    {verifiedPartner.discount || '제휴 할인 혜택이 적용됩니다.'}
+                                <h4 className="text-2xl font-black text-[#1F1235] mb-2">인증 완료!</h4>
+                                <p className="text-[#10B981] font-black text-xl mb-4">{verifiedPartner.name}</p>
+                                <p className="text-[#5B4E7A] font-medium text-sm mb-8 leading-relaxed">
+                                    {verifiedPartner.discount || '제휴 할인 혜택이 즉시 적용됩니다.'}
                                 </p>
                                 <button
                                     onClick={closePinModal}
-                                    className="w-full bg-gradient-to-r from-[#1D996D] to-[#34D399] text-white font-bold py-3 rounded-xl"
+                                    className="w-full bg-[#F8F5FF] border border-[#E8E0FA] text-[#9333EA] font-black py-4 rounded-2xl hover:bg-[#F3E8FF] transition-colors"
                                 >
-                                    닫기
+                                    확인
                                 </button>
                             </div>
                         )}

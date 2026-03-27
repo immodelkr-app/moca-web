@@ -17,12 +17,12 @@ const FieldInputPopup = ({ label, value, onChange, onClose, placeholder, type = 
 
     return (
         <div
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-fadeIn">
-                <h3 className="text-lg font-black text-gray-900 mb-1">{label} 입력</h3>
-                {hint && <p className="text-xs text-gray-400 mb-4">{hint}</p>}
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7 animate-fadeIn border border-[#E8E0FA]">
+                <h3 className="text-lg font-black text-[#1F1235] mb-1">{label} 입력</h3>
+                {hint && <p className="text-xs text-[#9CA3AF] mb-5 font-medium">{hint}</p>}
                 <input
                     ref={inputRef}
                     type={type}
@@ -30,18 +30,18 @@ const FieldInputPopup = ({ label, value, onChange, onClose, placeholder, type = 
                     onChange={(e) => setLocalValue(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                     placeholder={placeholder}
-                    className="w-full border-2 border-blue-300 focus:border-blue-500 rounded-xl px-4 py-3 text-base outline-none transition-colors mb-5 font-medium"
+                    className="w-full bg-[#F8F5FF] border border-[#E8E0FA] focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 rounded-xl px-4 py-3.5 text-base outline-none transition-colors mb-6 font-bold text-[#1F1235] placeholder-[#9CA3AF]"
                 />
                 <div className="flex gap-3">
                     <button
                         onClick={onClose}
-                        className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors"
+                        className="flex-1 py-3.5 rounded-2xl border border-[#E8E0FA] bg-[#F8F5FF] text-[#5B4E7A] font-bold text-sm hover:bg-[#EDE8FF] transition-colors"
                     >
                         취소
                     </button>
                     <button
                         onClick={handleSave}
-                        className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-colors"
+                        className="flex-1 py-3.5 rounded-2xl bg-[#9333EA] hover:bg-[#7C3AED] text-white font-black text-sm shadow-lg shadow-[#9333EA]/20 transition-all active:scale-[0.98]"
                     >
                         저장
                     </button>
@@ -126,27 +126,27 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
     ];
 
     return (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-[#f0f0f5] w-full max-w-3xl rounded-3xl shadow-2xl flex flex-col h-[90vh] sm:h-[85vh] overflow-hidden text-[#1a1a24]">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-[#F8F5FF] w-full max-w-3xl rounded-[32px] shadow-2xl flex flex-col h-[90vh] sm:h-[85vh] overflow-hidden text-[#1F1235]">
                 
                 {/* Header */}
-                <header className="px-6 py-5 border-b border-gray-300 flex justify-between items-center bg-white">
-                    <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">전속모델(VIP) 전자 계약서</h2>
-                    <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                        <span className="material-symbols-outlined text-gray-600">close</span>
+                <header className="px-6 py-5 border-b border-[#E8E0FA] flex justify-between items-center bg-white">
+                    <h2 className="text-xl sm:text-2xl font-black text-[#1F1235] tracking-tight">전속모델(VIP) 전자 계약서</h2>
+                    <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#F3E8FF] flex items-center justify-center hover:bg-[#EDE8FF] transition-colors">
+                        <span className="material-symbols-outlined text-[#9333EA] text-[20px]">close</span>
                     </button>
                 </header>
 
                 {/* Contract Body (Scrollable) */}
                 <div className="flex-1 overflow-y-auto p-6 sm:p-10 hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
-                    <div className="bg-white p-6 sm:p-10 shadow-sm border border-gray-200" style={{ fontFamily: "'Noto Sans KR', 'Malgun Gothic', sans-serif" }}>
-                        <h1 className="text-center text-3xl font-black mb-10 text-black tracking-widest break-keep">
+                    <div className="bg-white p-6 sm:p-10 shadow-xl rounded-2xl border border-[#E8E0FA]" style={{ fontFamily: "'Noto Sans KR', 'Malgun Gothic', sans-serif" }}>
+                        <h1 className="text-center text-2xl sm:text-3xl font-black mb-10 text-[#1F1235] tracking-tight break-keep">
                             [광고 캐스팅 위탁 협약서]
                         </h1>
 
-                        <p className="leading-relaxed mb-8 text-[15px] sm:text-[16px]">
+                        <p className="leading-relaxed mb-10 text-[15px] sm:text-[16px] text-[#5B4E7A] text-center">
                             기획업자 글로벌아임(아임모델) 대표 김대희 (이하 "갑")와 
-                            광고모델 <input type="text" name="memberName" value={contractData.memberName} onChange={handleInput} className="w-24 border-b-2 border-dashed border-gray-400 focus:border-blue-600 outline-none text-center bg-transparent mt-1 font-bold" placeholder="성함" /> 
+                            광고모델 <input type="text" name="memberName" value={contractData.memberName} onChange={handleInput} className="w-24 border-b-2 border-dashed border-[#9333EA]/40 text-[#9333EA] focus:border-[#9333EA] outline-none text-center bg-[#F8F5FF] rounded-t-lg mt-1 mx-1 font-black" placeholder="성함" /> 
                             (이하 "을")은 상호 신뢰를 바탕으로 다음과 같이 광고 캐스팅 위탁 및 매니지먼트 협약을 체결한다.
                         </p>
 
@@ -159,12 +159,14 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
                             <div>
                                 <h3 className="font-extrabold text-black text-lg mb-2">제2조 [계약 기간 및 의무 수강]</h3>
                                 <p>1. 계약 기간: 본 계약의 기간은 
-                                    <input type="text" name="startYear" value={contractData.startYear} onChange={handleInput} className="w-16 border-b border-gray-400 outline-none text-center mx-1 font-bold" />년 
-                                    <input type="text" name="startMonth" value={contractData.startMonth} onChange={handleInput} className="w-10 border-b border-gray-400 outline-none text-center mx-1 font-bold" />월 
-                                    <input type="text" name="startDay" value={contractData.startDay} onChange={handleInput} className="w-10 border-b border-gray-400 outline-none text-center mx-1 font-bold" />일 부터 
-                                    <input type="text" name="endYear" value={contractData.endYear} onChange={handleInput} className="w-16 border-b border-gray-400 outline-none text-center mx-1 font-bold" />년 
-                                    <input type="text" name="endMonth" value={contractData.endMonth} onChange={handleInput} className="w-10 border-b border-gray-400 outline-none text-center mx-1 font-bold" />월 
-                                    <input type="text" name="endDay" value={contractData.endDay} onChange={handleInput} className="w-10 border-b border-gray-400 outline-none text-center mx-1 font-bold" />일 까지로 한다.
+                                <p>1. 계약 기간: 본 계약의 기간은 
+                                    <input type="text" name="startYear" value={contractData.startYear} onChange={handleInput} className="w-16 border-b border-[#E8E0FA] outline-none text-center mx-1 font-bold text-[#9333EA]" />년 
+                                    <input type="text" name="startMonth" value={contractData.startMonth} onChange={handleInput} className="w-10 border-b border-[#E8E0FA] outline-none text-center mx-1 font-bold text-[#9333EA]" />월 
+                                    <input type="text" name="startDay" value={contractData.startDay} onChange={handleInput} className="w-10 border-b border-[#E8E0FA] outline-none text-center mx-1 font-bold text-[#9333EA]" />일 부터 
+                                    <input type="text" name="endYear" value={contractData.endYear} onChange={handleInput} className="w-16 border-b border-[#E8E0FA] outline-none text-center mx-1 font-bold text-[#9333EA]" />년 
+                                    <input type="text" name="endMonth" value={contractData.endMonth} onChange={handleInput} className="w-10 border-b border-[#E8E0FA] outline-none text-center mx-1 font-bold text-[#9333EA]" />월 
+                                    <input type="text" name="endDay" value={contractData.endDay} onChange={handleInput} className="w-10 border-b border-[#E8E0FA] outline-none text-center mx-1 font-bold text-[#9333EA]" />일 까지로 한다.
+                                </p>
                                 </p>
                                 <p>2. 의무 수강 기간 (원칙): "을"은 광고모델로서의 기본기를 다지고 실질적인 에이전시 홍보 효과를 거두기 위하여, 최소 6개월간 '에이전시 투어반' 과정을 의무적으로 수강 및 유지하여야 한다.</p>
                                 <p>3. [기간 단축 예외]: 단, "을"의 실력이 현저히 향상되었다고 판단될 경우, "갑"의 내부 테스트 및 실력 체크를 통해 상호 협의 하에 의무 수강 기간을 조정(단축)할 수 있다.</p>
@@ -174,7 +176,7 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
                                 <h3 className="font-extrabold text-black text-lg mb-2">제3조 [교육비 비용]</h3>
                                 <p>1. "을"은 제2조의 수강 기간에 해당하는 교육 및 관리 비용을 "갑"이 정한 방식(일시납 또는 월납)에 따라 선불로 납부한다.</p>
                                 <p className="flex items-center flex-wrap">2. 납부 금액: 월 금 
-                                    <input type="text" name="fee" value={contractData.fee} onChange={handleInput} placeholder="요금 입력" className="w-32 border-b-2 border-dashed border-gray-400 focus:border-blue-600 outline-none mx-2 text-right font-bold text-red-600 px-1" />
+                                    <input type="text" name="fee" value={contractData.fee} onChange={handleInput} placeholder="요금 입력" className="w-32 border-b-2 border-dashed border-[#9333EA]/40 focus:border-[#9333EA] outline-none mx-2 text-right font-black text-[#9333EA] px-1 bg-[#F8F5FF] rounded-t-lg" />
                                     원 (VAT 별도)
                                 </p>
                                 <p>3. 해당 비용은 "갑"이 제공하는 모델 실무 교육, 이미지 컨설팅, 에이전시 홍보 대행 업무 등에 사용된다.</p>
@@ -223,76 +225,67 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
                         </div>
 
                         {/* Date */}
-                        <div className="text-center my-14 text-xl font-bold">
-                            <input type="text" name="signYear" value={contractData.signYear} onChange={handleInput} className="w-16 border-b-2 border-dashed border-gray-400 outline-none text-center mx-1 bg-transparent" />년
-                            <input type="text" name="signMonth" value={contractData.signMonth} onChange={handleInput} className="w-10 border-b-2 border-dashed border-gray-400 outline-none text-center mx-1 bg-transparent" />월
-                            <input type="text" name="signDay" value={contractData.signDay} onChange={handleInput} className="w-10 border-b-2 border-dashed border-gray-400 outline-none text-center mx-1 bg-transparent" />일
+                        <div className="text-center my-14 text-xl font-bold text-[#1F1235]">
+                            <input type="text" name="signYear" value={contractData.signYear} onChange={handleInput} className="w-16 border-b-2 border-dashed border-[#E8E0FA] outline-none text-center mx-1 bg-transparent text-[#9333EA]" />년
+                            <input type="text" name="signMonth" value={contractData.signMonth} onChange={handleInput} className="w-10 border-b-2 border-dashed border-[#E8E0FA] outline-none text-center mx-1 bg-transparent text-[#9333EA]" />월
+                            <input type="text" name="signDay" value={contractData.signDay} onChange={handleInput} className="w-10 border-b-2 border-dashed border-[#E8E0FA] outline-none text-center mx-1 bg-transparent text-[#9333EA]" />일
                         </div>
 
                         {/* Signatures Panel */}
                         <div className="flex flex-col md:flex-row justify-between gap-10">
                             {/* 갑 (회사) */}
-                            <div className="flex-1 p-5 rounded-xl border-2 border-gray-200 bg-gray-50">
-                                <h4 className="font-extrabold text-lg mb-4">("갑") 소속사</h4>
-                                <div className="space-y-3 font-medium text-sm">
-                                    <div className="flex"><span className="w-20 text-gray-500">법명/상호:</span> 글로벌아임 (아임모델)</div>
-                                    <div className="flex"><span className="w-20 text-gray-500">대표자:</span> 김대희 (인)</div>
-                                    <div className="flex"><span className="w-20 text-gray-500">주소:</span> 서울특별시 강남구 논현로 648 (우:06103)</div>
-                                    <div className="flex"><span className="w-20 text-gray-500">연락처:</span> 02-3443-4672</div>
+                            <div className="flex-1 p-5 rounded-3xl border border-[#E8E0FA] bg-[#F8F5FF]">
+                                <h4 className="font-black text-lg mb-4 text-[#1F1235]">("갑") 소속사</h4>
+                                <div className="space-y-3 font-medium text-[13px] text-[#5B4E7A]">
+                                    <div className="flex"><span className="w-20 font-bold">법명/상호:</span> 글로벌아임 (아임모델)</div>
+                                    <div className="flex"><span className="w-20 font-bold">대표자:</span> 김대희 (인)</div>
+                                    <div className="flex"><span className="w-20 font-bold">주소:</span> 서울특별시 강남구 논현로 648 (우:06103)</div>
+                                    <div className="flex"><span className="w-20 font-bold">연락처:</span> 02-3443-4672</div>
                                 </div>
-                                <div className="mt-6 text-right">
-                                    <div className="inline-flex items-center justify-end gap-3">
-                                        <span className="text-2xl font-black text-black tracking-widest">김 대 희</span>
-                                        <img src="/company-stamp.png" alt="직인" className="w-20 h-20 object-contain opacity-100" />
+                                <div className="mt-8 text-right">
+                                    <div className="inline-flex items-center justify-end gap-3 px-4 py-2 border border-[#E8E0FA] rounded-2xl bg-white shadow-sm">
+                                        <span className="text-2xl font-black text-[#1F1235] tracking-widest">김 대 희</span>
+                                        <img src="/company-stamp.png" alt="직인" className="w-16 h-16 object-contain opacity-100 mix-blend-multiply" />
                                     </div>
                                 </div>
                             </div>
 
                             {/* 을 (회원) - 팝업 방식 입력 */}
-                            <div className="flex-1 p-5 rounded-xl border-2 border-blue-200 bg-blue-50">
-                                <h4 className="font-extrabold text-lg mb-1 text-blue-900">("을") 소속 모델</h4>
-                                <p className="text-xs text-blue-400 mb-4 font-semibold">각 항목을 터치하면 입력창이 열립니다 ✏️</p>
+                            <div className="flex-1 p-5 rounded-3xl border border-[#9333EA]/20 bg-[#F8F5FF]">
+                                <h4 className="font-black text-lg mb-1 text-[#9333EA]">("을") 소속 모델</h4>
+                                <p className="text-[10px] text-[#9CA3AF] mb-5 font-bold">각 항목을 터치하면 입력창이 열립니다 ✏️</p>
 
                                 {/* 팝업 방식 필드 목록 */}
-                                <div className="space-y-3 font-medium text-sm mb-6">
+                                <div className="space-y-4 font-medium text-[13px] mb-6">
                                     {popupFields.map(({ key, label }) => (
                                         <div key={key} className="flex items-center gap-2">
-                                            <span className="w-20 text-gray-500 whitespace-nowrap shrink-0">{label}:</span>
+                                            <span className="w-20 text-[#5B4E7A] font-bold whitespace-nowrap shrink-0">{label}:</span>
                                             <button
                                                 type="button"
                                                 onClick={() => setActivePopup(key)}
-                                                className={`flex-1 text-left border-b-2 px-2 py-1 rounded-t-md transition-all ${
+                                                className={`flex-1 text-left border-b border-[#E8E0FA] px-2 py-1.5 rounded-t-lg transition-all ${
                                                     contractData[key]
-                                                        ? 'border-blue-500 text-gray-900 font-semibold'
-                                                        : 'border-dashed border-gray-300 text-gray-400'
-                                                } hover:border-blue-400 hover:bg-blue-100/30`}
+                                                        ? 'border-[#9333EA] text-[#1F1235] font-black'
+                                                        : 'border-dashed border-[#9CA3AF]/40 text-[#9CA3AF]'
+                                                } hover:bg-[#9333EA]/5`}
                                             >
-                                                {contractData[key] || `${label} 터치하여 입력`}
+                                                {contractData[key] || `${label} 입력`}
                                             </button>
-                                            {contractData[key] && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActivePopup(key)}
-                                                    className="text-xs text-blue-500 font-bold hover:text-blue-700 whitespace-nowrap"
-                                                >
-                                                    수정
-                                                </button>
-                                            )}
                                         </div>
                                     ))}
                                 </div>
 
                                 {/* 서명 캔버스 */}
-                                <div className="border-2 border-blue-400 bg-white rounded-lg relative overflow-hidden">
-                                    <div className="absolute top-2 left-3 text-xs font-bold text-gray-400 pointer-events-none">여기에 정자로 서명해주세요</div>
+                                <div className="border border-[#9333EA]/20 bg-white rounded-2xl relative overflow-hidden shadow-inner">
+                                    <div className="absolute top-2 left-4 text-[10px] font-black text-[#9CA3AF] pointer-events-none uppercase">SIGNATURE</div>
                                     <SignatureCanvas 
                                         ref={sigCanvas}
-                                        penColor="black"
+                                        penColor="#1F1235"
                                         canvasProps={{ className: 'signature-canvas w-full h-32 md:h-40 cursor-crosshair' }} 
                                     />
                                     <button 
                                         onClick={clearSignature}
-                                        className="absolute bottom-2 right-2 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-2 rounded"
+                                        className="absolute bottom-2 right-2 text-[10px] bg-[#F8F5FF] hover:bg-[#EDE8FF] text-[#5B4E7A] font-black py-1.5 px-3 rounded-xl transition-all active:scale-95 border border-[#E8E0FA]"
                                     >
                                         지우기
                                     </button>
@@ -303,20 +296,20 @@ const ExclusiveContractModal = ({ isOpen, onClose, userName = '', userPhone = ''
                 </div>
 
                 {/* Footer Action */}
-                <div className="p-5 bg-white border-t border-gray-200">
+                <div className="p-6 bg-white border-t border-[#E8E0FA]">
                     <button 
                         onClick={handleSave}
                         disabled={loading}
-                        className="w-full bg-[#1D996D] hover:bg-[#15805a] text-white font-black text-lg py-4 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2"
+                        className="w-full bg-gradient-to-r from-[#9333EA] to-[#C084FC] hover:from-[#7C3AED] hover:to-[#9333EA] text-white font-black text-lg py-4.5 rounded-2xl transition-all shadow-xl shadow-[#9333EA]/20 flex items-center justify-center gap-2 active:scale-[0.98]"
                     >
                         {loading
                             ? <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                            : <span className="material-symbols-outlined">edit_square</span>
+                            : <span className="material-symbols-outlined text-[24px]">draw</span>
                         }
                         동의 및 전자 서명 제출하기
                     </button>
-                    <p className="text-center text-xs text-gray-400 mt-3 font-bold">
-                        * 제출된 계약서는 법적 효력을 가지며 서버에 안전하게 문서 데이터가 복구됩니다.
+                    <p className="text-center text-[11px] text-[#9CA3AF] mt-4 font-bold">
+                        * 제출된 계약서는 법적 효력을 가지며 아임모카 서버에 안전하게 보관됩니다.
                     </p>
                 </div>
             </div>

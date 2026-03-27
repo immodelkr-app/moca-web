@@ -111,11 +111,11 @@ const TourDiary = () => {
     const refreshMemos = () => loadDiaries();
 
     return (
-        <div className="p-6 pb-24 lg:pb-10 max-w-4xl mx-auto min-h-screen" style={{backgroundColor:'var(--moca-bg)'}}>
+        <div className="p-6 pb-24 lg:pb-10 max-w-4xl mx-auto min-h-screen bg-[#F8F5FF]">
             <header className="mb-8 pt-4">
                 <button
                     onClick={() => navigate('/agencies')}
-                    className="flex items-center gap-2 text-white/40 hover:text-white mb-6 transition-colors"
+                    className="flex items-center gap-2 text-[#9CA3AF] hover:text-[#9333EA] mb-6 transition-colors font-bold"
                 >
                     <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                     뒤로 가기
@@ -156,10 +156,10 @@ const TourDiary = () => {
 
                 {activeTab === 'diary' && (
                     <div className="ml-4 pl-1 mb-7 flex flex-col gap-1">
-                        <p className="text-white/80 text-sm lg:text-base font-semibold tracking-wide">
+                        <p className="text-[#5B4E7A] text-sm lg:text-base font-bold tracking-wide">
                             올해({new Date().getFullYear()}년) 다녀온 에이전시 방문 기록입니다.
                         </p>
-                        <p className="text-white/40 text-xs">꾸준한 기록은 캐스팅 성공의 지름길입니다 🚀</p>
+                        <p className="text-[#9CA3AF] text-xs font-medium">꾸준한 기록은 캐스팅 성공의 지름길입니다 🚀</p>
                     </div>
                 )}
 
@@ -172,11 +172,11 @@ const TourDiary = () => {
                         <div className="w-8 h-8 rounded-full border-2 border-[#6C63FF] border-t-transparent animate-spin" />
                     </div>
                 ) : Object.keys(groupedMemos).length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-24 bg-[#1a1a24] rounded-3xl border border-white/5 shadow-xl">
-                        <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                            <span className="material-symbols-outlined text-[40px] text-white/20">edit_note</span>
+                    <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[32px] border border-[#E8E0FA] shadow-lg shadow-[#9333EA]/5">
+                        <div className="w-20 h-20 rounded-full bg-[#F3E8FF] flex items-center justify-center mb-6">
+                            <span className="material-symbols-outlined text-[40px] text-[#9333EA]">edit_note</span>
                         </div>
-                        <p className="text-white/60 font-medium text-center leading-relaxed">
+                        <p className="text-[#5B4E7A] font-bold text-center leading-relaxed">
                             아직 올해 작성된 방문 기록이 없습니다.<br />
                             에이전시 상세정보에서 일지를 남겨보세요!
                         </p>
@@ -191,12 +191,12 @@ const TourDiary = () => {
                     <div className="space-y-8">
                         {Object.entries(groupedMemos).map(([date, memos]) => (
                             <div key={date} className="relative">
-                                <div className="sticky top-0 z-10 py-4 mb-4 border-b border-[#E8E0FA] flex items-center gap-3" style={{backgroundColor:'var(--moca-bg)'}}>
-                                    <span className="material-symbols-outlined text-[#6C63FF]">calendar_today</span>
-                                    <h2 className="text-lg font-bold text-[#1F1235] tracking-wide">
+                                <div className="sticky top-0 z-10 py-5 mb-5 border-b border-[#E8E0FA] flex items-center gap-3 bg-[#F8F5FF]/90 backdrop-blur-sm">
+                                    <span className="material-symbols-outlined text-[#9333EA] text-[20px]">calendar_today</span>
+                                    <h2 className="text-lg font-black text-[#1F1235] tracking-tight">
                                         {date}
                                     </h2>
-                                    <span className="px-2.5 py-1 rounded-full bg-[#F3E8FF] text-xs text-[#7C3AED] font-bold ml-auto">
+                                    <span className="px-3 py-1.5 rounded-full bg-white border border-[#E8E0FA] text-[11px] text-[#5B4E7A] font-black ml-auto shadow-sm">
                                         {getTimeAgoStr(date)}
                                     </span>
                                 </div>
@@ -220,16 +220,16 @@ const TourDiary = () => {
                                                     <button
                                                         onClick={() => setEditingMemo(memo)}
                                                         title="수정"
-                                                        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-amber-300 hover:bg-amber-400/10 transition-colors"
+                                                        className="w-8 h-8 rounded-full flex items-center justify-center text-[#9CA3AF] hover:text-[#9333EA] hover:bg-[#F3E8FF] transition-all"
                                                     >
-                                                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                                                        <span className="material-symbols-outlined text-[18px]">edit</span>
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(memo)}
                                                         title="삭제"
-                                                        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                                                        className="w-8 h-8 rounded-full flex items-center justify-center text-[#9CA3AF] hover:text-red-500 hover:bg-red-50 transition-all"
                                                     >
-                                                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                                                        <span className="material-symbols-outlined text-[18px]">delete</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -255,17 +255,17 @@ const TourDiary = () => {
                         <div className="w-8 h-8 rounded-full border-2 border-[#6C63FF] border-t-transparent animate-spin" />
                     </div>
                 ) : sendHistory.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-24 bg-[#1a1a24] rounded-3xl border border-white/5 shadow-xl">
-                        <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                            <span className="material-symbols-outlined text-[40px] text-white/20">mail</span>
+                    <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[32px] border border-[#E8E0FA] shadow-lg shadow-[#9333EA]/5">
+                        <div className="w-20 h-20 rounded-full bg-[#F3E8FF] flex items-center justify-center mb-6">
+                            <span className="material-symbols-outlined text-[40px] text-[#9333EA]">mail</span>
                         </div>
-                        <p className="text-white/60 font-medium text-center leading-relaxed">
+                        <p className="text-[#5B4E7A] font-bold text-center leading-relaxed">
                             아직 발송된 메일이 없습니다.<br />
                             에이전시에 프로필을 발송해보세요!
                         </p>
                         <button
                             onClick={() => navigate('/agencies')}
-                            className="mt-8 px-6 py-3 bg-[#6C63FF] hover:bg-[#5a52d5] text-white rounded-xl font-bold text-sm transition-colors shadow-lg"
+                            className="mt-8 px-8 py-3.5 bg-[#9333EA] hover:bg-[#7C3AED] text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-[#9333EA]/20 active:scale-95"
                         >
                             에이전시 찾아보기
                         </button>
@@ -276,28 +276,28 @@ const TourDiary = () => {
                     return (
                         <div className="space-y-4">
                             {/* 프로필 발송현황 */}
-                            <div className="bg-[#1a1a24] border border-white/10 rounded-3xl p-5 mb-2 shadow-xl">
-                                <h2 className="text-sm font-bold text-white/40 mb-3 uppercase tracking-widest">프로필 발송현황</h2>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex-1 bg-white/5 rounded-2xl p-4 text-center">
-                                        <p className="text-white/40 text-xs font-bold mb-1">발송횟수</p>
-                                        <p className="text-2xl font-black text-[#818CF8]">
+                            <div className="bg-white border border-[#E8E0FA] rounded-[32px] p-6 mb-4 shadow-sm">
+                                <h2 className="text-xs font-black text-[#9CA3AF] mb-4 uppercase tracking-[0.2em] ml-1">PROFILE STATS</h2>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex-1 bg-[#F8F5FF] rounded-2xl p-5 text-center border border-[#E8E0FA]">
+                                        <p className="text-[#5B4E7A] text-[11px] font-black mb-1.5 uppercase tracking-wider">Mails Sent</p>
+                                        <p className="text-2xl font-black text-[#9333EA]">
                                             {monthlyCount}
-                                            <span className="text-sm font-medium text-white/40 ml-1">
+                                            <span className="text-[13px] font-bold text-[#9CA3AF] ml-1.5">
                                                 {grade === 'GOLD' ? '회' : `/ ${SILVER_MONTHLY_LIMIT}회`}
                                             </span>
                                         </p>
                                     </div>
-                                    <div className="flex-1 bg-white/5 rounded-2xl p-4 text-center">
-                                        <p className="text-white/40 text-xs font-bold mb-1">총발송처</p>
-                                        <p className="text-2xl font-black text-[#34D399]">
+                                    <div className="flex-1 bg-[#F8F5FF] rounded-2xl p-5 text-center border border-[#E8E0FA]">
+                                        <p className="text-[#5B4E7A] text-[11px] font-black mb-1.5 uppercase tracking-wider">Total Targets</p>
+                                        <p className="text-2xl font-black text-[#10B981]">
                                             {sendHistory.length}
-                                            <span className="text-sm font-medium text-white/40 ml-1">곳</span>
+                                            <span className="text-[13px] font-bold text-[#9CA3AF] ml-1.5">곳</span>
                                         </p>
                                     </div>
-                                    <div className="flex-1 bg-white/5 rounded-2xl p-4 text-center">
-                                        <p className="text-white/40 text-xs font-bold mb-1">최근발송처</p>
-                                        <p className="text-sm font-black text-[#F472B6] truncate px-1 leading-tight mt-1">
+                                    <div className="flex-1 bg-[#F8F5FF] rounded-2xl p-5 text-center border border-[#E8E0FA]">
+                                        <p className="text-[#5B4E7A] text-[11px] font-black mb-1.5 uppercase tracking-wider">Most Recent</p>
+                                        <p className="text-sm font-black text-[#EC4899] truncate leading-tight mt-1 px-1">
                                             {sendHistory[0]?.agencyName || '-'}
                                         </p>
                                     </div>
@@ -313,18 +313,18 @@ const TourDiary = () => {
                                     return (
                                         <div
                                             key={idx}
-                                            className="bg-[#1a1a24] border border-white/5 rounded-2xl p-5 flex items-center gap-4 hover:border-[#6C63FF]/30 transition-all group overflow-hidden relative"
+                                            className="bg-white border border-[#E8E0FA] rounded-[24px] p-5 flex items-center gap-4 hover:border-[#9333EA]/30 transition-all group overflow-hidden relative shadow-sm"
                                         >
-                                            <div className="absolute top-0 left-0 w-1 h-full bg-[#34D399]/30 group-hover:bg-[#34D399] transition-colors" />
-                                            <div className="w-10 h-10 rounded-xl bg-[#34D399]/10 flex items-center justify-center shrink-0 ml-2">
-                                                <span className="material-symbols-outlined text-[20px] text-[#34D399]">mark_email_read</span>
+                                            <div className="absolute top-0 left-0 w-1.5 h-full bg-[#10B981]/20 group-hover:bg-[#10B981] transition-colors" />
+                                            <div className="w-11 h-11 rounded-2xl bg-[#10B981]/10 flex items-center justify-center shrink-0 ml-1 transition-transform group-hover:scale-105">
+                                                <span className="material-symbols-outlined text-[20px] text-[#10B981]">mark_email_read</span>
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="text-white font-black text-sm truncate">{send.agencyName}</h3>
-                                                <p className="text-white/40 text-xs mt-0.5">{dateStr}</p>
+                                                <h3 className="text-[#1F1235] font-black text-[15px] truncate">{send.agencyName}</h3>
+                                                <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold uppercase tracking-wider">{dateStr}</p>
                                             </div>
                                             <div className="shrink-0 text-right">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${isThisMonth ? 'bg-[#34D399]/15 text-[#34D399]' : 'bg-white/5 text-white/30'}`}>
+                                                <span className={`px-3 py-1.5 rounded-full text-[11px] font-black ${isThisMonth ? 'bg-[#10B981]/10 text-[#10B981]' : 'bg-[#F8F5FF] border border-[#E8E0FA] text-[#9CA3AF]'}`}>
                                                     {getTimeAgoStr(send.sentAt.split('T')[0])}
                                                 </span>
                                             </div>
@@ -341,10 +341,10 @@ const TourDiary = () => {
             {activeTab === 'diary' && (
                 <button
                     onClick={() => setIsQuickAddOpen(true)}
-                    className="fixed bottom-32 lg:bottom-12 right-6 w-12 h-12 bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white rounded-full flex items-center justify-center shadow-lg shadow-[#6C63FF]/40 hover:scale-110 active:scale-95 transition-transform z-40 group"
+                    className="fixed bottom-32 lg:bottom-12 right-6 w-14 h-14 bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white rounded-full flex items-center justify-center shadow-2xl shadow-[#9333EA]/40 hover:scale-110 active:scale-95 transition-all z-40 group border-2 border-white/20"
                 >
                     <span className="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <span className="material-symbols-outlined text-[24px]">edit</span>
+                    <span className="material-symbols-outlined text-[26px] font-black">edit</span>
                 </button>
             )}
 

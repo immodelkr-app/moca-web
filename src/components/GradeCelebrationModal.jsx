@@ -39,10 +39,10 @@ const GradeCelebrationModal = () => {
             />
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-sm bg-[#15151A] border-2 border-[#FFD700]/30 rounded-[32px] p-8 flex flex-col items-center text-center shadow-2xl shadow-[#FFD700]/20 animate-slideUp overflow-hidden">
+            <div className="relative w-full max-w-sm bg-white border border-[#E8E0FA] rounded-[40px] p-10 flex flex-col items-center text-center shadow-2xl shadow-[#FFD700]/10 animate-slideUp overflow-hidden">
 
                 {/* Background glow effect */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-[#FFD700]/20 blur-[60px] rounded-full pointer-events-none" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-[#FFD700]/5 blur-[60px] rounded-full pointer-events-none" />
 
                 <div className="relative mb-6">
                     <div className="w-24 h-24 bg-gradient-to-br from-[#FFF5C3] via-[#FFD700] to-[#E5B800] rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(255,215,0,0.5)] animate-bounce-slight">
@@ -53,28 +53,28 @@ const GradeCelebrationModal = () => {
                     <span className="absolute bottom-2 left-0 text-xl animate-pulse">✨</span>
                 </div>
 
-                <h2 className="relative text-2xl font-black text-white mb-2 tracking-tight">
+                <h2 className="relative text-2xl font-black text-[#1F1235] mb-2 tracking-tight">
                     축하합니다! 🎉
                 </h2>
 
                 <div className="relative mb-6 text-center">
                     <h3 className="text-[22px] font-black tracking-tight leading-tight">
-                        <span className="text-white">이제 </span>
-                        <span className="bg-gradient-to-r from-[#FFD700] via-[#FFE55C] to-[#E5B800] bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(255,215,0,0.4)]">
+                        <span className="text-[#1F1235]">이제 </span>
+                        <span className="bg-gradient-to-r from-[#FFD700] via-[#FBC02D] to-[#F9A825] bg-clip-text text-transparent drop-shadow-sm font-black">
                             골드 모카
                         </span>
-                        <span className="text-white"> 입니다</span>
+                        <span className="text-[#1F1235]"> 입니다</span>
                     </h3>
                 </div>
 
-                <p className="relative text-white/70 text-sm leading-relaxed mb-8 break-keep">
-                    SILVER 제약 없이 에이전시 정보를 자유롭게 열람하고, 특별한 골드 멤버십 혜택을 마음껏 누려보세요. 지금부터 진정한 나만의 캐스팅 매니저가 시작됩니다.
+                <p className="relative text-[#5B4E7A] text-[14px] leading-relaxed mb-10 break-keep font-medium">
+                    일일 조회 제한 없이 에이전시 정보를 자유롭게 확인하고, 특별한 골드 멤버십 혜택을 마음껏 누려보세요. 지금부터 진짜 수익 창출을 위한 모델 활동이 시작됩니다.
                 </p>
 
                 <div className="relative w-full mt-2">
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#FFD700] to-[#E5B800] text-black font-black text-[16px] tracking-wide shadow-lg shadow-[#FFD700]/30 hover:scale-[1.02] hover:shadow-[#FFD700]/50 transition-all duration-300"
+                        className="w-full py-4.5 rounded-[20px] bg-gradient-to-r from-[#FFD700] to-[#F9A825] text-[#1F1235] font-black text-base shadow-xl shadow-[#FFD700]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
                         확인
                     </button>
