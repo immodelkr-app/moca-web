@@ -111,7 +111,7 @@ const TourDiary = () => {
     const refreshMemos = () => loadDiaries();
 
     return (
-        <div className="p-6 pb-24 lg:pb-10 max-w-4xl mx-auto min-h-screen bg-[#0a0a0f]">
+        <div className="p-6 pb-24 lg:pb-10 max-w-4xl mx-auto min-h-screen" style={{backgroundColor:'var(--moca-bg)'}}>
             <header className="mb-8 pt-4">
                 <button
                     onClick={() => navigate('/agencies')}
@@ -123,12 +123,12 @@ const TourDiary = () => {
                 <div className="flex items-center gap-3 mb-3 justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#6C63FF] to-[#A78BFA]" />
-                        <h1 className="text-xl lg:text-2xl font-bold text-white tracking-tight">활동 기록 모아보기</h1>
+                        <h1 className="text-xl lg:text-2xl font-bold text-[#1F1235] tracking-tight">활동 기록 모아보기</h1>
                     </div>
                     {activeTab === 'diary' && (
                         <button
                             onClick={() => navigate('/home/calendar')}
-                            className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors flex items-center gap-1"
+                            className="px-4 py-2 bg-[#F3E8FF] hover:bg-[#EDE8FF] border border-[#E8E0FA] rounded-xl text-xs font-bold text-[#7C3AED] transition-colors flex items-center gap-1"
                         >
                             <span className="material-symbols-outlined text-[16px]">calendar_month</span>
                             캘린더 뷰
@@ -137,17 +137,17 @@ const TourDiary = () => {
                 </div>
 
                 {/* 탭 */}
-                <div className="flex gap-2 mb-6 bg-white/5 p-1 rounded-2xl">
+                <div className="flex gap-2 mb-6 bg-[#F3E8FF] p-1 rounded-2xl">
                     <button
                         onClick={() => setActiveTab('diary')}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'diary' ? 'bg-[#6C63FF] text-white shadow-lg shadow-[#6C63FF]/30' : 'text-white/40 hover:text-white/70'}`}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'diary' ? 'bg-[#9333EA] text-white shadow-lg shadow-[#9333EA]/30' : 'text-[#5B4E7A] hover:text-[#1F1235]'}`}
                     >
                         <span className="material-symbols-outlined text-[16px]">edit_note</span>
                         투어 일지
                     </button>
                     <button
                         onClick={() => setActiveTab('email')}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'email' ? 'bg-[#6C63FF] text-white shadow-lg shadow-[#6C63FF]/30' : 'text-white/40 hover:text-white/70'}`}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'email' ? 'bg-[#9333EA] text-white shadow-lg shadow-[#9333EA]/30' : 'text-[#5B4E7A] hover:text-[#1F1235]'}`}
                     >
                         <span className="material-symbols-outlined text-[16px]">mail</span>
                         메일 발송 내역
@@ -191,12 +191,12 @@ const TourDiary = () => {
                     <div className="space-y-8">
                         {Object.entries(groupedMemos).map(([date, memos]) => (
                             <div key={date} className="relative">
-                                <div className="sticky top-0 z-10 bg-[#0a0a0f]/95 backdrop-blur-md py-4 mb-4 border-b border-white/5 flex items-center gap-3">
+                                <div className="sticky top-0 z-10 py-4 mb-4 border-b border-[#E8E0FA] flex items-center gap-3" style={{backgroundColor:'var(--moca-bg)'}}>
                                     <span className="material-symbols-outlined text-[#6C63FF]">calendar_today</span>
-                                    <h2 className="text-lg font-bold text-white tracking-wide">
+                                    <h2 className="text-lg font-bold text-[#1F1235] tracking-wide">
                                         {date}
                                     </h2>
-                                    <span className="px-2.5 py-1 rounded-full bg-white/5 text-xs text-white/40 font-bold ml-auto">
+                                    <span className="px-2.5 py-1 rounded-full bg-[#F3E8FF] text-xs text-[#7C3AED] font-bold ml-auto">
                                         {getTimeAgoStr(date)}
                                     </span>
                                 </div>
@@ -205,7 +205,7 @@ const TourDiary = () => {
                                     {memos.map((memo) => (
                                         <div
                                             key={memo.id}
-                                            className="bg-[#1a1a24] border border-white/5 rounded-2xl p-6 hover:border-[#6C63FF]/30 hover:bg-[#1a1a24]/80 transition-all group overflow-hidden relative"
+                                            className="bg-white border border-[#E8E0FA] rounded-2xl p-6 hover:border-[#9333EA]/30 hover:shadow-sm transition-all group overflow-hidden relative"
                                         >
                                             <div className="absolute top-0 left-0 w-1 h-full bg-[#6C63FF]/30 group-hover:bg-[#6C63FF] transition-colors" />
 
@@ -214,7 +214,7 @@ const TourDiary = () => {
                                                     <div className="w-8 h-8 rounded-lg bg-[#6C63FF]/10 flex items-center justify-center shrink-0">
                                                         <span className="material-symbols-outlined text-[16px] text-[#A78BFA]">apartment</span>
                                                     </div>
-                                                    <h3 className="text-white font-black text-base truncate">{memo.agencyName}</h3>
+                                                    <h3 className="text-[#1F1235] font-black text-base truncate">{memo.agencyName}</h3>
                                                 </div>
                                                 <div className="flex items-center gap-1 ml-2 shrink-0">
                                                     <button
@@ -235,7 +235,7 @@ const TourDiary = () => {
                                             </div>
 
                                             <div className="pl-2">
-                                                <p className="text-white/70 text-sm whitespace-pre-wrap leading-relaxed min-h-[60px]">
+                                                <p className="text-[#5B4E7A] text-sm whitespace-pre-wrap leading-relaxed min-h-[60px]">
                                                     {memo.content}
                                                 </p>
                                             </div>

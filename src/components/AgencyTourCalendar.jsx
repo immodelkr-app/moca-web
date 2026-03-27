@@ -145,20 +145,20 @@ const AgencyTourCalendar = () => {
 
 
     return (
-        <div className="p-4 lg:p-6 pb-28 lg:pb-10 max-w-5xl mx-auto min-h-screen bg-[#0a0a0f]">
+        <div className="p-4 lg:p-6 pb-28 lg:pb-10 max-w-5xl mx-auto min-h-screen" style={{backgroundColor:'var(--moca-bg)'}}>
             {/* Header */}
             <header className="mb-6 pt-2">
                 <div className="flex items-center justify-between mb-6">
                     <button
                         onClick={() => navigate('/home/diary')}
-                        className="flex items-center gap-2 text-white/40 hover:text-white transition-colors"
+                        className="flex items-center gap-2 text-[#9CA3AF] hover:text-[#1F1235] transition-colors"
                     >
                         <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                         리스트로 보기
                     </button>
                     <button
                         onClick={handleToday}
-                        className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-white/80 hover:bg-white/10 transition-colors"
+                        className="px-3 py-1.5 rounded-full bg-[#F3E8FF] border border-[#E8E0FA] text-xs text-[#7C3AED] font-bold hover:bg-[#EDE8FF] transition-colors"
                     >
                         오늘
                     </button>
@@ -167,7 +167,7 @@ const AgencyTourCalendar = () => {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-1 h-8 rounded-full bg-gradient-to-b from-[#6C63FF] to-[#A78BFA]" />
-                        <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                        <h1 className="text-2xl font-black text-[#1F1235] tracking-tight flex items-center gap-2">
                             투어 캘린더🗓️
                         </h1>
                     </div>
@@ -175,24 +175,24 @@ const AgencyTourCalendar = () => {
             </header>
 
             {/* Calendar View */}
-            <div className="bg-[#1a1a24] border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative">
+            <div className="bg-white border border-[#E8E0FA] rounded-3xl overflow-hidden shadow-sm relative">
                 {/* Big Season Legend */}
-                <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20 flex items-center gap-1.5 sm:gap-2 bg-[#1a1a24]/90 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-yellow-300/60 shadow-lg shadow-yellow-400/20">
+                <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20 flex items-center gap-1.5 sm:gap-2 bg-white/95 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-yellow-300/60 shadow-lg shadow-yellow-400/20">
                     <div className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,1)] animate-pulse" />
                     <span className="text-[9px] sm:text-[10px] font-bold text-yellow-300 tracking-wider">Big Season</span>
                 </div>
 
                 {/* Calendar Control */}
-                <div className="p-4 sm:p-6 border-b border-white/5 flex items-center justify-center gap-4 sm:gap-6 bg-[#1a1a24] sticky top-0 z-10 pt-10 sm:pt-6">
-                    <button onClick={handlePrevMonth} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all">
+                <div className="p-4 sm:p-6 border-b border-[#E8E0FA] flex items-center justify-center gap-4 sm:gap-6 bg-white sticky top-0 z-10 pt-10 sm:pt-6">
+                    <button onClick={handlePrevMonth} className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#7C3AED] hover:bg-[#EDE8FF] transition-all">
                         <span className="material-symbols-outlined text-[24px]">chevron_left</span>
                     </button>
 
-                    <h2 className="text-xl sm:text-2xl font-black text-white min-w-[140px] text-center tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-black text-[#1F1235] min-w-[140px] text-center tracking-tight">
                         {year}년 {month + 1}월
                     </h2>
 
-                    <button onClick={handleNextMonth} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all">
+                    <button onClick={handleNextMonth} className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#7C3AED] hover:bg-[#EDE8FF] transition-all">
                         <span className="material-symbols-outlined text-[24px]">chevron_right</span>
                     </button>
                 </div>
@@ -206,7 +206,7 @@ const AgencyTourCalendar = () => {
                         {/* Days of Week */}
                         <div className="grid grid-cols-7 mb-2">
                             {['일', '월', '화', '수', '목', '금', '토'].map((dayName, idx) => (
-                                <div key={dayName} className={`text-center py-2 text-xs font-bold ${idx === 0 ? 'text-red-400' : idx === 6 ? 'text-blue-400' : 'text-white/40'}`}>
+                                <div key={dayName} className={`text-center py-2 text-xs font-bold ${idx === 0 ? 'text-red-400' : idx === 6 ? 'text-blue-400' : 'text-[#9CA3AF]'}`}>
                                     {dayName}
                                 </div>
                             ))}
@@ -230,9 +230,9 @@ const AgencyTourCalendar = () => {
                                         onClick={() => handleDayClick(day)}
                                         className={`
                                             relative flex flex-col min-h-[80px] sm:min-h-[100px] rounded-xl border p-1 sm:p-2 cursor-pointer transition-all group overflow-hidden
-                                            ${isCurrentMonth ? 'bg-white/5 hover:bg-white/10' : 'bg-transparent opacity-30 pointer-events-none'}
-                                            ${isToday ? 'border-[#6C63FF] bg-[#6C63FF]/10 z-10' :
-                                                (isSeason && isCurrentMonth) ? 'border-yellow-400/80 bg-yellow-400/10 shadow-[0_0_10px_rgba(250,204,21,0.2)] z-0' : 'border-white/5'}
+                                            ${isCurrentMonth ? 'bg-[#F8F5FF] hover:bg-[#F3E8FF]' : 'bg-transparent opacity-30 pointer-events-none'}
+                                            ${isToday ? 'border-[#9333EA] bg-[#F3E8FF] z-10' :
+                                                (isSeason && isCurrentMonth) ? 'border-yellow-400/80 bg-yellow-50 shadow-[0_0_10px_rgba(250,204,21,0.2)] z-0' : 'border-[#E8E0FA]'}
                                         `}
                                     >
                                         {/* Big Season Glow Effect */}
@@ -244,10 +244,10 @@ const AgencyTourCalendar = () => {
                                         <div className="flex items-center justify-between w-full z-10 relative">
                                             <span className={`
                                                 text-sm font-bold flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full
-                                                ${isToday ? 'bg-[#6C63FF] text-white' : ''}
+                                                ${isToday ? 'bg-[#9333EA] text-white' : ''}
                                                 ${!isToday && (isSunday || isHolidayDay) ? 'text-red-400' : ''}
                                                 ${!isToday && isSaturday && !isHolidayDay ? 'text-blue-400' : ''}
-                                                ${!isToday && !isSunday && !isSaturday && !isHolidayDay ? 'text-white/80' : ''}
+                                                ${!isToday && !isSunday && !isSaturday && !isHolidayDay ? 'text-[#1F1235]' : ''}
                                             `}>
                                                 {day.getDate()}
                                             </span>
@@ -261,7 +261,7 @@ const AgencyTourCalendar = () => {
                                                 </div>
                                             ))}
                                             {dayDiaries.length > 3 && (
-                                                <div className="text-[9px] text-white/40 pl-1 font-bold">
+                                                <div className="text-[9px] text-[#9CA3AF] pl-1 font-bold">
                                                     +{dayDiaries.length - 3} 더보기
                                                 </div>
                                             )}

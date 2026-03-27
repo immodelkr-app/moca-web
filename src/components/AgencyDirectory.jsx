@@ -115,7 +115,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
     const userGrade = getUserGrade();
 
     return (
-        <div className={`relative rounded-2xl border ${color.border} bg-gradient-to-br ${color.bg} backdrop-blur-sm p-5 flex flex-col gap-4 hover:scale-[1.01] transition-transform duration-200 overflow-hidden`}>
+        <div className={`relative rounded-2xl border ${color.border} bg-white p-5 flex flex-col gap-4 hover:scale-[1.01] hover:shadow-md transition-all duration-200 overflow-hidden shadow-sm`}>
             {/* Number badge */}
             <div className={`absolute top-4 right-4 w-7 h-7 rounded-full ${color.dot} flex items-center justify-center`}>
                 <span className="text-white text-[11px] font-black">{index + 1}</span>
@@ -128,7 +128,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
                 </div>
                 <div>
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <h3 className="font-black text-base text-white leading-tight">{agency.name}</h3>
+                        <h3 className="font-black text-base text-[#1F1235] leading-tight">{agency.name}</h3>
                         {timeAgoStr && (
                             <span className="text-white/85 text-xs font-semibold bg-white/10 py-0.5 px-2 rounded-md border border-white/15 whitespace-nowrap">
                                 🕒 {timeAgoStr}
@@ -141,14 +141,14 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
 
             {/* Address */}
             <div className="flex items-start gap-2.5">
-                <span className="material-symbols-outlined text-[16px] text-white/30 mt-0.5 flex-shrink-0">location_on</span>
-                <p className="text-white text-sm leading-relaxed">{agency.address}</p>
+                <span className="material-symbols-outlined text-[16px] text-[#9CA3AF] mt-0.5 flex-shrink-0">location_on</span>
+                <p className="text-[#1F1235] text-sm leading-relaxed">{agency.address}</p>
             </div>
 
             {/* Phone */}
             {agency.phone && (
                 <a href={`tel:${agency.phone}`} className="flex items-center gap-2.5 group">
-                    <span className="material-symbols-outlined text-[16px] text-white/30 flex-shrink-0">call</span>
+                    <span className="material-symbols-outlined text-[16px] text-[#9CA3AF] flex-shrink-0">call</span>
                     <span className={`text-sm font-bold ${color.accent} group-hover:underline`}>{agency.phone}</span>
                 </a>
             )}
@@ -156,7 +156,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
             {/* Email (Gold Members Only) */}
             {userGrade === 'GOLD' && agency.email && (
                 <a href={`mailto:${agency.email}`} className="flex items-center gap-2.5 group">
-                    <span className="material-symbols-outlined text-[16px] text-white/30 flex-shrink-0">mail</span>
+                    <span className="material-symbols-outlined text-[16px] text-[#9CA3AF] flex-shrink-0">mail</span>
                     <span className={`text-sm font-bold ${color.accent} group-hover:underline`}>{agency.email}</span>
                 </a>
             )}
@@ -169,20 +169,20 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
                         target="_blank"
                         rel="noreferrer"
                         onClick={(e) => onAction(e, agency, naverMapsUrl)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors cursor-pointer"
                     >
                         <span className="text-[13px] font-black text-[#03C75A]">N</span>
-                        <span className="text-white/60 text-[11px] font-bold">네이버 지도</span>
+                        <span className="text-[#5B4E7A] text-[11px] font-bold">네이버 지도</span>
                     </a>
                     <a
                         href={kakaoMapsUrl}
                         target="_blank"
                         rel="noreferrer"
                         onClick={(e) => onAction(e, agency, kakaoMapsUrl)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors cursor-pointer"
                     >
                         <span className="material-symbols-outlined text-[16px] text-yellow-400">map</span>
-                        <span className="text-white/60 text-[11px] font-bold">카카오 지도</span>
+                        <span className="text-[#5B4E7A] text-[11px] font-bold">카카오 지도</span>
                     </a>
                 </div>
                 <button
@@ -379,11 +379,7 @@ const AgencyDirectory = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
-            {/* Ambient background */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-64 bg-[#6C63FF]/10 blur-[120px]" />
-            </div>
+        <div className="min-h-screen flex flex-col" style={{backgroundColor:'var(--moca-bg)',color:'var(--moca-text)'}}>
 
             {/* User Status Badge (Top Right) */}
 
@@ -395,14 +391,14 @@ const AgencyDirectory = () => {
                     <div className="flex items-center gap-3">
                         <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#6C63FF] to-[#A78BFA]" />
                         <div>
-                            <h1 className="text-xl lg:text-2xl font-black text-white tracking-tight">에이전시 리스트</h1>
-                            <p className="text-white/30 text-xs mt-0.5">총 {agencies.length}개 에이전시 등록됨</p>
+                            <h1 className="text-xl lg:text-2xl font-black text-[#1F1235] tracking-tight">에이전시 리스트</h1>
+                            <p className="text-[#9CA3AF] text-xs mt-0.5">총 {agencies.length}개 에이전시 등록됨</p>
                         </div>
                     </div>
                     {/* Grade Badge */}
-                    <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-3 py-1.5">
+                    <div className="flex items-center gap-1.5 bg-[#F3E8FF] border border-[#E8E0FA] rounded-full px-3 py-1.5">
                         <span className="text-sm">{GRADE_EMOJI[grade] || '🌱'}</span>
-                        <span className="text-white/70 text-xs font-bold">{grade || 'BASIC'}</span>
+                        <span className="text-[#7C3AED] text-xs font-bold">{grade || 'BASIC'}</span>
                     </div>
                 </div>
 
@@ -465,13 +461,13 @@ const AgencyDirectory = () => {
 
                 {/* Search bar */}
                 <div className="relative max-w-2xl">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[18px] text-white/30">search</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[18px] text-[#9CA3AF]">search</span>
                     <input
                         type="text"
                         placeholder="에이전시 이름 또는 주소 검색..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white text-sm placeholder-white/25 focus:outline-none focus:border-[#6C63FF]/50 transition-all font-medium"
+                        className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white border border-[#E8E0FA] text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA]/50 focus:ring-2 focus:ring-[#9333EA]/10 transition-all font-medium shadow-sm"
                     />
                     {search && (
                         <button onClick={() => setSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors">
@@ -527,15 +523,15 @@ const AgencyDirectory = () => {
             {/* Toast 알림 */}
             {toast && (
                 <div className={`fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 max-w-[320px] w-[90%] border transition-all ${toast.type === 'success'
-                    ? 'bg-[#0d1f18] border-emerald-500/30'
+                    ? 'bg-white border-emerald-300'
                     : toast.type === 'error'
-                        ? 'bg-[#1f0d0d] border-red-500/30'
-                        : 'bg-[#12121e] border-[#6C63FF]/30'
+                        ? 'bg-white border-red-300'
+                        : 'bg-white border-[#E8E0FA]'
                     }`}>
-                    <span className={`material-symbols-outlined text-[20px] flex-shrink-0 ${toast.type === 'success' ? 'text-emerald-400' : toast.type === 'error' ? 'text-red-400' : 'text-[#818CF8]'}`}>
+                    <span className={`material-symbols-outlined text-[20px] flex-shrink-0 ${toast.type === 'success' ? 'text-emerald-500' : toast.type === 'error' ? 'text-red-500' : 'text-[#9333EA]'}`}>
                         {toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : 'info'}
                     </span>
-                    <p className="text-white text-sm font-bold leading-snug">{toast.message}</p>
+                    <p className="text-[#1F1235] text-sm font-bold leading-snug">{toast.message}</p>
                 </div>
             )}
 

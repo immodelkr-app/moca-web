@@ -101,16 +101,16 @@ END:VCALENDAR`;
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
             onClick={handleBackdropClick}
         >
-            <div className="w-full max-w-md bg-[#1a1a20] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
+            <div className="w-full max-w-md bg-white border border-[#E8E0FA] rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
                 {/* Header */}
-                <div className="p-5 border-b border-white/10 flex items-center justify-between bg-[#1a1a20]">
+                <div className="p-5 border-b border-[#E8E0FA] flex items-center justify-between bg-[#F8F5FF]">
                     <div>
-                        <h2 className="text-lg font-bold text-white leading-tight">{agency.name}</h2>
-                        <span className="text-xs text-white/40">방문 일지</span>
+                        <h2 className="text-lg font-bold text-[#1F1235] leading-tight">{agency.name}</h2>
+                        <span className="text-xs text-[#9CA3AF]">방문 일지</span>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                        className="w-8 h-8 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#9CA3AF] hover:text-[#7C3AED] hover:bg-[#EDE8FF] transition-colors"
                     >
                         <span className="material-symbols-outlined text-[20px]">close</span>
                     </button>
@@ -119,25 +119,25 @@ END:VCALENDAR`;
                 {/* Body - Scrollable */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-6">
                     {/* Input Form */}
-                    <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/5">
-                        <label className="block text-xs font-bold text-white/60 mb-1">새로운 기록 작성</label>
+                    <div className="space-y-3 bg-[#F8F5FF] p-4 rounded-xl border border-[#E8E0FA]">
+                        <label className="block text-xs font-bold text-[#5B4E7A] mb-1">새로운 기록 작성</label>
                         <input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#6C63FF]/50"
+                            className="w-full bg-white border border-[#E8E0FA] rounded-lg px-3 py-2 text-sm text-[#1F1235] focus:outline-none focus:border-[#9333EA]/50"
                         />
                         <textarea
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             placeholder="방문 내용, 특이사항, 미팅 결과 등을 기록하세요..."
-                            className="w-full h-24 bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-white resize-none focus:outline-none focus:border-[#6C63FF]/50 placeholder-white/20"
+                            className="w-full h-24 bg-white border border-[#E8E0FA] rounded-lg px-3 py-2 text-sm text-[#1F1235] resize-none focus:outline-none focus:border-[#9333EA]/50 placeholder-[#9CA3AF]"
                         />
                         <div className="flex justify-end">
                             <button
                                 onClick={handleSave}
                                 disabled={!content.trim() || isLoading}
-                                className="px-4 py-2 bg-[#6C63FF] hover:bg-[#5a52d5] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+                                className="px-4 py-2 bg-[#9333EA] hover:bg-[#7C3AED] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
                             >
                                 <span className="material-symbols-outlined text-[16px]">edit_note</span>
                                 {isLoading ? "저장 중..." : "기록 저장"}
@@ -148,19 +148,19 @@ END:VCALENDAR`;
                     {/* List */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-white/80">지난 기록 ({memos.length})</h3>
+                            <h3 className="text-sm font-bold text-[#1F1235]">지난 기록 ({memos.length})</h3>
                         </div>
 
                         {memos.length === 0 ? (
-                            <div className="text-center py-8 text-white/20 text-xs">
+                            <div className="text-center py-8 text-[#9CA3AF] text-xs">
                                 아직 기록된 내용이 없습니다.
                             </div>
                         ) : (
                             <div className="space-y-3">
                                 {memos.map(memo => (
-                                    <div key={memo.id} className="group relative bg-[#0a0a0f] border border-white/5 rounded-xl p-4 transition-colors hover:border-white/10">
+                                    <div key={memo.id} className="group relative bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl p-4 transition-colors hover:border-[#9333EA]/30">
                                         <div className="flex items-start justify-between mb-2">
-                                            <span className="text-[#6C63FF] text-xs font-bold bg-[#6C63FF]/10 px-2 py-0.5 rounded text-center">
+                                            <span className="text-[#9333EA] text-xs font-bold bg-[#F3E8FF] px-2 py-0.5 rounded text-center">
                                                 {memo.date}
                                             </span>
                                             <div className="flex items-center gap-1.5 transition-all">
@@ -180,8 +180,8 @@ END:VCALENDAR`;
                                                 </button>
                                             </div>
                                         </div>
-                                        <p className="text-white/80 text-sm whitespace-pre-wrap leading-relaxed">{memo.content}</p>
-                                        <div className="mt-2 text-[10px] text-white/20 text-right">
+                                        <p className="text-[#5B4E7A] text-sm whitespace-pre-wrap leading-relaxed">{memo.content}</p>
+                                        <div className="mt-2 text-[10px] text-[#9CA3AF] text-right">
                                             {new Date(memo.timestamp).toLocaleTimeString()} 작성
                                         </div>
                                     </div>

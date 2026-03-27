@@ -285,24 +285,19 @@ const SmartProfile = () => {
 
     return (
         <>
-        <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col">
-
-            {/* Ambient */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-56 bg-[#10B981]/8 blur-[120px]" />
-            </div>
+        <div className="min-h-screen flex flex-col" style={{backgroundColor:'var(--moca-bg)',color:'var(--moca-text)'}}>
 
             {/* Header */}
             <div className="relative z-10 px-5 pt-8 pb-4 flex items-center gap-3">
                 <button
                     onClick={() => navigate(-1)}
-                    className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors flex-shrink-0"
+                    className="w-9 h-9 rounded-xl bg-[#F3E8FF] border border-[#E8E0FA] flex items-center justify-center hover:bg-[#EDE8FF] transition-colors flex-shrink-0"
                 >
-                    <span className="material-symbols-outlined text-[20px] text-white/60">arrow_back</span>
+                    <span className="material-symbols-outlined text-[20px] text-[#7C3AED]">arrow_back</span>
                 </button>
                 <div>
-                    <h1 className="text-xl font-black text-white tracking-tight">나의 프로필 관리</h1>
-                    <p className="text-white/30 text-xs mt-0.5">등록하면 에이전시에 원클릭 지원 가능</p>
+                    <h1 className="text-xl font-black tracking-tight" style={{color:'var(--moca-text)'}}>나의 프로필 관리</h1>
+                    <p className="text-[#9CA3AF] text-xs mt-0.5">등록하면 에이전시에 원클릭 지원 가능</p>
                 </div>
             </div>
 
@@ -328,24 +323,24 @@ const SmartProfile = () => {
                 </div>
 
                 {/* ── 모델 프로필 ── */}
-                <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5">
+                <div className="bg-white border border-[#E8E0FA] rounded-2xl p-5 shadow-sm">
                     <div className="flex items-center gap-2 mb-4">
-                        <div className="w-7 h-7 rounded-lg bg-[#F59E0B]/20 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[15px] text-[#FCD34D]">straighten</span>
+                        <div className="w-7 h-7 rounded-lg bg-[#F3E8FF] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[15px] text-[#9333EA]">straighten</span>
                         </div>
-                        <h2 className="font-black text-white text-base">모델 프로필</h2>
+                        <h2 className="font-black text-[#1F1235] text-base">모델 프로필</h2>
                     </div>
 
                     {/* 이름 필드 추가 */}
                     <div className="space-y-1.5 mb-5">
-                        <label className="text-white/40 text-[11px] font-bold ml-1">이름 (본명) <span className="text-[#818CF8] font-black">*</span></label>
+                        <label className="text-[#5B4E7A] text-[11px] font-bold ml-1">이름 (본명) <span className="text-[#9333EA] font-black">*</span></label>
                         <input
                             type="text"
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
                             placeholder="예) 홍길동"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] transition-colors"
+                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-colors"
                         />
                     </div>
 
@@ -358,7 +353,7 @@ const SmartProfile = () => {
                             { name: 'shoe_size', label: '신발사이즈', unit: 'mm', placeholder: '270', type: 'number' },
                         ].map(field => (
                             <div key={field.name} className="space-y-1.5">
-                                <label className="text-white/40 text-[11px] font-bold ml-1">{field.label}</label>
+                                <label className="text-[#5B4E7A] text-[11px] font-bold ml-1">{field.label}</label>
                                 <div className="relative">
                                     <input
                                         type={field.type}
@@ -366,7 +361,7 @@ const SmartProfile = () => {
                                         value={formData[field.name]}
                                         onChange={handleChange}
                                         placeholder={field.placeholder}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#6C63FF] transition-colors text-center"
+                                        className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-3 py-2.5 text-[#1F1235] text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-colors text-center"
                                     />
                                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-white/25 text-[10px] font-bold">{field.unit}</span>
                                 </div>
@@ -375,29 +370,29 @@ const SmartProfile = () => {
                     </div>
 
                     {/* 경력 섹션 구분선 */}
-                    <div className="flex items-center gap-2 mb-4 pt-1 border-t border-white/8">
-                        <div className="w-6 h-6 rounded-lg bg-[#818CF8]/20 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[13px] text-[#818CF8]">workspace_premium</span>
+                    <div className="flex items-center gap-2 mb-4 pt-1 border-t border-[#E8E0FA]">
+                        <div className="w-6 h-6 rounded-lg bg-[#F3E8FF] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[13px] text-[#9333EA]">workspace_premium</span>
                         </div>
-                        <span className="text-white/60 text-xs font-black tracking-wide uppercase">경력</span>
+                        <span className="text-[#5B4E7A] text-xs font-black tracking-wide uppercase">경력</span>
                     </div>
 
                     {/* 광고모델 경력 */}
                     <div className="space-y-1.5 mb-3">
-                        <label className="text-white/40 text-[11px] font-bold ml-1">광고모델 경력</label>
+                        <label className="text-[#5B4E7A] text-[11px] font-bold ml-1">광고모델 경력</label>
                         <textarea
                             name="career_ad"
                             value={formData.career_ad}
                             onChange={handleChange}
                             placeholder="예) 삼성전자 갤럭시 광고, 롯데백화점 시즌 광고, KB국민은행 TV CF..."
                             rows={3}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#6C63FF] transition-colors resize-none leading-relaxed"
+                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-colors resize-none leading-relaxed"
                         />
                     </div>
 
                     {/* 그외 경력사항 */}
                     <div className="space-y-1.5">
-                        <label className="text-white/40 text-[11px] font-bold ml-1">그외 경력사항 <span className="text-white/25 font-normal">(방송·연극·패션쇼 대표작 기재)</span></label>
+                        <label className="text-[#5B4E7A] text-[11px] font-bold ml-1">그외 경력사항 <span className="text-[#9CA3AF] font-normal">(방송·연극·패션쇼 대표작 기재)</span></label>
                         <textarea
                             name="career_other"
                             value={formData.career_other}
@@ -410,15 +405,15 @@ const SmartProfile = () => {
                 </div>
 
                 {/* ── 프로필 링크 ── */}
-                <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5">
+                <div className="bg-white border border-[#E8E0FA] rounded-2xl p-5 shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="w-7 h-7 rounded-lg bg-[#4285F4]/20 flex items-center justify-center">
+                        <div className="w-7 h-7 rounded-lg bg-[#EBF5FF] flex items-center justify-center">
                             <span className="material-symbols-outlined text-[15px] text-[#4285F4]">add_to_drive</span>
                         </div>
-                        <h2 className="font-black text-white text-base">프로필</h2>
-                        <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-black">필수</span>
+                        <h2 className="font-black text-[#1F1235] text-base">프로필</h2>
+                        <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-500 text-[10px] font-black">필수</span>
                     </div>
-                    <p className="text-white/35 text-xs leading-relaxed mb-4">
+                    <p className="text-[#5B4E7A] text-xs leading-relaxed mb-4">
                         구글드라이브에서 파일 또는 폴더를 선택하면<br />링크가 자동으로 입력됩니다.
                     </p>
 
@@ -454,7 +449,7 @@ const SmartProfile = () => {
                             <span className={`material-symbols-outlined text-[16px] flex-shrink-0 ${isDriveUrl(formData.portfolio_link) ? 'text-emerald-400' : 'text-white/30'}`}>
                                 {isDriveUrl(formData.portfolio_link) ? 'check_circle' : 'link'}
                             </span>
-                            <p className="text-xs font-bold truncate flex-1 text-white/60">{formData.portfolio_link}</p>
+                            <p className="text-xs font-bold truncate flex-1 text-[#5B4E7A]">{formData.portfolio_link}</p>
                             <button
                                 onClick={() => setFormData(prev => ({ ...prev, portfolio_link: '' }))}
                                 className="text-white/30 hover:text-white/60 flex-shrink-0"
@@ -466,14 +461,14 @@ const SmartProfile = () => {
 
                     {!formData.portfolio_link && (
                         <div className="mt-2">
-                            <p className="text-white/60 text-sm text-center mb-2">또는 직접 링크 입력</p>
+                            <p className="text-[#9CA3AF] text-sm text-center mb-2">또는 직접 링크 입력</p>
                             <input
                                 type="url"
                                 name="portfolio_link"
                                 value={formData.portfolio_link}
                                 onChange={handleChange}
                                 placeholder="https://drive.google.com/..."
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-base placeholder-white/40 focus:outline-none focus:border-[#4285F4] transition-colors"
+                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-base placeholder-[#9CA3AF] focus:outline-none focus:border-[#4285F4] focus:ring-2 focus:ring-[#4285F4]/10 transition-colors"
                             />
                         </div>
                     )}
@@ -484,18 +479,18 @@ const SmartProfile = () => {
                     <div className="space-y-2.5">
                         <div className="flex items-center gap-2 px-1">
                             <span className="material-symbols-outlined text-[15px] text-[#818CF8]">preview</span>
-                            <p className="font-black text-white/50 text-xs tracking-wide uppercase">에이전시가 받을 이메일 미리보기</p>
+                            <p className="font-black text-[#5B4E7A] text-xs tracking-wide uppercase">에이전시가 받을 이메일 미리보기</p>
                         </div>
-                        <div className="bg-[#12121e] border border-[#6C63FF]/25 rounded-2xl overflow-hidden">
-                            <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02]">
-                                <p className="text-white/25 text-[11px] mb-0.5">발신: casting@immoca.kr</p>
-                                <p className="text-white text-sm font-black">
+                        <div className="bg-white border border-[#E8E0FA] rounded-2xl overflow-hidden shadow-sm">
+                            <div className="px-5 py-3 border-b border-[#E8E0FA] bg-[#F8F5FF]">
+                                <p className="text-[#9CA3AF] text-[11px] mb-0.5">발신: casting@immoca.kr</p>
+                                <p className="text-[#1F1235] text-sm font-black">
                                     광고모델 {formData.name || user?.name || user?.nickname}님의 프로필 정보입니다.
                                 </p>
                             </div>
                             <div className="px-5 py-4 space-y-3">
                                 <div>
-                                    <p className="font-black text-white text-base">{formData.name || user?.name || user?.nickname}</p>
+                                    <p className="font-black text-[#1F1235] text-base">{formData.name || user?.name || user?.nickname}</p>
                                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                                         {formData.age && <span className="text-white/40 text-xs">{formData.age}년생</span>}
                                         {formData.height && <span className="text-white/40 text-xs">키 {formData.height}cm</span>}
@@ -537,15 +532,15 @@ const SmartProfile = () => {
                 )}
 
                 {/* ── 현재모습 사진저장 ── */}
-                <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5">
+                <div className="bg-white border border-[#E8E0FA] rounded-2xl p-5 shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="w-7 h-7 rounded-lg bg-[#10B981]/20 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[15px] text-[#34D399]">photo_library</span>
+                        <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[15px] text-emerald-600">photo_library</span>
                         </div>
-                        <h2 className="font-black text-white text-base">현재모습 사진저장</h2>
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black">최대 10장</span>
+                        <h2 className="font-black text-[#1F1235] text-base">현재모습 사진저장</h2>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black">최대 10장</span>
                     </div>
-                    <p className="text-white/35 text-xs leading-relaxed mb-4">
+                    <p className="text-[#5B4E7A] text-xs leading-relaxed mb-4">
                         광고 에이전시 요청 시 공유할 현재 사진을 저장해두세요.<br />
                         운영자와 함께 사진을 관리하고 공유할 수 있습니다.
                     </p>
@@ -609,7 +604,7 @@ const SmartProfile = () => {
                             })}
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center py-6 text-white/20">
+                        <div className="flex flex-col items-center py-6 text-[#9CA3AF]">
                             <span className="material-symbols-outlined text-[40px] mb-2">collections</span>
                             <p className="text-xs font-bold">아직 저장된 사진이 없어요</p>
                         </div>
@@ -631,8 +626,8 @@ const SmartProfile = () => {
                     className={`w-full py-4 rounded-2xl text-white font-black text-base shadow-lg transition-all active:scale-[0.98] ${saved
                         ? 'bg-emerald-500 shadow-emerald-500/30'
                         : saving
-                            ? 'bg-[#6C63FF]/50 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-[#6C63FF] to-[#818CF8] hover:from-[#5a52d5] hover:to-[#6C63FF] shadow-[#6C63FF]/30'
+                            ? 'bg-[#9333EA]/50 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-[#9333EA] to-[#C084FC] hover:from-[#7C3AED] hover:to-[#9333EA] shadow-[#9333EA]/30'
                         }`}
                 >
                     <span className="flex items-center justify-center gap-2">
@@ -646,7 +641,7 @@ const SmartProfile = () => {
                 {hasProfile && (
                     <button
                         onClick={() => navigate('/agencies')}
-                        className="w-full py-4 rounded-2xl text-[#A78BFA] font-black text-base border border-[#6C63FF]/30 bg-[#6C63FF]/8 hover:bg-[#6C63FF]/15 active:scale-[0.98] transition-all"
+                        className="w-full py-4 rounded-2xl text-[#7C3AED] font-black text-base border border-[#E8E0FA] bg-[#F3E8FF] hover:bg-[#EDE8FF] active:scale-[0.98] transition-all"
                     >
                         <span className="flex items-center justify-center gap-2">
                             <span className="material-symbols-outlined text-[20px]">forward_to_inbox</span>
@@ -717,20 +712,20 @@ const SmartProfile = () => {
 
         {/* ── 등급 제한 안내 팝업 ── */}
         {showGradePopup && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm px-6" onClick={() => setShowGradePopup(false)}>
+            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6" onClick={() => setShowGradePopup(false)}>
                 <div
-                    className="w-full max-w-sm bg-[#14141f] border border-[#F59E0B]/30 rounded-3xl p-6 text-center shadow-2xl shadow-[#F59E0B]/10 animate-fadeIn"
+                    className="w-full max-w-sm bg-white border border-amber-200 rounded-3xl p-6 text-center shadow-2xl shadow-amber-200/50 animate-fadeIn"
                     onClick={e => e.stopPropagation()}
                 >
                     <div className="w-16 h-16 bg-[#F59E0B]/15 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="material-symbols-outlined text-4xl text-[#FCD34D]">lock</span>
                     </div>
-                    <h3 className="text-white font-black text-lg mb-2">GOLD 회원 이상 전용 기능</h3>
-                    <p className="text-white/50 text-sm leading-relaxed mb-2">
-                        <span className="text-[#FCD34D] font-bold">현재모습 사진등록</span>은<br />
-                        <span className="text-[#FCD34D] font-black">GOLD 회원</span> 이상부터 사용 가능합니다.
+                    <h3 className="text-[#1F1235] font-black text-lg mb-2">GOLD 회원 이상 전용 기능</h3>
+                    <p className="text-[#5B4E7A] text-sm leading-relaxed mb-2">
+                        <span className="text-amber-600 font-bold">현재모습 사진등록</span>은<br />
+                        <span className="text-amber-600 font-black">GOLD 회원</span> 이상부터 사용 가능합니다.
                     </p>
-                    <p className="text-white/30 text-xs mb-5">
+                    <p className="text-[#9CA3AF] text-xs mb-5">
                         구독 결제 또는 문의를 통해 업그레이드 해주세요.
                     </p>
 
@@ -757,7 +752,7 @@ const SmartProfile = () => {
                         {/* 닫기 */}
                         <button
                             onClick={() => setShowGradePopup(false)}
-                            className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-white/40 font-bold text-sm hover:bg-white/8 transition-colors"
+                            className="w-full py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] text-[#9CA3AF] font-bold text-sm hover:bg-[#EDE8FF] transition-colors"
                         >
                             닫기
                         </button>

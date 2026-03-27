@@ -247,21 +247,18 @@ const MocaShop = () => {
 
     // ══════════════════════════════════════════════════════════════════════════
     return (
-        <div className="min-h-screen bg-[#080810] pb-24">
+        <div className="min-h-screen pb-24" style={{backgroundColor:'var(--moca-bg)'}}>
             {/* ── 헤더 배너 ─────────────────────────────────────────────────── */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#1a1040] via-[#0f0f20] to-[#1a0830] border-b border-white/10">
-                {/* 배경 그라데이션 orb */}
-                <div className="absolute -top-10 -right-10 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl" />
-                <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-600/20 rounded-full blur-3xl" />
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#EDE8FF] via-[#F3F0FF] to-[#E8F0FF] border-b border-[#E8E0FA]">
 
                 <div className="relative px-4 pt-6 pb-5">
                     <div className="flex items-start justify-between mb-3">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <span className="text-orange-400 text-xl">🔥</span>
-                                <h1 className="text-white font-black text-xl tracking-tight">MOCA 에디트</h1>
+                                <h1 className="text-[#1F1235] font-black text-xl tracking-tight">MOCA 에디트</h1>
                             </div>
-                            <p className="text-white/40 text-xs text-indigo-300 font-bold">모카 멤버 타임공구</p>
+                            <p className="text-[#5B4E7A] text-xs font-bold">모카 멤버 타임공구</p>
                         </div>
 
                         <div className={`flex items-center gap-1.5 border rounded-full px-3 py-1 text-xs font-bold ${gradeBadge.cls}`}>
@@ -277,7 +274,7 @@ const MocaShop = () => {
                 {loading ? (
                     <div className="grid grid-cols-2 gap-3">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="rounded-2xl bg-white/5 border border-white/10 aspect-[3/4] animate-pulse" />
+                            <div key={i} className="rounded-2xl bg-[#F3E8FF] border border-[#E8E0FA] aspect-[3/4] animate-pulse" />
                         ))}
                     </div>
                 ) : products.length === 0 ? (
@@ -286,10 +283,10 @@ const MocaShop = () => {
                     <>
                         {/* 전체 판매 종료 타이머 (상품이 모두 같은 마감 시간인 경우) */}
                         {nextSaleStart && (
-                            <div className="flex items-center justify-between bg-black/40 border border-white/10 rounded-2xl px-4 py-3 mb-4">
+                            <div className="flex items-center justify-between bg-[#F3E8FF] border border-[#E8E0FA] rounded-2xl px-4 py-3 mb-4">
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-orange-400 text-base">schedule</span>
-                                    <span className="text-white/60 text-xs">현재 라운드 종료까지</span>
+                                    <span className="text-[#5B4E7A] text-xs">현재 라운드 종료까지</span>
                                 </div>
                                 <CountdownTimer
                                     targetDate={products[0]?.sale_end}
@@ -380,35 +377,35 @@ const GradeInfoBanner = ({ userGrade, coupons, copiedId, onCopy }) => {
     };
 
     return (
-        <div className="mt-6 bg-gradient-to-r from-[#1a1040]/60 to-[#0f0f20]/60 border border-white/10 rounded-2xl p-4">
-            <h3 className="text-white/70 text-xs font-bold mb-3 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-indigo-400">confirmation_number</span>
+        <div className="mt-6 bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl p-4">
+            <h3 className="text-[#5B4E7A] text-xs font-bold mb-3 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-[#9333EA]">confirmation_number</span>
                 내 등급 사용 가능 쿠폰
             </h3>
 
             {coupons.length === 0 ? (
                 <div className="text-center py-4">
-                    <p className="text-white/30 text-xs">현재 사용 가능한 쿠폰이 없습니다.</p>
+                    <p className="text-[#9CA3AF] text-xs text-center">현재 사용 가능한 쿠폰이 없습니다.</p>
                 </div>
             ) : (
                 <div className="space-y-2">
                     {coupons.map(coupon => (
-                        <div key={coupon.id} className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5">
+                        <div key={coupon.id} className="flex items-center gap-3 bg-white border border-[#E8E0FA] rounded-xl px-3 py-2.5">
                             {/* 할인율 */}
                             <div className="w-12 flex-shrink-0 text-center">
                                 <p className="font-black text-base text-[#A78BFA]">{formatDiscount(coupon)}</p>
-                                <p className="text-[9px] text-white/30">OFF</p>
+                                <p className="text-[10px] text-[#9CA3AF]">OFF</p>
                             </div>
 
                             {/* 정보 */}
                             <div className="flex-1 min-w-0">
-                                <p className="text-white text-xs font-bold truncate">{coupon.description || '할인 쿠폰'}</p>
+                                <p className="text-[#1F1235] text-xs font-bold truncate">{coupon.description || '할인 쿠폰'}</p>
                                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${GRADE_COLORS[coupon.target_grade] || GRADE_COLORS['ALL']}`}>
                                         {coupon.target_grade === 'ALL' ? '전체' : coupon.target_grade === 'VIP' ? '전속모델+' : `${coupon.target_grade}+`}
                                     </span>
                                     {coupon.min_price > 0 && (
-                                        <span className="text-[9px] text-white/30">{coupon.min_price.toLocaleString()}원 이상</span>
+                                        <span className="text-[9px] text-[#9CA3AF]">{coupon.min_price.toLocaleString()}원 이상</span>
                                     )}
                                     {coupon.expires_at && (
                                         <span className="text-[9px] text-white/30">{formatExpiry(coupon.expires_at)}</span>

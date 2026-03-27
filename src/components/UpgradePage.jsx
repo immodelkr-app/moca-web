@@ -142,23 +142,17 @@ const UpgradePage = () => {
     }, [navigate]);
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] text-white pb-32">
-
-            {/* ── 배경 ── */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#F59E0B]/6 rounded-full blur-[150px]" />
-                <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-[#6C63FF]/5 rounded-full blur-[120px]" />
-            </div>
+        <div className="min-h-screen pb-32" style={{backgroundColor:'var(--moca-bg)',color:'var(--moca-text)'}}>
 
             {/* ── 헤더 ── */}
             <div className="relative z-10 px-5 pt-8 pb-2 flex items-center gap-3">
                 <button onClick={() => navigate(-1)}
-                    className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors flex-shrink-0">
-                    <span className="material-symbols-outlined text-[20px] text-white/60">arrow_back</span>
+                    className="w-9 h-9 rounded-xl bg-[#F3E8FF] border border-[#E8E0FA] flex items-center justify-center hover:bg-[#EDE8FF] transition-colors flex-shrink-0">
+                    <span className="material-symbols-outlined text-[20px] text-[#7C3AED]">arrow_back</span>
                 </button>
                 <div>
-                    <h1 className="text-xl font-black tracking-tight">모카앱 플랜</h1>
-                    <p className="text-white/30 text-xs mt-0.5">나에게 맞는 플랜을 선택하세요</p>
+                    <h1 className="text-xl font-black text-[#1F1235] tracking-tight">모카앱 플랜</h1>
+                    <p className="text-[#9CA3AF] text-xs mt-0.5">나에게 맞는 플랜을 선택하세요</p>
                 </div>
             </div>
 
@@ -166,23 +160,23 @@ const UpgradePage = () => {
 
                 {/* ── 현재 등급 배너 ── */}
                 <div className={`rounded-2xl p-4 border flex items-center gap-3 ${isAlreadyGold
-                    ? 'bg-[#F59E0B]/10 border-[#F59E0B]/30'
-                    : 'bg-white/5 border-white/10'}`}>
+                    ? 'bg-amber-50 border-amber-200'
+                    : 'bg-white border-[#E8E0FA]'}`}>
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isAlreadyGold ? 'bg-[#F59E0B]/20' : 'bg-white/10'}`}>
                         <span className="text-xl">{isAlreadyGold ? '👑' : '🤍'}</span>
                     </div>
                     <div>
-                        <p className={`text-sm font-black ${isAlreadyGold ? 'text-[#FCD34D]' : 'text-white/60'}`}>
+                        <p className={`text-sm font-black ${isAlreadyGold ? 'text-amber-600' : 'text-[#5B4E7A]'}`}>
                             현재 등급: {userGrade === 'VIP' ? '전속모델' : userGrade}
                         </p>
-                        <p className="text-white/30 text-xs">
+                        <p className="text-[#9CA3AF] text-xs">
                             {isAlreadyGold ? '골드 혜택을 이용 중입니다' : '무료 실버 플랜 사용 중'}
                         </p>
                     </div>
                 </div>
 
                 {/* ── 탭 전환 ── */}
-                <div className="flex gap-2 bg-white/5 border border-white/10 rounded-2xl p-1">
+                <div className="flex gap-2 bg-[#F3E8FF] border border-[#E8E0FA] rounded-2xl p-1">
                     {[
                         { id: 'compare', label: '등급별 혜택 비교', icon: 'compare' },
                         { id: 'plans', label: '구독 플랜 선택', icon: 'credit_card' },
@@ -190,8 +184,8 @@ const UpgradePage = () => {
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                             className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all ${
                                 activeTab === tab.id
-                                    ? 'bg-[#F59E0B]/20 text-[#FCD34D] border border-[#F59E0B]/30'
-                                    : 'text-white/40 hover:text-white/60'
+                                    ? 'bg-[#9333EA]/20 text-[#9333EA] border border-[#9333EA]/30'
+                                    : 'text-[#5B4E7A] hover:text-[#1F1235]'
                             }`}>
                             <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
                             {tab.label}
@@ -205,13 +199,13 @@ const UpgradePage = () => {
                         {/* 등급 카드 비교 */}
                         <div className="grid grid-cols-2 gap-3">
                             {/* 실버 카드 */}
-                            <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 text-center">
-                                <div className="w-12 h-12 mx-auto rounded-full bg-slate-500/15 flex items-center justify-center mb-3">
+                            <div className="bg-white border border-[#E8E0FA] rounded-2xl p-4 text-center">
+                                <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-3">
                                     <span className="text-2xl">🤍</span>
                                 </div>
-                                <h3 className="text-white font-black text-base mb-1">SILVER</h3>
+                                <h3 className="text-[#1F1235] font-black text-base mb-1">SILVER</h3>
                                 <p className="text-emerald-400 font-black text-lg">무료</p>
-                                <p className="text-white/25 text-[10px] mt-1">기본 회원</p>
+                                <p className="text-[#9CA3AF] text-[10px] mt-1">기본 회원</p>
                             </div>
                             {/* 골드 카드 */}
                             <div className="bg-[#F59E0B]/8 border-2 border-[#F59E0B]/40 rounded-2xl p-4 text-center relative overflow-hidden">
@@ -226,17 +220,17 @@ const UpgradePage = () => {
                         </div>
 
                         {/* 기능 비교 리스트 */}
-                        <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
-                            <div className="grid grid-cols-[1fr_70px_70px] px-4 py-3 border-b border-white/8 bg-white/[0.02]">
-                                <span className="text-white/30 text-[11px] font-bold">기능</span>
-                                <span className="text-white/30 text-[11px] font-bold text-center">SILVER</span>
+                        <div className="bg-white border border-[#E8E0FA] rounded-2xl overflow-hidden">
+                            <div className="grid grid-cols-[1fr_70px_70px] px-4 py-3 border-b border-[#E8E0FA] bg-[#F8F5FF]">
+                                <span className="text-[#5B4E7A] text-[11px] font-bold">기능</span>
+                                <span className="text-[#5B4E7A] text-[11px] font-bold text-center">SILVER</span>
                                 <span className="text-[#FCD34D]/50 text-[11px] font-bold text-center">GOLD</span>
                             </div>
                             {FEATURES.map((feat, i) => (
-                                <div key={i} className={`grid grid-cols-[1fr_70px_70px] px-4 py-3 items-center ${i < FEATURES.length - 1 ? 'border-b border-white/5' : ''}`}>
+                                <div key={i} className={`grid grid-cols-[1fr_70px_70px] px-4 py-3 items-center ${i < FEATURES.length - 1 ? 'border-b border-[#E8E0FA]' : ''}`}>
                                     <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-[14px] text-white/25">{feat.icon}</span>
-                                        <span className="text-white/70 text-xs font-bold">{feat.name}</span>
+                                        <span className="material-symbols-outlined text-[14px] text-[#9CA3AF]">{feat.icon}</span>
+                                        <span className="text-[#5B4E7A] text-xs font-bold">{feat.name}</span>
                                     </div>
                                     <div className="flex justify-center">
                                         {typeof feat.silver === 'string' ? (
@@ -324,14 +318,14 @@ const UpgradePage = () => {
                         </div>
 
                         {/* 선택된 플랜 요약 */}
-                        <div className="bg-[#14141f] border border-[#F59E0B]/20 rounded-2xl p-5">
+                        <div className="bg-white border border-amber-200 rounded-2xl p-5">
                             <div className="flex items-center justify-between mb-3">
-                                <span className="text-white/40 text-sm">선택한 플랜</span>
+                                <span className="text-[#5B4E7A] text-sm">선택한 플랜</span>
                                 <span className="text-[#FCD34D] font-black">{selectedPlan.label} 구독</span>
                             </div>
                             <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/8">
-                                <span className="text-white/40 text-sm">결제 금액</span>
-                                <span className="text-white font-black text-xl">{selectedPlan.price.toLocaleString()}원</span>
+                                <span className="text-[#5B4E7A] text-sm">결제 금액</span>
+                                <span className="text-[#1F1235] font-black text-xl">{selectedPlan.price.toLocaleString()}원</span>
                             </div>
 
                             {/* 결제 버튼 */}
@@ -365,12 +359,12 @@ const UpgradePage = () => {
                         </button>
 
                         {/* 안내 */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-2">
-                            <p className="text-white/30 text-[11px] font-bold flex items-center gap-1.5">
+                        <div className="bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl p-4 space-y-2">
+                            <p className="text-[#5B4E7A] text-[11px] font-bold flex items-center gap-1.5">
                                 <span className="material-symbols-outlined text-[12px]">info</span>
                                 이용 안내
                             </p>
-                            <ul className="text-white/25 text-[11px] space-y-1 pl-4">
+                            <ul className="text-[#9CA3AF] text-[11px] space-y-1 pl-4">
                                 <li>• 결제 완료 후 즉시 골드 등급이 적용됩니다.</li>
                                 <li>• 구독 기간 만료 시 자동으로 실버로 변경됩니다.</li>
                                 <li>• 환불 문의는 카카오톡 채널로 연락해주세요.</li>

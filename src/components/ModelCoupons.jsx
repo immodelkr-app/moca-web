@@ -72,26 +72,26 @@ const ModelCoupons = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] text-white pb-32">
+        <div className="min-h-screen pb-32" style={{backgroundColor:'var(--moca-bg)',color:'var(--moca-text)'}}>
             {/* Header */}
-            <header className="flex items-center gap-4 p-5 sticky top-0 bg-[#0a0a0f]/90 backdrop-blur-md z-10 border-b border-white/5">
+            <header className="flex items-center gap-4 p-5 sticky top-0 bg-white/95 backdrop-blur-md z-10 border-b border-[#E8E0FA]">
                 <button
                     onClick={() => navigate(-1)}
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+                    className="w-10 h-10 rounded-full bg-[#F3E8FF] border border-[#E8E0FA] flex items-center justify-center hover:bg-[#EDE8FF] transition-colors"
                 >
-                    <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+                    <span className="material-symbols-outlined text-[20px] text-[#7C3AED]">arrow_back</span>
                 </button>
                 <div>
-                    <h1 className="text-lg font-black">모카 에디트 쿠폰</h1>
-                    <p className="text-xs text-white/40">{grade} 등급 사용 가능 쿠폰</p>
+                    <h1 className="text-lg font-black text-[#1F1235]">모카 에디트 쿠폰</h1>
+                    <p className="text-xs text-[#9CA3AF]">{grade} 등급 사용 가능 쿠폰</p>
                 </div>
             </header>
 
             <div className="p-5 max-w-2xl mx-auto">
                 {/* 안내 */}
-                <div className="mb-5 p-4 rounded-2xl bg-[#6C63FF]/10 border border-[#6C63FF]/20 flex items-start gap-3">
-                    <span className="material-symbols-outlined text-[18px] text-[#818CF8] mt-0.5 flex-shrink-0">info</span>
-                    <p className="text-white/60 text-xs leading-relaxed">
+                <div className="mb-5 p-4 rounded-2xl bg-[#F3E8FF] border border-[#E8E0FA] flex items-start gap-3">
+                    <span className="material-symbols-outlined text-[18px] text-[#9333EA] mt-0.5 flex-shrink-0">info</span>
+                    <p className="text-[#5B4E7A] text-xs leading-relaxed">
                         쿠폰 코드를 복사해서 모카 에디트 주문 시 입력하면 할인이 적용됩니다.
                     </p>
                 </div>
@@ -100,36 +100,36 @@ const ModelCoupons = () => {
                 {loading ? (
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="h-32 rounded-2xl bg-white/5 animate-pulse" />
+                            <div key={i} className="h-32 rounded-2xl bg-[#F3E8FF] animate-pulse" />
                         ))}
                     </div>
                 ) : coupons.length === 0 ? (
                     <div className="text-center py-16">
-                        <span className="material-symbols-outlined text-5xl text-white/20 mb-4 block">confirmation_number</span>
-                        <p className="text-white/40 text-sm">현재 사용 가능한 쿠폰이 없습니다.</p>
+                        <span className="material-symbols-outlined text-5xl text-[#9CA3AF] mb-4 block">confirmation_number</span>
+                        <p className="text-[#5B4E7A] text-sm">현재 사용 가능한 쿠폰이 없습니다.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
                         {coupons.map(coupon => (
-                            <div key={coupon.id} className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+                            <div key={coupon.id} className="rounded-2xl border border-[#E8E0FA] bg-white overflow-hidden shadow-sm">
                                 <div className="flex">
                                     {/* 왼쪽 할인율 */}
-                                    <div className="w-28 border-r border-dashed border-white/10 flex flex-col items-center justify-center p-4 flex-shrink-0 bg-gradient-to-b from-[#6C63FF]/10 to-[#A78BFA]/10">
-                                        <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider mb-1">할인</p>
-                                        <p className="font-black text-2xl text-[#A78BFA]">{formatDiscount(coupon)}</p>
-                                        <p className="text-[10px] text-white/30 mt-1">OFF</p>
+                                    <div className="w-28 border-r border-dashed border-[#E8E0FA] flex flex-col items-center justify-center p-4 flex-shrink-0 bg-gradient-to-b from-[#F3E8FF] to-[#EDE8FF]">
+                                        <p className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider mb-1">할인</p>
+                                        <p className="font-black text-2xl text-[#9333EA]">{formatDiscount(coupon)}</p>
+                                        <p className="text-[10px] text-[#9CA3AF] mt-1">OFF</p>
                                     </div>
 
                                     {/* 오른쪽 정보 */}
                                     <div className="flex-1 p-4 flex flex-col justify-between">
                                         <div>
-                                            <p className="font-bold text-sm text-white leading-tight">{coupon.description || '모카 에디트 할인 쿠폰'}</p>
+                                            <p className="font-bold text-sm text-[#1F1235] leading-tight">{coupon.description || '모카 에디트 할인 쿠폰'}</p>
                                             <div className="flex flex-wrap gap-1.5 mt-2">
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${GRADE_COLORS[coupon.target_grade] || GRADE_COLORS['ALL']}`}>
                                                     {coupon.target_grade === 'ALL' ? '전체 등급' : coupon.target_grade === 'VIP' ? '전속모델 이상' : `${coupon.target_grade} 이상`}
                                                 </span>
                                                 {coupon.min_price > 0 && (
-                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/10 text-white/40 bg-white/5">
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#E8E0FA] text-[#9CA3AF] bg-[#F8F5FF]">
                                                         {coupon.min_price.toLocaleString()}원 이상
                                                     </span>
                                                 )}

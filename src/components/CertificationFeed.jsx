@@ -86,15 +86,15 @@ const CertificationFeed = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col">
+        <div className="min-h-screen flex flex-col" style={{backgroundColor:'var(--moca-bg)',color:'var(--moca-text)'}}>
             {/* Header */}
-            <header className="sticky top-0 z-30 bg-[#0a0a0f]/95 backdrop-blur-md border-b border-white/5">
+            <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E8E0FA]">
                 <div className="flex items-center justify-between px-4 pt-5 pb-3">
                     <button
                         onClick={() => navigate('/home/dashboard')}
-                        className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors"
+                        className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors"
                     >
-                        <span className="material-symbols-outlined text-[20px] text-white/80">arrow_back</span>
+                        <span className="material-symbols-outlined text-[20px] text-[#7C3AED]">arrow_back</span>
                     </button>
 
                     <div className="text-center">
@@ -104,9 +104,9 @@ const CertificationFeed = () => {
 
                     <button
                         onClick={handleRefresh}
-                        className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors"
+                        className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors"
                     >
-                        <span className={`material-symbols-outlined text-[20px] text-white/60 ${isRefreshing ? 'animate-spin' : ''}`}>
+                        <span className={`material-symbols-outlined text-[20px] text-[#7C3AED] ${isRefreshing ? 'animate-spin' : ''}`}>
                             refresh
                         </span>
                     </button>
@@ -119,8 +119,8 @@ const CertificationFeed = () => {
                             key={tab}
                             onClick={() => handleFilterChange(tab)}
                             className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-black transition-all ${activeFilter === tab
-                                ? 'bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white shadow-lg shadow-[#6C63FF]/25'
-                                : 'bg-white/5 border border-white/10 text-white/50 hover:text-white/80'
+                                ? 'bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-white shadow-lg shadow-[#9333EA]/25'
+                                : 'bg-[#F3E8FF] border border-[#E8E0FA] text-[#7C3AED] hover:bg-[#EDE8FF]'
                                 }`}
                         >
                             {tab}
@@ -135,9 +135,9 @@ const CertificationFeed = () => {
                     /* Skeleton Loading */
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="bg-white/[0.03] border border-white/8 rounded-3xl overflow-hidden animate-pulse">
+                            <div key={i} className="bg-[#F8F5FF] border border-[#E8E0FA] rounded-3xl overflow-hidden animate-pulse">
                                 <div className="flex items-center gap-3 px-4 py-4">
-                                    <div className="w-9 h-9 rounded-full bg-white/10" />
+                                    <div className="w-9 h-9 rounded-full bg-[#E8E0FA]" />
                                     <div className="space-y-1.5">
                                         <div className="w-24 h-3 bg-white/10 rounded-full" />
                                         <div className="w-16 h-2.5 bg-white/5 rounded-full" />
@@ -157,7 +157,7 @@ const CertificationFeed = () => {
                         <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#6C63FF]/20 to-[#A78BFA]/10 border border-[#6C63FF]/20 flex items-center justify-center">
                             <span className="material-symbols-outlined text-[#A78BFA] text-[40px]">photo_camera</span>
                         </div>
-                        <p className="text-white/40 text-[15px] text-center leading-relaxed whitespace-pre-line font-medium">
+                        <p className="text-[#5B4E7A] text-[15px] text-center leading-relaxed whitespace-pre-line font-medium">
                             {EMPTY_MESSAGES[activeFilter]}
                         </p>
                         <button
