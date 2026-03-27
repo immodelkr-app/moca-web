@@ -203,7 +203,7 @@ const Layout = () => {
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar pb-28 lg:pb-8 w-full">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar pb-32 lg:pb-8 w-full max-w-[430px] mx-auto">
                     <Outlet />
 
                     {/* ── Footer ── */}
@@ -235,7 +235,7 @@ const Layout = () => {
                 </main>
 
                 {/* ── 모바일 하단 네비게이션 (lg 미만) ── */}
-                <nav className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[390px] h-20 bg-[#1a1a24]/90 backdrop-blur-xl rounded-full border border-white/10 flex items-center z-[100] shadow-2xl shadow-black/50">
+                <nav className="lg:hidden fixed bottom-5 left-1/2 -translate-x-1/2 w-[92%] max-w-[380px] h-16 bg-[#1a1a24]/90 backdrop-blur-xl rounded-full border border-white/10 flex items-center z-[100] shadow-2xl shadow-black/50 pb-[env(safe-area-inset-bottom,0)]">
 
                     {/* 왼쪽 — 뒤로 가기 */}
                     <div className="flex flex-1 items-center justify-center pr-8">
@@ -251,8 +251,8 @@ const Layout = () => {
                     {/* 중앙 홈 버튼 (절대 위치 고정) */}
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
                         <NavLink to="/home/dashboard">
-                            <button className="w-12 h-12 rounded-full bg-gradient-to-br from-[#6C63FF] to-[#A78BFA] flex items-center justify-center text-white shadow-lg shadow-[#6C63FF]/40 border-[3px] border-[#1a1a24] active:scale-95 transition-transform">
-                                <span className="material-symbols-outlined text-[24px] font-bold">home</span>
+                            <button className="w-11 h-11 rounded-full bg-gradient-to-br from-[#6C63FF] to-[#A78BFA] flex items-center justify-center text-white shadow-lg shadow-[#6C63FF]/40 border-[3px] border-[#1a1a24] active:scale-95 transition-transform">
+                                <span className="material-symbols-outlined text-[20px] font-bold">home</span>
                             </button>
                         </NavLink>
                     </div>

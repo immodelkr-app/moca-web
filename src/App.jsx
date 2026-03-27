@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
-import Home from './components/Home';
+
 import HomeDashboard from './components/HomeDashboard';
 
 import TourDiary from './components/TourDiary';

@@ -74,11 +74,11 @@ const HomeDashboard = () => {
         <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col">
 
             {/* ── Top Header ── */}
-            <header className="flex items-start gap-3 px-5 pt-8 pb-4">
+            <header className="flex items-start gap-3 px-5 pt-5 pb-4">
                 {/* 인사말 - 넓게 */}
                 <div className="flex-1 min-w-0">
-                    <p className="text-white/40 text-xs font-bold tracking-widest uppercase mb-1">Welcome back</p>
-                    <h1 className="text-white font-black text-xl leading-tight">
+                    <p className="text-white/40 text-[10px] font-bold tracking-widest uppercase mb-0.5">Welcome back</p>
+                    <h1 className="text-white font-black text-lg leading-tight">
                         안녕하세요,{' '}
                         <span className="bg-gradient-to-r from-[#C4B5FD] to-[#818CF8] bg-clip-text text-transparent">
                             {nickname}
@@ -138,7 +138,7 @@ const HomeDashboard = () => {
                         className={`relative flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black transition-all z-10 ${activeTab === 'MODEL_SUPPORT' ? 'text-white' : 'text-white/40'}`}
                     >
                         <span className="material-symbols-outlined text-[18px]">rocket_launch</span>
-                        모카 광고모델 지원
+                        광고모델 활동
                     </button>
                     <button
                         onClick={() => handleTabChange('MOCA_SHOPPING')}
@@ -154,9 +154,9 @@ const HomeDashboard = () => {
             <div className="px-5 pb-32 grid grid-cols-2 gap-3.5">
                 {currentItems.map((item, idx) => (
                     <button
-                        key={`${animKey}-${item.route}`}
+                        key={`${animKey}-${item.label}`}
                         onClick={() => navigate(item.route)}
-                        className="animate-slideUp relative flex flex-col items-center justify-center gap-3.5 w-full bg-white/[0.04] border border-white/10 hover:bg-white/[0.08] rounded-3xl py-7 transition-transform active:scale-95"
+                        className="animate-slideUp relative flex flex-col items-center justify-center gap-2.5 w-full bg-white/[0.04] border border-white/10 hover:bg-white/[0.08] rounded-3xl py-5 transition-transform active:scale-95"
                         style={{ animationDelay: `${idx * 0.06}s`, animationFillMode: 'both' }}
                     >
                         {item.badge && (

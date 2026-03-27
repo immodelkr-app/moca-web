@@ -47,6 +47,7 @@ const AdminPage = () => {
     const [announcementLinkUrl, setAnnouncementLinkUrl] = useState('');
     const [isPosting, setIsPosting] = useState(false);
     const [castingStats, setCastingStats] = useState([]);
+    const [senderStats, setSenderStats] = useState([]); // 프로필 발송 많이 보낸 유저 통계
     const [announcements, setAnnouncements] = useState([]);
     const [loungeView, setLoungeView] = useState('list'); // 'list' | 'write' | 'edit'
     const [editingAnnouncement, setEditingAnnouncement] = useState(null);
@@ -112,7 +113,7 @@ const AdminPage = () => {
             const { data: viewsData, error: fetchViewsError } = await supabase
                 .from('page_views')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('accessed_at', { ascending: false });
 
             if (fetchViewsError) {
                 // page_views 테이블이 없을 가능성이 높으므로 치명적 에러로 처리하지 않음
@@ -148,19 +149,30 @@ const AdminPage = () => {
                 setTourDiaries(diariesData || []);
             }
 
-            // 7. 프로필 발송 통계
+            // 7. 프로필 발송 통계 (받은 곳 / 보낸 사람)
             const { data: castingData } = await supabase
                 .from('casting_sends')
-                .select('agency_name');
+                .select('agency_name, user_nickname');
             if (castingData) {
-                const counts = {};
-                castingData.forEach(({ agency_name }) => {
-                    counts[agency_name] = (counts[agency_name] || 0) + 1;
+                // 7-1. 많이 받은 에이전시
+                const agencyCounts = {};
+                // 7-2. 많이 보낸 유저(모델/에이전시)
+                const senderCounts = {};
+
+                castingData.forEach(({ agency_name, user_nickname }) => {
+                    if (agency_name) agencyCounts[agency_name] = (agencyCounts[agency_name] || 0) + 1;
+                    if (user_nickname) senderCounts[user_nickname] = (senderCounts[user_nickname] || 0) + 1;
                 });
-                const sorted = Object.entries(counts)
+
+                const sortedAgencies = Object.entries(agencyCounts)
                     .sort((a, b) => b[1] - a[1])
                     .slice(0, 10);
-                setCastingStats(sorted);
+                setCastingStats(sortedAgencies);
+
+                const sortedSenders = Object.entries(senderCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10);
+                setSenderStats(sortedSenders);
             }
 
         } catch (err) {
@@ -438,12 +450,12 @@ const AdminPage = () => {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const stats1Day = pageViews.filter(v => new Date(v.created_at) > oneDayAgo).length;
-    const stats7Days = pageViews.filter(v => new Date(v.created_at) > sevenDaysAgo).length;
-    const stats30Days = pageViews.filter(v => new Date(v.created_at) > thirtyDaysAgo).length;
+    const stats1Day = pageViews.filter(v => new Date(v.accessed_at) > oneDayAgo).length;
+    const stats7Days = pageViews.filter(v => new Date(v.accessed_at) > sevenDaysAgo).length;
+    const stats30Days = pageViews.filter(v => new Date(v.accessed_at) > thirtyDaysAgo).length;
 
     // 인기 페이지 랭킹 계산 (최근 30일 기준)
-    const recent30DaysViews = pageViews.filter(v => new Date(v.created_at) > thirtyDaysAgo);
+    const recent30DaysViews = pageViews.filter(v => new Date(v.accessed_at) > thirtyDaysAgo);
     const pathCounts = recent30DaysViews.reduce((acc, v) => {
         // 라우트 이름 매핑
         let displayName = v.path;
@@ -828,6 +840,48 @@ const AdminPage = () => {
                                                     </div>
                                                     <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
                                                         <div className="h-full bg-gradient-to-r from-[#C4B5FD] to-[#907FF8] rounded-full" style={{ width: `${barWidth}%` }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 프로필 발송 (보낸 유저) 통계 */}
+                        <div className="rounded-2xl border border-white/10 bg-[#1a1a24] p-6 mb-6 animate-fadeIn">
+                            <h3 className="text-white font-bold flex items-center gap-2 mb-1">
+                                <span className="material-symbols-outlined text-[#34D399]">person_pin_circle</span>
+                                프로필 발송 많이 보낸 유저 (모델/에이전시) Top 10
+                            </h3>
+                            <p className="text-white/40 text-[11px] mb-4">전체 기간 누적 기준 · casting_sends 테이블</p>
+                            {senderStats.length === 0 ? (
+                                <p className="text-white/40 text-sm py-4">아직 발송 데이터가 없습니다.</p>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {senderStats.map(([nickname, count], index) => {
+                                        const maxCount = senderStats[0][1];
+                                        const barWidth = Math.round((count / maxCount) * 100);
+                                        const uInfo = users.find(u => u.nickname === nickname) || {};
+                                        return (
+                                            <div key={nickname} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3 border border-white/5">
+                                                <span className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-black shrink-0 ${
+                                                    index === 0 ? 'bg-emerald-500/20 text-emerald-400' :
+                                                    index === 1 ? 'bg-slate-400/20 text-slate-300' :
+                                                    index === 2 ? 'bg-orange-500/20 text-orange-400' :
+                                                    'bg-white/10 text-white/40'
+                                                }`}>{index + 1}</span>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <div className="flex items-baseline gap-1.5 truncate">
+                                                            <span className="text-[13px] font-bold text-white/90 truncate">{uInfo.name || '-'}</span>
+                                                            <span className="text-[10px] text-white/40 truncate">({nickname})</span>
+                                                        </div>
+                                                        <span className="text-[13px] font-black text-[#34D399] ml-2 shrink-0">{count}<span className="text-white/30 text-[10px] font-normal ml-0.5">건</span></span>
+                                                    </div>
+                                                    <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-gradient-to-r from-[#34D399] to-[#10B981] rounded-full" style={{ width: `${barWidth}%` }} />
                                                     </div>
                                                 </div>
                                             </div>

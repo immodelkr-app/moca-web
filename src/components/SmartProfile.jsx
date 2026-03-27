@@ -15,6 +15,7 @@ const SmartProfile = () => {
     const accessToken = useRef(null);
 
     const [formData, setFormData] = useState({
+        name: '',            // 이름(본명)
         height: '',
         weight: '',
         age: '',
@@ -39,6 +40,7 @@ const SmartProfile = () => {
     useEffect(() => {
         if (!user) return;
         setFormData({
+            name: user.name || '',
             height: user.height || '',
             weight: user.weight || '',
             age: user.age || '',
@@ -167,7 +169,10 @@ const SmartProfile = () => {
                 } else if (attempts >= 25) {
                     clearInterval(retry);
                     setPickerLoading(false);
-                    setErrorMsg('Google 연동에 실패했습니다. 페이지를 새로고침 후 다시 시도해주세요.');
+                    const isCapacitor = window.Capacitor || window.webkit?.messageHandlers?.bridge;
+                    setErrorMsg(isCapacitor 
+                        ? '모바일 앱(APK)에서는 구글 연동이 제한될 수 있습니다. 해결되지 않을 경우 웹(immoca.kr)에서 등록하시거나 링크를 직접 입력해주세요.'
+                        : 'Google 연동에 실패했습니다. 페이지를 새로고침 후 다시 시도해주세요.');
                 }
             }, 200);
             return;
@@ -331,6 +336,19 @@ const SmartProfile = () => {
                         <h2 className="font-black text-white text-base">모델 프로필</h2>
                     </div>
 
+                    {/* 이름 필드 추가 */}
+                    <div className="space-y-1.5 mb-5">
+                        <label className="text-white/40 text-[11px] font-bold ml-1">이름 (본명) <span className="text-[#818CF8] font-black">*</span></label>
+                        <input
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            placeholder="예) 홍길동"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#6C63FF] transition-colors"
+                        />
+                    </div>
+
                     {/* 신체 스펙 */}
                     <div className="grid grid-cols-2 gap-3 mb-5">
                         {[
@@ -472,12 +490,12 @@ const SmartProfile = () => {
                             <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02]">
                                 <p className="text-white/25 text-[11px] mb-0.5">발신: casting@immoca.kr</p>
                                 <p className="text-white text-sm font-black">
-                                    광고모델 {user?.name || user?.nickname}님의 프로필 정보입니다.
+                                    광고모델 {formData.name || user?.name || user?.nickname}님의 프로필 정보입니다.
                                 </p>
                             </div>
                             <div className="px-5 py-4 space-y-3">
                                 <div>
-                                    <p className="font-black text-white text-base">{user?.name || user?.nickname}</p>
+                                    <p className="font-black text-white text-base">{formData.name || user?.name || user?.nickname}</p>
                                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                                         {formData.age && <span className="text-white/40 text-xs">{formData.age}년생</span>}
                                         {formData.height && <span className="text-white/40 text-xs">키 {formData.height}cm</span>}
@@ -506,7 +524,7 @@ const SmartProfile = () => {
                                 >
                                     <span className="material-symbols-outlined text-[18px] text-[#A78BFA]">folder_open</span>
                                     <span className="text-[#A78BFA] text-sm font-black flex-1 truncate">
-                                        {user?.name || user?.nickname}모델님 프로필 다운받기
+                                        {formData.name || user?.name || user?.nickname}모델님 프로필 다운받기
                                     </span>
                                     <span className="material-symbols-outlined text-[14px] text-[#A78BFA]/60">open_in_new</span>
                                 </a>
@@ -707,20 +725,43 @@ const SmartProfile = () => {
                     <div className="w-16 h-16 bg-[#F59E0B]/15 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="material-symbols-outlined text-4xl text-[#FCD34D]">lock</span>
                     </div>
-                    <h3 className="text-white font-black text-lg mb-2">GOLD 회원 전용 기능</h3>
+                    <h3 className="text-white font-black text-lg mb-2">GOLD 회원 이상 전용 기능</h3>
                     <p className="text-white/50 text-sm leading-relaxed mb-2">
                         <span className="text-[#FCD34D] font-bold">현재모습 사진등록</span>은<br />
-                        <span className="text-[#FCD34D] font-black">GOLD 회원</span>부터 사용 가능합니다.
+                        <span className="text-[#FCD34D] font-black">GOLD 회원</span> 이상부터 사용 가능합니다.
                     </p>
-                    <p className="text-white/30 text-xs mb-6">
-                        등급 업그레이드 후 이용해 주세요.
+                    <p className="text-white/30 text-xs mb-5">
+                        구독 결제 또는 문의를 통해 업그레이드 해주세요.
                     </p>
-                    <button
-                        onClick={() => setShowGradePopup(false)}
-                        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white font-black text-base shadow-lg shadow-[#F59E0B]/25 hover:opacity-90 active:scale-[0.97] transition-all"
-                    >
-                        확인
-                    </button>
+
+                    {/* 버튼 영역 */}
+                    <div className="flex flex-col gap-2.5">
+                        {/* 구독결제 페이지 이동 */}
+                        <button
+                            onClick={() => { setShowGradePopup(false); navigate('/upgrade'); }}
+                            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] text-black font-black text-sm shadow-lg shadow-[#F59E0B]/25 hover:opacity-90 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">credit_card</span>
+                            구독 결제 페이지로 이동
+                        </button>
+
+                        {/* 카카오톡 문의하기 */}
+                        <button
+                            onClick={() => { setShowGradePopup(false); window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank'); }}
+                            className="w-full py-3.5 rounded-2xl bg-[#FEE500]/10 border border-[#FEE500]/20 text-[#FADA0B] font-black text-sm hover:bg-[#FEE500]/18 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">chat</span>
+                            카카오톡 문의하기
+                        </button>
+
+                        {/* 닫기 */}
+                        <button
+                            onClick={() => setShowGradePopup(false)}
+                            className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-white/40 font-bold text-sm hover:bg-white/8 transition-colors"
+                        >
+                            닫기
+                        </button>
+                    </div>
                 </div>
             </div>
         )}

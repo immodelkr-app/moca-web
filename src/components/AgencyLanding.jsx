@@ -347,15 +347,15 @@ const AgencyLanding = () => {
             />
 
             {/* ── Header: Login / Signup ── */}
-            <header className="absolute top-0 left-0 right-0 z-50 px-6 py-6 flex justify-center">
-                <div className="w-full max-w-6xl flex justify-between items-center">
+            <header className="sticky top-0 left-0 right-0 z-50 px-5 py-4 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5 mx-auto w-full max-w-[430px]">
+                <div className="w-full flex justify-between items-center">
                     {/* Left: Desktop MOCA Logo */}
                     <div className="flex items-center">
-                        <span className="bg-gradient-to-r from-[#9B8AFB] to-[#6052FF] bg-clip-text text-transparent text-xl lg:text-3xl font-black tracking-tighter">MOCA</span>
+                        <span className="bg-gradient-to-r from-[#9B8AFB] to-[#6052FF] bg-clip-text text-transparent text-xl font-black tracking-tighter">MOCA</span>
                     </div>
 
                     {/* Desktop: Align with the w-80 agency box (Left aligned within that box) */}
-                    <div className="flex lg:w-80 justify-end lg:justify-start">
+                    <div className="flex">
                         <div className="flex items-center gap-4">
                             {isLoggedIn ? (
                                 <div className="flex items-center gap-4 animate-fadeIn">

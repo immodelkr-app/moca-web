@@ -261,7 +261,7 @@ const MocaShop = () => {
                                 <span className="text-orange-400 text-xl">🔥</span>
                                 <h1 className="text-white font-black text-xl tracking-tight">MOCA 에디트</h1>
                             </div>
-                            <p className="text-white/40 text-xs">모카 멤버를 위해 셀렉한 상품 · 시간 안에만 구매 가능</p>
+                            <p className="text-white/40 text-xs text-indigo-300 font-bold">모카 멤버 타임공구</p>
                         </div>
 
                         <div className={`flex items-center gap-1.5 border rounded-full px-3 py-1 text-xs font-bold ${gradeBadge.cls}`}>
