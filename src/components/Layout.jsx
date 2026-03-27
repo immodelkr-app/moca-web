@@ -1,43 +1,46 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { logoutUser, getUser } from '../services/userService';
 
+/* ── 환불 정책 모달 (A-Plan 색상 적용) ── */
 const RefundPolicyModal = ({ onClose }) => (
-    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
-        <div className="bg-[#13131f] border border-white/10 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-[#13131f] border-b border-white/10 px-5 py-4 flex items-center justify-between">
-                <h2 className="text-white font-black text-base">교환 · 반품 · 취소 · 환불 정책</h2>
-                <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><span className="material-symbols-outlined">close</span></button>
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
+        <div className="bg-white border border-[#E8E0FA] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-moca-lg" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-[#E8E0FA] px-5 py-4 flex items-center justify-between">
+                <h2 className="text-[#1F1235] font-black text-base">교환 · 반품 · 취소 · 환불 정책</h2>
+                <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#1F1235] transition-colors">
+                    <span className="material-symbols-outlined">close</span>
+                </button>
             </div>
-            <div className="px-5 py-5 space-y-5 text-xs text-white/60 leading-relaxed">
+            <div className="px-5 py-5 space-y-5 text-xs text-[#5B4E7A] leading-relaxed">
                 <div>
-                    <p className="text-blue-300 font-bold mb-2">🚫 결제 취소</p>
+                    <p className="text-blue-600 font-bold mb-2">🚫 결제 취소</p>
                     <ul className="space-y-1.5 list-none">
                         <li>① 배송 시작 전(배송 준비 전)까지 100% 전액 취소 가능합니다.</li>
                         <li>② 이용약관 신청 후 회사로부터 상담이 미제공된 경우 취소 가능합니다.</li>
                         <li>③ 취소 신청: immodelkr@gmail.com (주문번호 포함)</li>
                     </ul>
                 </div>
-                <hr className="border-white/10" />
+                <hr className="border-[#E8E0FA]" />
                 <div>
-                    <p className="text-emerald-300 font-bold mb-2">🔄 반품 · 교환</p>
+                    <p className="text-emerald-600 font-bold mb-2">🔄 반품 · 교환</p>
                     <ul className="space-y-1.5 list-none">
-                        <li>① 상품 수령 후 <strong className="text-white">3일 이내</strong> 반품·교환 신청 가능</li>
+                        <li>① 상품 수령 후 <strong className="text-[#1F1235]">3일 이내</strong> 반품·교환 신청 가능</li>
                         <li>② 단순 변심: 미개봉·미사용 상태 한정, 왕복 배송비 고객 부담</li>
                         <li>③ 상품 하자·오배송: 3일 이내 사진 첨부 접수 시 배송비 회사 부담으로 교환·환불</li>
                         <li>④ 개봉 후 사용 상품은 단순 변심 반품 불가</li>
                     </ul>
                 </div>
-                <hr className="border-white/10" />
+                <hr className="border-[#E8E0FA]" />
                 <div>
-                    <p className="text-yellow-300 font-bold mb-2">💰 환불 정책</p>
-                    <p className="text-white/40 text-[11px] font-bold mb-1">📦 실물 상품</p>
+                    <p className="text-yellow-600 font-bold mb-2">💰 환불 정책</p>
+                    <p className="text-[#9CA3AF] text-[11px] font-bold mb-1">📦 실물 상품</p>
                     <ul className="space-y-1 mb-3 list-none">
                         <li>① 배송 전 취소: 100% 전액 환불</li>
                         <li>② 수령 후 3일 이내·미사용: 환불 가능 (왕복 배송비 고객 부담)</li>
                         <li>③ 상품 하자·오배송: 수령 후 3일 이내 100% 환불</li>
                     </ul>
-                    <p className="text-white/40 text-[11px] font-bold mb-1">👑 멤버십 구독</p>
+                    <p className="text-[#9CA3AF] text-[11px] font-bold mb-1">👑 멤버십 구독</p>
                     <ul className="space-y-1 list-none">
                         <li>① 정기결제: 이용일수 제외 일할 계산 환불 (결제 후 24시간 이후 ~ 15일까지)</li>
                         <li>② 연간결제: 전체 연간금액 ÷ 12 × 잔여개월 기준 환불</li>
@@ -45,9 +48,9 @@ const RefundPolicyModal = ({ onClose }) => (
                         <li>④ 회사 귀책사유(오류·서비스 중단): 전액 환불</li>
                     </ul>
                 </div>
-                <hr className="border-white/10" />
+                <hr className="border-[#E8E0FA]" />
                 <div>
-                    <p className="text-red-300 font-bold mb-2">🚫 환불 불가 항목</p>
+                    <p className="text-red-500 font-bold mb-2">🚫 환불 불가 항목</p>
                     <ul className="space-y-1 list-none">
                         <li>• 멤버십 결제 후 7일 초과</li>
                         <li>• 상품 수령 후 3일 초과</li>
@@ -56,57 +59,102 @@ const RefundPolicyModal = ({ onClose }) => (
                         <li>• 개봉 후 사용 상품의 단순 변심</li>
                     </ul>
                 </div>
-                <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-3 mt-2">
-                    <p className="text-orange-300 font-bold">📞 문의: immodelkr@gmail.com</p>
-                    <p className="text-white/40 mt-1">주문번호, 결제일자, 사유를 포함해 주세요. (영업일 1~2일 내 답변)</p>
+                <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mt-2">
+                    <p className="text-orange-600 font-bold">📞 문의: immodelkr@gmail.com</p>
+                    <p className="text-[#9CA3AF] mt-1">주문번호, 결제일자, 사유를 포함해 주세요. (영업일 1~2일 내 답변)</p>
                 </div>
             </div>
         </div>
     </div>
 );
 
+/* ── PC 사이드바 대분류/중분류 구조 ── */
 const navGroups = [
     {
-        title: '전체 홈',
+        title: '홈',
+        icon: 'home',
         items: [
-            { to: '/home/dashboard', icon: 'home', label: '대시보드 홈' }
+            { to: '/home/dashboard', icon: 'home', label: '대시보드 홈' },
         ]
     },
     {
-        title: '모델 활동지원',
+        title: '모델 활동',
+        icon: 'apartment',
         items: [
-            { to: '/agencies', icon: 'apartment', label: '에이전시 리스트' },
+            { to: '/agencies', icon: 'apartment', label: '에이전시 목록' },
             { to: '/home/smart-profile', icon: 'forward_to_inbox', label: '나의 프로필 관리' },
-            { to: '/home/cert', icon: 'photo_camera', label: '투어스타그램' },
-            { to: '/home/diary', icon: 'event_note', label: '투어일지 모아보기' },
             { to: '/home/calendar', icon: 'calendar_month', label: '투어 캘린더' },
-            { to: '/home/tv', icon: 'smart_display', label: '모카TV 시청' }
+            { to: '/home/diary', icon: 'event_note', label: '투어일지' },
+            { to: '/home/cert', icon: 'photo_camera', label: '투어스타그램' },
         ]
     },
     {
-        title: '모카 혜택 & 쇼핑',
+        title: '콘텐츠 & 소식',
+        icon: 'smart_display',
         items: [
-            { to: '/home/membership', icon: 'star', label: '모카 멤버십 카드' },
-            { to: '/home/coupons', icon: 'local_activity', label: '모델 할인쿠폰' },
-            { to: '/home/content', icon: 'shopping_bag', label: '모카 제휴혜택' },
+            { to: '/home/tv', icon: 'smart_display', label: '모카TV' },
+            { to: '/home/message', icon: 'local_post_office', label: '공지사항' },
+            { to: '/home/lounge', icon: 'forum', label: '모카 라운지' },
+        ]
+    },
+    {
+        title: '혜택 & 쇼핑',
+        icon: 'diamond',
+        items: [
+            { to: '/home/membership', icon: 'star', label: '멤버십 카드' },
+            { to: '/home/coupons', icon: 'local_activity', label: '모델 쿠폰' },
+            { to: '/home/content', icon: 'shopping_bag', label: '제휴혜택' },
             { to: '/home/shop', icon: 'local_fire_department', label: '모카 에디트' },
-            { to: '/home/benefits', icon: 'diamond', label: '혜택 & 쇼핑' }
+            { to: '/home/benefits', icon: 'diamond', label: '혜택 허브' },
         ]
     },
     {
-        title: '소식',
+        title: 'MY 서비스',
+        icon: 'contract',
         items: [
-            { to: '/home/message', icon: 'local_post_office', label: '아임모카 공지' }
+            { to: '/home/contract', icon: 'contract', label: '전속계약 요청' },
         ]
-    }
+    },
+];
+
+/* ── 모바일 5탭 ── */
+const bottomTabs = [
+    { to: '/home/dashboard', icon: 'home', label: '홈' },
+    { to: '/agencies', icon: 'apartment', label: '에이전시' },
+    { to: '/home/smart-profile', icon: 'forward_to_inbox', label: '프로필' },
+    { to: '/home/benefits', icon: 'diamond', label: '혜택' },
+];
+
+/* ── 더보기 메뉴 항목 ── */
+const moreMenuItems = [
+    { to: '/home/calendar',   icon: 'calendar_month',       label: '투어 캘린더' },
+    { to: '/home/diary',      icon: 'event_note',           label: '투어일지' },
+    { to: '/home/cert',       icon: 'photo_camera',         label: '투어스타그램' },
+    { to: '/home/tv',         icon: 'smart_display',        label: '모카TV' },
+    { to: '/home/message',    icon: 'local_post_office',    label: '공지사항' },
+    { to: '/home/lounge',     icon: 'forum',                label: '모카 라운지' },
+    { to: '/home/membership', icon: 'star',                 label: '멤버십 카드' },
+    { to: '/home/coupons',    icon: 'local_activity',       label: '모델 쿠폰' },
+    { to: '/home/content',    icon: 'shopping_bag',         label: '제휴혜택' },
+    { to: '/home/shop',       icon: 'local_fire_department',label: '모카 에디트' },
+    { to: '/home/contract',   icon: 'contract',             label: '전속계약 요청' },
 ];
 
 const Layout = () => {
     const [showRefundPolicy, setShowRefundPolicy] = useState(false);
+    const [showMoreMenu, setShowMoreMenu] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
     const user = getUser();
     const userGrade = user?.grade || 'BASIC';
     const userId = user?.nickname || user?.name || '';
+
+    const gradeColor = userGrade === 'GOLD' || userGrade === 'VIP' || userGrade === 'VVIP'
+        ? 'text-[#D97706]' : 'text-[#7C3AED]';
+    const gradeLabel = userGrade === 'GOLD' ? '골드모카'
+        : userGrade === 'VIP' ? 'VIP모카'
+        : userGrade === 'VVIP' ? 'VVIP모카'
+        : '실버모카';
 
     const handleLogout = () => {
         logoutUser();
@@ -114,48 +162,45 @@ const Layout = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] flex text-white overflow-x-hidden w-full max-w-[100vw]">
+        <div className="min-h-screen flex overflow-x-hidden w-full max-w-[100vw]" style={{ backgroundColor: 'var(--moca-bg)' }}>
 
-            {/* ── PC 사이드 네비게이션 (lg 이상) ── */}
-            <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-[#0a0a0f] border-r border-white/10 fixed left-0 top-0 z-50">
-                {/* Logo & Login Status */}
-                <div className="px-6 py-8 border-b border-white/10 flex flex-col items-center text-center">
-                    <span className="bg-gradient-to-r from-[#9B8AFB] to-[#6052FF] bg-clip-text text-transparent text-4xl font-black tracking-tighter pb-1">MOCA</span>
-                    <p className="text-[10px] text-white/30 mt-1 font-bold pl-1 space-x-1 uppercase tracking-widest mb-4">
-                        <span>아임모델</span> <span>에이전시</span>
-                    </p>
+            {/* ── PC 사이드바 (lg 이상) ── */}
+            <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-white border-r border-[#E8E0FA] fixed left-0 top-0 z-50 shadow-moca">
+                {/* 로고 & 유저 */}
+                <div className="px-6 py-7 border-b border-[#E8E0FA] flex flex-col items-center text-center">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-4xl font-black tracking-tighter pb-1">MOCA</span>
+                    <p className="text-[10px] text-[#9CA3AF] mt-1 font-bold uppercase tracking-widest mb-4">아임모델 에이전시</p>
                     {userId && (
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 w-full justify-center">
-                            <span className={`font-bold text-[11px] ${userGrade === 'GOLD' ? 'text-[#D4AF37]' : 'text-slate-300'}`}>
-                                {userGrade === 'GOLD' ? '골드모카' : '실버모카'}
-                            </span>
-                            <span className="text-white font-bold text-[11px]">{userId}</span>
+                        <div className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#F3E8FF] border border-[#E8E0FA] w-full justify-center">
+                            <span className={`font-black text-[11px] ${gradeColor}`}>{gradeLabel}</span>
+                            <span className="text-[#1F1235] font-bold text-[11px]">{userId}</span>
                         </div>
                     )}
                 </div>
 
-                {/* Nav links */}
-                <nav className="flex-1 px-4 py-4 overflow-y-auto hide-scrollbar">
+                {/* 사이드 메뉴 */}
+                <nav className="flex-1 px-3 py-4 overflow-y-auto hide-scrollbar">
                     {navGroups.map((group, idx) => (
-                        <div key={group.title} className={idx > 0 ? "mt-5" : ""}>
-                            <h3 className="px-4 text-[10px] font-black text-[#818CF8] tracking-widest mb-2 uppercase">
+                        <div key={group.title} className={idx > 0 ? 'mt-5' : ''}>
+                            <h3 className="px-3 text-[10px] font-black text-[#9333EA] tracking-widest mb-2 uppercase flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[14px]">{group.icon}</span>
                                 {group.title}
                             </h3>
-                            <div className="space-y-1">
+                            <div className="space-y-0.5">
                                 {group.items.map(({ to, icon, label }) => (
                                     <NavLink
                                         key={to}
                                         to={to}
-                                        end={to === '/'}
+                                        end={to === '/home/dashboard'}
                                         className={({ isActive }) =>
-                                            `flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold text-sm transition-all
+                                            `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-sm transition-all
                                             ${isActive
-                                                ? 'bg-[#6C63FF]/20 text-[#818CF8]'
-                                                : 'text-white/40 hover:bg-white/5 hover:text-white'
+                                                ? 'bg-[#F3E8FF] text-[#7C3AED] shadow-sm'
+                                                : 'text-[#5B4E7A] hover:bg-[#F8F5FF] hover:text-[#7C3AED]'
                                             }`
                                         }
                                     >
-                                        <span className="material-symbols-outlined text-[20px]">{icon}</span>
+                                        <span className="material-symbols-outlined text-[18px]">{icon}</span>
                                         {label}
                                     </NavLink>
                                 ))}
@@ -164,110 +209,163 @@ const Layout = () => {
                     ))}
                 </nav>
 
-                {/* Bottom info & Logout */}
-                <div className="px-6 py-5 border-t border-white/10 flex flex-col gap-4">
+                {/* 하단 로그아웃 */}
+                <div className="px-6 py-5 border-t border-[#E8E0FA] flex flex-col gap-3">
                     <button
                         onClick={handleLogout}
-                        className="flex items-center gap-2 text-white/40 hover:text-white transition-colors"
+                        className="flex items-center gap-2 text-[#9CA3AF] hover:text-[#9333EA] transition-colors"
                     >
                         <span className="material-symbols-outlined text-[18px]">logout</span>
                         <span className="text-xs font-bold tracking-widest">로그아웃</span>
                     </button>
-                    <p className="text-[10px] text-white/20 tracking-widest uppercase">© 2026 I'M MODEL</p>
+                    <p className="text-[10px] text-[#9CA3AF] tracking-widest uppercase">© 2026 I'M MODEL</p>
                 </div>
             </aside>
 
-            {/* ── 메인 콘텐츠 영역 ── */}
+            {/* ── 메인 콘텐츠 ── */}
             <div className="flex-1 lg:ml-64 flex flex-col min-h-screen relative w-full max-w-full overflow-x-hidden">
-                {/* ── Mobile Top Header & Floating Logout Button (lg 미만) ── */}
-                <header className="lg:hidden flex items-center justify-between px-5 pt-6 pb-4 bg-[#0a0a0f] border-b border-white/5 z-[100] sticky top-0 w-full">
-                    <div className="flex items-center gap-2">
-                        <span className="bg-gradient-to-r from-[#9B8AFB] to-[#6052FF] bg-clip-text text-transparent text-2xl font-black tracking-tighter">MOCA</span>
-                    </div>
+
+                {/* ── 모바일 탑 헤더 ── */}
+                <header className="lg:hidden flex items-center justify-between px-5 pt-5 pb-3 bg-white border-b border-[#E8E0FA] z-[100] sticky top-0 w-full shadow-sm">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-2xl font-black tracking-tighter">MOCA</span>
                     <div className="flex items-center gap-2">
                         {userId && (
-                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/5 border border-white/10">
-                                <span className={`font-bold text-[10px] ${userGrade === 'GOLD' ? 'text-[#D4AF37]' : 'text-slate-300'}`}>
-                                    {userGrade === 'GOLD' ? '골드모카' : '실버모카'}
-                                </span>
-                                <span className="text-white font-bold text-[10px]">{userId}</span>
+                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#F3E8FF] border border-[#E8E0FA]">
+                                <span className={`font-black text-[10px] ${gradeColor}`}>{gradeLabel}</span>
+                                <span className="text-[#1F1235] font-bold text-[10px]">{userId}</span>
                             </div>
                         )}
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full backdrop-blur-md transition-all"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-[#F8F5FF] hover:bg-[#F3E8FF] border border-[#E8E0FA] rounded-full transition-all"
                         >
-                            <span className="text-[10px] font-bold text-white/60 whitespace-nowrap">로그아웃</span>
-                            <span className="material-symbols-outlined text-[14px] text-white/60">logout</span>
+                            <span className="text-[10px] font-bold text-[#9CA3AF] whitespace-nowrap">로그아웃</span>
+                            <span className="material-symbols-outlined text-[13px] text-[#9CA3AF]">logout</span>
                         </button>
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar pb-32 lg:pb-8 w-full max-w-[430px] mx-auto">
+                {/* ── 콘텐츠 + 푸터 ── */}
+                <main className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar pb-28 lg:pb-8 w-full max-w-[430px] mx-auto">
                     <Outlet />
 
                     {/* ── Footer ── */}
-                    <footer className="w-full border-t border-white/10 bg-[#07070d] px-6 py-8 mt-8">
+                    <footer className="w-full border-t border-[#E8E0FA] bg-[#F8F5FF] px-6 py-8 mt-8">
                         <div className="w-full flex flex-col items-center text-center space-y-3">
-                            {/* 약관 링크 */}
                             <div className="flex items-center justify-center gap-3 flex-wrap">
-                                <a href="/privacy" className="text-white/70 text-[11px] font-bold hover:text-white transition-colors">개인정보처리방침</a>
-                                <span className="text-white/40 text-[11px]">|</span>
-                                <a href="/terms" className="text-white/70 text-[11px] font-bold hover:text-white transition-colors">서비스 이용약관</a>
-                                <span className="text-white/40 text-[11px]">|</span>
-                                <button onClick={() => setShowRefundPolicy(true)} className="text-orange-300/80 text-[11px] font-bold hover:text-orange-300 transition-colors">교환·반품·환불 정책</button>
+                                <a href="/privacy" className="text-[#5B4E7A] text-[11px] font-bold hover:text-[#9333EA] transition-colors">개인정보처리방침</a>
+                                <span className="text-[#E8E0FA] text-[11px]">|</span>
+                                <a href="/terms" className="text-[#5B4E7A] text-[11px] font-bold hover:text-[#9333EA] transition-colors">서비스 이용약관</a>
+                                <span className="text-[#E8E0FA] text-[11px]">|</span>
+                                <button onClick={() => setShowRefundPolicy(true)} className="text-orange-500 text-[11px] font-bold hover:text-orange-600 transition-colors">교환·반품·환불 정책</button>
                             </div>
                             {showRefundPolicy && <RefundPolicyModal onClose={() => setShowRefundPolicy(false)} />}
-                            {/* 사업자 정보 */}
-                            <p className="text-white/80 text-[11px] font-black tracking-widest uppercase">글로벌아임</p>
-                            <div className="text-white/60 text-[10px] leading-loose space-y-0">
+                            <p className="text-[#1F1235] text-[11px] font-black tracking-widest uppercase">글로벌아임</p>
+                            <div className="text-[#9CA3AF] text-[10px] leading-loose">
                                 <p>대표 : 김대희 | 사업자등록번호 : 365-22-00947</p>
                                 <p>통신판매업 신고번호 : 제2021-서울강남-05756호</p>
                                 <p>주소 : 서울시 영등포구 영중로 159, 7층 글로벌아임</p>
                                 <p>이메일 : immodelkr@gmail.com</p>
                                 <p>호스팅서비스 : Vercel Inc.</p>
                             </div>
-                            <p className="text-white/40 text-[10px] tracking-widest pt-1">
+                            <p className="text-[#9CA3AF] text-[10px] tracking-widest pt-1">
                                 © 2026 글로벌아임(IMMOCA). All rights reserved.
                             </p>
                         </div>
                     </footer>
                 </main>
 
-                {/* ── 모바일 하단 네비게이션 (lg 미만) ── */}
-                <nav className="lg:hidden fixed bottom-5 left-1/2 -translate-x-1/2 w-[92%] max-w-[380px] h-16 bg-[#1a1a24]/90 backdrop-blur-xl rounded-full border border-white/10 flex items-center z-[100] shadow-2xl shadow-black/50 pb-[env(safe-area-inset-bottom,0)]">
+                {/* ── 모바일 5탭 하단 내비게이션 ── */}
+                <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-[#E8E0FA] shadow-moca-lg pb-[env(safe-area-inset-bottom,0)]">
+                    <div className="flex items-center justify-around h-16 max-w-[430px] mx-auto px-2">
+                        {/* 4개 주요 탭 */}
+                        {bottomTabs.map(({ to, icon, label }) => {
+                            const isActive = location.pathname === to || location.pathname.startsWith(to + '/') && to !== '/home/dashboard'
+                                || (to === '/home/dashboard' && location.pathname === '/home/dashboard');
+                            return (
+                                <NavLink
+                                    key={to}
+                                    to={to}
+                                    className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all"
+                                    onClick={() => setShowMoreMenu(false)}
+                                >
+                                    {({ isActive }) => (
+                                        <>
+                                            <span className={`material-symbols-outlined text-[26px] transition-all ${isActive ? 'fill-1 text-[#9333EA]' : 'text-[#9CA3AF]'}`}>
+                                                {icon}
+                                            </span>
+                                            <span className={`text-[10px] font-black transition-all ${isActive ? 'text-[#9333EA]' : 'text-[#9CA3AF]'}`}>
+                                                {label}
+                                            </span>
+                                        </>
+                                    )}
+                                </NavLink>
+                            );
+                        })}
 
-                    {/* 왼쪽 — 뒤로 가기 */}
-                    <div className="flex flex-1 items-center justify-center pr-8">
+                        {/* 더보기 탭 */}
                         <button
-                            onClick={() => window.history.back()}
-                            className="flex flex-col items-center gap-1 text-white/30 hover:text-white/80 active:scale-90 transition-all"
+                            className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all"
+                            onClick={() => setShowMoreMenu(prev => !prev)}
                         >
-                            <span className="material-symbols-outlined text-[28px]">arrow_back_ios</span>
-                            <span className="text-[10px] font-bold tracking-widest whitespace-nowrap">뒤로가기</span>
-                        </button>
-                    </div>
-
-                    {/* 중앙 홈 버튼 (절대 위치 고정) */}
-                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                        <NavLink to="/home/dashboard">
-                            <button className="w-11 h-11 rounded-full bg-gradient-to-br from-[#6C63FF] to-[#A78BFA] flex items-center justify-center text-white shadow-lg shadow-[#6C63FF]/40 border-[3px] border-[#1a1a24] active:scale-95 transition-transform">
-                                <span className="material-symbols-outlined text-[20px] font-bold">home</span>
-                            </button>
-                        </NavLink>
-                    </div>
-
-                    {/* 오른쪽 — 앞으로 가기 */}
-                    <div className="flex flex-1 items-center justify-center pl-8">
-                        <button
-                            onClick={() => window.history.forward()}
-                            className="flex flex-col items-center gap-1 text-white/30 hover:text-white/80 active:scale-90 transition-all"
-                        >
-                            <span className="material-symbols-outlined text-[28px]">arrow_forward_ios</span>
-                            <span className="text-[10px] font-bold tracking-widest whitespace-nowrap">앞으로가기</span>
+                            <span className={`material-symbols-outlined text-[26px] transition-all ${showMoreMenu ? 'text-[#9333EA]' : 'text-[#9CA3AF]'}`}>
+                                more_horiz
+                            </span>
+                            <span className={`text-[10px] font-black transition-all ${showMoreMenu ? 'text-[#9333EA]' : 'text-[#9CA3AF]'}`}>
+                                더보기
+                            </span>
                         </button>
                     </div>
                 </nav>
+
+                {/* ── 더보기 슬라이드업 패널 ── */}
+                {showMoreMenu && (
+                    <>
+                        {/* 딤 배경 */}
+                        <div
+                            className="lg:hidden fixed inset-0 z-[99] bg-black/20 backdrop-blur-sm"
+                            onClick={() => setShowMoreMenu(false)}
+                        />
+                        {/* 패널 */}
+                        <div className="lg:hidden fixed bottom-16 left-0 right-0 z-[100] bg-white border-t border-[#E8E0FA] rounded-t-3xl shadow-moca-lg max-h-[65vh] overflow-y-auto pb-[env(safe-area-inset-bottom,16px)]">
+                            <div className="w-10 h-1 bg-[#E8E0FA] rounded-full mx-auto mt-3 mb-4" />
+                            <p className="text-center text-[11px] font-black text-[#9CA3AF] uppercase tracking-widest mb-4">전체 메뉴</p>
+                            <div className="grid grid-cols-3 gap-3 px-5 pb-6">
+                                {moreMenuItems.map(({ to, icon, label }) => (
+                                    <NavLink
+                                        key={to}
+                                        to={to}
+                                        onClick={() => setShowMoreMenu(false)}
+                                        className={({ isActive }) =>
+                                            `flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border transition-all text-center
+                                            ${isActive
+                                                ? 'bg-[#F3E8FF] border-[#9333EA]/30 text-[#7C3AED]'
+                                                : 'bg-[#F8F5FF] border-[#E8E0FA] text-[#5B4E7A] hover:bg-[#F3E8FF] hover:text-[#9333EA]'
+                                            }`
+                                        }
+                                    >
+                                        {({ isActive }) => (
+                                            <>
+                                                <span className={`material-symbols-outlined text-[24px] ${isActive ? 'fill-1' : ''}`}>{icon}</span>
+                                                <span className="text-[10px] font-black leading-tight">{label}</span>
+                                            </>
+                                        )}
+                                    </NavLink>
+                                ))}
+                            </div>
+                            {/* 로그아웃 */}
+                            <div className="border-t border-[#E8E0FA] mx-5 pt-4 pb-6">
+                                <button
+                                    onClick={() => { setShowMoreMenu(false); handleLogout(); }}
+                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] text-[#9CA3AF] font-bold text-sm hover:bg-[#F3E8FF] hover:text-[#9333EA] transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">logout</span>
+                                    로그아웃
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

@@ -2,47 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── A-Plan: MOCA Light Purple Design System ── */
+:root {
+  --moca-bg:          #F3F0FF;
+  --moca-bg-alt:      #EDE8FF;
+  --moca-surface:     #FFFFFF;
+  --moca-surface-2:   #F8F5FF;
+  --moca-border:      #E8E0FA;
+  --moca-primary:     #9333EA;
+  --moca-primary-2:   #7C3AED;
+  --moca-primary-lt:  #F3E8FF;
+  --moca-primary-grd: linear-gradient(135deg, #9333EA, #C084FC);
+  --moca-text:        #1F1235;
+  --moca-text-2:      #5B4E7A;
+  --moca-text-3:      #9CA3AF;
+  --moca-accent:      #C084FC;
+  --moca-gold:        #D97706;
+  --moca-shadow:      0 4px 24px rgba(147, 51, 234, 0.12);
+  --moca-shadow-lg:   0 8px 40px rgba(147, 51, 234, 0.18);
+}
+
 @layer base {
   body {
-    @apply font-display text-white antialiased bg-[#0a0a0f] min-h-screen;
+    @apply font-display antialiased min-h-screen;
+    background-color: var(--moca-bg);
+    color: var(--moca-text);
   }
 }
 
 @layer utilities {
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
   .circular-progress {
-    background: conic-gradient(#1241a1 306deg, #EEEEEE 0deg);
+    background: conic-gradient(#7C3AED 306deg, #E8E0FA 0deg);
   }
 
-  .fill-1 {
-    font-variation-settings: 'FILL' 1;
+  .fill-1 { font-variation-settings: 'FILL' 1; }
+
+  /* Moca card - white with purple shadow */
+  .moca-card {
+    background: var(--moca-surface);
+    border: 1px solid var(--moca-border);
+    border-radius: 1.25rem;
+    box-shadow: var(--moca-shadow);
   }
 
-  /* Admin tab scrollbar - visible on PC for discoverability */
-  .admin-tab-scrollbar::-webkit-scrollbar {
-    height: 4px;
+  /* Moca primary button */
+  .moca-btn-primary {
+    background: var(--moca-primary-grd);
+    color: white;
+    font-weight: 800;
+    border-radius: 9999px;
   }
+
+  /* Admin tab scrollbar */
+  .admin-tab-scrollbar::-webkit-scrollbar { height: 4px; }
   .admin-tab-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
+    background: rgba(147, 51, 234, 0.05); border-radius: 4px;
   }
   .admin-tab-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
+    background: rgba(147, 51, 234, 0.25); border-radius: 4px;
   }
   .admin-tab-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(147, 51, 234, 0.45);
   }
   .admin-tab-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+    scrollbar-color: rgba(147, 51, 234, 0.25) rgba(147, 51, 234, 0.05);
   }
 }
