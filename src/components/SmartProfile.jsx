@@ -296,7 +296,9 @@ const SmartProfile = () => {
                     <span className="material-symbols-outlined text-[20px] text-[#7C3AED]">arrow_back</span>
                 </button>
                 <div>
-                    <h1 className="text-xl font-black tracking-tight" style={{color:'var(--moca-text)'}}>나의 프로필 관리</h1>
+                    <h1 className="text-xl font-black tracking-tight" style={{color:'var(--moca-text)'}}>
+                        모델 {user?.name || user?.nickname}님의 프로필
+                    </h1>
                     <p className="text-[#9CA3AF] text-xs mt-0.5">등록하면 에이전시에 원클릭 지원 가능</p>
                 </div>
             </div>
