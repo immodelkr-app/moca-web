@@ -67,72 +67,73 @@ END:VCALENDAR`;
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm sm:p-4 animate-fadeIn"
+            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4 animate-fadeIn"
             onClick={handleBackdropClick}
         >
-            <div className="w-full max-w-lg bg-[#1a1a24] border border-white/10 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] animate-slideUp sm:animate-zoomIn">
+            <div className="w-full max-w-lg bg-white border border-[#E8E0FA] rounded-t-[40px] sm:rounded-[40px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] animate-slideUp sm:animate-zoomIn">
                 {/* Header */}
-                <div className="p-6 border-b border-white/5 flex items-center justify-between sticky top-0 z-10 bg-[#1a1a24]">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#6C63FF]/20 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[20px] text-[#A78BFA]">calendar_today</span>
+                <div className="p-8 pb-6 border-b border-[#E8E0FA] flex items-center justify-between sticky top-0 z-10 bg-white">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-[#F3E8FF] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[24px] text-[#9333EA]">calendar_today</span>
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white leading-tight">{dateStr}</h2>
-                            <p className="text-xs text-white/40 mt-0.5">나의 투어 일지</p>
+                            <h2 className="text-2xl font-black text-[#1F1235] leading-none tracking-tight">{dateStr}</h2>
+                            <p className="text-[13px] text-[#9CA3AF] font-bold mt-1.5 uppercase tracking-wider">나의 투어 일지</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                        className="w-10 h-10 rounded-full bg-[#F8F5FF] border border-[#E8E0FA] flex items-center justify-center text-[#9CA3AF] hover:text-[#1F1235] hover:bg-[#EDE8FF] transition-all"
                     >
-                        <span className="material-symbols-outlined text-[20px]">close</span>
+                        <span className="material-symbols-outlined text-[22px]">close</span>
                     </button>
                 </div>
 
                 {/* Body - Scrollable */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-[#1a1a24]">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
                     {diaries.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12">
-                            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                                <span className="material-symbols-outlined text-[32px] text-white/20">edit_note</span>
+                        <div className="flex flex-col items-center justify-center py-16">
+                            <div className="w-20 h-20 rounded-full bg-[#F3E8FF] flex items-center justify-center mb-6">
+                                <span className="material-symbols-outlined text-[40px] text-[#9333EA]/30">edit_note</span>
                             </div>
-                            <p className="text-white/60 font-medium text-center text-sm">
-                                이 날 작성된 투어 일지가 없습니다.
+                            <p className="text-[#5B4E7A] font-bold text-center text-sm leading-relaxed">
+                                이 날 작성된 투어 일지가 없습니다.<br/>
+                                <span className="text-[#9CA3AF] text-xs font-medium">활동 내용을 기록해보세요!</span>
                             </p>
                         </div>
                     ) : (
                         diaries.map(memo => (
                             <div
                                 key={memo.id}
-                                className="bg-[#0a0a0f] border border-white/5 rounded-2xl p-5 relative overflow-hidden group"
+                                className="bg-[#F8F5FF] border border-[#E8E0FA] rounded-[24px] p-6 relative overflow-hidden group hover:border-[#9333EA]/30 hover:shadow-sm transition-all shadow-moca"
                             >
-                                <div className="absolute top-0 left-0 w-1 h-full bg-[#6C63FF]/30" />
-                                <div className="flex items-start justify-between mb-3 pl-2">
-                                    <div className="flex items-center gap-2 flex-1">
-                                        <div className="w-7 h-7 rounded-lg bg-[#6C63FF]/10 flex items-center justify-center shrink-0">
-                                            <span className="material-symbols-outlined text-[14px] text-[#A78BFA]">apartment</span>
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-[#9333EA]/20 group-hover:bg-[#9333EA] transition-colors" />
+                                <div className="flex items-start justify-between mb-4 pl-2">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="w-9 h-9 rounded-xl bg-white border border-[#E8E0FA] flex items-center justify-center shrink-0">
+                                            <span className="material-symbols-outlined text-[18px] text-[#9333EA]">apartment</span>
                                         </div>
-                                        <h3 className="text-white font-bold text-sm">{memo.agencyName}</h3>
+                                        <h3 className="text-[#1F1235] font-black text-base truncate tracking-tight">{memo.agencyName}</h3>
                                     </div>
                                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
                                         <button
                                             onClick={() => handleAddToGoogleCalendar(memo)}
-                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/80 hover:text-blue-400 hover:bg-blue-400/20 transition-colors"
+                                            className="w-9 h-9 rounded-full bg-white border border-[#E8E0FA] flex items-center justify-center text-[#9CA3AF] hover:text-blue-500 hover:bg-blue-50 transition-all"
                                             title="캘린더 일정 추가"
                                         >
                                             <span className="material-symbols-outlined text-[20px]">calendar_add_on</span>
                                         </button>
                                         <button
                                             onClick={() => setEditingMemo(memo)}
-                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/80 hover:text-amber-300 hover:bg-amber-400/20 transition-colors"
+                                            className="w-9 h-9 rounded-full bg-white border border-[#E8E0FA] flex items-center justify-center text-[#9CA3AF] hover:text-[#9333EA] hover:bg-[#F3E8FF] transition-all"
                                             title="수정"
                                         >
                                             <span className="material-symbols-outlined text-[20px]">edit</span>
                                         </button>
                                         <button
                                             onClick={() => handleDelete(memo)}
-                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/80 hover:text-red-400 hover:bg-red-400/20 transition-colors"
+                                            className="w-9 h-9 rounded-full bg-white border border-[#E8E0FA] flex items-center justify-center text-[#9CA3AF] hover:text-red-500 hover:bg-red-50 transition-all"
                                             title="삭제"
                                         >
                                             <span className="material-symbols-outlined text-[20px]">delete</span>
@@ -140,7 +141,7 @@ END:VCALENDAR`;
                                     </div>
                                 </div>
                                 <div className="pl-2">
-                                    <p className="text-white/70 text-sm whitespace-pre-wrap leading-relaxed">
+                                    <p className="text-[#5B4E7A] text-sm whitespace-pre-wrap leading-relaxed font-medium">
                                         {memo.content}
                                     </p>
                                 </div>
@@ -150,12 +151,12 @@ END:VCALENDAR`;
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 sm:p-6 border-t border-white/5 bg-[#1a1a24] sticky bottom-0 z-10 pb-10 sm:pb-6">
+                <div className="p-8 pt-6 border-t border-[#E8E0FA] bg-white sticky bottom-0 z-10 pb-12 sm:pb-8">
                     <button
                         onClick={onAddClick}
-                        className="w-full py-4 bg-white/5 hover:bg-white/10 text-white text-sm font-bold tracking-wide rounded-xl transition-all border border-white/10 flex items-center justify-center gap-2 group"
+                        className="w-full py-4.5 bg-[#F3E8FF] hover:bg-[#EDE8FF] text-[#7C3AED] text-[15px] font-black tracking-wide rounded-[20px] transition-all border border-[#E8E0FA] flex items-center justify-center gap-2.5 group active:scale-[0.98]"
                     >
-                        <span className="material-symbols-outlined text-[#6C63FF] group-hover:text-[#A78BFA] transition-colors">add_circle</span>
+                        <span className="material-symbols-outlined text-[22px] font-black transition-transform group-hover:scale-110">add_circle</span>
                         새 투어 일지 추가
                     </button>
                 </div>

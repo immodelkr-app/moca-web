@@ -166,9 +166,9 @@ const AgencyTourCalendar = () => {
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-1 h-8 rounded-full bg-gradient-to-b from-[#6C63FF] to-[#A78BFA]" />
+                        <div className="w-1.5 h-8 rounded-full bg-gradient-to-b from-[#9333EA] to-[#C084FC]" />
                         <h1 className="text-2xl font-black text-[#1F1235] tracking-tight flex items-center gap-2">
-                            투어 캘린더🗓️
+                            투어 캘린더 일지
                         </h1>
                     </div>
                 </div>
@@ -255,11 +255,11 @@ const AgencyTourCalendar = () => {
 
                                         {/* Diary Chips (Truncated list if too many) */}
                                         <div className="flex-1 mt-1 sm:mt-2 space-y-1 overflow-hidden z-10 relative">
-                                            {dayDiaries.slice(0, 3).map((memo, mIdx) => (
-                                                <div key={mIdx} className="w-full truncate text-[9px] sm:text-[10px] font-medium bg-[#6C63FF]/20 text-[#A78BFA] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md border border-[#6C63FF]/30">
-                                                    {memo.agencyName}
-                                                </div>
-                                            ))}
+                                             {dayDiaries.slice(0, 3).map((memo, mIdx) => (
+                                                 <div key={mIdx} className="w-full truncate text-[9px] sm:text-[10px] font-black bg-white border border-[#E8E0FA] text-[#7C3AED] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md shadow-sm">
+                                                     {memo.agencyName}
+                                                 </div>
+                                             ))}
                                             {dayDiaries.length > 3 && (
                                                 <div className="text-[9px] text-[#9CA3AF] pl-1 font-bold">
                                                     +{dayDiaries.length - 3} 더보기
@@ -275,13 +275,13 @@ const AgencyTourCalendar = () => {
             </div>
 
             {/* Floating Quick Add */}
-            <button
-                onClick={() => setIsQuickAddOpen(true)}
-                className="fixed bottom-32 lg:bottom-12 right-6 w-12 h-12 bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white rounded-full flex items-center justify-center shadow-lg shadow-[#6C63FF]/40 hover:scale-110 active:scale-95 transition-transform z-40 group"
-            >
-                <span className="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="material-symbols-outlined text-[24px]">edit</span>
-            </button>
+             <button
+                 onClick={() => setIsQuickAddOpen(true)}
+                 className="fixed bottom-32 lg:bottom-12 right-6 w-14 h-14 bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white rounded-full flex items-center justify-center shadow-2xl shadow-[#9333EA]/40 hover:scale-110 active:scale-95 transition-all z-40 group border-2 border-white/20"
+             >
+                 <span className="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                 <span className="material-symbols-outlined text-[26px] font-black">edit</span>
+             </button>
 
 
             {/* Modals */}
