@@ -169,10 +169,10 @@ const SmartProfile = () => {
                 } else if (attempts >= 25) {
                     clearInterval(retry);
                     setPickerLoading(false);
-                    const isCapacitor = window.Capacitor || window.webkit?.messageHandlers?.bridge;
-                    setErrorMsg(isCapacitor 
-                        ? '모바일 앱(APK)에서는 구글 연동이 제한될 수 있습니다. 해결되지 않을 경우 웹(immoca.kr)에서 등록하시거나 링크를 직접 입력해주세요.'
-                        : 'Google 연동에 실패했습니다. 페이지를 새로고침 후 다시 시도해주세요.');
+                     const isCapacitor = window.Capacitor?.platform !== 'web' || /Capacitor/i.test(navigator.userAgent) || window.webkit?.messageHandlers?.bridge;
+                     setErrorMsg(isCapacitor 
+                         ? '모바일 앱(APK)은 구글 정책상 직접 로그인이 제한될 수 있습니다. 웹사이트(immoca.kr)에서 "스마트 프로필"을 등록하시면 앱에도 바로 반영됩니다.'
+                         : 'Google 연동 서비스에 응답이 없습니다. 잠시 후 새로고침하여 다시 시도해주세요.');
                 }
             }, 200);
             return;
@@ -463,15 +463,20 @@ const SmartProfile = () => {
 
                     {!formData.portfolio_link && (
                         <div className="mt-2">
-                            <p className="text-[#9CA3AF] text-sm text-center mb-2">또는 직접 링크 입력</p>
+                            <p className="text-[#9CA3AF] text-xs text-center mb-2 font-bold">— 또는 구글드라이브 공유용 링크 직접 입력 —</p>
                             <input
                                 type="url"
                                 name="portfolio_link"
                                 value={formData.portfolio_link}
                                 onChange={handleChange}
                                 placeholder="https://drive.google.com/..."
-                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-base placeholder-[#9CA3AF] focus:outline-none focus:border-[#4285F4] focus:ring-2 focus:ring-[#4285F4]/10 transition-colors"
+                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3.5 text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#4285F4] focus:ring-2 focus:ring-[#4285F4]/10 transition-colors shadow-inner"
                             />
+                            <div className="mt-3 bg-blue-50/50 rounded-xl p-3 border border-blue-100">
+                                <p className="text-[10px] text-blue-600/70 leading-relaxed">
+                                    <span className="font-black">※ 도움말:</span> 드라이브의 파일 '공유' → '링크가 있는 모든 사용자'로 설정 후 링크를 복사해서 이곳에 붙여넣으세요.
+                                </p>
+                            </div>
                         </div>
                     )}
                 </div>

@@ -170,11 +170,12 @@ const AgencyLanding = () => {
                     </span>
                     <h1 className="text-4xl md:text-6xl font-black text-[#1F1235] leading-tight tracking-tight mb-6">
                         당신의 모델 활동을<br />
-                        <span className="text-[#9333EA]">더 스마트하게.</span>
+                        <span className="text-[#9333EA]">더 스마트하게, 아임모카</span>
                     </h1>
                     <p className="text-[#5B4E7A] text-lg max-w-lg mx-auto mb-10 leading-relaxed font-medium">
-                        대한민국 {agencyCount}개 이상의 에이전시 정보를 한눈에 확인하고,<br />
-                        전문적인 모델 포트폴리오를 단 1분 만에 완성해 보세요.
+                        광고전문 에이전시 {agencyCount}개의 정보를 한눈에 확인하고,<br />
+                        전문적인 광고모델 활동<br />
+                        정보를 확인해보세요.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button
@@ -200,7 +201,7 @@ const AgencyLanding = () => {
                         <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
                             <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">apartment</span>
                             <h3 className="text-xl font-black text-[#1F1235] mb-3">전국 에이전시 리스트</h3>
-                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">실시간으로 업데이트되는 {agencyCount}개 이상 에이전시의 주소와 연락처, 특징을 한눈에.</p>
+                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">실시간으로 업데이트되는 {agencyCount}개 에이전시의 주소와 연락처, 특징을 한눈에.</p>
                         </div>
                         <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
                             <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">forward_to_inbox</span>

@@ -614,14 +614,14 @@ const AdminPage = () => {
     // 인증 전 - 비밀번호 입력 화면
     if (!authenticated) {
         return (
-            <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
-                <div className="bg-[#1a1a24] border border-white/10 rounded-2xl w-full max-w-sm p-8 shadow-2xl">
+            <div className="min-h-screen bg-[var(--moca-bg)] flex items-center justify-center p-4">
+                <div className="bg-white border border-[var(--moca-border)] rounded-2xl w-full max-w-sm p-8 shadow-2xl">
                     <div className="flex flex-col items-center mb-8">
-                        <div className="w-16 h-16 rounded-full bg-[#6C63FF]/20 flex items-center justify-center mb-4">
-                            <span className="material-symbols-outlined text-[#818CF8] text-[32px]">admin_panel_settings</span>
+                        <div className="w-16 h-16 rounded-full bg-[var(--moca-primary-lt)] flex items-center justify-center mb-4">
+                            <span className="material-symbols-outlined text-[var(--moca-primary)] text-[32px]">admin_panel_settings</span>
                         </div>
-                        <h1 className="text-2xl font-black text-white">관리자 페이지</h1>
-                        <p className="text-white/40 text-sm mt-1">아임모델 어드민</p>
+                        <h1 className="text-2xl font-black text-[var(--moca-text)]">관리자 페이지</h1>
+                        <p className="text-[var(--moca-text-3)] text-sm mt-1">아임모델 어드민</p>
                     </div>
 
                     <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -629,7 +629,7 @@ const AdminPage = () => {
                             type="password"
                             value={passwordInput}
                             onChange={e => { setPasswordInput(e.target.value); setPasswordError(''); }}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#6C63FF] transition-colors"
+                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors"
                             placeholder="관리자 비밀번호"
                             autoFocus
                         />
@@ -638,14 +638,14 @@ const AdminPage = () => {
                         )}
                         <button
                             type="submit"
-                            className="w-full bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white font-black py-3 rounded-xl transition-all hover:opacity-90"
+                            className="w-full bg-gradient-to-r from-[var(--moca-primary)] to-[var(--moca-accent)] text-white font-black py-3 rounded-xl transition-all hover:opacity-90"
                         >
                             로그인
                         </button>
                         <button
                             type="button"
                             onClick={() => navigate('/')}
-                            className="w-full text-white/30 hover:text-white text-sm transition-colors py-2"
+                            className="w-full text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-sm transition-colors py-2"
                         >
                             ← 랜딩으로 돌아가기
                         </button>
@@ -657,13 +657,13 @@ const AdminPage = () => {
 
     // 인증 후 - 어드민 대시보드
     return (
-        <div className="min-h-screen bg-[#0a0a0f] text-white">
+        <div className="min-h-screen bg-[var(--moca-bg)]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-md border-b border-white/5 px-6 py-4">
+            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[var(--moca-border)] px-6 py-4">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-[#818CF8]">admin_panel_settings</span>
-                        <h1 className="text-lg font-black text-white">아임모델 어드민</h1>
+                        <span className="material-symbols-outlined text-[var(--moca-primary)]">admin_panel_settings</span>
+                        <h1 className="text-lg font-black text-[var(--moca-text)]">아임모델 어드민</h1>
                     </div>
                     <div className="flex items-center gap-4">
                         {successMsg && (
@@ -671,21 +671,21 @@ const AdminPage = () => {
                         )}
                         <button
                             onClick={fetchData}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-bold transition-all"
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--moca-surface-2)] hover:bg-[var(--moca-primary-lt)] border border-[var(--moca-border)] text-sm font-bold transition-all"
                         >
                             <span className="material-symbols-outlined text-[16px]">refresh</span>
                             새로고침
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-1 text-white/40 hover:text-white text-sm transition-colors mr-2"
+                            className="flex items-center gap-1 text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-sm transition-colors mr-2"
                         >
                             <span className="material-symbols-outlined text-[16px]">logout</span>
                             로그아웃
                         </button>
                         <button
                             onClick={() => navigate('/')}
-                            className="text-white/40 hover:text-white text-sm transition-colors"
+                            className="text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-sm transition-colors"
                         >
                             ← 나가기
                         </button>
@@ -696,45 +696,45 @@ const AdminPage = () => {
             <div className="max-w-6xl mx-auto px-6 py-8">
 
                 {/* 탭 네비게이션 */}
-                <div className="flex gap-4 mb-8 border-b border-white/10 overflow-x-auto admin-tab-scrollbar whitespace-nowrap">
+                <div className="flex gap-1 mb-8 border-b border-[var(--moca-border)] overflow-x-auto admin-tab-scrollbar whitespace-nowrap">
                     <button
                         onClick={() => setActiveTab('users')}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'users' ? 'border-[#6C63FF] text-[#818CF8]' : 'border-transparent text-white/40 hover:text-white'
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'users' ? 'border-[var(--moca-primary)] text-[var(--moca-primary)] bg-[var(--moca-primary)]/5' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
                     >
                         회원 관리
                     </button>
                     <button
                         onClick={() => setActiveTab('stats')}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'stats' ? 'border-[#6C63FF] text-[#818CF8]' : 'border-transparent text-white/40 hover:text-white'
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'stats' ? 'border-[var(--moca-primary)] text-[var(--moca-primary)] bg-[var(--moca-primary)]/5' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
                     >
                         조회수 통계
                     </button>
                     <button
                         onClick={() => setActiveTab('partners')}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'partners' ? 'border-[#10b981] text-[#34d399]' : 'border-transparent text-white/40 hover:text-white'
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'partners' ? 'border-emerald-600 text-emerald-700 bg-emerald-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
                     >
                         제휴사 관리
                     </button>
                     <button
                         onClick={() => { setActiveTab('lounge'); setLoungeView('list'); loadAnnouncements(); }}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'lounge' ? 'border-[#C4B5FD] text-[#C4B5FD]' : 'border-transparent text-white/40 hover:text-white'
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'lounge' ? 'border-violet-500 text-violet-700 bg-violet-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
                     >
                         아임모카 공지
                     </button>
                     <button
                         onClick={() => setActiveTab('message')}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'message' ? 'border-[#FBBF24] text-[#FBBF24]' : 'border-transparent text-white/40 hover:text-white'
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'message' ? 'border-amber-500 text-amber-700 bg-amber-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
                     >
                         메시지 발송
                     </button>
                     <button
                         onClick={() => setActiveTab('shop')}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'shop' ? 'border-orange-400 text-orange-300' : 'border-transparent text-white/40 hover:text-white'
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'shop' ? 'border-orange-500 text-orange-700 bg-orange-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
                     >
                         🔥 모카 에디트 관리
@@ -747,28 +747,28 @@ const AdminPage = () => {
                             setCertPosts(data);
                             setCertLoading(false);
                         }}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'certifications' ? 'border-pink-400 text-pink-300' : 'border-transparent text-white/40 hover:text-white'
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'certifications' ? 'border-pink-500 text-pink-700 bg-pink-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
                     >
                         📸 인증샷 관리
                     </button>
                     <button
                         onClick={() => setActiveTab('popups')}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'popups' ? 'border-[#6C63FF] text-[#818CF8]' : 'border-transparent text-white/40 hover:text-white'
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'popups' ? 'border-rose-500 text-rose-700 bg-rose-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
                     >
                         🎯 팝업 관리
                     </button>
                     <button
                         onClick={() => setActiveTab('contracts')}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'contracts' ? 'border-green-400 text-green-300' : 'border-transparent text-white/40 hover:text-white'
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'contracts' ? 'border-teal-500 text-teal-700 bg-teal-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
                     >
                         📝 전속계약 관리
                     </button>
                     <button
                         onClick={() => setActiveTab('subscriptions')}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'subscriptions' ? 'border-[#FCD34D] text-[#FCD34D]' : 'border-transparent text-white/40 hover:text-white'}`}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'subscriptions' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
                         👑 구독 관리
                     </button>
@@ -780,7 +780,7 @@ const AdminPage = () => {
                             setCurrentPhotos(data);
                             setCurrentPhotosLoading(false);
                         }}
-                        className={`pb-4 px-2 text-sm font-black transition-all border-b-2 ${activeTab === 'currentphotos' ? 'border-emerald-400 text-emerald-300' : 'border-transparent text-white/40 hover:text-white'}`}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'currentphotos' ? 'border-cyan-500 text-cyan-700 bg-cyan-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
                         📸 현재모습 사진
                     </button>
@@ -796,50 +796,50 @@ const AdminPage = () => {
                                 { label: '주간 방문 (7d)', value: stats7Days, icon: 'date_range', color: 'text-purple-400' },
                                 { label: '월간 방문 (30d)', value: stats30Days, icon: 'calendar_month', color: 'text-pink-400' }
                             ].map((stat, i) => (
-                                <div key={i} className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                                <div key={i} className="rounded-2xl border border-[var(--moca-border)] bg-[var(--moca-surface-2)] p-6">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                                        <div className="w-10 h-10 rounded-full bg-[var(--moca-surface-2)] flex items-center justify-center">
                                             <span className={`material-symbols-outlined ${stat.color}`}>{stat.icon}</span>
                                         </div>
-                                        <h3 className="text-white/60 text-sm font-bold tracking-widest">{stat.label}</h3>
+                                        <h3 className="text-[var(--moca-text-2)] text-sm font-bold tracking-widest">{stat.label}</h3>
                                     </div>
                                     <div className="flex items-end gap-2">
-                                        <p className="text-4xl font-black text-white">{stat.value.toLocaleString()}</p>
-                                        <p className="text-white/40 text-sm mb-1 pb-0.5">조회</p>
+                                        <p className="text-4xl font-black text-[var(--moca-text)]">{stat.value.toLocaleString()}</p>
+                                        <p className="text-[var(--moca-text-3)] text-sm mb-1 pb-0.5">조회</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
                         {/* 프로필 발송 통계 */}
-                        <div className="rounded-2xl border border-white/10 bg-[#1a1a24] p-6 mb-6">
-                            <h3 className="text-white font-bold flex items-center gap-2 mb-1">
-                                <span className="material-symbols-outlined text-[#C4B5FD]">send</span>
+                        <div className="rounded-2xl border border-[var(--moca-border)] bg-white p-6 mb-6">
+                            <h3 className="text-[var(--moca-text)] font-bold flex items-center gap-2 mb-1">
+                                <span className="material-symbols-outlined text-[var(--moca-accent)]">send</span>
                                 프로필 발송 많이 받은 에이전시 Top 10
                             </h3>
-                            <p className="text-white/40 text-[11px] mb-4">전체 기간 누적 기준 · casting_sends 테이블</p>
+                            <p className="text-[var(--moca-text-3)] text-[11px] mb-4">전체 기간 누적 기준 · casting_sends 테이블</p>
                             {castingStats.length === 0 ? (
-                                <p className="text-white/40 text-sm py-4">아직 발송 데이터가 없습니다.</p>
+                                <p className="text-[var(--moca-text-3)] text-sm py-4">아직 발송 데이터가 없습니다.</p>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {castingStats.map(([agency, count], index) => {
                                         const maxCount = castingStats[0][1];
                                         const barWidth = Math.round((count / maxCount) * 100);
                                         return (
-                                            <div key={agency} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3 border border-white/5">
+                                            <div key={agency} className="flex items-center gap-3 bg-[var(--moca-surface-2)] rounded-xl px-4 py-3 border border-[var(--moca-border)]">
                                                 <span className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-black shrink-0 ${
                                                     index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
                                                     index === 1 ? 'bg-slate-400/20 text-slate-300' :
                                                     index === 2 ? 'bg-orange-500/20 text-orange-400' :
-                                                    'bg-white/10 text-white/40'
+                                                    'bg-[var(--moca-primary-lt)] text-[var(--moca-text-3)]'
                                                 }`}>{index + 1}</span>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-[13px] font-bold text-white/90 truncate">{agency}</span>
-                                                        <span className="text-[13px] font-black text-[#C4B5FD] ml-2 shrink-0">{count}<span className="text-white/30 text-[10px] font-normal ml-0.5">건</span></span>
+                                                        <span className="text-[13px] font-bold text-[var(--moca-text)] truncate">{agency}</span>
+                                                        <span className="text-[13px] font-black text-[var(--moca-accent)] ml-2 shrink-0">{count}<span className="text-[var(--moca-text-3)] text-[10px] font-normal ml-0.5">건</span></span>
                                                     </div>
-                                                    <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-gradient-to-r from-[#C4B5FD] to-[#907FF8] rounded-full" style={{ width: `${barWidth}%` }} />
+                                                    <div className="w-full h-1 bg-[var(--moca-primary-lt)] rounded-full overflow-hidden">
+                                                        <div className="h-full bg-gradient-to-r from-[var(--moca-accent)] to-[var(--moca-primary)] rounded-full" style={{ width: `${barWidth}%` }} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -850,14 +850,14 @@ const AdminPage = () => {
                         </div>
 
                         {/* 프로필 발송 (보낸 유저) 통계 */}
-                        <div className="rounded-2xl border border-white/10 bg-[#1a1a24] p-6 mb-6 animate-fadeIn">
-                            <h3 className="text-white font-bold flex items-center gap-2 mb-1">
+                        <div className="rounded-2xl border border-[var(--moca-border)] bg-white p-6 mb-6 animate-fadeIn">
+                            <h3 className="text-[var(--moca-text)] font-bold flex items-center gap-2 mb-1">
                                 <span className="material-symbols-outlined text-[#34D399]">person_pin_circle</span>
                                 프로필 발송 많이 보낸 유저 (모델/에이전시) Top 10
                             </h3>
-                            <p className="text-white/40 text-[11px] mb-4">전체 기간 누적 기준 · casting_sends 테이블</p>
+                            <p className="text-[var(--moca-text-3)] text-[11px] mb-4">전체 기간 누적 기준 · casting_sends 테이블</p>
                             {senderStats.length === 0 ? (
-                                <p className="text-white/40 text-sm py-4">아직 발송 데이터가 없습니다.</p>
+                                <p className="text-[var(--moca-text-3)] text-sm py-4">아직 발송 데이터가 없습니다.</p>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {senderStats.map(([nickname, count], index) => {
@@ -865,22 +865,22 @@ const AdminPage = () => {
                                         const barWidth = Math.round((count / maxCount) * 100);
                                         const uInfo = users.find(u => u.nickname === nickname) || {};
                                         return (
-                                            <div key={nickname} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3 border border-white/5">
+                                            <div key={nickname} className="flex items-center gap-3 bg-[var(--moca-surface-2)] rounded-xl px-4 py-3 border border-[var(--moca-border)]">
                                                 <span className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-black shrink-0 ${
                                                     index === 0 ? 'bg-emerald-500/20 text-emerald-400' :
                                                     index === 1 ? 'bg-slate-400/20 text-slate-300' :
                                                     index === 2 ? 'bg-orange-500/20 text-orange-400' :
-                                                    'bg-white/10 text-white/40'
+                                                    'bg-[var(--moca-primary-lt)] text-[var(--moca-text-3)]'
                                                 }`}>{index + 1}</span>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center justify-between mb-1">
                                                         <div className="flex items-baseline gap-1.5 truncate">
-                                                            <span className="text-[13px] font-bold text-white/90 truncate">{uInfo.name || '-'}</span>
-                                                            <span className="text-[10px] text-white/40 truncate">({nickname})</span>
+                                                            <span className="text-[13px] font-bold text-[var(--moca-text)] truncate">{uInfo.name || '-'}</span>
+                                                            <span className="text-[10px] text-[var(--moca-text-3)] truncate">({nickname})</span>
                                                         </div>
-                                                        <span className="text-[13px] font-black text-[#34D399] ml-2 shrink-0">{count}<span className="text-white/30 text-[10px] font-normal ml-0.5">건</span></span>
+                                                        <span className="text-[13px] font-black text-[#34D399] ml-2 shrink-0">{count}<span className="text-[var(--moca-text-3)] text-[10px] font-normal ml-0.5">건</span></span>
                                                     </div>
-                                                    <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                                                    <div className="w-full h-1 bg-[var(--moca-primary-lt)] rounded-full overflow-hidden">
                                                         <div className="h-full bg-gradient-to-r from-[#34D399] to-[#10B981] rounded-full" style={{ width: `${barWidth}%` }} />
                                                     </div>
                                                 </div>
@@ -895,16 +895,16 @@ const AdminPage = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                             {/* 월별 멤버 방문 Top 10 */}
-                            <div className="rounded-2xl border border-white/10 bg-[#1a1a24] p-6 lg:col-span-1">
+                            <div className="rounded-2xl border border-[var(--moca-border)] bg-white p-6 lg:col-span-1">
                                 <div className="flex items-center justify-between mb-1">
-                                    <h3 className="text-white font-bold flex items-center gap-2">
+                                    <h3 className="text-[var(--moca-text)] font-bold flex items-center gap-2">
                                         <span className="material-symbols-outlined text-green-400">group</span>
                                         {statsMonth === 0 ? '올해 총 우수 멤버 Top 10' : `${statsMonth}월 우수 멤버 Top 10`}
                                     </h3>
                                     <select
                                         value={statsMonth}
                                         onChange={(e) => setStatsMonth(Number(e.target.value))}
-                                        className="bg-[#0a0a0f] border border-white/10 text-white text-xs rounded-lg px-2 py-1 outline-none focus:border-[#6C63FF]"
+                                        className="bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text)] text-xs rounded-lg px-2 py-1 outline-none focus:border-[var(--moca-primary)]"
                                     >
                                         <option value={0}>올해 전체</option>
                                         {[...Array(12).keys()].map(m => (
@@ -912,31 +912,31 @@ const AdminPage = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <p className="text-white/40 text-[11px] mb-4">제휴처 및 에이전시 방문 기록 합산</p>
+                                <p className="text-[var(--moca-text-3)] text-[11px] mb-4">제휴처 및 에이전시 방문 기록 합산</p>
                                 {top10Users.length === 0 ? (
-                                    <p className="text-white/40 text-sm py-4">아직 방문 데이터가 없습니다.</p>
+                                    <p className="text-[var(--moca-text-3)] text-sm py-4">아직 방문 데이터가 없습니다.</p>
                                 ) : (
                                     <div className="space-y-2">
                                         {top10Users.map((user, index) => (
-                                            <div key={user.nickname} className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                                            <div key={user.nickname} className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)]">
                                                 <div className="flex items-center gap-3">
                                                     <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
                                                         index === 1 ? 'bg-slate-400/20 text-slate-300' :
                                                             index === 2 ? 'bg-orange-500/20 text-orange-400' :
-                                                                'bg-white/10 text-white/40'
+                                                                'bg-[var(--moca-primary-lt)] text-[var(--moca-text-3)]'
                                                         }`}>
                                                         {index + 1}
                                                     </span>
                                                     <div>
                                                         <div className="flex items-baseline gap-1.5">
-                                                            <span className="text-sm font-bold text-white leading-none">{user.name}</span>
-                                                            <span className="text-[11px] text-white/50 leading-none">({user.nickname})</span>
+                                                            <span className="text-sm font-bold text-[var(--moca-text)] leading-none">{user.name}</span>
+                                                            <span className="text-[11px] text-[var(--moca-text-2)] leading-none">({user.nickname})</span>
                                                         </div>
-                                                        <span className="text-[10px] text-white/30 tracking-tight">{user.phone}</span>
+                                                        <span className="text-[10px] text-[var(--moca-text-3)] tracking-tight">{user.phone}</span>
                                                     </div>
                                                 </div>
-                                                <div className="text-sm font-black text-white/90">
-                                                    {user.count.toLocaleString()} <span className="text-white/30 text-[10px] font-normal">회</span>
+                                                <div className="text-sm font-black text-[var(--moca-text)]">
+                                                    {user.count.toLocaleString()} <span className="text-[var(--moca-text-3)] text-[10px] font-normal">회</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -945,30 +945,30 @@ const AdminPage = () => {
                             </div>
 
                             {/* 멤버들 최다 방문처 Top 5 */}
-                            <div className="rounded-2xl border border-white/10 bg-[#1a1a24] p-6 lg:col-span-1">
-                                <h3 className="text-white font-bold flex items-center gap-2 mb-1">
+                            <div className="rounded-2xl border border-[var(--moca-border)] bg-white p-6 lg:col-span-1">
+                                <h3 className="text-[var(--moca-text)] font-bold flex items-center gap-2 mb-1">
                                     <span className="material-symbols-outlined text-pink-400">storefront</span>
                                     올해의 최다 방문처 Top 5
                                 </h3>
-                                <p className="text-white/40 text-[11px] mb-4">멤버들이 투어/제휴로 가장 많이 찾은 곳</p>
+                                <p className="text-[var(--moca-text-3)] text-[11px] mb-4">멤버들이 투어/제휴로 가장 많이 찾은 곳</p>
                                 {top5Places.length === 0 ? (
-                                    <p className="text-white/40 text-sm py-4">아직 방문 데이터가 없습니다.</p>
+                                    <p className="text-[var(--moca-text-3)] text-sm py-4">아직 방문 데이터가 없습니다.</p>
                                 ) : (
                                     <div className="space-y-3">
                                         {top5Places.map(([place, count], index) => (
-                                            <div key={place} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                                            <div key={place} className="flex items-center justify-between p-3 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)]">
                                                 <div className="flex items-center gap-3">
                                                     <span className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-black ${index === 0 ? 'bg-pink-500/20 text-pink-400' :
                                                         index === 1 ? 'bg-purple-500/20 text-purple-300' :
                                                             index === 2 ? 'bg-indigo-500/20 text-indigo-400' :
-                                                                'bg-white/10 text-white/40'
+                                                                'bg-[var(--moca-primary-lt)] text-[var(--moca-text-3)]'
                                                         }`}>
                                                         {index + 1}
                                                     </span>
-                                                    <span className="text-[13px] font-bold text-white/80 line-clamp-1">{place}</span>
+                                                    <span className="text-[13px] font-bold text-[var(--moca-text)] line-clamp-1">{place}</span>
                                                 </div>
-                                                <div className="text-[13px] font-black text-white">
-                                                    {count.toLocaleString()} <span className="text-white/30 text-[10px] font-normal">건</span>
+                                                <div className="text-[13px] font-black text-[var(--moca-text)]">
+                                                    {count.toLocaleString()} <span className="text-[var(--moca-text-3)] text-[10px] font-normal">건</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -977,30 +977,30 @@ const AdminPage = () => {
                             </div>
 
                             {/* 인기 방문 페이지 Top 5 */}
-                            <div className="rounded-2xl border border-white/10 bg-[#1a1a24] p-6 lg:col-span-1">
-                                <h3 className="text-white font-bold flex items-center gap-2 mb-1">
-                                    <span className="material-symbols-outlined text-[#818CF8]">local_fire_department</span>
+                            <div className="rounded-2xl border border-[var(--moca-border)] bg-white p-6 lg:col-span-1">
+                                <h3 className="text-[var(--moca-text)] font-bold flex items-center gap-2 mb-1">
+                                    <span className="material-symbols-outlined text-[var(--moca-primary)]">local_fire_department</span>
                                     인기 방문 앱 페이지 Top 5
                                 </h3>
-                                <p className="text-white/40 text-[11px] mb-4">최근 30일 접속 통계 기준</p>
+                                <p className="text-[var(--moca-text-3)] text-[11px] mb-4">최근 30일 접속 통계 기준</p>
                                 {popularPages.length === 0 ? (
-                                    <p className="text-white/40 text-sm py-4">아직 접속 통계가 없습니다.</p>
+                                    <p className="text-[var(--moca-text-3)] text-sm py-4">아직 접속 통계가 없습니다.</p>
                                 ) : (
                                     <div className="space-y-3">
                                         {popularPages.map(([path, count], index) => (
-                                            <div key={path} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                                            <div key={path} className="flex items-center justify-between p-3 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)]">
                                                 <div className="flex items-center gap-3">
                                                     <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
                                                         index === 1 ? 'bg-slate-400/20 text-slate-300' :
                                                             index === 2 ? 'bg-orange-500/20 text-orange-400' :
-                                                                'bg-white/10 text-white/40'
+                                                                'bg-[var(--moca-primary-lt)] text-[var(--moca-text-3)]'
                                                         }`}>
                                                         {index + 1}
                                                     </span>
-                                                    <span className="text-[13px] font-medium text-white/70 line-clamp-1">{path}</span>
+                                                    <span className="text-[13px] font-medium text-[var(--moca-text-2)] line-clamp-1">{path}</span>
                                                 </div>
-                                                <div className="text-[13px] font-black text-white text-right">
-                                                    {count.toLocaleString()}<span className="text-white/30 text-[10px] ml-1">회</span>
+                                                <div className="text-[13px] font-black text-[var(--moca-text)] text-right">
+                                                    {count.toLocaleString()}<span className="text-[var(--moca-text-3)] text-[10px] ml-1">회</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -1023,8 +1023,8 @@ const AdminPage = () => {
                                         key={grade}
                                         onClick={() => setFilterGrade(filterGrade === grade ? 'ALL' : grade)}
                                         className={`rounded-2xl border p-5 cursor-pointer transition-all hover:scale-[1.02] ${filterGrade === grade
-                                            ? 'bg-[#6C63FF]/20 border-[#6C63FF]'
-                                            : 'bg-white/5 border-white/10 hover:bg-white/8'
+                                            ? 'bg-[var(--moca-primary-lt)] border-[var(--moca-primary)]'
+                                            : 'bg-[var(--moca-surface-2)] border-[var(--moca-border)] hover:bg-[var(--moca-primary-lt)]'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between mb-2">
@@ -1033,8 +1033,8 @@ const AdminPage = () => {
                                                 {info.label}
                                             </span>
                                         </div>
-                                        <p className="text-3xl font-black text-white">{gradeStats[grade] || 0}</p>
-                                        <p className="text-white/40 text-xs mt-1">명</p>
+                                        <p className="text-3xl font-black text-[var(--moca-text)]">{gradeStats[grade] || 0}</p>
+                                        <p className="text-[var(--moca-text-3)] text-xs mt-1">명</p>
                                     </div>
                                 );
                             })}
@@ -1043,13 +1043,13 @@ const AdminPage = () => {
                         {/* 검색 & 필터 */}
                         <div className="flex flex-col sm:flex-row gap-3 mb-6 items-start sm:items-center">
                             <div className="relative flex-1 w-full">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-white/30 text-[18px]">search</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-[var(--moca-text-3)] text-[18px]">search</span>
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                     placeholder="닉네임, 이름, 연락처 검색..."
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#6C63FF] transition-colors text-sm"
+                                    className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl pl-10 pr-4 py-3 text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors text-sm"
                                 />
                             </div>
                             <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
@@ -1058,8 +1058,8 @@ const AdminPage = () => {
                                         key={g}
                                         onClick={() => setFilterGrade(g)}
                                         className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap ${filterGrade === g
-                                            ? 'bg-[#6C63FF] border-[#6C63FF] text-white'
-                                            : 'bg-white/5 border-white/10 text-white/40 hover:text-white'
+                                            ? 'bg-[var(--moca-primary)] border-[var(--moca-primary)] text-[var(--moca-text)]'
+                                            : 'bg-[var(--moca-surface-2)] border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-[var(--moca-text)]'
                                             }`}
                                     >
                                         {g === 'ALL' ? '전체' : `${GRADE_EMOJI[g]} ${g === 'VIP' ? '전속모델' : g}`}
@@ -1086,21 +1086,21 @@ const AdminPage = () => {
                         {/* 로딩 */}
                         {loading ? (
                             <div className="flex items-center justify-center py-20">
-                                <div className="w-8 h-8 border-2 border-[#6C63FF]/30 border-t-[#6C63FF] rounded-full animate-spin" />
+                                <div className="w-8 h-8 border-2 border-[var(--moca-primary)]/30 border-t-[var(--moca-primary)] rounded-full animate-spin" />
                             </div>
                         ) : (
                             <>
                                 {/* 회원 수 */}
-                                <p className="text-white/40 text-sm mb-4">
-                                    총 <span className="text-white font-bold">{filteredUsers.length}</span>명
+                                <p className="text-[var(--moca-text-3)] text-sm mb-4">
+                                    총 <span className="text-[var(--moca-text)] font-bold">{filteredUsers.length}</span>명
                                     {filterGrade !== 'ALL' && ` (${filterGrade} 필터 중)`}
                                 </p>
 
                                 {/* 회원 테이블 */}
-                                <div className="bg-[#1a1a24] border border-white/10 rounded-2xl overflow-hidden w-full overflow-x-auto">
+                                <div className="bg-white border border-[var(--moca-border)] rounded-2xl overflow-hidden w-full overflow-x-auto">
                                     <div className="min-w-[900px]">
                                         {/* Table Header */}
-                                        <div className="grid grid-cols-12 gap-3 px-5 py-3 border-b border-white/5 text-white/30 text-xs font-black uppercase tracking-widest bg-white/5">
+                                        <div className="grid grid-cols-12 gap-3 px-5 py-3 border-b border-[var(--moca-border)] text-[var(--moca-text-3)] text-xs font-black uppercase tracking-widest bg-[var(--moca-surface-2)]">
                                             <div className="col-span-2">닉네임</div>
                                             <div className="col-span-1">이름</div>
                                             <div className="col-span-2">연락처</div>
@@ -1112,7 +1112,7 @@ const AdminPage = () => {
                                         </div>
 
                                         {filteredUsers.length === 0 ? (
-                                            <div className="flex flex-col items-center justify-center py-16 text-white/20">
+                                            <div className="flex flex-col items-center justify-center py-16 text-[var(--moca-text-3)]">
                                                 <span className="material-symbols-outlined text-[48px] mb-2">group</span>
                                                 <p className="text-sm">회원이 없습니다</p>
                                             </div>
@@ -1126,23 +1126,23 @@ const AdminPage = () => {
                                                 return (
                                                     <div
                                                         key={user.id}
-                                                        className={`grid grid-cols-12 gap-3 px-5 py-4 items-center transition-colors hover:bg-white/5 ${idx !== filteredUsers.length - 1 ? 'border-b border-white/5' : ''
+                                                        className={`grid grid-cols-12 gap-3 px-5 py-4 items-center transition-colors hover:bg-[var(--moca-primary-lt)] ${idx !== filteredUsers.length - 1 ? 'border-b border-[var(--moca-border)]' : ''
                                                             }`}
                                                     >
                                                         {/* 닉네임 */}
                                                         <div className="col-span-2 flex items-center gap-2 min-w-0">
                                                             <span className="text-lg flex-shrink-0">{emoji}</span>
                                                             <div className="min-w-0">
-                                                                <p className="text-white font-bold text-sm truncate" title={user.nickname}>{user.nickname}</p>
+                                                                <p className="text-[var(--moca-text)] font-bold text-sm truncate" title={user.nickname}>{user.nickname}</p>
                                                             </div>
                                                         </div>
 
                                                         {/* 이름 */}
-                                                        <div className="col-span-1 text-white/70 text-sm truncate" title={user.name}>{user.name}</div>
+                                                        <div className="col-span-1 text-[var(--moca-text-2)] text-sm truncate" title={user.name}>{user.name}</div>
 
                                                         {/* 연락처 및 복사/문자 버튼 */}
                                                         <div className="col-span-2 flex flex-col items-start gap-1 w-full overflow-hidden">
-                                                            <div className="text-white/50 text-xs truncate w-full" title={user.phone}>
+                                                            <div className="text-[var(--moca-text-2)] text-xs truncate w-full" title={user.phone}>
                                                                 {user.phone}
                                                             </div>
                                                             <div className="flex items-center gap-1.5 mt-0.5">
@@ -1152,7 +1152,7 @@ const AdminPage = () => {
                                                                         setSuccessMsg('연락처 복사 완료!');
                                                                         setTimeout(() => setSuccessMsg(''), 2000);
                                                                     }}
-                                                                    className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 border border-white/5 text-white/40 hover:text-white transition-colors text-[10px]"
+                                                                    className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--moca-surface-2)] hover:bg-[var(--moca-primary-lt)] border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-[var(--moca-text)] transition-colors text-[10px]"
                                                                     title="번호 복사"
                                                                 >
                                                                     <span className="material-symbols-outlined text-[10px]">content_copy</span>
@@ -1160,7 +1160,7 @@ const AdminPage = () => {
                                                                 </button>
                                                                 <a
                                                                     href={`sms:${user.phone.replace(/-/g, '')}`}
-                                                                    className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#6C63FF]/20 hover:bg-[#6C63FF]/40 border border-[#6C63FF]/30 text-[#818CF8] hover:text-white transition-colors text-[10px]"
+                                                                    className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--moca-primary-lt)] hover:bg-[var(--moca-primary)]/30 border border-[var(--moca-primary)]/30 text-[var(--moca-primary)] hover:text-[var(--moca-text)] transition-colors text-[10px]"
                                                                     title="문자 보내기"
                                                                 >
                                                                     <span className="material-symbols-outlined text-[10px]">sms</span>
@@ -1170,14 +1170,14 @@ const AdminPage = () => {
                                                         </div>
 
                                                         {/* 주소 */}
-                                                        <div className="col-span-2 text-white/60 text-[11px] leading-tight line-clamp-2" title={user.address}>
+                                                        <div className="col-span-2 text-[var(--moca-text-2)] text-[11px] leading-tight line-clamp-2" title={user.address}>
                                                             {user.address || '-'}
                                                         </div>
 
                                                         {/* 가입경로 */}
                                                         <div className="col-span-1 flex flex-wrap gap-1">
                                                             {(user.referral_source || []).map(s => (
-                                                                <span key={s} className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/5 text-white/40 font-bold whitespace-nowrap">
+                                                                <span key={s} className="px-1.5 py-0.5 rounded-full text-[10px] bg-[var(--moca-surface-2)] text-[var(--moca-text-3)] font-bold whitespace-nowrap">
                                                                     {referralLabels[s] || s}
                                                                 </span>
                                                             ))}
@@ -1197,12 +1197,12 @@ const AdminPage = () => {
                                                                     }
                                                                 }}
                                                                 disabled={updatingId === user.id}
-                                                                className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs font-bold focus:outline-none focus:border-[#6C63FF] transition-colors cursor-pointer disabled:opacity-50"
+                                                                className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-lg px-2 py-1.5 text-[var(--moca-text)] text-xs font-bold focus:outline-none focus:border-[var(--moca-primary)] transition-colors cursor-pointer disabled:opacity-50"
                                                             >
                                                                 {grades.map(g => {
                                                                     if (g === 'GOLD') {
                                                                         return (
-                                                                            <optgroup key={g} label={`${GRADE_EMOJI[g]} ${g}`} className="bg-[#1a1a24]">
+                                                                            <optgroup key={g} label={`${GRADE_EMOJI[g]} ${g}`} className="bg-white">
                                                                                 <option value="GOLD_1">1개월 골드</option>
                                                                                 <option value="GOLD_3">3개월 골드</option>
                                                                                 <option value="GOLD_6">6개월 골드</option>
@@ -1211,26 +1211,26 @@ const AdminPage = () => {
                                                                         );
                                                                     }
                                                                     return (
-                                                                        <option key={g} value={g} className="bg-[#1a1a24]">
+                                                                        <option key={g} value={g} className="bg-white">
                                                                             {GRADE_EMOJI[g]} {g === 'VIP' ? '전속모델' : g}
                                                                         </option>
                                                                     );
                                                                 })}
                                                                 {user.grade === 'GOLD' && (
-                                                                    <option value="GOLD" className="bg-[#1a1a24] hidden">
+                                                                    <option value="GOLD" className="bg-white hidden">
                                                                         🌟 GOLD (현재)
                                                                     </option>
                                                                 )}
                                                             </select>
                                                             {user.grade === 'GOLD' && user.grade_expires_at && (
-                                                                <span className="text-[10px] text-[#A78BFA] whitespace-nowrap">
+                                                                <span className="text-[10px] text-[var(--moca-accent)] whitespace-nowrap">
                                                                     ~ {new Date(user.grade_expires_at).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' })} 만료
                                                                 </span>
                                                             )}
                                                         </div>
 
                                                         {/* 가입일 */}
-                                                        <div className="col-span-1 text-white/30 text-[10px]">
+                                                        <div className="col-span-1 text-[var(--moca-text-3)] text-[10px]">
                                                             {new Date(user.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
                                                         </div>
 
@@ -1261,7 +1261,7 @@ const AdminPage = () => {
                         <div className="flex justify-end mb-4">
                             <button
                                 onClick={handleExportPartnerVisitsExcel}
-                                className="flex items-center gap-2 bg-[#6C63FF]/20 hover:bg-[#6C63FF]/30 border border-[#6C63FF]/50 text-[#A78BFA] px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-lg"
+                                className="flex items-center gap-2 bg-[var(--moca-primary-lt)] hover:bg-[var(--moca-primary)]/20 border border-[var(--moca-primary)]/50 text-[var(--moca-accent)] px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-lg"
                             >
                                 <span className="material-symbols-outlined text-[18px]">download</span>
                                 방문내역 엑셀
@@ -1279,24 +1279,24 @@ const AdminPage = () => {
 
                 {activeTab === 'lounge' && (
                     <div className="animate-fadeIn max-w-2xl mx-auto mt-8">
-                        <div className="bg-[#1a1a24] border border-white/10 rounded-2xl p-8 shadow-2xl">
+                        <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-8 shadow-2xl">
                             {/* 헤더 + 탭 버튼 */}
-                            <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+                            <div className="flex items-center justify-between mb-6 border-b border-[var(--moca-border)] pb-4">
                                 <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-[#C4B5FD] text-3xl">local_police</span>
+                                    <span className="material-symbols-outlined text-[var(--moca-accent)] text-3xl">local_police</span>
                                     <div>
-                                        <h2 className="text-xl font-black text-white">아임모카 공지</h2>
-                                        <p className="text-sm text-white/40 mt-1">공지 등록 및 관리</p>
+                                        <h2 className="text-xl font-black text-[var(--moca-text)]">아임모카 공지</h2>
+                                        <p className="text-sm text-[var(--moca-text-3)] mt-1">공지 등록 및 관리</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => { setLoungeView('list'); loadAnnouncements(); }}
-                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${loungeView === 'list' ? 'bg-[#C4B5FD]/20 text-[#C4B5FD] border border-[#C4B5FD]/30' : 'text-white/40 hover:text-white'}`}
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${loungeView === 'list' ? 'bg-[var(--moca-primary-lt)] text-[var(--moca-accent)] border border-[var(--moca-primary)]/30' : 'text-[var(--moca-text-3)] hover:text-[var(--moca-text)]'}`}
                                     >목록</button>
                                     <button
                                         onClick={() => setLoungeView('write')}
-                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${loungeView === 'write' ? 'bg-[#C4B5FD]/20 text-[#C4B5FD] border border-[#C4B5FD]/30' : 'text-white/40 hover:text-white'}`}
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${loungeView === 'write' ? 'bg-[var(--moca-primary-lt)] text-[var(--moca-accent)] border border-[var(--moca-primary)]/30' : 'text-[var(--moca-text-3)] hover:text-[var(--moca-text)]'}`}
                                     >+ 작성</button>
                                 </div>
                             </div>
@@ -1318,20 +1318,20 @@ const AdminPage = () => {
                             {loungeView === 'list' && (
                                 <div>
                                     {announcements.length === 0 ? (
-                                        <div className="text-center py-12 text-white/30">
+                                        <div className="text-center py-12 text-[var(--moca-text-3)]">
                                             <span className="material-symbols-outlined text-[48px] mb-2 block">inbox</span>
                                             <p className="text-sm">등록된 공지가 없습니다.</p>
-                                            <button onClick={() => setLoungeView('write')} className="mt-4 px-5 py-2 rounded-xl bg-[#C4B5FD]/20 text-[#C4B5FD] text-sm font-bold hover:bg-[#C4B5FD]/30 transition-colors">
+                                            <button onClick={() => setLoungeView('write')} className="mt-4 px-5 py-2 rounded-xl bg-[var(--moca-primary-lt)] text-[var(--moca-accent)] text-sm font-bold hover:bg-[var(--moca-primary)]/20 transition-colors">
                                                 첫 공지 작성하기
                                             </button>
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
                                             {announcements.map(a => (
-                                                <div key={a.id} className="flex items-start justify-between gap-3 bg-[#0a0a0f] rounded-xl px-4 py-3 border border-white/5">
+                                                <div key={a.id} className="flex items-start justify-between gap-3 bg-[var(--moca-surface-2)] rounded-xl px-4 py-3 border border-[var(--moca-border)]">
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-white font-bold text-sm truncate">{a.title}</p>
-                                                        <p className="text-white/30 text-xs mt-0.5">{new Date(a.created_at).toLocaleDateString('ko-KR')}</p>
+                                                        <p className="text-[var(--moca-text)] font-bold text-sm truncate">{a.title}</p>
+                                                        <p className="text-[var(--moca-text-3)] text-xs mt-0.5">{new Date(a.created_at).toLocaleDateString('ko-KR')}</p>
                                                     </div>
                                                     <div className="flex gap-1 shrink-0">
                                                         <button
@@ -1358,59 +1358,59 @@ const AdminPage = () => {
                             {loungeView === 'edit' && editingAnnouncement && (
                                 <form onSubmit={handleUpdateAnnouncement} className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-bold text-white/70 mb-2">메세지 제목</label>
+                                        <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">메세지 제목</label>
                                         <input
                                             type="text"
                                             value={editTitle}
                                             onChange={(e) => { setEditTitle(e.target.value); setError(''); }}
-                                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#C4B5FD] transition-colors"
+                                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-white/70 mb-2">본문 내용</label>
+                                        <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">본문 내용</label>
                                         <textarea
                                             value={editContent}
                                             onChange={(e) => { setEditContent(e.target.value); setError(''); }}
                                             rows={8}
-                                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#C4B5FD] transition-colors resize-none leading-relaxed"
+                                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors resize-none leading-relaxed"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-white/70 mb-2">사진 변경 (선택)</label>
+                                        <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">사진 변경 (선택)</label>
                                         {editingAnnouncement.image_url && !editImage && (
-                                            <div className="mb-2 rounded-xl overflow-hidden border border-white/10 w-32">
+                                            <div className="mb-2 rounded-xl overflow-hidden border border-[var(--moca-border)] w-32">
                                                 <img src={editingAnnouncement.image_url} alt="현재 이미지" className="w-full h-auto object-cover opacity-70" />
-                                                <p className="text-[10px] text-white/30 text-center py-1">현재 이미지</p>
+                                                <p className="text-[10px] text-[var(--moca-text-3)] text-center py-1">현재 이미지</p>
                                             </div>
                                         )}
                                         <input
                                             type="file"
                                             accept="image/*"
                                             onChange={(e) => { if (e.target.files?.[0]) setEditImage(e.target.files[0]); }}
-                                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#C4B5FD] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-[#C4B5FD]/20 file:text-[#C4B5FD] hover:file:bg-[#C4B5FD]/30"
+                                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-[var(--moca-primary-lt)] file:text-[var(--moca-accent)] hover:file:bg-[var(--moca-primary)]/20"
                                         />
                                         {editImage && <p className="text-xs text-green-400 mt-2">새 파일: {editImage.name}</p>}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-white/70 mb-2">연결 링크 (선택)</label>
+                                        <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">연결 링크 (선택)</label>
                                         <input
                                             type="url"
                                             value={editLinkUrl}
                                             onChange={(e) => { setEditLinkUrl(e.target.value); setError(''); }}
                                             placeholder="https://example.com"
-                                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C4B5FD] transition-colors"
+                                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors"
                                         />
                                     </div>
                                     <div className="flex gap-3">
                                         <button
                                             type="button"
                                             onClick={() => setLoungeView('list')}
-                                            className="flex-1 py-4 rounded-xl border border-white/10 text-white/60 font-bold text-sm hover:bg-white/5 transition-colors"
+                                            className="flex-1 py-4 rounded-xl border border-[var(--moca-border)] text-[var(--moca-text-2)] font-bold text-sm hover:bg-[var(--moca-primary-lt)] transition-colors"
                                         >취소</button>
                                         <button
                                             type="submit"
                                             disabled={isUpdating || !editTitle.trim() || !editContent.trim()}
-                                            className="flex-1 py-4 rounded-xl bg-gradient-to-r from-[#C4B5FD] to-[#907FF8] text-black font-black text-sm disabled:opacity-50 flex justify-center items-center gap-2"
+                                            className="flex-1 py-4 rounded-xl bg-gradient-to-r from-[var(--moca-accent)] to-[var(--moca-primary)] text-black font-black text-sm disabled:opacity-50 flex justify-center items-center gap-2"
                                         >
                                             {isUpdating ? '저장 중...' : (
                                                 <>
@@ -1427,18 +1427,18 @@ const AdminPage = () => {
                             {loungeView === 'write' && (
                                 <form onSubmit={handlePostAnnouncement} className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-bold text-white/70 mb-2">메세지 제목</label>
+                                        <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">메세지 제목</label>
                                         <input
                                             type="text"
                                             value={announcementTitle}
                                             onChange={(e) => { setAnnouncementTitle(e.target.value); setError(''); }}
                                             placeholder="예: [안내] 이번주 MOCA 오프라인 모임"
-                                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C4B5FD] transition-colors"
+                                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-white/70 mb-2">사진 첨부 (선택)</label>
+                                        <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">사진 첨부 (선택)</label>
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -1447,7 +1447,7 @@ const AdminPage = () => {
                                                     setAnnouncementImage(e.target.files[0]);
                                                 }
                                             }}
-                                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#C4B5FD] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-[#C4B5FD]/20 file:text-[#C4B5FD] hover:file:bg-[#C4B5FD]/30"
+                                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-[var(--moca-primary-lt)] file:text-[var(--moca-accent)] hover:file:bg-[var(--moca-primary)]/20"
                                         />
                                         {announcementImage && (
                                             <p className="text-xs text-green-400 mt-2">선택된 파일: {announcementImage.name}</p>
@@ -1455,31 +1455,31 @@ const AdminPage = () => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-white/70 mb-2">본문 내용</label>
+                                        <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">본문 내용</label>
                                         <textarea
                                             value={announcementContent}
                                             onChange={(e) => { setAnnouncementContent(e.target.value); setError(''); }}
                                             placeholder="어떤 소식을 전하고 싶으신가요?"
                                             rows={8}
-                                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C4B5FD] transition-colors resize-none leading-relaxed"
+                                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors resize-none leading-relaxed"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-white/70 mb-2">연결 링크 (선택)</label>
+                                        <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">연결 링크 (선택)</label>
                                         <input
                                             type="url"
                                             value={announcementLinkUrl}
                                             onChange={(e) => { setAnnouncementLinkUrl(e.target.value); setError(''); }}
                                             placeholder="https://example.com"
-                                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#C4B5FD] transition-colors"
+                                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors"
                                         />
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={isPosting || !announcementTitle.trim() || !announcementContent.trim()}
-                                        className="w-full py-4 rounded-xl bg-gradient-to-r from-[#C4B5FD] to-[#907FF8] text-black font-black text-[16px] shadow-lg shadow-[#5B21B6]/30 hover:scale-[1.02] hover:shadow-[#5B21B6]/50 transition-all duration-300 disabled:opacity-50 disabled:scale-100 flex justify-center items-center gap-2"
+                                        className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--moca-accent)] to-[var(--moca-primary)] text-black font-black text-[16px] shadow-lg shadow-[var(--moca-primary)]/20 hover:scale-[1.02] hover:shadow-[var(--moca-primary)]/30 transition-all duration-300 disabled:opacity-50 disabled:scale-100 flex justify-center items-center gap-2"
                                     >
                                         {isPosting ? '업로드 중...' : (
                                             <>
@@ -1496,22 +1496,22 @@ const AdminPage = () => {
 
                 {activeTab === 'message' && (
                     <div className="animate-fadeIn max-w-2xl mx-auto mt-8">
-                        <div className="bg-[#1a1a24] border border-white/10 rounded-2xl p-8 shadow-2xl">
-                            <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
+                        <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-8 shadow-2xl">
+                            <div className="flex items-center gap-3 mb-6 border-b border-[var(--moca-border)] pb-4">
                                 <span className="material-symbols-outlined text-[#FBBF24] text-3xl">sms</span>
                                 <div>
-                                    <h2 className="text-xl font-black text-white">단체 메시지 발송</h2>
-                                    <p className="text-sm text-white/40 mt-1">회원들에게 친구톡 · 알림톡 · 문자를 발송합니다.</p>
+                                    <h2 className="text-xl font-black text-[var(--moca-text)]">단체 메시지 발송</h2>
+                                    <p className="text-sm text-[var(--moca-text-3)] mt-1">회원들에게 친구톡 · 알림톡 · 문자를 발송합니다.</p>
                                 </div>
                             </div>
 
                             <form onSubmit={handleSendBulkMessage} className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-bold text-white/70 mb-2">발송 방식</label>
+                                    <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">발송 방식</label>
                                     <select
                                         value={msgType}
                                         onChange={(e) => setMsgType(e.target.value)}
-                                        className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#FBBF24] transition-colors"
+                                        className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors"
                                     >
                                         <option value="friendtalk">친구톡 (마케팅 · 자유형식)</option>
                                         <option value="kakao">알림톡 (정보성 · 템플릿 필요)</option>
@@ -1520,18 +1520,18 @@ const AdminPage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-white/70 mb-2">수신 대상</label>
+                                    <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">수신 대상</label>
                                     <select
                                         value={msgTarget}
                                         onChange={(e) => setMsgTarget(e.target.value)}
-                                        className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#FBBF24] transition-colors"
+                                        className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors"
                                     >
                                         <option value="ALL">전체 회원</option>
                                         {grades.map(g => (
                                             <option key={g} value={g}>{GRADE_EMOJI[g]} {g === 'VIP' ? '전속모델' : g} 등급 회원</option>
                                         ))}
                                     </select>
-                                    <p className="text-xs text-white/40 mt-2">
+                                    <p className="text-xs text-[var(--moca-text-3)] mt-2">
                                         현재 선택된 대상: {
                                             (msgTarget === 'ALL' ? users : users.filter(u => {
                                                 let grade = u.grade || 'SILVER';
@@ -1543,20 +1543,20 @@ const AdminPage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-white/70 mb-2">메시지 내용</label>
+                                    <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">메시지 내용</label>
                                     <textarea
                                         value={msgContent}
                                         onChange={(e) => { setMsgContent(e.target.value); setError(''); }}
                                         placeholder={msgType === 'friendtalk' ? '자유롭게 내용을 입력하세요. (친구톡은 템플릿 불필요, 채널 친구에게 발송 · 비친구는 SMS 자동 대체)' : msgType === 'kakao' ? '사전에 승인된 알림톡 템플릿 내용과 정확히 일치해야 합니다.' : '발송할 문자 내용을 입력하세요.'}
                                         rows={6}
-                                        className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#FBBF24] transition-colors resize-none"
+                                        className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors resize-none"
                                     />
                                 </div>
 
                                 <button
                                     type="submit"
                                     disabled={isSendingMsg || !msgContent.trim()}
-                                    className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FBBF24] to-[#F59E0B] text-black font-black text-[16px] shadow-lg shadow-[#F59E0B]/30 hover:scale-[1.02] hover:shadow-[#F59E0B]/50 transition-all duration-300 disabled:opacity-50 disabled:scale-100 flex justify-center items-center gap-2"
+                                    className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FBBF24] to-[#F59E0B] text-black font-black text-[16px] shadow-lg shadow-amber-500/20 hover:scale-[1.02] hover:shadow-amber-500/30 transition-all duration-300 disabled:opacity-50 disabled:scale-100 flex justify-center items-center gap-2"
                                 >
                                     {isSendingMsg ? '발송 요청 중...' : (
                                         <>
@@ -1587,10 +1587,10 @@ const AdminPage = () => {
                     <div className="animate-fadeIn">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h2 className="text-2xl font-black text-white">📝 전속계약 관리</h2>
-                                <p className="text-white/40 text-sm mt-1">전속모델이 서명 제출한 계약서를 검토하고 승인합니다.</p>
+                                <h2 className="text-2xl font-black text-[var(--moca-text)]">📝 전속계약 관리</h2>
+                                <p className="text-[var(--moca-text-3)] text-sm mt-1">전속모델이 서명 제출한 계약서를 검토하고 승인합니다.</p>
                             </div>
-                            <div className="text-sm font-bold text-white/40">
+                            <div className="text-sm font-bold text-[var(--moca-text-3)]">
                                 총 {contracts.length}건 · 대기 {contracts.filter(c => c.status === 'pending').length}건
                             </div>
                         </div>
@@ -1603,7 +1603,7 @@ const AdminPage = () => {
                                         계약서 상세 조회
                                         <button 
                                             onClick={() => setIsContractViewerOpen(true)}
-                                            className="ml-4 text-xs bg-[#6C63FF]/10 text-[#6C63FF] border border-[#6C63FF]/30 px-3 py-1.5 rounded-lg hover:bg-[#6C63FF]/20 transition-colors"
+                                            className="ml-4 text-xs bg-[var(--moca-primary-lt)] text-[var(--moca-primary)] border border-[var(--moca-primary)]/30 px-3 py-1.5 rounded-lg hover:bg-[var(--moca-primary)]/15 transition-colors"
                                         >
                                             📄 계약서 전문 보기
                                         </button>
@@ -1687,7 +1687,7 @@ const AdminPage = () => {
                         ) : (
                             /* 계약서 목록 테이블 */
                             contracts.length === 0 ? (
-                                <div className="text-center py-20 text-white/30">
+                                <div className="text-center py-20 text-[var(--moca-text-3)]">
                                     <span className="material-symbols-outlined text-6xl mb-4 block">contract</span>
                                     <p className="font-bold">제출된 계약서가 없습니다.</p>
                                 </div>
@@ -1697,7 +1697,7 @@ const AdminPage = () => {
                                         <div
                                             key={c.id}
                                             onClick={() => setSelectedContract(c)}
-                                            className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl px-5 py-4 cursor-pointer transition-all flex items-center justify-between group"
+                                            className="bg-[var(--moca-surface-2)] hover:bg-[var(--moca-primary-lt)] border border-[var(--moca-border)] rounded-2xl px-5 py-4 cursor-pointer transition-all flex items-center justify-between group"
                                         >
                                             <div className="flex items-center gap-4">
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${
@@ -1708,13 +1708,13 @@ const AdminPage = () => {
                                                     {c.status === 'approved' ? '✅' : c.status === 'rejected' ? '❌' : '⏳'}
                                                 </div>
                                                 <div>
-                                                    <p className="font-black text-white text-base">{c.member_name}</p>
-                                                    <p className="text-white/40 text-xs">{c.member_phone} · 계약기간: {c.start_date} ~ {c.end_date}</p>
+                                                    <p className="font-black text-[var(--moca-text)] text-base">{c.member_name}</p>
+                                                    <p className="text-[var(--moca-text-3)] text-xs">{c.member_phone} · 계약기간: {c.start_date} ~ {c.end_date}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right hidden sm:block">
-                                                    <p className="text-white/60 text-xs">{new Date(c.created_at).toLocaleDateString('ko-KR')} 제출</p>
+                                                    <p className="text-[var(--moca-text-2)] text-xs">{new Date(c.created_at).toLocaleDateString('ko-KR')} 제출</p>
                                                     <p className={`text-xs font-black mt-0.5 ${
                                                         c.status === 'approved' ? 'text-green-400' :
                                                         c.status === 'rejected' ? 'text-red-400' :
@@ -1723,7 +1723,7 @@ const AdminPage = () => {
                                                         {c.status === 'approved' ? '승인완료' : c.status === 'rejected' ? '반려됨' : '검토 대기 중'}
                                                     </p>
                                                 </div>
-                                                <span className="material-symbols-outlined text-white/20 group-hover:text-white/60 transition-colors">chevron_right</span>
+                                                <span className="material-symbols-outlined text-[var(--moca-text-3)] group-hover:text-[var(--moca-text-2)] transition-colors">chevron_right</span>
                                             </div>
                                         </div>
                                     ))}
@@ -1797,10 +1797,10 @@ const AdminPage = () => {
                             <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border border-yellow-500/20 rounded-2xl p-6">
                                 <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                                     <div>
-                                        <h3 className="text-lg font-black text-white flex items-center gap-2">
+                                        <h3 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2">
                                             🏆 이달의 Best 인증샷 Top 3
                                         </h3>
-                                        <p className="text-white/40 text-xs mt-0.5">{now.getMonth() + 1}월 좋아요 순 자동 집계</p>
+                                        <p className="text-[var(--moca-text-3)] text-xs mt-0.5">{now.getMonth() + 1}월 좋아요 순 자동 집계</p>
                                     </div>
                                     {top3.length > 0 && (
                                         <button
@@ -1852,7 +1852,7 @@ const AdminPage = () => {
                                 </div>
 
                                 {top3.length === 0 ? (
-                                    <p className="text-white/30 text-sm text-center py-6">이번 달 업로드된 인증샷이 없습니다.</p>
+                                    <p className="text-[var(--moca-text-3)] text-sm text-center py-6">이번 달 업로드된 인증샷이 없습니다.</p>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         {top3.map((post, idx) => {
@@ -1869,8 +1869,8 @@ const AdminPage = () => {
                                                         <div className="absolute top-2 left-2 text-2xl">{medals[idx]}</div>
                                                     </div>
                                                     <div className="p-3">
-                                                        <p className="text-white font-black text-sm">{post.user_nickname}</p>
-                                                        <p className="text-white/50 text-xs">❤️ {post.likes_count} · {post.activity_type}</p>
+                                                        <p className="text-[var(--moca-text)] font-black text-sm">{post.user_nickname}</p>
+                                                        <p className="text-[var(--moca-text-2)] text-xs">❤️ {post.likes_count} · {post.activity_type}</p>
                                                     </div>
                                                 </div>
                                             );
@@ -1882,40 +1882,40 @@ const AdminPage = () => {
                             {/* ── 인증샷 목록 헤더 + 필터 ── */}
                             <div className="flex items-center justify-between gap-4 flex-wrap">
                                 <div>
-                                    <h3 className="text-lg font-black text-white">📸 전체 투어스타그램 관리</h3>
-                                    <p className="text-white/40 text-sm mt-0.5">HOT 배지 부여 · 모카베스트 PICK 선정 · 카페 포스팅 · 삭제</p>
+                                    <h3 className="text-lg font-black text-[var(--moca-text)]">📸 전체 투어스타그램 관리</h3>
+                                    <p className="text-[var(--moca-text-3)] text-sm mt-0.5">HOT 배지 부여 · 모카베스트 PICK 선정 · 카페 포스팅 · 삭제</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => setCertFilter('all')}
                                         className={`px-4 py-2 rounded-xl text-sm font-black transition-all ${certFilter === 'all'
                                             ? 'bg-pink-500/20 border border-pink-500/40 text-pink-300'
-                                            : 'bg-white/5 border border-white/10 text-white/50'}`}
+                                            : 'bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text-2)]'}`}
                                     >전체</button>
                                     <button
                                         onClick={() => setCertFilter('pick')}
                                         className={`px-4 py-2 rounded-xl text-sm font-black transition-all ${certFilter === 'pick'
                                             ? 'bg-yellow-500/20 border border-yellow-500/40 text-yellow-300'
-                                            : 'bg-white/5 border border-white/10 text-white/50'}`}
+                                            : 'bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text-2)]'}`}
                                     >👑 모카베스트 PICK만</button>
                                 </div>
                             </div>
 
                             {certLoading ? (
                                 <div className="flex justify-center py-12">
-                                    <span className="material-symbols-outlined text-white/30 text-[40px] animate-spin">progress_activity</span>
+                                    <span className="material-symbols-outlined text-[var(--moca-text-3)] text-[40px] animate-spin">progress_activity</span>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {certPosts
                                         .filter(p => certFilter === 'pick' ? p.is_marketing_pick : true)
                                         .map(post => (
-                                            <div key={post.id} className="bg-[#1a1a24] border border-white/10 rounded-2xl overflow-hidden">
+                                            <div key={post.id} className="bg-white border border-[var(--moca-border)] rounded-2xl overflow-hidden">
                                                 <div className="relative w-full aspect-square bg-black/30">
                                                     <img src={post.image_url} alt={post.caption || '인증샷'} className="w-full h-full object-cover" loading="lazy" />
                                                     <div className="absolute top-2 left-2 flex gap-1.5 flex-wrap">
                                                         {(post.likes_count >= 10 || post.is_hot) && (
-                                                            <span className="flex items-center gap-0.5 bg-orange-500/80 backdrop-blur-sm text-white text-[10px] font-black px-2 py-0.5 rounded-full">🔥 HOT</span>
+                                                            <span className="flex items-center gap-0.5 bg-orange-500/80 backdrop-blur-sm text-[var(--moca-text)] text-[10px] font-black px-2 py-0.5 rounded-full">🔥 HOT</span>
                                                         )}
                                                         {post.is_marketing_pick && (
                                                             <span className="flex items-center gap-0.5 bg-yellow-500/80 backdrop-blur-sm text-black text-[10px] font-black px-2 py-0.5 rounded-full">👑 모카베스트 PICK</span>
@@ -1925,10 +1925,10 @@ const AdminPage = () => {
                                                 <div className="p-3 space-y-2">
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <p className="text-white font-bold text-sm">{post.user_nickname}</p>
-                                                            <p className="text-white/40 text-[11px]">{post.activity_type} · ❤️ {post.likes_count}</p>
+                                                            <p className="text-[var(--moca-text)] font-bold text-sm">{post.user_nickname}</p>
+                                                            <p className="text-[var(--moca-text-3)] text-[11px]">{post.activity_type} · ❤️ {post.likes_count}</p>
                                                         </div>
-                                                        {post.tag_label && <span className="text-[11px] text-[#A78BFA] font-bold">#{post.tag_label}</span>}
+                                                        {post.tag_label && <span className="text-[11px] text-[var(--moca-accent)] font-bold">#{post.tag_label}</span>}
                                                     </div>
                                                     <div className="flex gap-1.5 flex-wrap">
                                                         {/* HOT */}
@@ -1936,7 +1936,7 @@ const AdminPage = () => {
                                                             const newHot = !post.is_hot;
                                                             await setHotStatus(post.id, newHot);
                                                             setCertPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_hot: newHot } : p));
-                                                        }} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black transition-all ${post.is_hot ? 'bg-orange-500/20 border border-orange-500/40 text-orange-400' : 'bg-white/5 border border-white/10 text-white/50 hover:bg-orange-500/10'}`}>
+                                                        }} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black transition-all ${post.is_hot ? 'bg-orange-500/20 border border-orange-500/40 text-orange-400' : 'bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text-2)] hover:bg-orange-500/10'}`}>
                                                             🔥 {post.is_hot ? 'HOT 해제' : 'HOT'}
                                                         </button>
                                                         {/* 모카베스트 PICK */}
@@ -1955,7 +1955,7 @@ const AdminPage = () => {
                                                                     setSuccessMsg('👑 모카베스트 PICK 선정! (전화번호 없어 알림톡 미발송)');
                                                                 }
                                                             }
-                                                        }} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black transition-all ${post.is_marketing_pick ? 'bg-yellow-500/20 border border-yellow-500/40 text-yellow-400' : 'bg-white/5 border border-white/10 text-white/50 hover:bg-yellow-500/10'}`}>
+                                                        }} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black transition-all ${post.is_marketing_pick ? 'bg-yellow-500/20 border border-yellow-500/40 text-yellow-400' : 'bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text-2)] hover:bg-yellow-500/10'}`}>
                                                             👑 {post.is_marketing_pick ? 'PICK 해제' : '모카베스트 PICK'}
                                                         </button>
                                                         {/* 📋 네이버 카페 포스팅 */}
@@ -1975,7 +1975,7 @@ const AdminPage = () => {
                                                             if (!window.confirm('이 인증샷을 삭제할까요?')) return;
                                                             await deleteCertPost(post.id);
                                                             setCertPosts(prev => prev.filter(p => p.id !== post.id));
-                                                        }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black bg-white/5 border border-white/10 text-white/40 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all">
+                                                        }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all">
                                                             <span className="material-symbols-outlined text-[13px]">delete</span>삭제
                                                         </button>
                                                     </div>
@@ -1983,7 +1983,7 @@ const AdminPage = () => {
                                             </div>
                                         ))}
                                     {certPosts.filter(p => certFilter === 'pick' ? p.is_marketing_pick : true).length === 0 && (
-                                        <div className="col-span-full flex flex-col items-center justify-center py-16 text-white/30">
+                                        <div className="col-span-full flex flex-col items-center justify-center py-16 text-[var(--moca-text-3)]">
                                             <span className="material-symbols-outlined text-[40px] mb-3">photo_camera</span>
                                             <p>{certFilter === 'pick' ? "'모카베스트 PICK'으로 선정된 기록이 없습니다." : '아직 다녀온 투어스타그램 기록이 없습니다.'}</p>
                                         </div>
@@ -1992,42 +1992,42 @@ const AdminPage = () => {
                             )}
 
                             {/* ── 📊 인증샷 통계 대시보드 ── */}
-                            <div className="border-t border-white/10 pt-8 space-y-6">
-                                <h3 className="text-lg font-black text-white">📊 인증샷 통계</h3>
+                            <div className="border-t border-[var(--moca-border)] pt-8 space-y-6">
+                                <h3 className="text-lg font-black text-[var(--moca-text)]">📊 인증샷 통계</h3>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                     {/* 월별 업로드 바차트 */}
-                                    <div className="lg:col-span-2 bg-[#1a1a24] border border-white/10 rounded-2xl p-5">
-                                        <h4 className="text-white font-bold mb-1">최근 6개월 업로드 수</h4>
-                                        <p className="text-white/30 text-[11px] mb-5">월별 인증샷 업로드 추이</p>
+                                    <div className="lg:col-span-2 bg-white border border-[var(--moca-border)] rounded-2xl p-5">
+                                        <h4 className="text-[var(--moca-text)] font-bold mb-1">최근 6개월 업로드 수</h4>
+                                        <p className="text-[var(--moca-text-3)] text-[11px] mb-5">월별 인증샷 업로드 추이</p>
                                         <div className="flex items-end gap-3 h-32">
                                             {monthlyUploads.map((m, i) => (
                                                 <div key={i} className="flex flex-col items-center flex-1 gap-1.5">
-                                                    <span className="text-white text-[11px] font-black">{m.count > 0 ? m.count : ''}</span>
-                                                    <div className="w-full bg-white/5 rounded-t-lg overflow-hidden flex flex-col justify-end" style={{ height: '96px' }}>
+                                                    <span className="text-[var(--moca-text)] text-[11px] font-black">{m.count > 0 ? m.count : ''}</span>
+                                                    <div className="w-full bg-[var(--moca-surface-2)] rounded-t-lg overflow-hidden flex flex-col justify-end" style={{ height: '96px' }}>
                                                         <div
-                                                            className="w-full bg-gradient-to-t from-[#6C63FF] to-[#A78BFA] rounded-t-lg transition-all duration-700"
+                                                            className="w-full bg-gradient-to-t from-[var(--moca-primary)] to-[var(--moca-accent)] rounded-t-lg transition-all duration-700"
                                                             style={{ height: `${(m.count / maxUploads) * 100}%`, minHeight: m.count > 0 ? '4px' : '0' }}
                                                         />
                                                     </div>
-                                                    <span className="text-white/40 text-[10px]">{m.label}</span>
+                                                    <span className="text-[var(--moca-text-3)] text-[10px]">{m.label}</span>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
 
                                     {/* 활동 유형 분포 */}
-                                    <div className="bg-[#1a1a24] border border-white/10 rounded-2xl p-5">
-                                        <h4 className="text-white font-bold mb-1">활동 유형 분포</h4>
-                                        <p className="text-white/30 text-[11px] mb-5">전체 {certPosts.length}건</p>
+                                    <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-5">
+                                        <h4 className="text-[var(--moca-text)] font-bold mb-1">활동 유형 분포</h4>
+                                        <p className="text-[var(--moca-text-3)] text-[11px] mb-5">전체 {certPosts.length}건</p>
                                         <div className="space-y-3">
                                             {activityCounts.map((a, i) => (
                                                 <div key={a.label}>
                                                     <div className="flex items-center justify-between text-xs mb-1">
                                                         <span className={`font-bold ${activityTextColors[i]}`}>{a.label}</span>
-                                                        <span className="text-white/60 font-black">{a.count}건 ({Math.round((a.count / totalPosts) * 100)}%)</span>
+                                                        <span className="text-[var(--moca-text-2)] font-black">{a.count}건 ({Math.round((a.count / totalPosts) * 100)}%)</span>
                                                     </div>
-                                                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                                    <div className="h-2 bg-[var(--moca-surface-2)] rounded-full overflow-hidden">
                                                         <div
                                                             className={`h-full rounded-full ${activityColors[i]} opacity-80 transition-all duration-700`}
                                                             style={{ width: `${(a.count / totalPosts) * 100}%` }}
@@ -2040,21 +2040,21 @@ const AdminPage = () => {
                                 </div>
 
                                 {/* 이달의 활발한 회원 Top 5 */}
-                                <div className="bg-[#1a1a24] border border-white/10 rounded-2xl p-5">
-                                    <h4 className="text-white font-bold mb-1">이달의 활발한 회원 Top 5</h4>
-                                    <p className="text-white/30 text-xs mb-4">{now.getMonth() + 1}월 업로드 수 기준</p>
+                                <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-5">
+                                    <h4 className="text-[var(--moca-text)] font-bold mb-1">이달의 활발한 회원 Top 5</h4>
+                                    <p className="text-[var(--moca-text-3)] text-xs mb-4">{now.getMonth() + 1}월 업로드 수 기준</p>
                                     {top5Active.length === 0 ? (
-                                        <p className="text-white/30 text-sm py-3">이번 달 업로드가 없습니다.</p>
+                                        <p className="text-[var(--moca-text-3)] text-sm py-3">이번 달 업로드가 없습니다.</p>
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                                             {top5Active.map(([nick, count], idx) => {
-                                                const rankColors = ['text-yellow-400', 'text-slate-300', 'text-orange-400', 'text-white/60', 'text-white/60'];
-                                                const rankBg = ['bg-yellow-500/15 border-yellow-500/30', 'bg-slate-500/15 border-slate-500/30', 'bg-orange-500/15 border-orange-500/30', 'bg-white/5 border-white/10', 'bg-white/5 border-white/10'];
+                                                const rankColors = ['text-yellow-400', 'text-slate-300', 'text-orange-400', 'text-[var(--moca-text-2)]', 'text-[var(--moca-text-2)]'];
+                                                const rankBg = ['bg-yellow-500/15 border-yellow-500/30', 'bg-slate-500/15 border-slate-500/30', 'bg-orange-500/15 border-orange-500/30', 'bg-[var(--moca-surface-2)] border-[var(--moca-border)]', 'bg-[var(--moca-surface-2)] border-[var(--moca-border)]'];
                                                 return (
                                                     <div key={nick} className={`flex flex-col items-center p-3 rounded-xl border text-center ${rankBg[idx]}`}>
                                                         <span className={`text-lg font-black ${rankColors[idx]}`}>{['🥇', '🥈', '🥉', '4', '5'][idx]}</span>
-                                                        <p className="text-white text-sm font-black mt-1 truncate w-full">{nick}</p>
-                                                        <p className="text-white/50 text-xs">{count}건</p>
+                                                        <p className="text-[var(--moca-text)] text-sm font-black mt-1 truncate w-full">{nick}</p>
+                                                        <p className="text-[var(--moca-text-2)] text-xs">{count}건</p>
                                                     </div>
                                                 );
                                             })}
@@ -2093,8 +2093,8 @@ const AdminPage = () => {
                     return (
                         <div className="animate-fadeIn space-y-6">
                             <div>
-                                <h2 className="text-2xl font-black text-white">📸 현재모습 사진 관리</h2>
-                                <p className="text-white/40 text-sm mt-1">모델이 업로드한 현재모습 사진을 확인하고 상태를 관리합니다.</p>
+                                <h2 className="text-2xl font-black text-[var(--moca-text)]">📸 현재모습 사진 관리</h2>
+                                <p className="text-[var(--moca-text-3)] text-sm mt-1">모델이 업로드한 현재모습 사진을 확인하고 상태를 관리합니다.</p>
                             </div>
 
                             {/* Supabase 테이블 안내 */}
@@ -2119,38 +2119,38 @@ const AdminPage = () => {
                                     value={currentPhotosSearch}
                                     onChange={e => setCurrentPhotosSearch(e.target.value)}
                                     placeholder="모델 이름/닉네임 검색"
-                                    className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-sm outline-none focus:border-emerald-500/60 transition w-48"
+                                    className="bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-2 text-[var(--moca-text)] text-sm outline-none focus:border-[var(--moca-primary)] transition w-48"
                                 />
                                 {['all', 'pending', 'approved', 'needs_more'].map(f => (
                                     <button
                                         key={f}
                                         onClick={() => setCurrentPhotosFilter(f)}
-                                        className={`px-3 py-2 rounded-xl text-xs font-black border transition-all ${currentPhotosFilter === f ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' : 'bg-white/5 border-white/10 text-white/40 hover:text-white'}`}
+                                        className={`px-3 py-2 rounded-xl text-xs font-black border transition-all ${currentPhotosFilter === f ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' : 'bg-[var(--moca-surface-2)] border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-[var(--moca-text)]'}`}
                                     >
                                         {{ all: '전체', pending: '검토중', approved: '승인', needs_more: '추가요청' }[f]}
                                     </button>
                                 ))}
-                                <span className="text-white/30 text-xs ml-auto">총 {filtered.length}장</span>
+                                <span className="text-[var(--moca-text-3)] text-xs ml-auto">총 {filtered.length}장</span>
                             </div>
 
                             {currentPhotosLoading ? (
-                                <div className="text-center py-12 text-white/30">불러오는 중...</div>
+                                <div className="text-center py-12 text-[var(--moca-text-3)]">불러오는 중...</div>
                             ) : Object.keys(groups).length === 0 ? (
-                                <div className="text-center py-12 text-white/20">
+                                <div className="text-center py-12 text-[var(--moca-text-3)]">
                                     <span className="material-symbols-outlined text-[48px] mb-2 block">collections</span>
                                     <p>업로드된 사진이 없습니다.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-8">
                                     {Object.entries(groups).map(([key, group]) => (
-                                        <div key={key} className="bg-[#1a1a24] border border-white/10 rounded-2xl p-5">
+                                        <div key={key} className="bg-white border border-[var(--moca-border)] rounded-2xl p-5">
                                             <div className="flex items-center gap-3 mb-4">
                                                 <div className="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center">
                                                     <span className="material-symbols-outlined text-[18px] text-emerald-400">person</span>
                                                 </div>
                                                 <div>
-                                                    <p className="font-black text-white">{group.name || group.nickname}</p>
-                                                    <p className="text-white/30 text-xs">@{group.nickname} · {group.photos.length}장</p>
+                                                    <p className="font-black text-[var(--moca-text)]">{group.name || group.nickname}</p>
+                                                    <p className="text-[var(--moca-text-3)] text-xs">@{group.nickname} · {group.photos.length}장</p>
                                                 </div>
                                             </div>
                                             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
@@ -2161,7 +2161,7 @@ const AdminPage = () => {
                                                             <img
                                                                 src={photo.photo_url}
                                                                 alt="현재모습"
-                                                                className="w-full aspect-square object-cover rounded-xl border border-white/10"
+                                                                className="w-full aspect-square object-cover rounded-xl border border-[var(--moca-border)]"
                                                             />
                                                             {/* 상태 뱃지 */}
                                                             <span className={`absolute top-1 left-1 px-1.5 py-0.5 rounded-full text-[9px] font-black border ${sl.bg} ${sl.color} ${sl.border}`}>
@@ -2195,7 +2195,7 @@ const AdminPage = () => {
                                                                 <button
                                                                     title="링크 복사"
                                                                     onClick={() => navigator.clipboard.writeText(photo.photo_url)}
-                                                                    className="w-7 h-7 rounded-lg bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition"
+                                                                    className="w-7 h-7 rounded-lg bg-[var(--moca-primary-lt)] text-[var(--moca-text-2)] hover:text-[var(--moca-text)] flex items-center justify-center transition"
                                                                 >
                                                                     <span className="material-symbols-outlined text-[14px]">link</span>
                                                                 </button>
@@ -2205,7 +2205,7 @@ const AdminPage = () => {
                                                                     download
                                                                     target="_blank"
                                                                     rel="noreferrer"
-                                                                    className="w-7 h-7 rounded-lg bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition"
+                                                                    className="w-7 h-7 rounded-lg bg-[var(--moca-primary-lt)] text-[var(--moca-text-2)] hover:text-[var(--moca-text)] flex items-center justify-center transition"
                                                                     title="다운로드"
                                                                 >
                                                                     <span className="material-symbols-outlined text-[14px]">download</span>

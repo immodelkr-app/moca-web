@@ -144,69 +144,69 @@ const AdminPartners = ({ partners, setPartners, setSuccessMsg, setError }) => {
 
     if (isEditing) {
         return (
-            <div className="bg-[#1a1a24] border border-white/10 rounded-2xl p-6 animate-fadeIn">
-                <h2 className="text-xl font-black text-white mb-6 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#818CF8]">{formData.id ? 'edit' : 'add_circle'}</span>
+            <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-6 animate-fadeIn">
+                <h2 className="text-xl font-black text-[var(--moca-text)] mb-6 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[var(--moca-primary)]">{formData.id ? 'edit' : 'add_circle'}</span>
                     {formData.id ? '제휴사 수정' : '새 제휴사 추가'}
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-white/60 text-xs font-bold mb-1">카테고리</label>
-                            <select name="category" value={formData.category} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#6C63FF] outline-none text-sm">
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-1">카테고리</label>
+                            <select name="category" value={formData.category} onChange={handleChange} className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:border-[var(--moca-primary)] outline-none text-sm">
                                 {Object.entries(CATEGORY_NAMES).map(([val, label]) => (
                                     <option key={val} value={val} className="text-black">{label}</option>
                                 ))}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-white/60 text-xs font-bold mb-1">업체명 *</label>
-                            <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#6C63FF] outline-none text-sm" placeholder="업체명" />
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-1">업체명 *</label>
+                            <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:border-[var(--moca-primary)] outline-none text-sm" placeholder="업체명" />
                         </div>
                         <div>
-                            <label className="block text-white/60 text-xs font-bold mb-1">할인 핵심요약 (예: 10% 기미+잡티)</label>
-                            <input type="text" name="discount_text" value={formData.discount_text} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#6C63FF] outline-none text-sm" placeholder="할인 핵심요약" />
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-1">할인 핵심요약 (예: 10% 기미+잡티)</label>
+                            <input type="text" name="discount_text" value={formData.discount_text} onChange={handleChange} className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:border-[var(--moca-primary)] outline-none text-sm" placeholder="할인 핵심요약" />
                         </div>
                         <div>
-                            <label className="block text-white/60 text-xs font-bold mb-1">상세 설명</label>
-                            <input type="text" name="description" value={formData.description || ''} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#6C63FF] outline-none text-sm" placeholder="상세 설명" />
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-1">상세 설명</label>
+                            <input type="text" name="description" value={formData.description || ''} onChange={handleChange} className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:border-[var(--moca-primary)] outline-none text-sm" placeholder="상세 설명" />
                         </div>
                         <div>
-                            <label className="block text-white/60 text-xs font-bold mb-1">업체 연락처 (표시용)</label>
-                            <input type="text" name="phone" value={formData.phone || ''} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#6C63FF] outline-none text-sm" placeholder="예: 02-1234-5678" />
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-1">업체 연락처 (표시용)</label>
+                            <input type="text" name="phone" value={formData.phone || ''} onChange={handleChange} className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:border-[var(--moca-primary)] outline-none text-sm" placeholder="예: 02-1234-5678" />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="block text-white/60 text-xs font-bold mb-1">인증 PIN (4자리 등)</label>
-                            <input type="text" name="pin_code" value={formData.pin_code || ''} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#6C63FF] outline-none text-sm" placeholder="예: 4521" />
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-1">인증 PIN (4자리 등)</label>
+                            <input type="text" name="pin_code" value={formData.pin_code || ''} onChange={handleChange} className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:border-[var(--moca-primary)] outline-none text-sm" placeholder="예: 4521" />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="block text-white/60 text-xs font-bold mb-1">위치/주소</label>
-                            <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#6C63FF] outline-none text-sm" placeholder="주소" />
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-1">위치/주소</label>
+                            <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:border-[var(--moca-primary)] outline-none text-sm" placeholder="주소" />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="block text-white/60 text-xs font-bold mb-1">홈페이지 링크</label>
-                            <input type="url" name="homepage_link" value={formData.homepage_link || ''} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#6C63FF] outline-none text-sm" placeholder="https://..." />
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-1">홈페이지 링크</label>
+                            <input type="url" name="homepage_link" value={formData.homepage_link || ''} onChange={handleChange} className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:border-[var(--moca-primary)] outline-none text-sm" placeholder="https://..." />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="block text-white/60 text-xs font-bold mb-1">지도 링크 (네이버 지도, 카카오맵 등)</label>
-                            <input type="url" name="map_link" value={formData.map_link || ''} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#6C63FF] outline-none text-sm" placeholder="https://..." />
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-1">지도 링크 (네이버 지도, 카카오맵 등)</label>
+                            <input type="url" name="map_link" value={formData.map_link || ''} onChange={handleChange} className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:border-[var(--moca-primary)] outline-none text-sm" placeholder="https://..." />
                         </div>
 
                         {/* 이미지 썸네일 업로드 */}
                         <div className="md:col-span-2">
-                            <label className="block text-white/60 text-xs font-bold mb-2">썸네일 이미지 파일 올리기 (권장: 4:3 비율, 가로가 더 넓게)</label>
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-2">썸네일 이미지 파일 올리기 (권장: 4:3 비율, 가로가 더 넓게)</label>
                             <div
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={handleImageDrop}
                                 onClick={() => fileInputRef.current?.click()}
                                 className={`w-full aspect-[4/3] max-w-sm mx-auto rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center overflow-hidden relative group
-                                    ${imagePreview ? 'border-transparent bg-white/5' : 'border-white/20 hover:border-[#6C63FF] bg-white/5 hover:bg-white/10'}`}
+                                    ${imagePreview ? 'border-transparent bg-[var(--moca-surface-2)]' : 'border-white/20 hover:border-[var(--moca-primary)] bg-[var(--moca-surface-2)] hover:bg-[var(--moca-primary-lt)]'}`}
                             >
                                 {imagePreview ? (
                                     <>
                                         <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <span className="text-white font-bold flex items-center gap-2">
+                                            <span className="text-[var(--moca-text)] font-bold flex items-center gap-2">
                                                 <span className="material-symbols-outlined">edit</span>
                                                 이미지 변경
                                             </span>
@@ -214,9 +214,9 @@ const AdminPartners = ({ partners, setPartners, setSuccessMsg, setError }) => {
                                     </>
                                 ) : (
                                     <div className="text-center p-6">
-                                        <span className="material-symbols-outlined text-[48px] text-white/20 mb-3 block">add_photo_alternate</span>
-                                        <p className="text-white/60 text-sm font-bold mb-1">클릭하여 이미지 선택 또는 끌어오기</p>
-                                        <p className="text-white/30 text-xs">JPG, PNG 파일 지원 (최대 5MB)</p>
+                                        <span className="material-symbols-outlined text-[48px] text-[var(--moca-text-3)] mb-3 block">add_photo_alternate</span>
+                                        <p className="text-[var(--moca-text-2)] text-sm font-bold mb-1">클릭하여 이미지 선택 또는 끌어오기</p>
+                                        <p className="text-[var(--moca-text-3)] text-xs">JPG, PNG 파일 지원 (최대 5MB)</p>
                                     </div>
                                 )}
                             </div>
@@ -229,13 +229,13 @@ const AdminPartners = ({ partners, setPartners, setSuccessMsg, setError }) => {
                             />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="block text-white/60 text-xs font-bold mb-1">이미지 URL 직접 입력 (선택, 파일 업로드 시 자동 무시됨)</label>
-                            <input type="url" name="img_url" value={formData.img_url || ''} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#6C63FF] outline-none text-sm" placeholder="https://" />
+                            <label className="block text-[var(--moca-text-2)] text-xs font-bold mb-1">이미지 URL 직접 입력 (선택, 파일 업로드 시 자동 무시됨)</label>
+                            <input type="url" name="img_url" value={formData.img_url || ''} onChange={handleChange} className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:border-[var(--moca-primary)] outline-none text-sm" placeholder="https://" />
                         </div>
                     </div>
-                    <div className="flex gap-3 pt-4 border-t border-white/10">
-                        <button type="button" onClick={handleCancel} disabled={loading} className="px-5 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white hover:bg-white/5 transition-colors font-bold text-sm">취소</button>
-                        <button type="submit" disabled={loading} className="px-5 py-3 rounded-xl bg-[#6C63FF] hover:bg-[#5a52d5] text-white transition-colors font-bold text-sm shadow-lg shadow-[#6C63FF]/20 flex-1 flex justify-center items-center gap-2">
+                    <div className="flex gap-3 pt-4 border-t border-[var(--moca-border)]">
+                        <button type="button" onClick={handleCancel} disabled={loading} className="px-5 py-3 rounded-xl border border-[var(--moca-border)] text-[var(--moca-text-2)] hover:text-[var(--moca-text)] hover:bg-[var(--moca-primary-lt)] transition-colors font-bold text-sm">취소</button>
+                        <button type="submit" disabled={loading} className="px-5 py-3 rounded-xl bg-[var(--moca-primary)] hover:bg-[#5a52d5] text-[var(--moca-text)] transition-colors font-bold text-sm shadow-lg shadow-[#6C63FF]/20 flex-1 flex justify-center items-center gap-2">
                             {loading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                             저장하기
                         </button>
@@ -249,8 +249,8 @@ const AdminPartners = ({ partners, setPartners, setSuccessMsg, setError }) => {
         <div className="animate-fadeIn">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-xl font-black text-white">제휴사 등록/관리</h2>
-                    <p className="text-sm text-white/40 mt-1">상시 혜택을 제공하는 파트너 업체 리스트입니다.</p>
+                    <h2 className="text-xl font-black text-[var(--moca-text)]">제휴사 등록/관리</h2>
+                    <p className="text-sm text-[var(--moca-text-3)] mt-1">상시 혜택을 제공하는 파트너 업체 리스트입니다.</p>
                 </div>
                 <button onClick={handleCreateNew} className="flex items-center gap-2 px-4 py-2 bg-[#10b981]/20 border border-[#10b981]/50 text-[#34d399] rounded-xl font-bold hover:bg-[#10b981]/30 transition-colors text-sm">
                     <span className="material-symbols-outlined text-[18px]">add</span>
@@ -260,38 +260,38 @@ const AdminPartners = ({ partners, setPartners, setSuccessMsg, setError }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {partners.length === 0 ? (
-                    <div className="col-span-full py-10 text-center text-white/30 bg-white/5 rounded-2xl border border-white/5">
+                    <div className="col-span-full py-10 text-center text-[var(--moca-text-3)] bg-[var(--moca-surface-2)] rounded-2xl border border-[var(--moca-border)]">
                         <span className="material-symbols-outlined text-[48px] mb-2">storefront</span>
                         <p>등록된 제휴사가 없습니다.</p>
                     </div>
                 ) : (
                     partners.map(p => (
-                        <div key={p.id} className="bg-[#1a1a24] border border-white/10 rounded-2xl p-5 hover:border-[#6C63FF]/50 transition-colors flex flex-col h-full">
+                        <div key={p.id} className="bg-white border border-[var(--moca-border)] rounded-2xl p-5 hover:border-[var(--moca-primary)]/50 transition-colors flex flex-col h-full">
                             <div className="flex justify-between items-start mb-3">
-                                <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-white/60 text-[10px] font-bold">
+                                <span className="px-2 py-1 rounded bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text-2)] text-[10px] font-bold">
                                     {CATEGORY_NAMES[p.category] || p.category}
                                 </span>
                                 <div className="flex gap-2">
-                                    <button onClick={() => handleEdit(p)} className="text-white/40 hover:text-white transition-colors"><span className="material-symbols-outlined text-[18px]">edit</span></button>
+                                    <button onClick={() => handleEdit(p)} className="text-[var(--moca-text-3)] hover:text-[var(--moca-text)] transition-colors"><span className="material-symbols-outlined text-[18px]">edit</span></button>
                                     <button onClick={() => handleDelete(p.id, p.name)} className="text-red-400/50 hover:text-red-400 transition-colors"><span className="material-symbols-outlined text-[18px]">delete</span></button>
                                 </div>
                             </div>
-                            <h3 className="text-lg font-black text-white mb-1">{p.name}</h3>
-                            <p className="text-[#818CF8] font-bold text-sm mb-3 line-clamp-2">{p.discount_text}</p>
+                            <h3 className="text-lg font-black text-[var(--moca-text)] mb-1">{p.name}</h3>
+                            <p className="text-[var(--moca-primary)] font-bold text-sm mb-3 line-clamp-2">{p.discount_text}</p>
                             <div className="mt-auto space-y-1">
-                                <p className="text-white/40 text-xs flex items-center gap-1">
+                                <p className="text-[var(--moca-text-3)] text-xs flex items-center gap-1">
                                     <span className="material-symbols-outlined text-[14px]">location_on</span>
                                     {p.location || '-'}
                                 </p>
-                                <p className="text-white/40 text-xs flex items-center gap-1 mt-1">
+                                <p className="text-[var(--moca-text-3)] text-xs flex items-center gap-1 mt-1">
                                     <span className="material-symbols-outlined text-[14px]">call</span>
                                     {p.phone || '-'}
                                 </p>
-                                <p className="text-white/40 text-[10px] break-all flex items-center gap-1 mt-1">
+                                <p className="text-[var(--moca-text-3)] text-[10px] break-all flex items-center gap-1 mt-1">
                                     <span className="material-symbols-outlined text-[14px]">image</span>
                                     {p.img_url ? '이미지 등록됨' : '이미지 없음'}
                                 </p>
-                                <p className="text-white/40 text-xs flex items-center gap-1 font-mono tracking-widest mt-2 border-t border-white/10 pt-2">
+                                <p className="text-[var(--moca-text-3)] text-xs flex items-center gap-1 font-mono tracking-widest mt-2 border-t border-[var(--moca-border)] pt-2">
                                     <span className="material-symbols-outlined text-[14px]">password</span>
                                     PIN: {p.pin_code || '미설정'}
                                 </p>

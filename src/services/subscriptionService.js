@@ -56,10 +56,16 @@ export const upgradeUserToGold = async (userId, months) => {
 export const fetchAllSubscriptions = async () => {
     const { data, error } = await supabase
         .from('subscriptions')
-        .select('*')
+        .select('*, users(phone)')
         .order('created_at', { ascending: false });
 
-    return { data: data || [], error };
+    // Flatten calculations to make it easier to usephone
+    const flattened = (data || []).map(s => ({
+        ...s,
+        phone: s.users?.phone || ''
+    }));
+
+    return { data: flattened, error };
 };
 
 /**
