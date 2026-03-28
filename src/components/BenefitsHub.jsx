@@ -3,11 +3,48 @@ import { useNavigate } from 'react-router-dom';
 import { getUser } from '../services/userService';
 
 const GRADE_BADGE = {
-    SILVER: { label: '🤍 SILVER', cls: 'bg-slate-400/20 text-slate-300 border-slate-400/30' },
-    GOLD: { label: '👑 GOLD', cls: 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30' },
-    VIP: { label: '💜 전속모델', cls: 'bg-purple-500/20 text-purple-300 border-purple-400/30' },
-    VVIP: { label: '🔥 VVIP', cls: 'bg-pink-500/20 text-pink-300 border-pink-400/30' },
+    SILVER: { label: '🤍 SILVER', cls: 'bg-[#F8F5FF] text-[#5B4E7A] border-[#E8E0FA]' },
+    GOLD:   { label: '👑 GOLD',   cls: 'bg-[#FFF8E1] text-[#D97706] border-[#F5E6A3]' },
+    VIP:    { label: '💜 전속모델', cls: 'bg-[#F3E8FF] text-[#7C3AED] border-[#E8D5FF]' },
+    VVIP:   { label: '🔥 VVIP',   cls: 'bg-[#FFF0F6] text-[#DB2777] border-[#FBD5E7]' },
 };
+
+const cards = [
+    {
+        id: 'shop',
+        icon: 'local_fire_department',
+        iconBg: 'bg-gradient-to-br from-orange-400 to-rose-500',
+        title: 'M뷰티&쇼핑',
+        subtitle: '모카 에디트 · 멤버 전용 셀렉 상품',
+        accentColor: 'text-orange-500',
+        accentBg: 'bg-orange-50 border-orange-100',
+        badge: 'LIVE',
+        badgeCls: 'bg-red-500 text-white',
+        path: '/home/shop',
+    },
+    {
+        id: 'coupons',
+        icon: 'local_activity',
+        iconBg: 'bg-gradient-to-br from-[#9333EA] to-[#C084FC]',
+        title: '모델 할인쿠폰',
+        subtitle: '등급별 전용 바우처 · 제휴 매장 즉시 사용',
+        accentColor: 'text-[#9333EA]',
+        accentBg: 'bg-[#F3E8FF] border-[#E8E0FA]',
+        badge: null,
+        path: '/home/coupons',
+    },
+    {
+        id: 'affiliates',
+        icon: 'store',
+        iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+        title: '모카 제휴혜택',
+        subtitle: '헤어 · 메이크업 · 스튜디오 · 에스테틱 할인',
+        accentColor: 'text-emerald-600',
+        accentBg: 'bg-emerald-50 border-emerald-100',
+        badge: null,
+        path: '/home/content',
+    },
+];
 
 const BenefitsHub = () => {
     const navigate = useNavigate();
@@ -15,108 +52,79 @@ const BenefitsHub = () => {
     const userGrade = user?.grade || 'SILVER';
     const gradeBadge = GRADE_BADGE[userGrade] || GRADE_BADGE.SILVER;
 
-    const cards = [
-        {
-            id: 'shop',
-            emoji: '🔥',
-            title: 'M뷰티&쇼핑',
-            subtitle: '모카 에디트 · 멤버 전용 셀렉 상품',
-            gradient: 'from-[#FF416C] to-[#FF4B2B]', // 고급스러운 로즈-레드 골드 톤
-            glowColor: 'shadow-[#FF416C]/30',
-            badge: 'LIVE',
-            badgeCls: 'bg-red-500 text-white animate-pulse',
-            path: '/home/shop',
-            wide: true,
-        },
-        {
-            id: 'coupons',
-            emoji: '🎟',
-            title: '모델 할인쿠폰',
-            subtitle: '등급별 전용 바우처 · 제휴 매장 즉시 사용',
-            gradient: 'from-[#6C63FF] to-[#4F46E5]', // 모카앱 시그니처 퍼플 딥 톤
-            glowColor: 'shadow-[#6C63FF]/30',
-            badge: null,
-            path: '/home/coupons',
-            wide: true,
-        },
-        {
-            id: 'affiliates',
-            emoji: '🏪',
-            title: '모카 제휴혜택',
-            subtitle: '헤어 · 메이크업 · 스튜디오 · 에스테틱 제휴 혜택',
-            gradient: 'from-[#0F766E] to-[#042F2E]', // 딥 에메랄드 (무게감 있는 고급 제휴 그린)
-            glowColor: 'shadow-[#0F766E]/30',
-            badge: null,
-            path: '/home/content',
-            wide: true,
-        },
-    ];
-
     return (
-        <div className="min-h-screen bg-[#080810] pb-28">
-            {/* ── 헤더 ─────────────────────────────────────────────────────── */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#14102a] via-[#0f0f20] to-[#1a0c30] border-b border-white/10 px-4 pt-6 pb-5">
-                <div className="absolute -top-10 -right-10 w-48 h-48 bg-purple-600/15 rounded-full blur-3xl" />
-                <div className="absolute -bottom-8 -left-8 w-40 h-40 bg-pink-600/10 rounded-full blur-3xl" />
-                <div className="relative">
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
+        <div className="min-h-screen pb-28" style={{ backgroundColor: 'var(--moca-bg)' }}>
+
+            {/* ── 상단 헤더 배너 ── */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#EDE8FF] via-[#F3F0FF] to-[#E8F0FF] border-b border-[#E8E0FA] px-5 pt-6 pb-5">
+                <div className="absolute -top-8 -right-8 w-40 h-40 bg-[#9333EA]/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-[#C084FC]/10 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="relative flex items-start justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
                             <span className="text-2xl">💎</span>
-                            <h1 className="text-white font-black text-xl tracking-tight">혜택 & 쇼핑</h1>
+                            <h1 className="text-[#1F1235] font-black text-xl tracking-tight">혜택 &amp; 쇼핑</h1>
                         </div>
-                        <div className={`text-xs font-bold border rounded-full px-3 py-1 ${gradeBadge.cls}`}>
-                            {gradeBadge.label}
-                        </div>
+                        <p className="text-xs text-[#9CA3AF] font-medium pl-9">모카앱 멤버 전용 · 쇼핑 + 쿠폰 + 제휴혜택</p>
                     </div>
-                    <p className="text-white/40 text-xs pl-9">모카앱 멤버 전용 · M뷰티&쇼핑 + 쿠폰 + 제휴사</p>
+                    {/* 등급 뱃지 */}
+                    <div className={`flex-shrink-0 text-xs font-black border rounded-full px-3 py-1.5 ${gradeBadge.cls}`}>
+                        {gradeBadge.label}
+                    </div>
                 </div>
             </div>
 
-            {/* ── 배너 리스트 (모 모두 세로 한줄 가로형) ────────────────────────────────────────────────── */}
+            {/* ── 카드 리스트 ── */}
             <div className="px-4 pt-5 flex flex-col gap-3">
                 {cards.map(card => (
                     <button
                         key={card.id}
                         onClick={() => navigate(card.path)}
-                        className={`
-                            relative group w-full flex items-center justify-between overflow-hidden
-                            rounded-2xl px-5 py-5 text-left
-                            bg-gradient-to-r ${card.gradient}
-                            shadow-xl ${card.glowColor}
-                            hover:scale-[1.02] active:scale-[0.98] transition-all duration-300
-                            border border-white/5
-                        `}
+                        className="relative group w-full bg-white border border-[#E8E0FA] rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:shadow-[#9333EA]/10 hover:border-[#9333EA]/25 active:scale-[0.98] transition-all duration-200 text-left"
                     >
-                        {/* 배경 도트/패턴 */}
-                        <div className="absolute inset-0 opacity-10"
-                            style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
-
-                        {/* LIVE 뱃지 */}
-                        {card.badge && (
-                            <span className={`absolute top-4 right-4 text-[10px] font-black px-2 py-0.5 rounded-full z-20 ${card.badgeCls}`}>
-                                {card.badge}
-                            </span>
-                        )}
-
-                        <div className="flex items-center gap-4 relative z-10">
-                            {/* 아이콘 컨테이너 */}
-                            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl backdrop-blur-md border border-white/30 shrink-0 shadow-inner">
-                                {card.emoji}
+                        <div className="flex items-center gap-4 px-5 py-4">
+                            {/* 아이콘 */}
+                            <div className={`w-14 h-14 ${card.iconBg} rounded-2xl flex items-center justify-center shrink-0 shadow-md`}>
+                                <span className="material-symbols-outlined text-white text-[26px] fill-1">{card.icon}</span>
                             </div>
 
-                            {/* 텍스트 정보 */}
-                            <div className="pr-4">
-                                <h2 className="text-white font-black text-[17px] tracking-tight mb-0.5">{card.title}</h2>
-                                <p className="text-white/70 text-[11px] leading-tight font-medium">{card.subtitle}</p>
+                            {/* 텍스트 */}
+                            <div className="flex-1 min-w-0 pr-2">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                    <h2 className="text-[#1F1235] font-black text-[17px] tracking-tight">{card.title}</h2>
+                                    {card.badge && (
+                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse ${card.badgeCls}`}>
+                                            {card.badge}
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-[#5B4E7A] text-xs font-medium leading-relaxed">{card.subtitle}</p>
+                            </div>
+
+                            {/* 화살표 */}
+                            <div className="w-9 h-9 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] flex items-center justify-center shrink-0 group-hover:bg-[#F3E8FF] group-hover:border-[#9333EA]/20 transition-colors">
+                                <span className="material-symbols-outlined text-[#9333EA] text-[18px]">arrow_forward</span>
                             </div>
                         </div>
 
-                        {/* 화살표 아이콘 */}
-                        <div className="w-8 h-8 bg-black/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors shrink-0 relative z-10 border border-white/10">
-                            <span className="material-symbols-outlined text-white text-sm">arrow_forward</span>
-                        </div>
+                        {/* 하단 포인트 바 */}
+                        <div className={`h-0.5 w-full ${card.accentBg} opacity-0 group-hover:opacity-100 transition-opacity`} />
                     </button>
                 ))}
+            </div>
+
+            {/* ── 안내 문구 ── */}
+            <div className="px-4 mt-5">
+                <div className="bg-white border border-[#E8E0FA] rounded-2xl p-4 flex items-start gap-3 shadow-sm">
+                    <div className="w-9 h-9 rounded-xl bg-[#F3E8FF] flex items-center justify-center flex-shrink-0">
+                        <span className="material-symbols-outlined text-[#9333EA] text-[18px]">info</span>
+                    </div>
+                    <div>
+                        <p className="text-[#1F1235] text-xs font-black mb-0.5">멤버십 등급에 따라 혜택이 달라져요</p>
+                        <p className="text-[#9CA3AF] text-[11px] leading-relaxed">SILVER · GOLD · VIP · VVIP 등급별 전용 혜택이 제공됩니다.</p>
+                    </div>
+                </div>
             </div>
         </div>
     );

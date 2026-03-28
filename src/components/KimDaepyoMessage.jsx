@@ -15,7 +15,6 @@ const KimDaepyoMessage = () => {
     const user = getUser();
     const myNickname = user?.nickname || user?.name || '익명모카';
 
-    // Load initial list
     useEffect(() => {
         const loadMessages = async () => {
             setIsLoading(true);
@@ -64,48 +63,51 @@ const KimDaepyoMessage = () => {
         return d.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
     };
 
-    // --- Detail View ---
+    // ── 상세 뷰 ──────────────────────────────────────────────────────────────
     if (selectedMessage) {
         return (
-            <div className="flex flex-col h-full bg-[#0A0A0F] text-white overflow-hidden relative pb-20 lg:pb-0">
-                {/* Header */}
-                <header className="flex-none flex items-center justify-between px-4 py-4 z-20 bg-[#0A0A0F]/90 backdrop-blur-md border-b border-white/5 sticky top-0">
+            <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: 'var(--moca-bg)' }}>
+                {/* 헤더 */}
+                <header className="flex-none flex items-center justify-between px-4 py-4 z-20 bg-white/90 backdrop-blur-md border-b border-[#E8E0FA] sticky top-0 shadow-sm">
                     <button
                         onClick={handleBackToList}
-                        className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors"
+                        className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors"
                     >
-                        <span className="material-symbols-outlined text-[20px] text-white/80">arrow_back</span>
+                        <span className="material-symbols-outlined text-[20px] text-[#9333EA]">arrow_back</span>
                     </button>
-                    <h1 className="text-xl font-bold tracking-wide">아임모카 공지</h1>
-                    <div className="w-10"></div> {/* Spacer */}
+                    <h1 className="text-[#1F1235] font-black text-base tracking-tight">공지 상세</h1>
+                    <div className="w-10" />
                 </header>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto px-5 py-6 hide-scrollbar flex flex-col">
-                    <h2 className="text-2xl font-black mb-3 text-white leading-snug break-words">
+                {/* 본문 */}
+                <div className="flex-1 overflow-y-auto px-5 py-6 hide-scrollbar flex flex-col pb-24">
+                    {/* 뱃지 + 날짜 */}
+                    <div className="flex items-center gap-2 mb-3">
+                        <span className="text-[10px] font-black text-[#9333EA] bg-[#F3E8FF] px-2.5 py-1 rounded-full border border-[#E8E0FA] uppercase tracking-wider">공지</span>
+                        <span className="text-xs text-[#9CA3AF] font-medium">{formatDate(selectedMessage.created_at)}</span>
+                    </div>
+
+                    <h2 className="text-[#1F1235] text-2xl font-black mb-5 leading-snug break-words">
                         {selectedMessage.title}
                     </h2>
-                    <span className="text-white/40 text-xs mb-6 block font-medium">
-                        {formatDate(selectedMessage.created_at)}
-                    </span>
 
                     {selectedMessage.image_url && (
-                        <div className="mb-6 rounded-xl overflow-hidden shadow-lg border border-white/5">
+                        <div className="mb-6 rounded-2xl overflow-hidden shadow-md border border-[#E8E0FA]">
                             <img src={selectedMessage.image_url} alt="본문 이미지" className="w-full h-auto object-cover" />
                         </div>
                     )}
 
-                    <div className="text-white/80 text-[15px] leading-loose whitespace-pre-wrap break-words mb-10 pb-4 border-b border-white/5">
+                    <div className="text-[#5B4E7A] text-[15px] leading-loose whitespace-pre-wrap break-words mb-8 pb-6 border-b border-[#E8E0FA]">
                         {selectedMessage.content}
                     </div>
 
                     {selectedMessage.link_url && (
-                        <div className="mb-10 pb-4 border-b border-white/5">
+                        <div className="mb-8 pb-6 border-b border-[#E8E0FA]">
                             <a
                                 href={selectedMessage.link_url.startsWith('http') ? selectedMessage.link_url : `https://${selectedMessage.link_url}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white font-bold text-sm shadow-lg hover:opacity-90 transition-opacity"
+                                className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-white font-bold text-sm shadow-lg shadow-[#9333EA]/25 hover:opacity-90 transition-opacity"
                             >
                                 <span className="material-symbols-outlined text-[18px]">link</span>
                                 관련 페이지로 이동하기
@@ -113,47 +115,50 @@ const KimDaepyoMessage = () => {
                         </div>
                     )}
 
-                    {/* Comments Section */}
+                    {/* 댓글 섹션 */}
                     <div>
-                        <h3 className="text-sm font-bold text-white/60 mb-4 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[18px]">chat</span>
+                        <h3 className="text-sm font-black text-[#1F1235] mb-4 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[18px] text-[#9333EA]">chat</span>
                             댓글 {comments.length}
                         </h3>
 
-                        <div className="space-y-4 mb-6">
+                        <div className="space-y-3 mb-6">
                             {comments.map(c => (
-                                <div key={c.id} className="bg-[#15151A] rounded-2xl p-4 border border-white/5">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="font-bold text-sm text-[#C4B5FD]">{c.user_nickname}</span>
-                                        <span className="text-[10px] text-white/30">{formatDate(c.created_at)}</span>
+                                <div key={c.id} className="bg-white rounded-2xl p-4 border border-[#E8E0FA] shadow-sm">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="font-black text-sm text-[#7C3AED]">{c.user_nickname}</span>
+                                        <span className="text-[10px] text-[#9CA3AF]">{formatDate(c.created_at)}</span>
                                     </div>
-                                    <p className="text-[14px] text-white/80 leading-relaxed border-t border-white/5 pt-2 mt-2">{c.comment}</p>
+                                    <p className="text-[14px] text-[#5B4E7A] leading-relaxed border-t border-[#E8E0FA] pt-2 mt-1">{c.comment}</p>
                                 </div>
                             ))}
                             {comments.length === 0 && (
-                                <p className="text-white/30 text-sm text-center py-6">첫 댓글을 남겨보세요!</p>
+                                <div className="text-center py-8">
+                                    <span className="material-symbols-outlined text-[32px] text-[#C084FC]/40 mb-2 block">chat_bubble</span>
+                                    <p className="text-[#9CA3AF] text-sm">첫 댓글을 남겨보세요!</p>
+                                </div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* Comment Input */}
-                <div className="flex-none p-4 pb-6 bg-[#0A0A0F]/95 backdrop-blur-xl border-t border-white/5 mt-auto sticky bottom-0">
+                {/* 댓글 입력 */}
+                <div className="flex-none p-4 pb-6 bg-white/95 backdrop-blur-xl border-t border-[#E8E0FA] sticky bottom-0">
                     <form
                         onSubmit={handlePostComment}
-                        className="flex flex-row items-center bg-[#1C1C24] border border-white/10 rounded-full h-[52px] pr-2 shadow-inner"
+                        className="flex flex-row items-center bg-[#F8F5FF] border border-[#E8E0FA] rounded-full h-[52px] pr-2 shadow-inner group focus-within:border-[#9333EA]/30 transition-all"
                     >
                         <input
                             type="text"
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
                             placeholder="댓글을 남겨주세요..."
-                            className="flex-1 bg-transparent border-none outline-none text-[14px] px-5 text-white placeholder-white/30 h-full w-full min-w-0"
+                            className="flex-1 bg-transparent border-none outline-none text-[14px] px-5 text-[#1F1235] placeholder-[#9CA3AF] h-full w-full min-w-0 font-medium"
                         />
                         <button
                             type="submit"
                             disabled={!newComment.trim() || isSubmitting}
-                            className="w-[40px] h-[40px] rounded-full bg-gradient-to-br from-[#907FF8] to-[#7B61FF] flex items-center justify-center shrink-0 disabled:opacity-50 transition-all ml-2"
+                            className="w-[40px] h-[40px] rounded-full bg-gradient-to-br from-[#9333EA] to-[#C084FC] flex items-center justify-center shrink-0 disabled:opacity-40 transition-all ml-2 shadow-md shadow-[#9333EA]/20 active:scale-95"
                         >
                             <span className="material-symbols-outlined text-[18px] text-white">edit</span>
                         </button>
@@ -163,38 +168,44 @@ const KimDaepyoMessage = () => {
         );
     }
 
-    // --- List View ---
+    // ── 목록 뷰 ──────────────────────────────────────────────────────────────
     return (
-        <div className="flex flex-col h-full bg-[#0A0A0F] text-white overflow-hidden pb-20 lg:pb-0">
-            {/* Header */}
-            <header className="flex-none flex items-center justify-between px-4 py-4 z-20 bg-[#0A0A0F]/90 backdrop-blur-md border-b border-white/5 sticky top-0">
-                <button
-                    onClick={() => navigate('/home')}
-                    className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors"
-                >
-                    <span className="material-symbols-outlined text-[20px] text-white/80">arrow_back</span>
-                </button>
-                <h1 className="text-xl font-bold tracking-wide">아임모카 공지</h1>
-                <div className="w-10"></div> {/* Spacer */}
-            </header>
+        <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--moca-bg)' }}>
 
-            {/* Banner/Title Area */}
-            <div className="px-5 pt-6 pb-4 border-b border-white/5 bg-gradient-to-b from-[#1C1C24] to-transparent">
-                <div className="w-12 h-12 bg-gradient-to-tr from-[#907FF8] to-[#C4B5FD] rounded-full flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(144,127,248,0.3)]">
-                    <span className="material-symbols-outlined text-white text-[24px]">local_police</span>
+            {/* 상단 헤더 배너 */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#EDE8FF] via-[#F3F0FF] to-[#E8F0FF] border-b border-[#E8E0FA] px-5 pt-6 pb-5">
+                <div className="absolute -top-8 -right-8 w-40 h-40 bg-[#9333EA]/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-[#C084FC]/10 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="relative flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="material-symbols-outlined text-[22px] text-[#9333EA]">campaign</span>
+                            <h1 className="text-xl font-black text-[#1F1235] tracking-tight">공지사항</h1>
+                        </div>
+                        <p className="text-xs text-[#9CA3AF] font-medium pl-7">아임모델 대표님의 최신 소식</p>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#9333EA] to-[#C084FC] rounded-2xl flex items-center justify-center shadow-lg shadow-[#9333EA]/25">
+                        <span className="material-symbols-outlined text-white text-[22px]">local_police</span>
+                    </div>
                 </div>
-                <h2 className="text-xl font-black tracking-tight text-white mb-1">MOCA 특별 공지게시판</h2>
-                <p className="text-sm text-white/50">아임모델 대표님이 전하는 최신 정보와 팁</p>
             </div>
 
-            {/* List */}
-            <div className="flex-1 overflow-y-auto hide-scrollbar px-4 py-4">
+            {/* 공지 목록 */}
+            <div className="flex-1 px-4 pt-5 pb-8">
                 {isLoading ? (
-                    <div className="flex justify-center items-center py-20 text-white/20">로딩 중...</div>
+                    <div className="space-y-3">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="bg-white rounded-2xl border border-[#E8E0FA] h-20 animate-pulse shadow-sm" />
+                        ))}
+                    </div>
                 ) : messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-white/20">
-                        <span className="material-symbols-outlined text-[48px] mb-2">inbox</span>
-                        <p className="text-sm">등록된 메세지가 없습니다.</p>
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="w-16 h-16 bg-[#F3E8FF] rounded-full flex items-center justify-center mb-3">
+                            <span className="material-symbols-outlined text-[#C084FC] text-[32px]">inbox</span>
+                        </div>
+                        <p className="text-[#5B4E7A] font-bold text-sm">등록된 공지사항이 없습니다.</p>
+                        <p className="text-[#9CA3AF] text-xs mt-1">새로운 소식이 곧 올라올 예정이에요!</p>
                     </div>
                 ) : (
                     <div className="space-y-3">
@@ -202,28 +213,26 @@ const KimDaepyoMessage = () => {
                             <div
                                 key={msg.id}
                                 onClick={() => handleSelectMessage(msg.id)}
-                                className="group relative bg-[#15151A] rounded-2xl p-5 border border-white/5 hover:border-[#6C63FF]/50 hover:bg-[#1A1A22] cursor-pointer transition-all duration-300 shadow-sm hover:shadow-[0_0_15px_rgba(108,99,255,0.1)]"
+                                className="group bg-white rounded-2xl p-4 border border-[#E8E0FA] hover:border-[#9333EA]/30 hover:shadow-md hover:shadow-[#9333EA]/8 cursor-pointer transition-all duration-200 shadow-sm"
                             >
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-2">
-                                            {/* 'New' badge logic could be added here */}
-                                            <span className="text-[10px] font-bold text-[#A78BFA] bg-[#A78BFA]/10 px-2 py-0.5 rounded uppercase tracking-wider">공지</span>
-                                            <span className="text-xs text-white/30 font-medium">{formatDate(msg.created_at)}</span>
+                                            <span className="text-[10px] font-black text-[#9333EA] bg-[#F3E8FF] px-2 py-0.5 rounded-full border border-[#E8E0FA] uppercase tracking-wider">공지</span>
+                                            <span className="text-xs text-[#9CA3AF]">{formatDate(msg.created_at)}</span>
                                         </div>
-                                        <h3 className="text-[15px] font-bold text-white group-hover:text-[#E0E7FF] transition-colors leading-snug line-clamp-2 pr-2">
+                                        <h3 className="text-[15px] font-black text-[#1F1235] group-hover:text-[#7C3AED] transition-colors leading-snug line-clamp-2 pr-2">
                                             {msg.title}
                                         </h3>
                                     </div>
 
-                                    {/* Thumbnail if image exists */}
                                     {msg.image_url ? (
-                                        <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-white/5">
-                                            <img src={msg.image_url} alt="썸네일" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                        <div className="w-16 h-16 rounded-xl overflow-hidden border border-[#E8E0FA] shrink-0 bg-[#F8F5FF]">
+                                            <img src={msg.image_url} alt="썸네일" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
                                         </div>
                                     ) : (
-                                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 self-center group-hover:bg-[#6C63FF]/10 transition-colors">
-                                            <span className="material-symbols-outlined text-white/30 text-[18px] group-hover:text-[#6C63FF]">chevron_right</span>
+                                        <div className="w-10 h-10 rounded-full bg-[#F3E8FF] border border-[#E8E0FA] flex items-center justify-center shrink-0 self-center group-hover:bg-[#EDE8FF] transition-colors">
+                                            <span className="material-symbols-outlined text-[#9333EA] text-[18px]">chevron_right</span>
                                         </div>
                                     )}
                                 </div>
