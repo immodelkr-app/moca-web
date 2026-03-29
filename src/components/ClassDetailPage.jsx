@@ -25,6 +25,7 @@ const ClassDetailPage = () => {
     const [paymentMethod, setPaymentMethod] = useState('transfer'); // 'transfer' | 'card'
     const [isTossLoading, setIsTossLoading] = useState(false);
     const [copySuccess, setCopySuccess] = useState(false);
+    const [shareSuccess, setShareSuccess] = useState(false);
 
     const GRADE_INFO = { SILVER: '🥈', GOLD: '🌟', VIP: '👑' };
 
@@ -145,6 +146,26 @@ const ClassDetailPage = () => {
         setTimeout(() => setCopySuccess(false), 2000);
     };
 
+    const handleShare = async () => {
+        const shareData = {
+            title: `🎓 모카 클래스 - ${cls.title}`,
+            text: `✨ ${cls.title}\n📅 ${cls.class_date}\n📍 ${cls.location}\n\n등급별 특별 혜택가로 신청하세요!`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (e) {
+                // 사용자 취소 등
+            }
+        } else {
+            // Web Share API 미지원 시 링크 복사
+            await navigator.clipboard.writeText(window.location.href);
+            setShareSuccess(true);
+            setTimeout(() => setShareSuccess(false), 2500);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[var(--moca-bg)]">
@@ -172,6 +193,12 @@ const ClassDetailPage = () => {
                 <div className="absolute top-0 left-0 right-0 p-5 flex items-center justify-between z-10">
                     <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm text-white flex items-center justify-center border border-white/20">
                         <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+                    </button>
+                    <button
+                        onClick={handleShare}
+                        className={`w-10 h-10 rounded-full backdrop-blur-sm text-white flex items-center justify-center border transition-all ${shareSuccess ? 'bg-green-500 border-green-400' : 'bg-black/40 border-white/20'}`}
+                    >
+                        <span className="material-symbols-outlined text-[20px]">{shareSuccess ? 'check' : 'share'}</span>
                     </button>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">

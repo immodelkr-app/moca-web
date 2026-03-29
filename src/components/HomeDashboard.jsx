@@ -11,6 +11,7 @@ const MODEL_SUPPORT_ITEMS = [
     { icon: 'apartment',       label: '에이전시 리스트',  route: '/agencies',           color: 'from-[#9333EA] to-[#C084FC]', glow: 'shadow-[#9333EA]/25' },
     { icon: 'event_note',      label: '투어일지',         route: '/home/diary',         color: 'from-[#0EA5E9] to-[#38BDF8]', glow: 'shadow-[#0EA5E9]/25' },
     { icon: 'manage_accounts', label: '모델프로필 관리',   route: '/home/smart-profile', color: 'from-[#7C3AED] to-[#A78BFA]', glow: 'shadow-[#7C3AED]/25', badge: 'NEW' },
+    { icon: 'school',          label: '모카 클래스',     route: '/home/class',         color: 'from-[#4F46E5] to-[#818CF8]', glow: 'shadow-[#4F46E5]/25', badge: 'NEW' },
     { icon: 'forward_to_inbox',label: '프로필 메일발송',   route: '/home/smart-profile', color: 'from-[#059669] to-[#34D399]', glow: 'shadow-[#059669]/25' },
     { icon: 'calendar_month',  label: '투어 캘린더',      route: '/home/calendar',      color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/25' },
     { icon: 'photo_camera',    label: '투어스타그램',      route: '/home/cert',          color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/25' },
