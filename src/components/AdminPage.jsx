@@ -1234,8 +1234,22 @@ const AdminPage = () => {
                                                             {new Date(user.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
                                                         </div>
 
-                                                        {/* 관리 (강퇴 버튼) */}
-                                                        <div className="col-span-1 flex justify-center">
+                                                        {/* 관리 (계약초대 + 강퇴 버튼) */}
+                                                        <div className="col-span-1 flex flex-col items-center gap-1">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const name = user.name || user.nickname || '회원';
+                                                                    const msg = `안녕하세요, ${name}님 😊\n\n아임모델 MOCA 대표 김대희입니다.\n\n${name}님과 전속계약을 제안드리고 싶어 연락드립니다.\n아래 링크에서 계약서를 확인하고 서명해 주세요.\n\n👉 https://immoca.kr/home/contract\n\n궁금하신 점은 언제든 연락 주세요.\n감사합니다.`;
+                                                                    navigator.clipboard.writeText(msg).then(() => {
+                                                                        setSuccessMsg(`✅ ${name}님 계약초대 메시지가 복사되었습니다! 카카오톡으로 직접 발송해주세요.`);
+                                                                        setTimeout(() => setSuccessMsg(''), 4000);
+                                                                    });
+                                                                }}
+                                                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-[var(--moca-accent)] border border-purple-500/30 transition-colors"
+                                                                title={`${user.name || user.nickname}님에게 계약초대 메시지 복사`}
+                                                            >
+                                                                <span className="material-symbols-outlined text-[14px]">contract</span>
+                                                            </button>
                                                             <button
                                                                 onClick={() => handleDeleteUser(user.id, user.nickname)}
                                                                 disabled={updatingId === user.id}
