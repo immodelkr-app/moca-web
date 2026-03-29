@@ -1,4 +1,6 @@
 import React from 'react';
+import ClassListPage from './components/ClassListPage';
+import ClassDetailPage from './components/ClassDetailPage';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 
@@ -74,6 +76,8 @@ function AppContent() {
                         <Route path="cert" element={<CertificationFeed />} />
                         <Route path="smart-profile" element={<SmartProfile />} />
                         <Route path="contract" element={<ExclusiveContractPage />} />
+                        <Route path="class" element={<ClassListPage />} />
+                        <Route path="class/:id" element={<ClassDetailPage />} />
                     </Route>
                 </Route>
 

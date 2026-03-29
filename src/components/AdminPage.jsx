@@ -10,6 +10,7 @@ import AdminPartners from './AdminPartners';
 import AdminShop from './AdminShop';
 import AdminSubscriptions from './AdminSubscriptions';
 import AdminPopups from './AdminPopups';
+import AdminClasses from './AdminClasses';
 import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost } from '../services/certificationService';
 import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '../services/currentPhotosService';
@@ -765,6 +766,13 @@ const AdminPage = () => {
                             }`}
                     >
                         📝 전속계약 관리
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('classes')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'classes' ? 'border-indigo-500 text-indigo-700 bg-indigo-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
+                            }`}
+                    >
+                        🎓 모카 클래스
                     </button>
                     <button
                         onClick={() => setActiveTab('subscriptions')}
@@ -1594,6 +1602,10 @@ const AdminPage = () => {
 
                 {activeTab === 'subscriptions' && (
                     <AdminSubscriptions />
+                )}
+
+                {activeTab === 'classes' && (
+                    <AdminClasses />
                 )}
 
                 {/* ── 📝 전속계약 관리 탭 ── */}

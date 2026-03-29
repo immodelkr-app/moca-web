@@ -86,6 +86,7 @@ const navGroups = [
             { to: '/home/calendar', icon: 'calendar_month', label: '투어 캘린더' },
             { to: '/home/diary', icon: 'event_note', label: '투어일지' },
             { to: '/home/cert', icon: 'photo_camera', label: '투어스타그램' },
+            { to: '/home/class', icon: 'school', label: '모카 클래스' },
         ]
     },
     {
@@ -133,6 +134,7 @@ const moreMenuItems = [
     { to: '/home/tv',         icon: 'smart_display',        label: '모카TV' },
     { to: '/home/message',    icon: 'local_post_office',    label: '공지사항' },
     { to: '/home/lounge',     icon: 'forum',                label: '모카 라운지' },
+    { to: '/home/class',      icon: 'school',               label: '모카 클래스' },
     { to: '/home/membership', icon: 'star',                 label: '멤버십 카드' },
     { to: '/home/coupons',    icon: 'local_activity',       label: '모델 쿠폰' },
     { to: '/home/content',    icon: 'shopping_bag',         label: '제휴혜택' },
