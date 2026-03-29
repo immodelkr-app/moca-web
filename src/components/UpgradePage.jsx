@@ -353,7 +353,7 @@ const UpgradePage = () => {
 
                         {/* 카카오 문의 */}
                         <button onClick={() => window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank')}
-                            className="w-full flex items-center justify-center gap-2.5 py-4.5 rounded-[24px] bg-white border border-[#E8E0FA] text-[#5B4E7A] font-black text-sm hover:bg-[#F8F5FF] transition-all shadow-sm">
+                            className="w-full flex items-center justify-center gap-2.5 py-5 rounded-[24px] bg-white border border-[#E8E0FA] text-[#5B4E7A] font-black text-sm hover:bg-[#F8F5FF] transition-all shadow-sm">
                             <span className="material-symbols-outlined text-[20px] text-[#9333EA]">chat</span>
                             골드모카 문의하기
                         </button>

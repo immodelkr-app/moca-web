@@ -24,6 +24,7 @@ const MOCA_BENEFITS_ITEMS = [
     { icon: 'diamond',             label: '혜택 모아보기',  route: '/home/benefits',   color: 'from-[#3B82F6] to-[#93C5FD]', glow: 'shadow-[#3B82F6]/25' },
     { icon: 'local_activity',      label: '할인쿠폰',      route: '/home/coupons',    color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/25' },
     { icon: 'shopping_bag',        label: '제휴혜택',      route: '/home/content',    color: 'from-[#F43F5E] to-[#FCA5A5]', glow: 'shadow-[#F43F5E]/25' },
+    { icon: 'card_membership',     label: '멤버십 구독',    route: '/upgrade',         color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/25' },
 ];
 
 const HomeDashboard = () => {

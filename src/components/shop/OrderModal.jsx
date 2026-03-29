@@ -163,57 +163,57 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
     };
 
     return (
-        <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+        <div className="fixed inset-0 z-[300] flex items-end justify-center bg-slate-900/50 backdrop-blur-sm" onClick={onClose}>
             <div
-                className="w-full max-w-md bg-[#0f0f1a] border border-white/15 rounded-t-3xl p-5 pb-8 max-h-[92vh] overflow-y-auto"
+                className="w-full max-w-md bg-white border border-slate-100 rounded-t-3xl p-5 pb-8 max-h-[92vh] overflow-y-auto shadow-2xl"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+                <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
 
                 <div className="flex items-center gap-2 mb-5">
-                    <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                        <span className="material-symbols-outlined text-purple-400">shopping_bag</span>
+                    <div className="w-10 h-10 bg-moca-primary/10 rounded-xl flex items-center justify-center">
+                        <span className="material-symbols-outlined text-moca-primary">shopping_bag</span>
                     </div>
                     <div>
-                        <h3 className="text-white font-black text-base">주문서 작성</h3>
-                        <p className="text-white/40 text-xs line-clamp-1">{product.title}</p>
+                        <h3 className="text-slate-900 font-black text-base">주문서 작성</h3>
+                        <p className="text-slate-500 text-xs line-clamp-1">{product.title}</p>
                     </div>
-                    <button onClick={onClose} className="ml-auto text-white/40 hover:text-white">
+                    <button onClick={onClose} className="ml-auto text-slate-400 hover:text-slate-600 transition-colors">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
 
                 {/* 금액 요약 */}
-                <div className="bg-black/40 border border-white/10 rounded-2xl p-4 mb-4 space-y-2">
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-4 space-y-2">
                     <Row label="정가" value={`${product.original_price.toLocaleString()}원`} muted />
                     <Row label="특가" value={`${basePrice.toLocaleString()}원`} highlight="orange" />
                     {appliedCoupon && (
                         <Row label={`쿠폰 (${appliedCoupon.coupon.code})`} value={`-${discountAmount.toLocaleString()}원`} highlight="purple" />
                     )}
-                    <div className="border-t border-white/10 pt-2 flex justify-between items-center">
-                        <span className="text-white/60 text-sm">최종 결제금액</span>
-                        <span className="text-white font-black text-xl">{finalPrice.toLocaleString()}원</span>
+                    <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
+                        <span className="text-slate-600 text-sm font-bold">최종 결제금액</span>
+                        <span className="text-slate-900 font-black text-xl">{finalPrice.toLocaleString()}원</span>
                     </div>
                 </div>
 
                 {/* 쿠폰 코드 */}
                 <div className="mb-5">
                     {appliedCoupon ? (
-                        <div className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 rounded-xl px-4 py-3">
-                            <span className="text-purple-400 text-lg">🎟</span>
+                        <div className="flex items-center gap-2 bg-moca-primary/5 border border-moca-primary/20 rounded-xl px-4 py-3">
+                            <span className="text-moca-primary text-lg">🎟</span>
                             <div className="flex-1">
-                                <p className="text-purple-300 font-black text-sm">{appliedCoupon.coupon.code}</p>
-                                <p className="text-purple-400/60 text-xs">{appliedCoupon.coupon.description}</p>
+                                <p className="text-moca-primary font-black text-sm">{appliedCoupon.coupon.code}</p>
+                                <p className="text-moca-primary/70 text-xs">{appliedCoupon.coupon.description}</p>
                             </div>
-                            <span className="text-purple-300 font-black text-sm">-{discountAmount.toLocaleString()}원</span>
-                            <button type="button" onClick={handleRemoveCoupon} className="text-white/30 hover:text-red-400 transition-colors ml-1">
+                            <span className="text-moca-primary font-black text-sm">-{discountAmount.toLocaleString()}원</span>
+                            <button type="button" onClick={handleRemoveCoupon} className="text-slate-400 hover:text-red-500 transition-colors ml-1">
                                 <span className="material-symbols-outlined text-sm">close</span>
                             </button>
                         </div>
                     ) : (
                         <div>
-                            <label className="text-white/50 text-xs mb-1.5 block flex items-center gap-1">
-                                <span>🎟</span> 쿠폰 코드 <span className="text-white/20">(선택)</span>
+                            <label className="text-slate-700 text-xs font-bold mb-1.5 flex items-center gap-1">
+                                <span>🎟</span> 쿠폰 코드 <span className="text-slate-400 font-normal">(선택)</span>
                             </label>
                             <div className="flex gap-2">
                                 <input
@@ -222,19 +222,19 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                                     onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
                                     onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
                                     placeholder="쿠폰 코드 입력 (예: MOCA10)"
-                                    className="flex-1 bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-purple-500/60 transition-colors tracking-widest uppercase"
+                                    className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20 transition-all tracking-widest uppercase"
                                 />
                                 <button
                                     type="button"
                                     onClick={handleApplyCoupon}
                                     disabled={couponLoading}
-                                    className="px-4 py-2.5 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm font-bold hover:bg-purple-500/30 transition-all disabled:opacity-50 whitespace-nowrap"
+                                    className="px-4 py-2.5 rounded-xl bg-moca-primary/10 border border-moca-primary/20 text-moca-primary text-sm font-bold hover:bg-moca-primary hover:text-white transition-all disabled:opacity-50 whitespace-nowrap"
                                 >
                                     {couponLoading ? '확인 중...' : '적용'}
                                 </button>
                             </div>
                             {couponError && (
-                                <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+                                <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
                                     <span className="material-symbols-outlined text-sm">error</span>
                                     {couponError}
                                 </p>
@@ -244,11 +244,11 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                 </div>
 
                 {/* 배송지 입력 */}
-                <div className="space-y-3 mb-5">
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-white/70 text-sm font-bold">배송지 정보</h4>
+                <div className="space-y-3 mb-6">
+                    <div className="flex items-center justify-between pb-1">
+                        <h4 className="text-slate-800 text-sm font-black">배송지 정보</h4>
                         {autoFilled && (
-                            <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
+                            <span className="flex items-center gap-1 text-[11px] font-bold text-moca-primary bg-moca-primary/10 px-2 py-0.5 rounded-full">
                                 <span className="material-symbols-outlined text-[12px]">check_circle</span>
                                 회원정보 자동 기입
                             </span>
@@ -265,22 +265,22 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
                 <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white font-black text-base shadow-lg shadow-purple-500/25 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-2xl bg-moca-primary text-white font-black text-base shadow-lg shadow-moca-primary/25 hover:bg-moca-hover active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                     {loading ? (
                         <>
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            결제창 열는 중...
+                            결제창 여는 중...
                         </>
                     ) : (
                         <>
                             <span className="material-symbols-outlined text-[20px]">credit_card</span>
-                            토스페이먼츠로 {finalPrice.toLocaleString()}원 결제
+                            {finalPrice.toLocaleString()}원 결제하기
                         </>
                     )}
                 </button>
 
-                <p className="text-center text-white/25 text-[10px] mt-3">
+                <p className="text-center text-slate-400 text-[10px] mt-4 font-medium">
                     결제 진행 시 서비스 이용약관 및 개인정보 처리방침에 동의한 것으로 간주됩니다.
                 </p>
             </div>
@@ -290,27 +290,27 @@ const OrderModal = ({ product, userGrade, userNickname, onClose, onConfirm }) =>
 
 const Row = ({ label, value, muted, highlight }) => (
     <div className="flex justify-between items-center text-sm">
-        <span className={muted ? 'text-white/40' : 'text-white/70'}>{label}</span>
+        <span className={muted ? 'text-slate-400' : 'text-slate-600 font-medium'}>{label}</span>
         <span className={
-            highlight === 'orange' ? 'text-orange-400 font-bold' :
-                highlight === 'purple' ? 'text-purple-400 font-bold' :
-                    muted ? 'text-white/40 line-through' : 'text-white font-bold'
+            highlight === 'orange' ? 'text-orange-500 font-black' :
+                highlight === 'purple' ? 'text-moca-primary font-black' :
+                    muted ? 'text-slate-400 line-through font-medium' : 'text-slate-800 font-bold'
         }>{value}</span>
     </div>
 );
 
 const Field = ({ label, name, value, onChange, error, placeholder, type = 'text' }) => (
     <div>
-        <label className="text-white/50 text-xs mb-1 block">{label}</label>
+        <label className="text-slate-700 text-xs font-bold mb-1 block">{label}</label>
         <input
             type={type}
             name={name}
             value={value}
             onChange={onChange}
             placeholder={placeholder}
-            className={`w-full bg-black/40 border rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none transition-colors ${error ? 'border-red-500/60 focus:border-red-400' : 'border-white/15 focus:border-purple-500/60'}`}
+            className={`w-full bg-white border rounded-xl px-4 py-3 text-slate-900 text-sm placeholder-slate-400 focus:outline-none transition-all outline-none ${error ? 'border-red-400 focus:ring-1 focus:ring-red-400' : 'border-slate-200 focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20'}`}
         />
-        {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+        {error && <p className="text-red-500 text-xs mt-1.5 font-medium">{error}</p>}
     </div>
 );
 

@@ -63,11 +63,25 @@ const ClassDetailPage = () => {
 
     // My Price Helper
     const getMyPriceInfo = () => {
-        if (!cls?.class_pricing || !currentUser) return null;
-        const myGrade = currentUser.grade;
+        if (!cls?.class_pricing || cls.class_pricing.length === 0) return null;
+        
+        // If not logged in, fallback to first pricing (usually normal price)
+        if (!currentUser || !currentUser.grade) {
+            return cls.class_pricing[0];
+        }
+
+        const myGrade = currentUser.grade.toUpperCase();
+        let searchTerms = [myGrade];
+
+        if (myGrade === 'GUEST' || myGrade === 'MEMBER') searchTerms.push('일반', '비회원', '기본', '베이직');
+        if (myGrade === 'SILVER') searchTerms.push('실버', 'SILVER');
+        if (myGrade === 'GOLD') searchTerms.push('골드', 'GOLD');
+        if (myGrade === 'VIP' || myGrade === 'VVIP') searchTerms.push('VIP', 'VVIP', '브이아이피');
+
         const p = cls.class_pricing.find(item => 
-            item.grade_label.toUpperCase().includes(myGrade.toUpperCase())
+            searchTerms.some(term => item.grade_label.toUpperCase().includes(term))
         );
+        
         return p || cls.class_pricing[0]; // Fallback to first pricing if no match
     };
 
@@ -262,121 +276,113 @@ const ClassDetailPage = () => {
                 </button>
             </div>
 
-            {/* Hero Image */}
-            <div className="relative w-full aspect-[4/5] sm:aspect-video bg-gray-50 overflow-hidden">
+            {/* Hero / Poster Image */}
+            <div className="w-full bg-gray-50 flex justify-center items-center">
                 {cls.image_url ? (
-                    <img src={cls.image_url} alt={cls.title} className="w-full h-full object-cover" />
+                    <img src={cls.image_url} alt={cls.title} className="w-full max-h-[70vh] object-contain shadow-sm" />
                 ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-indigo-50">
+                    <div className="w-full aspect-video flex flex-col items-center justify-center bg-indigo-50">
                         <span className="material-symbols-outlined text-indigo-200 text-[100px] mb-4">school</span>
                         <p className="text-indigo-300 font-black tracking-widest text-lg uppercase">MOCA CLASS</p>
                     </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-10 left-8 right-8 text-white">
-                    <div className="flex items-center gap-2 mb-3">
-                        <span className="px-3 py-1 rounded-full bg-indigo-500 text-white text-[10px] font-black uppercase border border-indigo-400">
-                            {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이 클래스'}
-                        </span>
-                        {isApplied && <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase border border-white/20">신청완료</span>}
-                    </div>
-                    <h1 className="text-3xl font-black mb-3 leading-tight tracking-tight drop-shadow-xl">{cls.title}</h1>
-                    <div className="flex flex-wrap gap-4 text-white/80 font-bold text-sm">
-                        <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">calendar_today</span>{cls.class_date}</span>
-                        <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">location_on</span>{cls.location}</span>
-                    </div>
-                </div>
             </div>
 
             {/* Main Content */}
-            <div className="px-8 -mt-6 relative z-10">
-                <div className="bg-white rounded-[40px] shadow-2xl shadow-black/5 p-8 lg:p-12 mb-10">
-                    {/* Pricing Table */}
+            <div className="px-5 py-8 relative z-10 max-w-4xl mx-auto">
+                <div className="bg-white rounded-[32px] sm:shadow-sm sm:p-8 mb-10">
+                    
+                    {/* 1. Header Info (Title, Tags, Date, Location) */}
+                    <div className="mb-10">
+                        <div className="flex flex-wrap items-center gap-2 mb-4">
+                            <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-black uppercase">
+                                {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이 클래스'}
+                            </span>
+                            {isApplied && <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-black uppercase flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span> 신청완료</span>}
+                        </div>
+                        <h1 className="text-3xl lg:text-4xl font-black mb-4 leading-tight text-[var(--moca-text)] tracking-tight">{cls.title}</h1>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-[var(--moca-text-3)] font-bold text-sm">
+                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">calendar_today</span>{cls.class_date}</span>
+                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">location_on</span>{cls.location}</span>
+                        </div>
+                    </div>
+
+                    {/* 2. Description (프로그램 상세 안내) */}
                     <div className="mb-12">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-black text-[var(--moca-text)] flex items-center gap-3">
-                                <span className="w-2 h-6 bg-indigo-500 rounded-full" />
-                                멤버십 특별가
-                            </h2>
-                            {currentUser?.grade === 'SILVER' && (
-                                <button onClick={() => navigate('/upgrade')} className="text-xs font-black text-indigo-500 hover:scale-105 transition-transform">멤버십 UPGRADE →</button>
-                            )}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {(cls.class_pricing || []).map((p) => {
-                                const isMyPrice = myPriceInfo?.id === p.id;
-                                return (
-                                    <div key={p.id} className={`p-6 rounded-[28px] border-2 transition-all ${isMyPrice ? 'border-indigo-500 bg-indigo-50/50 scale-[1.02] shadow-xl shadow-indigo-500/10' : 'border-[var(--moca-border)] bg-gray-50/50'}`}>
-                                        <p className={`text-[10px] font-black uppercase mb-1 ${isMyPrice ? 'text-indigo-600' : 'text-[var(--moca-text-3)]'}`}>{p.grade_label}</p>
-                                        <p className={`text-xl font-extrabold ${isMyPrice ? 'text-indigo-600' : 'text-[var(--moca-text)]'}`}>
-                                            <span className="text-sm font-bold mr-0.5">₩</span>
-                                            {p.price.toLocaleString()}
-                                        </p>
-                                        {isMyPrice && <div className="mt-4 py-1.5 bg-indigo-500 text-white text-[9px] font-black text-center rounded-xl">내 혜택 적용 중</div>}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Schedule Card */}
-                    <div className="mb-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div className="p-8 rounded-[36px] bg-[var(--moca-surface-2)] border border-[var(--moca-border)]">
-                            <h3 className="text-xs font-black text-[var(--moca-text-3)] uppercase tracking-[0.2em] mb-6">Class Schedule</h3>
-                            <div className="space-y-6">
-                                <div className="flex gap-5">
-                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-indigo-500 shadow-sm">
-                                        <span className="material-symbols-outlined font-black">event_repeat</span>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">일시</p>
-                                        <p className="text-[15px] font-black">{cls.class_date}</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-5">
-                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-indigo-500 shadow-sm">
-                                        <span className="material-symbols-outlined font-black">location_away</span>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">장소</p>
-                                        <p className="text-[15px] font-black">{cls.location}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-8 rounded-[36px] bg-indigo-600 text-white shadow-2xl shadow-indigo-500/20 flex flex-col justify-between">
-                            <div>
-                                <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.2em] mb-6">Notice</h3>
-                                <p className="text-sm font-bold leading-relaxed opacity-90 italic">
-                                    "모카 전문 강사진의 피드백과 함께 실력을 업그레이드할 수 있는 이번 기회를 놓치지 마세요."
-                                </p>
-                            </div>
-                            <div className="mt-8 flex items-center justify-between border-t border-white/10 pt-6">
-                                <div>
-                                    <p className="text-[10px] font-black text-white/40 uppercase">Capacity</p>
-                                    <p className="text-lg font-black">{cls.capacity}명 정원</p>
-                                </div>
-                                <span className="material-symbols-outlined text-4xl opacity-20">verified</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="bg-white">
-                        <h2 className="text-xl font-black text-[var(--moca-text)] flex items-center gap-3 mb-8">
-                            <span className="w-2 h-6 bg-indigo-500 rounded-full" />
+                        <h2 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2 mb-6 border-b border-[var(--moca-border)] pb-4">
+                            <span className="material-symbols-outlined text-indigo-500">menu_book</span>
                             프로그램 상세 안내
                         </h2>
-                        <div className="text-[var(--moca-text-2)] text-[15px] font-medium leading-[1.8] whitespace-pre-wrap px-2">
+                        <div className="text-[var(--moca-text-2)] text-[15px] font-medium leading-[1.8] whitespace-pre-wrap px-1">
                             {cls.description || '현재 상세 교육 내용이 준비 중입니다. 궁금하신 점은 고객센터로 문의주세요.'}
                         </div>
+                    </div>
+
+                    {/* 3. Schedule & Capacity (클래스 스케줄 및 정원) */}
+                    <div className="mb-12">
+                        <h2 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2 mb-6 border-b border-[var(--moca-border)] pb-4">
+                            <span className="material-symbols-outlined text-indigo-500">event_available</span>
+                            클래스 스케줄
+                        </h2>
+                        <div className="bg-[var(--moca-surface-2)] p-6 rounded-3xl border border-[var(--moca-border)] space-y-6">
+                            <div className="flex items-start gap-4">
+                                <span className="material-symbols-outlined text-indigo-400 mt-0.5">calendar_month</span>
+                                <div>
+                                    <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">일시</p>
+                                    <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.class_date}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4">
+                                <span className="material-symbols-outlined text-indigo-400 mt-0.5">location_on</span>
+                                <div>
+                                    <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">장소</p>
+                                    <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.location}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4">
+                                <span className="material-symbols-outlined text-indigo-400 mt-0.5">group</span>
+                                <div>
+                                    <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">모집 정원</p>
+                                    <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.capacity}명</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 4. Logged-in Grade Pricing Info */}
+                    <div className="mb-4 bg-indigo-50 border border-indigo-100 p-8 rounded-3xl flex flex-col items-center text-center">
+                        {currentUser ? (
+                            <>
+                                <p className="text-indigo-600 font-bold text-sm mb-2">
+                                    [<span className="font-black">{currentUser.grade}</span>] 등급 멤버십 혜택가가 적용됩니다.
+                                </p>
+                                <p className="text-3xl font-black text-indigo-900 tracking-tighter">
+                                    <span className="text-lg font-bold mr-1">₩</span>
+                                    {myPrice.toLocaleString()}
+                                </p>
+                                {currentUser.grade === 'SILVER' && (
+                                    <button onClick={() => navigate('/upgrade')} className="mt-5 px-5 py-2.5 bg-white rounded-full text-xs font-black text-indigo-600 shadow-sm hover:scale-105 transition-transform border border-indigo-200">
+                                        멤버십 UPGRADE 하고 추가 할인 받기 →
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-indigo-600 font-bold text-sm mb-2">로그인하시면 등급별 멤버십 혜택가를 안내해 드립니다.</p>
+                                <p className="text-2xl font-black text-[var(--moca-text-3)] opacity-50 tracking-tighter line-through">
+                                    ₩{myPrice.toLocaleString()}
+                                </p>
+                                <button onClick={() => navigate('/login')} className="mt-5 px-5 py-2.5 bg-indigo-600 rounded-full text-xs font-black text-white shadow-sm hover:scale-105 transition-transform active:bg-indigo-700">
+                                    로그인하고 클래스 혜택가 확인하기 →
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Sticky Floating CTA */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-2xl border-t border-[var(--moca-border)] px-8 py-6 flex items-center justify-between gap-8 animate-slideUp" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+            {/* Sticky Floating CTA - Adjusted bottom to avoid mobile nav bar block */}
+            <div className="fixed bottom-[65px] lg:bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[var(--moca-border)] px-6 py-4 lg:py-6 flex items-center justify-between gap-4 lg:gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] animate-slideUp">
                 <div className="hidden sm:block">
                     <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">{myPriceInfo?.grade_label || 'Special Price'}</p>
                     <p className="text-2xl font-black text-[var(--moca-text)] tracking-tighter">
@@ -385,16 +391,16 @@ const ClassDetailPage = () => {
                     </p>
                 </div>
                 {isApplied ? (
-                    <button disabled className="flex-1 bg-indigo-100 text-indigo-500 border border-indigo-200 py-4 rounded-[28px] font-black text-lg flex items-center justify-center gap-2">
+                    <button disabled className="flex-1 bg-indigo-100 text-indigo-500 border border-indigo-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
                         <span className="material-symbols-outlined font-black">task_alt</span>
-                        신청이 완료되었습니다
+                        신청 완료
                     </button>
                 ) : (
                     <button 
                         onClick={() => setShowModal(true)}
-                        className="flex-1 bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg shadow-2xl shadow-indigo-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                        className="flex-1 bg-indigo-600 text-white py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                     >
-                        지금 바로 참가하기
+                        결제 및 신청하기
                         <span className="material-symbols-outlined font-black">arrow_forward</span>
                     </button>
                 )}

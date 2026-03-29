@@ -103,6 +103,7 @@ const navGroups = [
         icon: 'diamond',
         items: [
             { to: '/home/membership', icon: 'star', label: '멤버십 카드' },
+            { to: '/upgrade', icon: 'workspace_premium', label: '멤버십 구독' },
             { to: '/home/coupons', icon: 'local_activity', label: '모델 쿠폰' },
             { to: '/home/content', icon: 'shopping_bag', label: '제휴혜택' },
             { to: '/home/shop', icon: 'local_fire_department', label: '모카 에디트' },
@@ -136,6 +137,7 @@ const moreMenuItems = [
     { to: '/home/lounge',     icon: 'forum',                label: '모카 라운지' },
     { to: '/home/class',      icon: 'school',               label: '모카 클래스' },
     { to: '/home/membership', icon: 'star',                 label: '멤버십 카드' },
+    { to: '/upgrade',         icon: 'workspace_premium',    label: '멤버십 구독' },
     { to: '/home/coupons',    icon: 'local_activity',       label: '모델 쿠폰' },
     { to: '/home/content',    icon: 'shopping_bag',         label: '제휴혜택' },
     { to: '/home/shop',       icon: 'local_fire_department',label: '모카 에디트' },
