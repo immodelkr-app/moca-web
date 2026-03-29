@@ -1,5 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { fetchClasses, createClass, deleteClass, fetchApplications, updatePaymentStatus } from '../services/classService';
+import React, { useState, useEffect, useRef } from 'react';
+import { fetchClasses, createClass, deleteClass, fetchApplications, updatePaymentStatus, sendClassApplicationNotification } from '../services/classService';
+import { supabase } from '../services/supabaseClient';
+
+const CLASS_BUCKET = 'class-images';
+const MAX_FILE_MB = 10;
+
+// ── 클래스 포스터 업로더 ──────────────────────────────────────────────────────
+const ClassPosterUploader = ({ value, onChange, onError }) => {
+    const [preview, setPreview] = useState(value || '');
+    const [uploading, setUploading] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
+    const fileInputRef = useRef(null);
+
+    useEffect(() => { setPreview(value || ''); }, [value]);
+
+    const handleFile = async (file) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { onError('이미지 파일만 업로드 가능합니다.'); return; }
+        if (file.size > MAX_FILE_MB * 1024 * 1024) { onError(`최대 ${MAX_FILE_MB}MB까지 업로드 가능합니다.`); return; }
+        const localUrl = URL.createObjectURL(file);
+        setPreview(localUrl);
+        if (!supabase) { onChange(localUrl); return; }
+        setUploading(true);
+        try {
+            const ext = file.name.split('.').pop();
+            const fileName = `poster_${Date.now()}.${ext}`;
+            const { error: uploadErr } = await supabase.storage
+                .from(CLASS_BUCKET)
+                .upload(fileName, file, { upsert: true, contentType: file.type });
+            if (uploadErr) throw uploadErr;
+            const { data } = supabase.storage.from(CLASS_BUCKET).getPublicUrl(fileName);
+            setPreview(data.publicUrl);
+            onChange(data.publicUrl);
+        } catch (e) {
+            onError('업로드 실패: ' + e.message);
+            setPreview(value || '');
+        } finally { setUploading(false); }
+    };
+
+    const handleDrop = (e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files?.[0]); };
+    const clear = () => { setPreview(''); onChange(''); if (fileInputRef.current) fileInputRef.current.value = ''; };
+
+    return (
+        <div>
+            <label className="block text-sm font-black text-[var(--moca-text-2)] mb-2">클래스 포스터 이미지</label>
+            <div className="flex gap-3 items-start">
+                <div className="relative w-24 h-32 rounded-xl overflow-hidden bg-indigo-50 border border-[var(--moca-border)] flex-shrink-0 flex items-center justify-center">
+                    {preview ? (
+                        <>
+                            <img src={preview} alt="" className="w-full h-full object-cover" />
+                            <button type="button" onClick={clear} className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center hover:text-red-400">
+                                <span className="material-symbols-outlined text-white text-[12px]">close</span>
+                            </button>
+                        </>
+                    ) : <span className="material-symbols-outlined text-indigo-200 text-[40px]">image</span>}
+                    {uploading && <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><div className="w-5 h-5 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" /></div>}
+                </div>
+                <div
+                    onClick={() => !uploading && fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                    className={`flex-1 h-32 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all
+                        ${dragOver ? 'border-indigo-500 bg-indigo-50' : 'border-[var(--moca-border)] bg-gray-50 hover:border-indigo-400/50'}
+                        ${uploading ? 'pointer-events-none opacity-60' : ''}`}
+                >
+                    <span className="material-symbols-outlined text-indigo-400 text-3xl">cloud_upload</span>
+                    <p className="text-[var(--moca-text-3)] text-[11px] font-black">{uploading ? '업로드 중...' : '클릭하거나 드래그해서 업로드'}</p>
+                    <p className="text-[var(--moca-text-3)] text-[10px]">JPG · PNG · WEBP · 최대 10MB</p>
+                    <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const AdminClasses = () => {
     const [view, setView] = useState('list'); // 'list', 'create', 'applicants'
@@ -20,6 +94,7 @@ const AdminClasses = () => {
         capacity: 20,
         image_url: ''
     });
+    const [formError, setFormError] = useState('');
     // 등급별 가격 상태
     const [pricing, setPricing] = useState({
         SILVER: 50000,
@@ -41,10 +116,11 @@ const AdminClasses = () => {
 
     const handleCreateClass = async (e) => {
         e.preventDefault();
+        setFormError('');
         setIsSubmitting(true);
         const { error } = await createClass(newClass, pricing);
         if (error) {
-            setError(error.message);
+            setFormError(error.message || JSON.stringify(error));
         } else {
             setSuccessMsg('✅ 클래스가 성공적으로 개설되었습니다!');
             setView('list');
@@ -75,6 +151,23 @@ const AdminClasses = () => {
             setApplicants(prev => prev.map(a => a.id === appId ? { ...a, payment_status: status } : a));
             setSuccessMsg('✅ 결제 상태가 업데이트되었습니다.');
             setTimeout(() => setSuccessMsg(''), 3000);
+
+            // 승인 시 클래스 신청 완료 알림톡 자동 발송
+            if (status === 'paid' && selectedClass) {
+                const app = applicants.find(a => a.id === appId);
+                if (app?.users?.phone) {
+                    sendClassApplicationNotification({
+                        userName:   app.users.name || app.users.nickname || '회원',
+                        phone:      app.users.phone,
+                        classTitle: selectedClass.title,
+                        classDate:  selectedClass.class_date,
+                        location:   selectedClass.location,
+                        paidPrice:  app.applied_price || 0,
+                    })
+                        .then(() => console.log('클래스 확정 알림톡 발송 완료'))
+                        .catch(err => console.error('알림톡 발송 오류:', err));
+                }
+            }
         }
     };
 
@@ -253,16 +346,16 @@ const AdminClasses = () => {
                                     className="w-full bg-[var(--moca-bg)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-black text-[var(--moca-text-2)] mb-2">대표 이미지 URL (선택)</label>
-                                <input
-                                    type="text"
+                            <div className="col-span-full">
+                                <ClassPosterUploader
                                     value={newClass.image_url}
-                                    onChange={e => setNewClass({ ...newClass, image_url: e.target.value })}
-                                    placeholder="https://..."
-                                    className="w-full bg-[var(--moca-bg)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+                                    onChange={(url) => setNewClass(prev => ({ ...prev, image_url: url }))}
+                                    onError={(msg) => setFormError(msg)}
                                 />
                             </div>
+                            {formError && (
+                                <div className="col-span-full text-red-500 text-sm font-bold bg-red-50 border border-red-200 rounded-xl px-4 py-3">{formError}</div>
+                            )}
                         </div>
 
                         <div className="border-t border-[var(--moca-border)] pt-6">
@@ -359,28 +452,32 @@ const AdminClasses = () => {
                                                 </td>
                                                 <td className="px-4 py-4 text-center">
                                                     <span className={`px-2 py-1 rounded-lg text-[10px] font-black ${
-                                                        app.payment_status === 'paid' ? 'bg-green-500/10 text-green-500 border border-green-500/30' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30'
+                                                        app.payment_status === 'paid' 
+                                                            ? 'bg-green-500/10 text-green-500 border border-green-500/30' 
+                                                            : app.payment_status === 'pending_card'
+                                                                ? 'bg-indigo-500/10 text-indigo-500 border border-indigo-500/30'
+                                                                : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30'
                                                     }`}>
-                                                        {app.payment_status === 'paid' ? '입금확인' : '입금대기'}
+                                                        {app.payment_status === 'paid' ? '입금확인' : app.payment_status === 'pending_card' ? '카드결제대기' : '무통장대기'}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-4 text-center text-[var(--moca-text-3)] text-[11px]">
                                                     {new Date(app.created_at).toLocaleDateString('ko-KR')}
                                                 </td>
                                                 <td className="px-4 py-4 text-center">
-                                                    {app.payment_status === 'pending' ? (
-                                                        <button
-                                                            onClick={() => handleUpdatePayment(app.id, 'paid')}
-                                                            className="px-3 py-1 bg-green-500 text-white text-[11px] font-black rounded-lg hover:bg-green-600 transition-all"
-                                                        >
-                                                            승인
-                                                        </button>
-                                                    ) : (
+                                                    {app.payment_status === 'paid' ? (
                                                         <button
                                                             onClick={() => handleUpdatePayment(app.id, 'pending')}
                                                             className="px-3 py-1 bg-gray-100 text-[var(--moca-text-3)] text-[11px] font-black rounded-lg hover:bg-gray-200 transition-all"
                                                         >
-                                                            대기
+                                                            대기처리
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleUpdatePayment(app.id, 'paid')}
+                                                            className="px-3 py-1 bg-green-500 text-white text-[11px] font-black rounded-lg hover:bg-green-600 transition-all"
+                                                        >
+                                                            입금확인
                                                         </button>
                                                     )}
                                                 </td>

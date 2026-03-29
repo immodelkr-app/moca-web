@@ -174,7 +174,7 @@ const Layout = () => {
                     {userId && (
                         <div className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#F3E8FF] border border-[#E8E0FA] w-full justify-center">
                             <span className={`font-black text-[11px] ${gradeColor}`}>{gradeLabel}</span>
-                            <span className="text-[#1F1235] font-bold text-[11px]">{userId}</span>
+                            <span className="text-[#1F1235] font-bold text-[11px]">{userId}님</span>
                         </div>
                     )}
                 </div>
@@ -233,7 +233,7 @@ const Layout = () => {
                         {userId && (
                             <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#F3E8FF] border border-[#E8E0FA]">
                                 <span className={`font-black text-[10px] ${gradeColor}`}>{gradeLabel}</span>
-                                <span className="text-[#1F1235] font-bold text-[10px]">{userId}</span>
+                                <span className="text-[#1F1235] font-bold text-[10px]">{userId}님</span>
                             </div>
                         )}
                         <button

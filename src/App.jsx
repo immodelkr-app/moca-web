@@ -30,6 +30,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import PaymentSuccess from './components/shop/PaymentSuccess';
 import PaymentFail from './components/shop/PaymentFail';
+import ClassPaymentSuccess from './components/payment/ClassPaymentSuccess';
 import { usePageView } from './hooks/usePageView';
 import { useAutoLogout } from './hooks/useAutoLogout';
 import PopupBanner from './components/PopupBanner';
@@ -52,6 +53,7 @@ function AppContent() {
                 <Route path="/terms" element={<TermsOfService />} />
                 {/* 토스페이먼츠 결제 콜백 (로그인 없이 접근 가능해야 함) */}
                 <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/class-success" element={<ClassPaymentSuccess />} />
                 <Route path="/payment/fail" element={<PaymentFail />} />
                 {/* 보호된 라우트 (로그인 필요) */}
                 <Route element={<ProtectedRoute />}>

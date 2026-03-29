@@ -45,6 +45,10 @@ export const saveUserToSupabase = async (userData) => {
             address_detail: userData.address_detail || null,
             referral_source: userData.referralSource || [],
             grade: userData.grade || 'SILVER',
+            marketing_consent: userData.marketing_consent || false,
+            terms_consent: userData.terms_consent || false,
+            marketing_consent_at: userData.marketing_consent ? new Date().toISOString() : null,
+            terms_consent_at: userData.terms_consent ? new Date().toISOString() : null,
         }])
         .select()
         .single();
@@ -360,6 +364,14 @@ export const updateUserProfile = async (userId, updateData) => {
         delete patches.password;
     }
 
+    // 마케팅 동의 시점 기록
+    if (patches.marketing_consent === true) {
+        patches.marketing_consent_at = new Date().toISOString();
+    }
+    if (patches.terms_consent === true) {
+        patches.terms_consent_at = new Date().toISOString();
+    }
+
     if (isSupabaseEnabled() && userId) {
         const { data, error } = await supabase
             .from('users')
@@ -369,15 +381,25 @@ export const updateUserProfile = async (userId, updateData) => {
             .single();
 
         if (error) {
+            console.error('[updateUserProfile] error:', error);
             return { error: { message: '정보 수정에 실패했습니다.' } };
         }
 
         // 업데이트 된 정보 로컬스토리지 최신화
         const currentUser = getUser();
         if (currentUser && currentUser.id === userId) {
-            // saveUser 내부에 password_hash 가 덮어씌워질 수 있으므로 구조 분해 할당 후 직접 localStorage에 반영
             const updatedMeta = { ...currentUser, ...data };
             localStorage.setItem(USER_KEY, JSON.stringify(updatedMeta));
+
+            // 가입자 목록도 업데이트
+            const usersListRaw = localStorage.getItem(USERS_LIST_KEY);
+            let usersList = [];
+            try { usersList = JSON.parse(usersListRaw) || []; } catch (e) { }
+            const index = usersList.findIndex(u => u.nickname === updatedMeta.nickname);
+            if (index >= 0) {
+                usersList[index] = { ...usersList[index], ...updatedMeta };
+                localStorage.setItem(USERS_LIST_KEY, JSON.stringify(usersList));
+            }
         }
 
         return { user: data, error: null };
@@ -402,4 +424,3 @@ export const updateUserProfile = async (userId, updateData) => {
         return { user: updatedUser, error: null };
     }
 };
-

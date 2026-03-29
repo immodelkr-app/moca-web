@@ -95,7 +95,7 @@ const ClassListPage = () => {
                                             <img src={cls.image_url} alt={cls.title} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center bg-indigo-50">
-                                                <span className="material-symbols-outlined text- indigo-200 text-6xl">school</span>
+                                                <span className="material-symbols-outlined text-indigo-200 text-6xl">school</span>
                                             </div>
                                         )}
                                         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
@@ -116,7 +116,7 @@ const ClassListPage = () => {
                                                     {currentUser?.grade} 회원가
                                                 </span>
                                                 <span className="text-lg font-black text-[var(--moca-text)]">
-                                                    {myPrice ? `${myPrice.toLocaleString()}원` : '문의'}
+                                                    {myPrice !== null ? `${myPrice.toLocaleString()}원` : '문의'}
                                                 </span>
                                             </div>
                                         </div>

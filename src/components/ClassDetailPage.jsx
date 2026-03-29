@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { applyForClass } from '../services/classService';
+import { applyForClass, saveClassCalendarEvent } from '../services/classService';
 
 const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
 
@@ -26,6 +26,7 @@ const ClassDetailPage = () => {
     const [isTossLoading, setIsTossLoading] = useState(false);
     const [copySuccess, setCopySuccess] = useState(false);
     const [shareSuccess, setShareSuccess] = useState(false);
+    const [calendarSaved, setCalendarSaved] = useState(false);
 
     const GRADE_INFO = { SILVER: '🥈', GOLD: '🌟', VIP: '👑' };
 
@@ -62,6 +63,98 @@ const ClassDetailPage = () => {
         setLoading(false);
     };
 
+    // ──────────────────────────────────────────────
+    // 📅 캘린더 헬퍼 함수들
+    // ──────────────────────────────────────────────
+
+    // 모카 캘린더에 저장 (Supabase class_calendar_events)
+    const handleSaveMocaCalendar = async () => {
+        if (!currentUser || !cls) return;
+        const { error } = await saveClassCalendarEvent({
+            userId: currentUser.id,
+            classId: cls.id,
+            title: cls.title,
+            classDate: cls.class_date,
+            location: cls.location,
+            description: cls.description,
+        });
+        if (!error) {
+            setCalendarSaved(true);
+            setTimeout(() => setCalendarSaved(false), 3000);
+        } else {
+            alert('캘린더 저장 중 오류가 발생했습니다.');
+        }
+    };
+
+    // 구글 캘린더 URL로 이동
+    const handleAddGoogleCalendar = () => {
+        if (!cls) return;
+        const title = encodeURIComponent(`[모카 클래스] ${cls.title}`);
+        const details = encodeURIComponent(`장소: ${cls.location}\n${cls.description || ''}`);
+        const location = encodeURIComponent(cls.location || '');
+
+        // class_date에서 날짜 파싱
+        const isoMatch = cls.class_date?.match(/(\d{4})-(\d{2})-(\d{2})/);
+        let dates = '';
+        if (isoMatch) {
+            const d = isoMatch[0].replace(/-/g, '');
+            dates = `${d}/${d}`;
+        } else {
+            // 파싱 불가 시 오늘 날짜
+            const today = new Date();
+            const d = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+            dates = `${d}/${d}`;
+        }
+
+        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
+        window.open(url, '_blank');
+    };
+
+    // .ics 파일 다운로드 (기기 기본 캘린더 앱)
+    const handleDownloadIcs = () => {
+        if (!cls) return;
+        const isoMatch = cls.class_date?.match(/(\d{4})-(\d{2})-(\d{2})/);
+        let startStr, endStr;
+        if (isoMatch) {
+            const dateObj = new Date(isoMatch[0]);
+            const nextDay = new Date(dateObj);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const fmt = (d) => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+            startStr = fmt(dateObj);
+            endStr = fmt(nextDay);
+        } else {
+            const today = new Date();
+            const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+            const fmt = (d) => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+            startStr = fmt(today);
+            endStr = fmt(tomorrow);
+        }
+
+        const ics = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//MOCA//MOCA Class//KO',
+            'BEGIN:VEVENT',
+            `DTSTART;VALUE=DATE:${startStr}`,
+            `DTEND;VALUE=DATE:${endStr}`,
+            `SUMMARY:[모카 클래스] ${cls.title}`,
+            `DESCRIPTION:장소: ${cls.location}\n${cls.description || ''}`,
+            `LOCATION:${cls.location || ''}`,
+            'END:VEVENT',
+            'END:VCALENDAR',
+        ].join('\r\n');
+
+        const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `모카클래스_${cls.title}.ics`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     // 계좌이체 신청 처리
     const handleTransferApply = async () => {
         if (!currentUser) { alert('로그인이 필요합니다.'); return; }
@@ -79,6 +172,15 @@ const ClassDetailPage = () => {
         } else {
             setSuccess(true);
             setIsApplied(true);
+            // 모카 캘린더 자동 저장
+            await saveClassCalendarEvent({
+                userId: currentUser.id,
+                classId: cls.id,
+                title: cls.title,
+                classDate: cls.class_date,
+                location: cls.location,
+                description: cls.description,
+            });
         }
         setIsApplying(false);
     };
@@ -313,8 +415,48 @@ const ClassDetailPage = () => {
                                 <div className="w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <span className="material-symbols-outlined text-green-500 text-4xl">check_circle</span>
                                 </div>
-                                <h3 className="text-xl font-black text-[var(--moca-text)] mb-1">신청 완료!</h3>
-                                <p className="text-sm text-[var(--moca-text-3)] mb-6">아래 계좌로 입금해주시면 최종 확정됩니다.</p>
+                                <h3 className="text-xl font-black text-[var(--moca-text)] mb-1">신청 완료! 🎉</h3>
+                                <p className="text-sm text-[var(--moca-text-3)] mb-5">아래 계좌로 입금해주시면 최종 확정됩니다.</p>
+
+                                {/* ── 캘린더 추가 버튼 ── */}
+                                <div className="mb-6">
+                                    <p className="text-xs font-black text-[var(--moca-text-3)] mb-3 uppercase tracking-widest">📅 일정을 캘린더에 추가하세요</p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {/* 모카 캘린더 */}
+                                        <button
+                                            onClick={handleSaveMocaCalendar}
+                                            className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl border-2 transition-all text-center ${
+                                                calendarSaved
+                                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
+                                                    : 'border-[var(--moca-border)] bg-[var(--moca-surface-2)] text-[var(--moca-text-2)] hover:border-indigo-400 hover:bg-indigo-50'
+                                            }`}
+                                        >
+                                            <span className="text-xl">{calendarSaved ? '✅' : '📱'}</span>
+                                            <span className="text-[10px] font-black leading-tight">
+                                                {calendarSaved ? '저장됨' : '모카앱\n캘린더'}
+                                            </span>
+                                        </button>
+
+                                        {/* 구글 캘린더 */}
+                                        <button
+                                            onClick={handleAddGoogleCalendar}
+                                            className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl border-2 border-[var(--moca-border)] bg-[var(--moca-surface-2)] text-[var(--moca-text-2)] hover:border-blue-400 hover:bg-blue-50 transition-all text-center"
+                                        >
+                                            <span className="text-xl">📆</span>
+                                            <span className="text-[10px] font-black leading-tight">구글\n캘린더</span>
+                                        </button>
+
+                                        {/* ICS 다운로드 */}
+                                        <button
+                                            onClick={handleDownloadIcs}
+                                            className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl border-2 border-[var(--moca-border)] bg-[var(--moca-surface-2)] text-[var(--moca-text-2)] hover:border-green-400 hover:bg-green-50 transition-all text-center"
+                                        >
+                                            <span className="text-xl">📥</span>
+                                            <span className="text-[10px] font-black leading-tight">캘린더\n파일저장</span>
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-[var(--moca-text-3)] mt-2">iOS/안드로이드 기본 캘린더 앱에도 추가됩니다</p>
+                                </div>
 
                                 <div className="bg-yellow-50 border-2 border-dashed border-yellow-300 rounded-2xl p-5 mb-5 text-left">
                                     <p className="text-[10px] text-yellow-600 font-black mb-2 uppercase tracking-widest">입금 계좌 정보</p>
