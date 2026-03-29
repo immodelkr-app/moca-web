@@ -250,25 +250,29 @@ const Layout = () => {
                     <Outlet />
 
                     {/* ── Footer ── */}
-                    <footer className="w-full border-t border-[#E8E0FA] bg-[#F8F5FF] px-6 py-8 mt-8">
-                        <div className="w-full flex flex-col items-center text-center space-y-3">
-                            <div className="flex items-center justify-center gap-3 flex-wrap">
-                                <a href="/privacy" className="text-[#5B4E7A] text-[11px] font-bold hover:text-[#9333EA] transition-colors">개인정보처리방침</a>
-                                <span className="text-[#E8E0FA] text-[11px]">|</span>
-                                <a href="/terms" className="text-[#5B4E7A] text-[11px] font-bold hover:text-[#9333EA] transition-colors">서비스 이용약관</a>
-                                <span className="text-[#E8E0FA] text-[11px]">|</span>
-                                <button onClick={() => setShowRefundPolicy(true)} className="text-orange-500 text-[11px] font-bold hover:text-orange-600 transition-colors">교환·반품·환불 정책</button>
+                    <footer className="w-full border-t border-[#E8E0FA] bg-[#F8F5FF] px-6 py-10 mt-8">
+                        <div className="w-full flex flex-col items-center text-center space-y-5">
+                            {/* 정책 링크 */}
+                            <div className="flex items-center justify-center gap-4 flex-wrap">
+                                <a href="/privacy" className="text-[#5B4E7A] text-xs font-bold hover:text-[#9333EA] transition-colors">개인정보처리방침</a>
+                                <span className="text-[#C8C0E0] text-xs">|</span>
+                                <a href="/terms" className="text-[#5B4E7A] text-xs font-bold hover:text-[#9333EA] transition-colors">서비스 이용약관</a>
+                                <span className="text-[#C8C0E0] text-xs">|</span>
+                                <button onClick={() => setShowRefundPolicy(true)} className="text-orange-500 text-xs font-bold hover:text-orange-600 transition-colors">교환·반품·환불 정책</button>
                             </div>
                             {showRefundPolicy && <RefundPolicyModal onClose={() => setShowRefundPolicy(false)} />}
-                            <p className="text-[#1F1235] text-[11px] font-black tracking-widest uppercase">글로벌아임</p>
-                            <div className="text-[#9CA3AF] text-[10px] leading-loose">
+                            {/* 회사명 */}
+                            <p className="text-[#1F1235] text-sm font-black">글로벌아임</p>
+                            {/* 회사 정보 */}
+                            <div className="text-[#9CA3AF] text-[11px] leading-7">
                                 <p>대표 : 김대희 | 사업자등록번호 : 365-22-00947</p>
                                 <p>통신판매업 신고번호 : 제2021-서울강남-05756호</p>
                                 <p>주소 : 서울시 영등포구 영중로 159, 7층 글로벌아임</p>
                                 <p>이메일 : immodelkr@gmail.com</p>
                                 <p>호스팅서비스 : Vercel Inc.</p>
                             </div>
-                            <p className="text-[#9CA3AF] text-[10px] tracking-widest pt-1">
+                            {/* 저작권 */}
+                            <p className="text-[#9CA3AF] text-[11px] pt-1">
                                 © 2026 글로벌아임(IMMOCA). All rights reserved.
                             </p>
                         </div>
