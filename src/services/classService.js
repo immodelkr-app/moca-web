@@ -81,7 +81,7 @@ export const fetchClasses = async () => {
 };
 
 // 클래스 생성
-export const createClass = async (classData, pricingData) => {
+export const createClass = async (classData, pricingArray) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
 
     // 1. 클래스 마스터 정보 저장
@@ -90,10 +90,15 @@ export const createClass = async (classData, pricingData) => {
         .insert([{
             title: classData.title,
             description: classData.description,
-            class_date: classData.class_date,
             location: classData.location,
-            capacity: classData.capacity,
-            image_url: classData.image_url || null
+            capacity: parseInt(classData.capacity, 10) || 20,
+            image_url: classData.image_url || null,
+            schedule_type: classData.schedule_type || 'one_time',
+            class_date: classData.class_date, // 텍스트 형태 (4월 2일 1:30 등)
+            start_date: classData.start_date || null,
+            end_date: classData.end_date || null,
+            day_of_week: classData.day_of_week || null, // [1, 3, 5] 등 배열
+            start_time: classData.start_time || null
         }])
         .select()
         .single();
@@ -101,10 +106,11 @@ export const createClass = async (classData, pricingData) => {
     if (classError) return { error: classError };
 
     // 2. 등급별 가격 정보 저장
-    const pricingToInsert = Object.entries(pricingData).map(([grade, price]) => ({
+    // pricingArray: [{ grade_label: 'SILVER', price: 50000 }, ...]
+    const pricingToInsert = pricingArray.map(p => ({
         class_id: newClass.id,
-        grade: grade,
-        price: parseInt(price, 10) || 0
+        grade_label: p.grade_label,
+        price: parseInt(p.price, 10) || 0
     }));
 
     const { error: pricingError } = await supabase
@@ -170,7 +176,7 @@ export const applyForClass = async (applicationData) => {
         .insert([{
             class_id: applicationData.classId,
             user_id: applicationData.userId,
-            user_grade: applicationData.userGrade,
+            grade_label: applicationData.userGrade, // record grade label at time of entry
             applied_price: applicationData.appliedPrice,
             payment_type: applicationData.paymentType || 'transfer', // 'transfer' | 'card'
             payment_status: applicationData.paymentType === 'card' ? 'pending_card' : 'pending'

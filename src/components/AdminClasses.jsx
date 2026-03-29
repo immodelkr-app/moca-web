@@ -18,8 +18,10 @@ const ClassPosterUploader = ({ value, onChange, onError }) => {
         if (!file) return;
         if (!file.type.startsWith('image/')) { onError('이미지 파일만 업로드 가능합니다.'); return; }
         if (file.size > MAX_FILE_MB * 1024 * 1024) { onError(`최대 ${MAX_FILE_MB}MB까지 업로드 가능합니다.`); return; }
+        
         const localUrl = URL.createObjectURL(file);
         setPreview(localUrl);
+
         if (!supabase) { onChange(localUrl); return; }
         setUploading(true);
         try {
@@ -38,37 +40,38 @@ const ClassPosterUploader = ({ value, onChange, onError }) => {
         } finally { setUploading(false); }
     };
 
-    const handleDrop = (e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files?.[0]); };
     const clear = () => { setPreview(''); onChange(''); if (fileInputRef.current) fileInputRef.current.value = ''; };
 
     return (
         <div>
-            <label className="block text-sm font-black text-[var(--moca-text-2)] mb-2">클래스 포스터 이미지</label>
+            <label className="block text-sm font-black text-[var(--moca-text-2)] mb-2">클래스 포스터 이미지 (선택)</label>
             <div className="flex gap-3 items-start">
-                <div className="relative w-24 h-32 rounded-xl overflow-hidden bg-indigo-50 border border-[var(--moca-border)] flex-shrink-0 flex items-center justify-center">
+                <div className="relative w-24 h-32 rounded-xl overflow-hidden bg-indigo-50 border border-[var(--moca-border)] flex-shrink-0 flex items-center justify-center group">
                     {preview ? (
                         <>
                             <img src={preview} alt="" className="w-full h-full object-cover" />
-                            <button type="button" onClick={clear} className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center hover:text-red-400">
-                                <span className="material-symbols-outlined text-white text-[12px]">close</span>
-                            </button>
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <button type="button" onClick={clear} className="w-8 h-8 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 text-white hover:bg-red-500 transition-colors">
+                                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                                </button>
+                            </div>
                         </>
-                    ) : <span className="material-symbols-outlined text-indigo-200 text-[40px]">image</span>}
+                    ) : <span className="material-symbols-outlined text-indigo-100 text-[32px]">add_photo_alternate</span>}
                     {uploading && <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><div className="w-5 h-5 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" /></div>}
                 </div>
                 <div
                     onClick={() => !uploading && fileInputRef.current?.click()}
                     onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
-                    onDrop={handleDrop}
+                    onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files?.[0]); }}
                     className={`flex-1 h-32 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all
-                        ${dragOver ? 'border-indigo-500 bg-indigo-50' : 'border-[var(--moca-border)] bg-gray-50 hover:border-indigo-400/50'}
+                        ${dragOver ? 'border-indigo-500 bg-indigo-50/50' : 'border-[var(--moca-border)] bg-gray-50/50 hover:border-indigo-300'}
                         ${uploading ? 'pointer-events-none opacity-60' : ''}`}
                 >
-                    <span className="material-symbols-outlined text-indigo-400 text-3xl">cloud_upload</span>
-                    <p className="text-[var(--moca-text-3)] text-[11px] font-black">{uploading ? '업로드 중...' : '클릭하거나 드래그해서 업로드'}</p>
-                    <p className="text-[var(--moca-text-3)] text-[10px]">JPG · PNG · WEBP · 최대 10MB</p>
-                    <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+                    <span className="material-symbols-outlined text-indigo-400 text-2xl group-hover:scale-110 transition-transform">upload_file</span>
+                    <p className="text-[var(--moca-text-3)] text-[11px] font-bold">{uploading ? '업로드 중...' : '클릭하거나 파일을 여기로 끌어다 놓으세요'}</p>
+                    <p className="text-[var(--moca-text-3)] text-[10px] opacity-60">JPG, PNG, WEBP (최대 10MB)</p>
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
                 </div>
             </div>
         </div>
@@ -76,7 +79,7 @@ const ClassPosterUploader = ({ value, onChange, onError }) => {
 };
 
 const AdminClasses = () => {
-    const [view, setView] = useState('list'); // 'list', 'create', 'applicants'
+    const [view, setView] = useState('list');
     const [classes, setClasses] = useState([]);
     const [selectedClass, setSelectedClass] = useState(null);
     const [applicants, setApplicants] = useState([]);
@@ -85,26 +88,32 @@ const AdminClasses = () => {
     const [successMsg, setSuccessMsg] = useState('');
     const [error, setError] = useState('');
 
+    const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
     // 생성용 폼 상태
     const [newClass, setNewClass] = useState({
         title: '',
         description: '',
-        class_date: '',
         location: '',
         capacity: 20,
-        image_url: ''
-    });
-    const [formError, setFormError] = useState('');
-    // 등급별 가격 상태
-    const [pricing, setPricing] = useState({
-        SILVER: 50000,
-        GOLD: 30000,
-        VIP: 10000
+        image_url: '',
+        schedule_type: 'one_time',
+        class_date: '',
+        start_date: '',
+        end_date: '',
+        day_of_week: [],
+        start_time: '14:00'
     });
 
-    useEffect(() => {
-        loadClasses();
-    }, []);
+    const [pricing, setPricing] = useState([
+        { grade_label: '🥈 SILVER', price: 50000 },
+        { grade_label: '🌟 GOLD', price: 30000 },
+        { grade_label: '👑 전속모델', price: 10000 }
+    ]);
+
+    const [formError, setFormError] = useState('');
+
+    useEffect(() => { loadClasses(); }, []);
 
     const loadClasses = async () => {
         setLoading(true);
@@ -118,15 +127,24 @@ const AdminClasses = () => {
         e.preventDefault();
         setFormError('');
         setIsSubmitting(true);
-        const { error } = await createClass(newClass, pricing);
+
+        // 정기 클래스의 경우 class_date 자동 생성 시도
+        let finalClassDate = newClass.class_date;
+        if (newClass.schedule_type === 'weekly' && newClass.day_of_week.length > 0) {
+            const daysStr = newClass.day_of_week.map(d => DAYS[d]).join(',');
+            finalClassDate = `매주 ${daysStr} ${newClass.start_time}`;
+        }
+
+        const { error } = await createClass({ ...newClass, class_date: finalClassDate }, pricing);
         if (error) {
-            setFormError(error.message || JSON.stringify(error));
+            setFormError(error.message);
         } else {
             setSuccessMsg('✅ 클래스가 성공적으로 개설되었습니다!');
             setView('list');
             loadClasses();
-            // Reset form
-            setNewClass({ title: '', description: '', class_date: '', location: '', capacity: 20, image_url: '' });
+            // Reset
+            setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', start_date: '', end_date: '', day_of_week: [], start_time: '14:00' });
+            setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
         }
         setIsSubmitting(false);
         setTimeout(() => setSuccessMsg(''), 3000);
@@ -138,156 +156,164 @@ const AdminClasses = () => {
         setLoading(true);
         const { data, error } = await fetchApplications(cls.id);
         if (data) setApplicants(data);
-        if (error) setError(error.message);
         setLoading(false);
     };
 
     const handleUpdatePayment = async (appId, status) => {
         if (!window.confirm(`${status === 'paid' ? '입금 확인' : '대기 처리'} 하시겠습니까?`)) return;
         const { error } = await updatePaymentStatus(appId, status);
-        if (error) {
-            setError(error.message);
-        } else {
+        if (!error) {
             setApplicants(prev => prev.map(a => a.id === appId ? { ...a, payment_status: status } : a));
-            setSuccessMsg('✅ 결제 상태가 업데이트되었습니다.');
-            setTimeout(() => setSuccessMsg(''), 3000);
-
-            // 승인 시 클래스 신청 완료 알림톡 자동 발송
+            setSuccessMsg('✅ 상태 업데이트 완료');
             if (status === 'paid' && selectedClass) {
                 const app = applicants.find(a => a.id === appId);
                 if (app?.users?.phone) {
                     sendClassApplicationNotification({
-                        userName:   app.users.name || app.users.nickname || '회원',
-                        phone:      app.users.phone,
+                        userName: app.users.name || app.users.nickname,
+                        phone: app.users.phone,
                         classTitle: selectedClass.title,
-                        classDate:  selectedClass.class_date,
-                        location:   selectedClass.location,
-                        paidPrice:  app.applied_price || 0,
-                    })
-                        .then(() => console.log('클래스 확정 알림톡 발송 완료'))
-                        .catch(err => console.error('알림톡 발송 오류:', err));
+                        classDate: selectedClass.class_date,
+                        location: selectedClass.location,
+                        paidPrice: app.applied_price
+                    }).catch(console.error);
                 }
             }
         }
+        setTimeout(() => setSuccessMsg(''), 3000);
     };
 
     const handleDeleteClass = async (id) => {
-        if (!window.confirm('정말 이 클래스를 삭제하시겠습니까? 관련 신청 데이터도 모두 삭제될 수 있습니다.')) return;
+        if (!window.confirm('정말 삭제하시겠습니까?')) return;
         const { error } = await deleteClass(id);
-        if (error) {
-            setError(error.message);
-        } else {
+        if (!error) {
             setClasses(prev => prev.filter(c => c.id !== id));
-            setSuccessMsg('✅ 클래스가 삭제되었습니다.');
-            setTimeout(() => setSuccessMsg(''), 3000);
+            setSuccessMsg('✅ 삭제 완료');
         }
+        setTimeout(() => setSuccessMsg(''), 3000);
     };
 
-    const GRADE_EMOJI = { SILVER: '🥈', GOLD: '🌟', VIP: '👑' };
+    const toggleDay = (dayIndex) => {
+        setNewClass(prev => ({
+            ...prev,
+            day_of_week: prev.day_of_week.includes(dayIndex)
+                ? prev.day_of_week.filter(d => d !== dayIndex)
+                : [...prev.day_of_week, dayIndex].sort()
+        }));
+    };
+
+    const addPrice = () => {
+        if (pricing.length >= 5) return;
+        setPricing([...pricing, { grade_label: '새 등급', price: 0 }]);
+    };
+
+    const removePrice = (idx) => {
+        setPricing(pricing.filter((_, i) => i !== idx));
+    };
+
+    const updatePrice = (idx, field, value) => {
+        const next = [...pricing];
+        next[idx][field] = value;
+        setPricing(next);
+    };
 
     return (
-        <div className="animate-fadeIn">
-            <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-                <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-indigo-500 text-3xl">school</span>
+        <div className="animate-fadeIn min-h-screen pb-20">
+            {/* Top Navigation Bar */}
+            <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-indigo-500 text-2xl font-black">school</span>
+                    </div>
                     <div>
-                        <h2 className="text-2xl font-black text-[var(--moca-text)]">모카 클래스 관리</h2>
-                        <p className="text-[var(--moca-text-3)] text-sm mt-1">모카 전문 강사진의 클래스를 오픈하고 신청자를 관리합니다.</p>
+                        <h2 className="text-2xl font-black text-[var(--moca-text)] tracking-tight">모카 클래스 관리</h2>
+                        <p className="text-[var(--moca-text-3)] text-xs font-bold leading-none mt-1.5 opacity-70">체계적인 교육 시스템 관리 및 정산</p>
                     </div>
                 </div>
                 {view === 'list' ? (
                     <button
                         onClick={() => setView('create')}
-                        className="flex items-center gap-2 bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-black text-sm hover:bg-indigo-600 transition-all shadow-lg"
+                        className="flex items-center gap-2 bg-[var(--moca-text)] text-white px-6 py-3 rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-indigo-500/10"
                     >
-                        <span className="material-symbols-outlined text-[20px]">add_circle</span>
-                        새 클래스 개설
+                        <span className="material-symbols-outlined text-[18px]">add</span>
+                        개설하기
                     </button>
                 ) : (
                     <button
                         onClick={() => { setView('list'); setSelectedClass(null); }}
-                        className="text-sm font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-text)] transition-colors flex items-center gap-1"
+                        className="px-5 py-2.5 rounded-xl border border-[var(--moca-border)] bg-white text-xs font-bold text-[var(--moca-text-2)] hover:bg-gray-50 flex items-center gap-2 transition-all"
                     >
-                        <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-                        목록으로 돌아가기
+                        <span className="material-symbols-outlined text-[16px]">keyboard_backspace</span>
+                        닫기
                     </button>
                 )}
             </div>
 
-            {successMsg && (
-                <div className="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-xl mb-6 font-bold flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[20px]">check_circle</span>
-                    {successMsg}
-                </div>
-            )}
-            {error && (
-                <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-6 font-bold flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[20px]">error</span>
-                    {error}
-                </div>
-            )}
+            {/* Notification Area */}
+            {successMsg && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-[var(--moca-text)] text-white px-6 py-3 rounded-2xl font-black text-sm shadow-2xl animate-bounce-short">{successMsg}</div>}
 
-            {/* 목록 뷰 */}
             {view === 'list' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {loading ? (
-                        <div className="col-span-full py-20 text-center text-[var(--moca-text-3)]">데이터를 불러오는 중...</div>
+                        [1,2,3].map(i => <div key={i} className="h-64 rounded-3xl bg-white border border-[var(--moca-border)] animate-pulse" />)
                     ) : classes.length === 0 ? (
-                        <div className="col-span-full py-20 text-center text-[var(--moca-text-3)] border border-dashed border-[var(--moca-border)] rounded-2xl">
-                            <span className="material-symbols-outlined text-6xl mb-4 block">event_busy</span>
-                            <p className="font-bold">개설된 클래스가 없습니다.</p>
+                        <div className="col-span-full py-24 text-center border-2 border-dashed border-[var(--moca-border)] rounded-[40px] bg-white/50">
+                            <span className="material-symbols-outlined text-6xl text-indigo-200 mb-4 block">explore_off</span>
+                            <p className="text-[var(--moca-text-3)] font-black text-lg">아직 개설된 클래스가 없습니다</p>
+                            <p className="text-[var(--moca-text-3)] text-sm opacity-60 mt-1">지금 바로 첫 클래스를 만들어보세요</p>
+                            <button onClick={() => setView('create')} className="mt-6 text-indigo-500 font-black text-sm hover:underline underline-offset-4">클래스 개설 시작하기 →</button>
                         </div>
                     ) : (
                         classes.map(cls => (
-                            <div key={cls.id} className="bg-white border border-[var(--moca-border)] rounded-2xl overflow-hidden hover:shadow-xl transition-all group">
-                                {cls.image_url ? (
-                                    <div className="aspect-video w-full bg-gray-100 relative overflow-hidden">
-                                        <img src={cls.image_url} alt={cls.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            <div key={cls.id} className="group bg-white border border-[var(--moca-border)] rounded-[32px] overflow-hidden hover:shadow-2xl hover:shadow-indigo-500/10 transition-all flex flex-col h-full active:scale-[0.995]">
+                                <div className="aspect-[16/10] bg-gray-50 relative overflow-hidden">
+                                    {cls.image_url ? (
+                                        <img src={cls.image_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-indigo-50/50">
+                                            <span className="material-symbols-outlined text-indigo-200 text-5xl">auto_stories</span>
+                                        </div>
+                                    )}
+                                    <div className="absolute top-4 left-4">
+                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border backdrop-blur-md ${cls.schedule_type === 'weekly' ? 'bg-indigo-500/80 text-white border-white/20' : 'bg-white/80 text-[var(--moca-text)] border-[var(--moca-border)]'}`}>
+                                            {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이'}
+                                        </span>
                                     </div>
-                                ) : (
-                                    <div className="aspect-video w-full bg-indigo-50 flex items-center justify-center">
-                                        <span className="material-symbols-outlined text-[var(--moca-primary)] text-5xl opacity-30">school</span>
-                                    </div>
-                                )}
-                                <div className="p-5">
-                                    <h3 className="text-lg font-black text-[var(--moca-text)] mb-2 line-clamp-1">{cls.title}</h3>
-                                    <div className="space-y-1.5 mb-4 text-xs text-[var(--moca-text-3)]">
-                                        <p className="flex items-center gap-1.5">
-                                            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                                            {cls.class_date}
-                                        </p>
-                                        <p className="flex items-center gap-1.5">
-                                            <span className="material-symbols-outlined text-[14px]">location_on</span>
-                                            {cls.location}
-                                        </p>
-                                        <p className="flex items-center gap-1.5">
-                                            <span className="material-symbols-outlined text-[14px]">group</span>
-                                            정원 {cls.capacity}명
-                                        </p>
-                                    </div>
-
-                                    {/* 등급별 가격 요약 */}
-                                    <div className="bg-[var(--moca-surface-2)] rounded-xl p-3 mb-4 grid grid-cols-3 gap-1 text-center">
-                                        {cls.class_pricing?.map(p => (
-                                            <div key={p.id}>
-                                                <p className="text-[10px] font-bold text-[var(--moca-text-3)]">{p.grade}</p>
-                                                <p className="text-[11px] font-black text-indigo-500">{p.price.toLocaleString()}원</p>
+                                </div>
+                                <div className="p-6 flex-1 flex flex-col">
+                                    <div className="flex-1">
+                                        <h3 className="text-lg font-black text-[var(--moca-text)] line-clamp-1 mb-3">{cls.title}</h3>
+                                        <div className="space-y-2 mb-6">
+                                            <div className="flex items-center gap-2 text-xs text-[var(--moca-text-2)] font-bold">
+                                                <span className="material-symbols-outlined text-[16px] text-indigo-400">event</span>
+                                                {cls.class_date}
                                             </div>
-                                        ))}
+                                            <div className="flex items-center gap-2 text-xs text-[var(--moca-text-3)] font-bold">
+                                                <span className="material-symbols-outlined text-[16px] text-indigo-300">location_on</span>
+                                                {cls.location}
+                                            </div>
+                                        </div>
+                                        {/* Pricing Summary */}
+                                        <div className="grid grid-cols-3 gap-2 py-3 border-y border-dashed border-[var(--moca-border)] mb-6">
+                                            {cls.class_pricing?.slice(0, 3).map((p, idx) => (
+                                                <div key={idx} className="text-center">
+                                                    <p className="text-[9px] font-black text-[var(--moca-text-3)] mb-0.5 truncate uppercase opacity-60">{p.grade_label.replace(/[🥈🌟👑\s]/g, '')}</p>
+                                                    <p className="text-[11px] font-black text-indigo-600">₩{p.price.toLocaleString()}</p>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => handleViewApplicants(cls)}
-                                            className="flex-1 bg-indigo-500/10 text-indigo-500 border border-indigo-500/30 font-bold py-2 rounded-lg text-sm hover:bg-indigo-500 hover:text-white transition-all"
+                                            className="flex-1 bg-indigo-50 text-indigo-600 font-black py-3 rounded-2xl text-[13px] hover:bg-indigo-600 hover:text-white transition-all border border-indigo-100"
                                         >
-                                            신청자 관리
+                                            신청 관리
                                         </button>
                                         <button
                                             onClick={() => handleDeleteClass(cls.id)}
-                                            className="px-3 bg-red-500/10 text-red-500 border border-red-500/30 rounded-lg hover:bg-red-500 hover:text-white transition-all"
+                                            className="w-12 flex items-center justify-center rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-red-500 hover:bg-red-50 transition-all"
                                         >
-                                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                                            <span className="material-symbols-outlined text-[20px]">delete_sweep</span>
                                         </button>
                                     </div>
                                 </div>
@@ -297,196 +323,267 @@ const AdminClasses = () => {
                 </div>
             )}
 
-            {/* 생성 뷰 */}
             {view === 'create' && (
-                <div className="max-w-3xl mx-auto bg-white border border-[var(--moca-border)] rounded-2xl p-8 shadow-2xl">
-                    <h3 className="text-xl font-black text-[var(--moca-text)] mb-6">새 클래스 만들기</h3>
-                    <form onSubmit={handleCreateClass} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="col-span-full">
-                                <label className="block text-sm font-black text-[var(--moca-text-2)] mb-2">클래스 제목</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={newClass.title}
-                                    onChange={e => setNewClass({ ...newClass, title: e.target.value })}
-                                    placeholder="예: 원데이 프로필 영상 촬영 워크숍"
-                                    className="w-full bg-[var(--moca-bg)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-black text-[var(--moca-text-2)] mb-2">날짜 및 시간</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={newClass.class_date}
-                                    onChange={e => setNewClass({ ...newClass, class_date: e.target.value })}
-                                    placeholder="예: 4월 15일(토) 14:00"
-                                    className="w-full bg-[var(--moca-bg)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-black text-[var(--moca-text-2)] mb-2">장소</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={newClass.location}
-                                    onChange={e => setNewClass({ ...newClass, location: e.target.value })}
-                                    placeholder="예: MOCA 강남 스튜디오"
-                                    className="w-full bg-[var(--moca-bg)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-black text-[var(--moca-text-2)] mb-2">정원 (명)</label>
-                                <input
-                                    type="number"
-                                    required
-                                    value={newClass.capacity}
-                                    onChange={e => setNewClass({ ...newClass, capacity: e.target.value })}
-                                    className="w-full bg-[var(--moca-bg)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
-                                />
-                            </div>
-                            <div className="col-span-full">
-                                <ClassPosterUploader
-                                    value={newClass.image_url}
-                                    onChange={(url) => setNewClass(prev => ({ ...prev, image_url: url }))}
-                                    onError={(msg) => setFormError(msg)}
-                                />
-                            </div>
-                            {formError && (
-                                <div className="col-span-full text-red-500 text-sm font-bold bg-red-50 border border-red-200 rounded-xl px-4 py-3">{formError}</div>
-                            )}
-                        </div>
-
-                        <div className="border-t border-[var(--moca-border)] pt-6">
-                            <h4 className="font-black text-[var(--moca-text)] mb-4 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-indigo-500">payments</span>
-                                등급별 참가비 설정
-                            </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                {['SILVER', 'GOLD', 'VIP'].map(grade => (
-                                    <div key={grade}>
-                                        <label className="block text-xs font-bold text-[var(--moca-text-3)] mb-1.5">{GRADE_EMOJI[grade]} {grade} 회원</label>
-                                        <div className="relative">
+                <div className="max-w-4xl mx-auto">
+                    <div className="bg-white border border-[var(--moca-border)] rounded-[40px] overflow-hidden shadow-2xl">
+                        <div className="p-8 lg:p-12">
+                            <h3 className="text-2xl font-black text-[var(--moca-text)] mb-8 flex items-center gap-3">
+                                <span className="w-2 h-8 bg-indigo-500 rounded-full" />
+                                클래스 설정
+                            </h3>
+                            
+                            <form onSubmit={handleCreateClass} className="space-y-10">
+                                {/* Basic Info */}
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-black text-[var(--moca-text-2)] mb-3">클래스 제목</label>
                                             <input
-                                                type="number"
-                                                required
-                                                value={pricing[grade]}
-                                                onChange={e => setPricing({ ...pricing, [grade]: e.target.value })}
-                                                className="w-full bg-[var(--moca-bg)] border border-[var(--moca-border)] rounded-xl pl-4 pr-10 py-3 text-sm font-black focus:outline-none focus:border-indigo-500"
+                                                type="text" required
+                                                value={newClass.title} onChange={e => setNewClass({ ...newClass, title: e.target.value })}
+                                                placeholder="예: 실전 광고 모델 워크숍 1기"
+                                                className="w-full bg-[var(--moca-surface-2)] border-2 border-transparent focus:border-indigo-500/30 focus:bg-white rounded-2xl px-5 py-4 text-sm font-bold transition-all outline-none"
                                             />
-                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[var(--moca-text-3)] font-bold">원</span>
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-black text-[var(--moca-text-2)] mb-3">스케줄 유형</label>
+                                            <div className="bg-[var(--moca-surface-2)] p-1.5 rounded-2xl flex gap-1 border border-[var(--moca-border)]">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setNewClass({ ...newClass, schedule_type: 'one_time' })}
+                                                    className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${newClass.schedule_type === 'one_time' ? 'bg-white shadow-sm text-indigo-600' : 'text-[var(--moca-text-3)] hover:text-[var(--moca-text-2)]'}`}
+                                                >단발성 (One-Day)</button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setNewClass({ ...newClass, schedule_type: 'weekly' })}
+                                                    className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${newClass.schedule_type === 'weekly' ? 'bg-white shadow-sm text-indigo-600' : 'text-[var(--moca-text-3)] hover:text-[var(--moca-text-2)]'}`}
+                                                >정기 (Weekly)</button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-black text-[var(--moca-text-2)] mb-3">강의 장소</label>
+                                            <input
+                                                type="text" required
+                                                value={newClass.location} onChange={e => setNewClass({ ...newClass, location: e.target.value })}
+                                                placeholder="예: 당산 연기 스튜디오"
+                                                className="w-full bg-[var(--moca-surface-2)] border-2 border-transparent focus:border-indigo-500/30 focus:bg-white rounded-2xl px-5 py-4 text-sm font-bold transition-all outline-none"
+                                            />
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
 
-                        <div className="col-span-full">
-                            <label className="block text-sm font-black text-[var(--moca-text-2)] mb-2">상세 설명</label>
-                            <textarea
-                                value={newClass.description}
-                                onChange={e => setNewClass({ ...newClass, description: e.target.value })}
-                                rows={6}
-                                placeholder="프로그램 내용, 준비물, 주의사항 등을 적어주세요."
-                                className="w-full bg-[var(--moca-bg)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 resize-none"
-                            />
-                        </div>
+                                    {/* Schedule Details */}
+                                    <div className="p-6 bg-[var(--moca-bg)] rounded-3xl border border-[var(--moca-border)] space-y-6">
+                                        {newClass.schedule_type === 'one_time' ? (
+                                            <div>
+                                                <label className="block text-xs font-black text-[var(--moca-text-3)] mb-3 uppercase tracking-widest">날짜/시간 입력</label>
+                                                <div className="flex gap-4 items-center">
+                                                    <input
+                                                        type="text" required
+                                                        value={newClass.class_date} onChange={e => setNewClass({ ...newClass, class_date: e.target.value })}
+                                                        placeholder="예: 4월 25일(토) 14:00"
+                                                        className="flex-1 bg-white border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                <div>
+                                                    <label className="block text-xs font-black text-[var(--moca-text-3)] mb-3 uppercase tracking-widest">강의 요일 선택 (중복 가능)</label>
+                                                    <div className="flex gap-2">
+                                                        {DAYS.map((d, i) => (
+                                                            <button
+                                                                key={d} type="button" onClick={() => toggleDay(i)}
+                                                                className={`w-10 h-10 rounded-xl font-black text-xs border transition-all ${newClass.day_of_week.includes(i) ? 'bg-indigo-500 text-white border-indigo-400 shadow-md shadow-indigo-500/20' : 'bg-white text-[var(--moca-text-3)] border-[var(--moca-border)] hover:bg-gray-50'}`}
+                                                            >{d}</button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                                                    <div className="col-span-full lg:col-span-1">
+                                                        <label className="block text-xs font-black text-[var(--moca-text-3)] mb-2 uppercase tracking-widest">시작 시간</label>
+                                                        <input
+                                                            type="time" value={newClass.start_time} onChange={e => setNewClass({ ...newClass, start_time: e.target.value })}
+                                                            className="w-full bg-white border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-black text-[var(--moca-text-3)] mb-2 uppercase tracking-widest">시작일</label>
+                                                        <input
+                                                            type="date" value={newClass.start_date} onChange={e => setNewClass({ ...newClass, start_date: e.target.value })}
+                                                            className="w-full bg-white border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-black text-[var(--moca-text-3)] mb-2 uppercase tracking-widest">종료일 (선택)</label>
+                                                        <input
+                                                            type="date" value={newClass.end_date} onChange={e => setNewClass({ ...newClass, end_date: e.target.value })}
+                                                            className="w-full bg-white border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className="pt-2">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className="block text-xs font-black text-[var(--moca-text-3)] uppercase tracking-widest">수강 정원</label>
+                                                <span className="text-sm font-black text-indigo-500">{newClass.capacity}명</span>
+                                            </div>
+                                            <input
+                                                type="range" min="1" max="100"
+                                                value={newClass.capacity} onChange={e => setNewClass({ ...newClass, capacity: e.target.value })}
+                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
 
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full bg-indigo-500 text-white font-black py-4 rounded-2xl hover:bg-indigo-600 transition-all shadow-xl disabled:opacity-50"
-                        >
-                            {isSubmitting ? '개설하는 중...' : '클래스 개설 완료'}
-                        </button>
-                    </form>
+                                {/* Poster & Pricing */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                    <ClassPosterUploader
+                                        value={newClass.image_url}
+                                        onChange={url => setNewClass({ ...newClass, image_url: url })}
+                                        onError={setFormError}
+                                    />
+                                    
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="block text-sm font-black text-[var(--moca-text-2)]">수강료 설정 (최대 5개)</label>
+                                            <button type="button" onClick={addPrice} disabled={pricing.length >= 5} className="text-xs font-black text-indigo-500 hover:underline disabled:opacity-30">+ 추가</button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {pricing.map((p, i) => (
+                                                <div key={i} className="flex gap-2 items-center group animate-fadeIn">
+                                                    <input
+                                                        type="text" value={p.grade_label} onChange={e => updatePrice(i, 'grade_label', e.target.value)}
+                                                        className="w-1/3 bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-3 py-2 text-[11px] font-black focus:outline-none focus:border-indigo-300"
+                                                        placeholder="회원 등급명"
+                                                    />
+                                                    <div className="flex-1 relative">
+                                                        <input
+                                                            type="number" value={p.price} onChange={e => updatePrice(i, 'price', e.target.value)}
+                                                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-3 py-2 text-[11px] font-black focus:outline-none focus:border-indigo-300"
+                                                            placeholder="60,000"
+                                                        />
+                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[var(--moca-text-3)] font-black opacity-40">원</span>
+                                                    </div>
+                                                    {pricing.length > 1 && (
+                                                        <button type="button" onClick={() => removePrice(i)} className="p-2 text-[var(--moca-text-3)] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <span className="material-symbols-outlined text-[18px]">remove_circle_outline</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Detailed Description */}
+                                <div>
+                                    <label className="block text-sm font-black text-[var(--moca-text-2)] mb-3">상세 내용 및 소개</label>
+                                    <textarea
+                                        value={newClass.description} onChange={e => setNewClass({ ...newClass, description: e.target.value })}
+                                        rows={8} placeholder="클래스의 상세 커리큘럼, 준비물, 환불 규정 등을 설명해주세요."
+                                        className="w-full bg-[var(--moca-surface-2)] border-2 border-transparent focus:border-indigo-500/30 focus:bg-white rounded-[28px] px-6 py-5 text-sm font-medium transition-all outline-none resize-none leading-relaxed"
+                                    />
+                                </div>
+
+                                {formError && <p className="text-red-400 text-xs font-bold text-center bg-red-50 p-3 rounded-2xl border border-red-100">{formError}</p>}
+
+                                <div className="pt-6">
+                                    <button
+                                        type="submit" disabled={isSubmitting}
+                                        className="w-full bg-gradient-to-r from-[var(--moca-text)] to-[#333] text-white font-black py-5 rounded-[28px] text-[15px] shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
+                                    >{isSubmitting ? '클래스를 준비하는 중...' : '클래스 개설 완료하기'}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             )}
 
-            {/* 신청자 뷰 */}
             {view === 'applicants' && selectedClass && (
-                <div className="bg-white border border-[var(--moca-border)] rounded-2xl overflow-hidden shadow-2xl">
-                    <div className="bg-indigo-500 text-white px-8 py-6">
-                        <h3 className="text-xl font-black mb-1">{selectedClass.title}</h3>
-                        <p className="text-indigo-100 text-sm">{selectedClass.class_date} · 신청자 현황</p>
-                    </div>
+                <div className="max-w-6xl mx-auto">
+                    <div className="bg-white border border-[var(--moca-border)] rounded-[40px] overflow-hidden shadow-2xl">
+                        {/* Header Stats */}
+                        <div className="bg-[var(--moca-text)] p-8 lg:p-12 text-white flex flex-col md:flex-row md:items-end justify-between gap-8">
+                            <div className="max-w-xl">
+                                <span className="inline-block px-3 py-1 rounded-full bg-white/10 text-[10px] font-black border border-white/20 mb-3 tracking-widest uppercase">Class Dashboard</span>
+                                <h3 className="text-2xl font-black mb-2 leading-tight">{selectedClass.title}</h3>
+                                <p className="text-white/60 text-sm font-bold flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+                                    {selectedClass.class_date}
+                                </p>
+                            </div>
+                            <div className="flex gap-4">
+                                <div className="bg-white/5 border border-white/10 p-4 rounded-3xl text-center min-w-[100px]">
+                                    <p className="text-[10px] font-black text-white/40 mb-1 uppercase tracking-tighter">Total</p>
+                                    <p className="text-xl font-black">{applicants.length}명</p>
+                                </div>
+                                <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-3xl text-center min-w-[100px]">
+                                    <p className="text-[10px] font-black text-green-400/60 mb-1 uppercase tracking-tighter">Confirmed</p>
+                                    <p className="text-xl font-black text-green-400">{applicants.filter(a => a.payment_status === 'paid').length}명</p>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div className="p-8">
-                        {loading ? (
-                            <div className="text-center py-12 text-[var(--moca-text-3)]">신청자 목록을 불러오는 중...</div>
-                        ) : applicants.length === 0 ? (
-                            <div className="text-center py-12 text-[var(--moca-text-3)]">
-                                <span className="material-symbols-outlined text-4xl mb-2 block">person_off</span>
-                                <p>아직 신청자가 없습니다.</p>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-[var(--moca-border)] text-[var(--moca-text-3)] uppercase tracking-wider">
-                                            <th className="px-4 py-3 text-left">닉네임/이름</th>
-                                            <th className="px-4 py-3 text-left">연락처</th>
-                                            <th className="px-4 py-3 text-center">등급</th>
-                                            <th className="px-4 py-3 text-right">결제금액</th>
-                                            <th className="px-4 py-3 text-center">결제상태</th>
-                                            <th className="px-4 py-3 text-center">신청일</th>
-                                            <th className="px-4 py-3 text-center">관리</th>
+                        <div className="p-6 overflow-x-auto">
+                            <table className="w-full min-w-[800px]">
+                                <thead>
+                                    <tr className="border-b border-[var(--moca-border)] text-left">
+                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center w-16">번호</th>
+                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] uppercase tracking-widest">수강생 정보</th>
+                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] uppercase tracking-widest">멤버 등급</th>
+                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-right">수강 금액</th>
+                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center">결제 상태</th>
+                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center">관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[var(--moca-border)]">
+                                    {applicants.map((app, idx) => (
+                                        <tr key={app.id} className="hover:bg-gray-50/50 transition-colors group">
+                                            <td className="px-6 py-5 text-center text-xs font-bold text-[var(--moca-text-3)]">{applicants.length - idx}</td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-500 text-xs">
+                                                        {(app.users?.name || app.users?.nickname || '?')[0]}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-[var(--moca-text)]">{app.users?.name || app.users?.nickname}</p>
+                                                        <p className="text-[11px] font-bold text-[var(--moca-text-3)]">{app.users?.phone}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <span className="px-3 py-1 rounded-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[10px] font-black text-[var(--moca-text-2)] uppercase">
+                                                    {app.grade_label || app.users?.grade || 'SILVER'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-5 text-right font-black text-sm text-[var(--moca-text)]">
+                                                {app.applied_price?.toLocaleString()}원
+                                            </td>
+                                            <td className="px-6 py-5 text-center">
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black border tracking-tighter ${app.payment_status === 'paid' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
+                                                        {app.payment_status === 'paid' ? '승인완료' : '입금대기'}
+                                                    </span>
+                                                    <span className="text-[9px] font-bold text-[var(--moca-text-3)] opacity-60 uppercase">{app.payment_type}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5 text-center">
+                                                <button
+                                                    onClick={() => handleUpdatePayment(app.id, app.payment_status === 'paid' ? 'pending' : 'paid')}
+                                                    className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all ${app.payment_status === 'paid' ? 'bg-gray-100 text-[var(--moca-text-3)] hover:bg-gray-200' : 'bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg shadow-indigo-500/20'}`}
+                                                >
+                                                    {app.payment_status === 'paid' ? '취소하기' : '승인하기'}
+                                                </button>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[var(--moca-border)]">
-                                        {applicants.map(app => (
-                                            <tr key={app.id} className="hover:bg-[var(--moca-primary-lt)]/30 transition-colors">
-                                                <td className="px-4 py-4 font-bold text-[var(--moca-text)]">
-                                                    {app.users?.name || app.users?.nickname}
-                                                    <span className="block text-[11px] font-normal text-[var(--moca-text-3)]">@{app.users?.nickname}</span>
-                                                </td>
-                                                <td className="px-4 py-4 text-[var(--moca-text-2)]">{app.users?.phone}</td>
-                                                <td className="px-4 py-4 text-center">
-                                                    <span className="px-2 py-1 rounded-lg bg-[var(--moca-surface-2)] text-[10px] font-black border border-[var(--moca-border)]">
-                                                        {GRADE_EMOJI[app.user_grade]} {app.user_grade}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-4 text-right font-black text-indigo-500">
-                                                    {app.applied_price?.toLocaleString()}원
-                                                </td>
-                                                <td className="px-4 py-4 text-center">
-                                                    <span className={`px-2 py-1 rounded-lg text-[10px] font-black ${
-                                                        app.payment_status === 'paid' 
-                                                            ? 'bg-green-500/10 text-green-500 border border-green-500/30' 
-                                                            : app.payment_status === 'pending_card'
-                                                                ? 'bg-indigo-500/10 text-indigo-500 border border-indigo-500/30'
-                                                                : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30'
-                                                    }`}>
-                                                        {app.payment_status === 'paid' ? '입금확인' : app.payment_status === 'pending_card' ? '카드결제대기' : '무통장대기'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-4 text-center text-[var(--moca-text-3)] text-[11px]">
-                                                    {new Date(app.created_at).toLocaleDateString('ko-KR')}
-                                                </td>
-                                                <td className="px-4 py-4 text-center">
-                                                    {app.payment_status === 'paid' ? (
-                                                        <button
-                                                            onClick={() => handleUpdatePayment(app.id, 'pending')}
-                                                            className="px-3 py-1 bg-gray-100 text-[var(--moca-text-3)] text-[11px] font-black rounded-lg hover:bg-gray-200 transition-all"
-                                                        >
-                                                            대기처리
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleUpdatePayment(app.id, 'paid')}
-                                                            className="px-3 py-1 bg-green-500 text-white text-[11px] font-black rounded-lg hover:bg-green-600 transition-all"
-                                                        >
-                                                            입금확인
-                                                        </button>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}

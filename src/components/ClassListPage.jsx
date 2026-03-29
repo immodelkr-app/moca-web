@@ -42,9 +42,15 @@ const ClassListPage = () => {
 
     const getPriceForMe = (pricing) => {
         if (!pricing || !currentUser) return null;
-        const myGrade = currentUser.grade;
-        const p = pricing.find(item => item.grade === myGrade);
-        return p ? p.price : null;
+        const myGrade = currentUser.grade; // SILVER, GOLD, VIP
+        
+        // Find pricing entry where the label contains the user's grade string (case-insensitive)
+        const p = pricing.find(item => 
+            item.grade_label.toUpperCase().includes(myGrade.toUpperCase())
+        );
+        
+        // If no match found, just take the first one or null
+        return p ? { price: p.price, label: p.grade_label } : null;
     };
 
     return (
@@ -76,7 +82,7 @@ const ClassListPage = () => {
                 ) : (
                     <div className="grid grid-cols-1 gap-6">
                         {classes.map(cls => {
-                            const myPrice = getPriceForMe(cls.class_pricing);
+                            const myPriceInfo = getPriceForMe(cls.class_pricing);
                             const isApplied = myApplications.includes(cls.id);
                             
                             return (
@@ -99,24 +105,25 @@ const ClassListPage = () => {
                                             </div>
                                         )}
                                         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-                                            <span className="inline-block px-2 py-0.5 rounded-lg bg-indigo-500 text-white text-[9px] font-black mb-1">
-                                                {cls.class_date.split(' ')[0]} {/* 날짜만 간략히 */}
+                                            <span className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black mb-2 border border-white/20 shadow-lg">
+                                                {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이'}
                                             </span>
-                                            <h3 className="text-white font-black text-lg line-clamp-1">{cls.title}</h3>
+                                            <h3 className="text-white font-black text-xl leading-tight mb-1 drop-shadow-sm">{cls.title}</h3>
+                                            <p className="text-white/80 text-[11px] font-bold">{cls.class_date}</p>
                                         </div>
                                     </div>
-                                    <div className="p-5 flex items-center justify-between">
-                                        <div className="space-y-1">
-                                            <p className="text-[11px] text-[var(--moca-text-3)] font-bold flex items-center gap-1">
-                                                <span className="material-symbols-outlined text-[14px]">location_on</span>
+                                    <div className="p-6 flex items-center justify-between">
+                                        <div className="space-y-2">
+                                            <p className="text-[11px] text-[var(--moca-text-3)] font-bold flex items-center gap-1.5 opacity-70">
+                                                <span className="material-symbols-outlined text-[16px] text-indigo-400">location_on</span>
                                                 {cls.location}
                                             </p>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[10px] bg-indigo-50 text-indigo-500 px-1.5 py-0.5 rounded font-black border border-indigo-100">
-                                                    {currentUser?.grade} 회원가
+                                                <span className="text-[10px] bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-lg font-black border border-indigo-100">
+                                                    {myPriceInfo?.label || `${currentUser?.grade} 전용`}
                                                 </span>
-                                                <span className="text-lg font-black text-[var(--moca-text)]">
-                                                    {myPrice !== null ? `${myPrice.toLocaleString()}원` : '문의'}
+                                                <span className="text-xl font-black text-[var(--moca-text)] tracking-tight">
+                                                    {myPriceInfo ? `${myPriceInfo.price.toLocaleString()}원` : '문의'}
                                                 </span>
                                             </div>
                                         </div>
