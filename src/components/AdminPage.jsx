@@ -1585,13 +1585,28 @@ const AdminPage = () => {
                 {/* ── 📝 전속계약 관리 탭 ── */}
                 {activeTab === 'contracts' && (
                     <div className="animate-fadeIn">
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                             <div>
                                 <h2 className="text-2xl font-black text-[var(--moca-text)]">📝 전속계약 관리</h2>
                                 <p className="text-[var(--moca-text-3)] text-sm mt-1">전속모델이 서명 제출한 계약서를 검토하고 승인합니다.</p>
                             </div>
-                            <div className="text-sm font-bold text-[var(--moca-text-3)]">
-                                총 {contracts.length}건 · 대기 {contracts.filter(c => c.status === 'pending').length}건
+                            <div className="flex items-center gap-3">
+                                <span className="text-sm font-bold text-[var(--moca-text-3)]">
+                                    총 {contracts.length}건 · 대기 {contracts.filter(c => c.status === 'pending').length}건
+                                </span>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText('https://immoca.kr/home/contract')
+                                            .then(() => {
+                                                setSuccessMsg('✅ 계약 초대 링크가 복사되었습니다! 카카오톡 또는 문자로 발송해주세요.');
+                                                setTimeout(() => setSuccessMsg(''), 4000);
+                                            });
+                                    }}
+                                    className="flex items-center gap-2 bg-[var(--moca-primary-lt)] hover:bg-[var(--moca-primary)]/20 border border-[var(--moca-primary)]/50 text-[var(--moca-accent)] px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-lg"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">link</span>
+                                    계약 초대 링크 복사
+                                </button>
                             </div>
                         </div>
 

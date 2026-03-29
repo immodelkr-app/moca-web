@@ -137,7 +137,6 @@ const moreMenuItems = [
     { to: '/home/coupons',    icon: 'local_activity',       label: '모델 쿠폰' },
     { to: '/home/content',    icon: 'shopping_bag',         label: '제휴혜택' },
     { to: '/home/shop',       icon: 'local_fire_department',label: '모카 에디트' },
-    { to: '/home/contract',   icon: 'contract',             label: '전속계약 요청' },
 ];
 
 const Layout = () => {
