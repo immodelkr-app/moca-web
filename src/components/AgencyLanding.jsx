@@ -241,9 +241,9 @@ const AgencyLanding = () => {
                         <span className="text-[#9333EA]">더 스마트하게, 아임모카</span>
                     </h1>
                     <p className="text-[#5B4E7A] text-lg max-w-lg mx-auto mb-10 leading-relaxed font-medium">
-                        대한민국 {agencyCount}개 이상의 에이전시 정보를 한눈에 확인하고,<br />
-                        전문적인 모델 포트폴리오를 단 1분 만에 완성하여<br />
-                        스마트한 광고모델 활동을 시작해보세요.
+                        HOT한 중요 {agencyCount}개 이상의 정보를<br />
+                        한눈에 확인하고, 광고모델 전문 프로필을 단 1분만에 완성하여<br />
+                        스마트한 광고모델 활동을 시작해보세요!
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button
