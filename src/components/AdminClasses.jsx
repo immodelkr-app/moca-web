@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchClasses, createClass, deleteClass, fetchApplications, updatePaymentStatus, sendClassApplicationNotification } from '../services/classService';
+import { fetchClasses, createClass, updateClass, deleteClass, fetchApplications, updatePaymentStatus, sendClassApplicationNotification } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
 
 const CLASS_BUCKET = 'class-images';
@@ -87,6 +87,7 @@ const AdminClasses = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
     const [error, setError] = useState('');
+    const [editingClassId, setEditingClassId] = useState(null);
 
     const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -123,6 +124,13 @@ const AdminClasses = () => {
         setLoading(false);
     };
 
+    const resetForm = () => {
+        setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', start_date: '', end_date: '', day_of_week: [], start_time: '14:00' });
+        setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
+        setFormError('');
+        setEditingClassId(null);
+    };
+
     const handleCreateClass = async (e) => {
         e.preventDefault();
         setFormError('');
@@ -135,16 +143,26 @@ const AdminClasses = () => {
             finalClassDate = `매주 ${daysStr} ${newClass.start_time}`;
         }
 
-        const { error } = await createClass({ ...newClass, class_date: finalClassDate }, pricing);
-        if (error) {
-            setFormError(error.message);
+        if (editingClassId) {
+            const { error } = await updateClass(editingClassId, { ...newClass, class_date: finalClassDate }, pricing);
+            if (error) {
+                setFormError(error.message);
+            } else {
+                setSuccessMsg('✅ 클래스가 성공적으로 수정되었습니다!');
+                setView('list');
+                loadClasses();
+                resetForm();
+            }
         } else {
-            setSuccessMsg('✅ 클래스가 성공적으로 개설되었습니다!');
-            setView('list');
-            loadClasses();
-            // Reset
-            setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', start_date: '', end_date: '', day_of_week: [], start_time: '14:00' });
-            setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
+            const { error } = await createClass({ ...newClass, class_date: finalClassDate }, pricing);
+            if (error) {
+                setFormError(error.message);
+            } else {
+                setSuccessMsg('✅ 클래스가 성공적으로 개설되었습니다!');
+                setView('list');
+                loadClasses();
+                resetForm();
+            }
         }
         setIsSubmitting(false);
         setTimeout(() => setSuccessMsg(''), 3000);
@@ -264,7 +282,7 @@ const AdminClasses = () => {
                 </div>
                 {view === 'list' ? (
                     <button
-                        onClick={() => setView('create')}
+                        onClick={() => { resetForm(); setView('create'); }}
                         className="flex items-center gap-2 bg-[var(--moca-text)] text-white px-6 py-3 rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-indigo-500/10"
                     >
                         <span className="material-symbols-outlined text-[18px]">add</span>
@@ -272,7 +290,7 @@ const AdminClasses = () => {
                     </button>
                 ) : (
                     <button
-                        onClick={() => { setView('list'); setSelectedClass(null); }}
+                        onClick={() => { resetForm(); setView('list'); setSelectedClass(null); }}
                         className="px-5 py-2.5 rounded-xl border border-[var(--moca-border)] bg-white text-xs font-bold text-[var(--moca-text-2)] hover:bg-gray-50 flex items-center gap-2 transition-all"
                     >
                         <span className="material-symbols-outlined text-[16px]">keyboard_backspace</span>
@@ -343,10 +361,38 @@ const AdminClasses = () => {
                                             신청 관리
                                         </button>
                                         <button
-                                            onClick={() => handleDeleteClass(cls.id)}
-                                            className="w-12 flex items-center justify-center rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-red-500 hover:bg-red-50 transition-all"
+                                            onClick={() => {
+                                                setEditingClassId(cls.id);
+                                                setNewClass({
+                                                    title: cls.title || '',
+                                                    description: cls.description || '',
+                                                    location: cls.location || '',
+                                                    capacity: cls.capacity || 20,
+                                                    image_url: cls.image_url || '',
+                                                    schedule_type: cls.schedule_type || 'one_time',
+                                                    class_date: cls.class_date || '',
+                                                    start_date: cls.start_date || '',
+                                                    end_date: cls.end_date || '',
+                                                    day_of_week: cls.day_of_week || [],
+                                                    start_time: cls.start_time || '14:00'
+                                                });
+                                                setPricing(cls.class_pricing && cls.class_pricing.length > 0 ? cls.class_pricing.map(p => ({
+                                                    grade_label: p.grade_label,
+                                                    price: p.price
+                                                })) : [{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
+                                                setView('create');
+                                            }}
+                                            className="w-[50px] flex flex-col items-center justify-center rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all font-bold"
                                         >
-                                            <span className="material-symbols-outlined text-[20px]">delete_sweep</span>
+                                            <span className="material-symbols-outlined text-[18px] mb-0.5">edit</span>
+                                            <span className="text-[9px]">수정</span>
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteClass(cls.id)}
+                                            className="w-[50px] flex flex-col items-center justify-center rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-all font-bold"
+                                        >
+                                            <span className="material-symbols-outlined text-[18px] mb-0.5">delete_sweep</span>
+                                            <span className="text-[9px]">삭제</span>
                                         </button>
                                     </div>
                                 </div>
@@ -362,7 +408,7 @@ const AdminClasses = () => {
                         <div className="p-8 lg:p-12">
                             <h3 className="text-2xl font-black text-slate-900 mb-8 flex items-center gap-3">
                                 <span className="w-2 h-8 bg-moca-primary rounded-full" />
-                                클래스 설정
+                                클래스 설정 {editingClassId ? '(수정)' : '(개설)'}
                             </h3>
 
                             <form onSubmit={handleCreateClass} className="space-y-10">

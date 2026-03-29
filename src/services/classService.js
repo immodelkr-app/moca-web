@@ -120,6 +120,55 @@ export const createClass = async (classData, pricingArray) => {
     return { data: newClass, error: pricingError };
 };
 
+// 클래스 수정
+export const updateClass = async (classId, classData, pricingArray) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+
+    // 1. 클래스 마스터 정보 수정
+    const { data: updatedClass, error: classError } = await supabase
+        .from('classes')
+        .update({
+            title: classData.title,
+            description: classData.description,
+            location: classData.location,
+            capacity: parseInt(classData.capacity, 10) || 20,
+            image_url: classData.image_url || null,
+            schedule_type: classData.schedule_type || 'one_time',
+            class_date: classData.class_date,
+            start_date: classData.start_date || null,
+            end_date: classData.end_date || null,
+            day_of_week: classData.day_of_week || null,
+            start_time: classData.start_time || null
+        })
+        .eq('id', classId)
+        .select()
+        .single();
+
+    if (classError) return { error: classError };
+
+    // 2. 기존 클래스 가격 삭제 후 다시 등록
+    const { error: deletePricingError } = await supabase
+        .from('class_pricing')
+        .delete()
+        .eq('class_id', classId);
+
+    if (!deletePricingError && pricingArray && pricingArray.length > 0) {
+        const pricingToInsert = pricingArray.map(p => ({
+            class_id: classId,
+            grade_label: p.grade_label,
+            price: parseInt(p.price, 10) || 0
+        }));
+
+        const { error: insertPricingError } = await supabase
+            .from('class_pricing')
+            .insert(pricingToInsert);
+        
+        return { data: updatedClass, error: insertPricingError };
+    }
+
+    return { data: updatedClass, error: deletePricingError };
+};
+
 // 클래스 삭제
 export const deleteClass = async (classId) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
