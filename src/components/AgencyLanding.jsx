@@ -6,7 +6,74 @@ import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser } from '..
 import ProfileEditModal from './ProfileEditModal';
 import TermsModal from './shop/TermsModal';
 
+// ── 환불 정책 모달 (A-Plan 색상 적용) ──
+const RefundPolicyModal = ({ onClose }) => (
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
+        <div className="bg-white border border-[#E8E0FA] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-moca-lg" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-[#E8E0FA] px-5 py-4 flex items-center justify-between">
+                <h2 className="text-[#1F1235] font-black text-base">교환 · 반품 · 취소 · 환불 정책</h2>
+                <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#1F1235] transition-colors">
+                    <span className="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div className="px-5 py-5 space-y-5 text-xs text-[#5B4E7A] leading-relaxed">
+                <div>
+                    <p className="text-blue-600 font-bold mb-2">🚫 결제 취소</p>
+                    <ul className="space-y-1.5 list-none">
+                        <li>① 배송 시작 전(배송 준비 전)까지 100% 전액 취소 가능합니다.</li>
+                        <li>② 이용약관 신청 후 회사로부터 상담이 미제공된 경우 취소 가능합니다.</li>
+                        <li>③ 취소 신청: immodelkr@gmail.com (주문번호 포함)</li>
+                    </ul>
+                </div>
+                <hr className="border-[#E8E0FA]" />
+                <div>
+                    <p className="text-emerald-600 font-bold mb-2">🔄 반품 · 교환</p>
+                    <ul className="space-y-1.5 list-none">
+                        <li>① 상품 수령 후 <strong className="text-[#1F1235]">3일 이내</strong> 반품·교환 신청 가능</li>
+                        <li>② 단순 변심: 미개봉·미사용 상태 한정, 왕복 배송비 고객 부담</li>
+                        <li>③ 상품 하자·오배송: 3일 이내 사진 첨부 접수 시 배송비 회사 부담으로 교환·환불</li>
+                        <li>④ 개봉 후 사용 상품은 단순 변심 반품 불가</li>
+                    </ul>
+                </div>
+                <hr className="border-[#E8E0FA]" />
+                <div>
+                    <p className="text-yellow-600 font-bold mb-2">💰 환불 정책</p>
+                    <p className="text-[#9CA3AF] text-[11px] font-bold mb-1">📦 실물 상품</p>
+                    <ul className="space-y-1 mb-3 list-none">
+                        <li>① 배송 전 취소: 100% 전액 환불</li>
+                        <li>② 수령 후 3일 이내·미사용: 환불 가능 (왕복 배송비 고객 부담)</li>
+                        <li>③ 상품 하자·오배송: 수령 후 3일 이내 100% 환불</li>
+                    </ul>
+                    <p className="text-[#9CA3AF] text-[11px] font-bold mb-1">👑 멤버십 구독</p>
+                    <ul className="space-y-1 list-none">
+                        <li>① 정기결제: 이용일수 제외 일할 계산 환불 (결제 후 24시간 이후 ~ 15일까지)</li>
+                        <li>② 연간결제: 전체 연간금액 ÷ 12 × 잔여개월 기준 환불</li>
+                        <li>③ 프로필카드 2회 이상 수령 시 위약금 10% 제외 후 부분 환불</li>
+                        <li>④ 회사 귀책사유(오류·서비스 중단): 전액 환불</li>
+                    </ul>
+                </div>
+                <hr className="border-[#E8E0FA]" />
+                <div>
+                    <p className="text-red-500 font-bold mb-2">🚫 환불 불가 항목</p>
+                    <ul className="space-y-1 list-none">
+                        <li>• 멤버십 결제 후 7일 초과</li>
+                        <li>• 상품 수령 후 3일 초과</li>
+                        <li>• 콘텐츠 다운로드·실질 이용 후</li>
+                        <li>• 고객 사용·훼손으로 가치 감소</li>
+                        <li>• 개봉 후 사용 상품의 단순 변심</li>
+                    </ul>
+                </div>
+                <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mt-2">
+                    <p className="text-orange-600 font-bold">📞 문의: immodelkr@gmail.com</p>
+                    <p className="text-[#9CA3AF] mt-1">주문번호, 결제일자, 사유를 포함해 주세요. (영업일 1~2일 내 답변)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
 const AgencyLanding = () => {
+
     const navigate = useNavigate();
     const [agencyCount, setAgencyCount] = useState(0);
     const [loaded, setLoaded] = useState(false);
@@ -41,6 +108,7 @@ const AgencyLanding = () => {
     const [showPostcode, setShowPostcode] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [showTerms, setShowTerms] = useState(false);
+    const [showRefundPolicy, setShowRefundPolicy] = useState(false);
 
     const [showLogin, setShowLogin] = useState(false);
     const [loginLoading, setLoginLoading] = useState(false);
@@ -173,9 +241,9 @@ const AgencyLanding = () => {
                         <span className="text-[#9333EA]">더 스마트하게, 아임모카</span>
                     </h1>
                     <p className="text-[#5B4E7A] text-lg max-w-lg mx-auto mb-10 leading-relaxed font-medium">
-                        광고전문 에이전시 {agencyCount}개의 정보를 한눈에 확인하고,<br />
-                        전문적인 광고모델 활동<br />
-                        정보를 확인해보세요.
+                        대한민국 {agencyCount}개 이상의 에이전시 정보를 한눈에 확인하고,<br />
+                        전문적인 모델 포트폴리오를 단 1분 만에 완성하여<br />
+                        스마트한 광고모델 활동을 시작해보세요.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button
@@ -226,13 +294,16 @@ const AgencyLanding = () => {
                     </div>
                     <div className="flex flex-col items-center md:items-end gap-4">
                         <div className="flex items-center gap-4 text-xs font-bold text-[#5B4E7A]">
+                            <a href="/privacy" className="hover:text-[#9333EA]">개인정보처리방침</a>
+                            <span className="text-[#E8E0FA]">|</span>
                             <button onClick={() => setShowTerms(true)} className="hover:text-[#9333EA]">이용약관</button>
                             <span className="text-[#E8E0FA]">|</span>
-                            <a href="/privacy" className="hover:text-[#9333EA]">개인정보처리방침</a>
+                            <button onClick={() => setShowRefundPolicy(true)} className="text-orange-500 hover:text-orange-600">교환·반품·환불 정책</button>
                         </div>
+                        {showRefundPolicy && <RefundPolicyModal onClose={() => setShowRefundPolicy(false)} />}
                         <p className="text-[#9CA3AF] text-[10px] text-center md:text-right leading-loose">
                             대표 : 김대희 | 사업자등록번호 : 365-22-00947 | 통신판매업 제2021-서울강남-05756호<br />
-                            서울시 영등포구 영중로 159, 7층 글로벌아임 | immodelkr@gmail.com
+                            서울시 영등포구 영중로 159, 7층 글로벌아임 | immodelkr@gmail.com | 호스팅서비스: Vercel Inc.
                         </p>
                     </div>
                 </div>
