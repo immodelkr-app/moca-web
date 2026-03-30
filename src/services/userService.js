@@ -579,4 +579,28 @@ export const maskNickname = (nickname) => {
     return nickname.slice(0, mid) + '*'.repeat(nickname.length - mid - 1) + nickname.slice(-1);
 };
 
+/**
+ * 닉네임 중복 확인
+ * @param {string} nickname
+ * @returns {Promise<{available: boolean, error: object|null}>}
+ */
+export const checkNicknameDuplicate = async (nickname) => {
+    if (!nickname) return { available: false, error: { message: '아이디를 입력해 주세요.' } };
 
+    if (isSupabaseEnabled()) {
+        const { data, error } = await supabase
+            .from('users')
+            .select('nickname')
+            .eq('nickname', nickname)
+            .maybeSingle();
+
+        if (error) return { available: false, error };
+        return { available: !data, error: null };
+    } else {
+        const usersListRaw = localStorage.getItem(USERS_LIST_KEY);
+        let usersList = [];
+        try { usersList = JSON.parse(usersListRaw || '[]'); } catch (e) { }
+        const exists = usersList.some(u => u.nickname === nickname);
+        return { available: !exists, error: null };
+    }
+};

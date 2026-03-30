@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DaumPostcode from 'react-daum-postcode';
 import { fetchAgencies } from '../services/agencyService';
-import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser } from '../services/userService';
+import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser, checkNicknameDuplicate } from '../services/userService';
 import ProfileEditModal from './ProfileEditModal';
 import TermsModal from './shop/TermsModal';
 import FindAccountModal from './FindAccountModal';
@@ -120,6 +120,12 @@ const AgencyLanding = () => {
     });
     const [findMode, setFindMode] = useState(null); // null | 'id' | 'password'
 
+    // ── 닉네임 중복 확인 관련 상태 ──
+    const [isNicknameChecked, setIsNicknameChecked] = useState(false);
+    const [nicknameCheckedValue, setNicknameCheckedValue] = useState('');
+    const [nicknameCheckLoading, setNicknameCheckLoading] = useState(false);
+    const [nicknameCheckMessage, setNicknameCheckMessage] = useState('');
+
     useEffect(() => {
         const storedUser = getUser();
         if (storedUser) {
@@ -163,12 +169,44 @@ const AgencyLanding = () => {
         }
     };
 
+    // ── 닉네임 중복 확인 ──
+    const handleCheckNickname = async () => {
+        if (!signupForm.nickname) {
+            alert('아이디를 입력해 주세요.');
+            return;
+        }
+        setNicknameCheckLoading(true);
+        setNicknameCheckMessage('');
+        try {
+            const { available, error } = await checkNicknameDuplicate(signupForm.nickname);
+            if (error) throw error;
+            if (available) {
+                setIsNicknameChecked(true);
+                setNicknameCheckedValue(signupForm.nickname);
+                setNicknameCheckMessage('사용 가능한 아이디입니다.');
+            } else {
+                setIsNicknameChecked(false);
+                setNicknameCheckMessage('이미 사용 중인 아이디입니다.');
+            }
+        } catch (err) {
+            setNicknameCheckMessage('중복 확인 중 오류가 발생했습니다.');
+        } finally {
+            setNicknameCheckLoading(false);
+        }
+    };
+
     const handleSignupSubmit = async (e) => {
         e.preventDefault();
         if (signupForm.password !== signupForm.confirmPassword) {
             setSignupError('비밀번호가 일치하지 않습니다.');
             return;
         }
+
+        if (!isNicknameChecked || signupForm.nickname !== nicknameCheckedValue) {
+            setSignupError('아이디 중복 확인을 해주세요.');
+            return;
+        }
+
         if (!signupForm.agreed.service || !signupForm.agreed.privacy) {
             setSignupError('필수 약관에 동의해 주세요.');
             return;
@@ -377,7 +415,7 @@ const AgencyLanding = () => {
                 </div>
             )}
 
-            {/* ── 회원가입 모달 (간략화) ── */}
+            {/* ── 회원가입 모달 ── */}
             {showSignup && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-moca-lg relative border border-[#E8E0FA] max-h-[90vh] overflow-y-auto hide-scrollbar">
@@ -387,14 +425,37 @@ const AgencyLanding = () => {
                         <h2 className="text-2xl font-black text-[#1F1235] mb-8 text-center">무료 회원가입</h2>
                         <form onSubmit={handleSignupSubmit} className="space-y-4">
                             <div className="grid md:grid-cols-2 gap-4">
-                                <input
-                                    type="text"
-                                    placeholder="아이디"
-                                    value={signupForm.nickname}
-                                    onChange={(e) => setSignupForm({ ...signupForm, nickname: e.target.value })}
-                                    className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
-                                    required
-                                />
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="아이디"
+                                            value={signupForm.nickname}
+                                            onChange={(e) => {
+                                                setSignupForm({ ...signupForm, nickname: e.target.value });
+                                                if (e.target.value !== nicknameCheckedValue) {
+                                                    setIsNicknameChecked(false);
+                                                    setNicknameCheckMessage('');
+                                                }
+                                            }}
+                                            className="flex-1 px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleCheckNickname}
+                                            disabled={nicknameCheckLoading}
+                                            className="px-4 py-4 rounded-2xl bg-[#F3E8FF] text-[#9333EA] font-bold text-sm border border-[#E8E0FA] whitespace-nowrap hover:bg-[#E8D5FF] transition-colors"
+                                        >
+                                            {nicknameCheckLoading ? '...' : '중복확인'}
+                                        </button>
+                                    </div>
+                                    {nicknameCheckMessage && (
+                                        <p className={`text-[10px] font-bold ml-2 ${isNicknameChecked ? 'text-emerald-500' : 'text-red-500'}`}>
+                                            {nicknameCheckMessage}
+                                        </p>
+                                    )}
+                                </div>
                                 <input
                                     type="text"
                                     placeholder="성함(실명)"
