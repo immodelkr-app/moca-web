@@ -438,22 +438,37 @@ export const updateUserProfile = async (userId, updateData) => {
         patches.terms_consent_at = new Date().toISOString();
     }
 
-    if (isSupabaseEnabled() && userId) {
+    let targetId = userId;
+    const currentUser = getUser();
+    
+    // userId가 없거나 UUID 형식이 아닐 때(nickname인 경우) nickname으로 Supabase에서 ID 찾기 시도
+    if (isSupabaseEnabled() && (!targetId || targetId === currentUser?.nickname)) {
+        const { data: userInDb } = await supabase
+            .from('users')
+            .select('id')
+            .eq('nickname', currentUser?.nickname || userId)
+            .maybeSingle();
+        
+        if (userInDb) {
+            targetId = userInDb.id;
+        }
+    }
+
+    if (isSupabaseEnabled() && targetId && targetId.length > 20) { // UUID check
         const { data, error } = await supabase
             .from('users')
             .update(patches)
-            .eq('id', userId)
+            .eq('id', targetId)
             .select()
             .single();
 
         if (error) {
-            console.error('[updateUserProfile] error:', error);
+            console.error('[updateUserProfile] Supabase Error:', error);
             return { error: { message: '정보 수정에 실패했습니다.' } };
         }
 
         // 업데이트 된 정보 로컬스토리지 최신화
-        const currentUser = getUser();
-        if (currentUser && currentUser.id === userId) {
+        if (currentUser && (currentUser.id === targetId || currentUser.nickname === data.nickname)) {
             const updatedMeta = { ...currentUser, ...data };
             localStorage.setItem(USER_KEY, JSON.stringify(updatedMeta));
 
@@ -470,8 +485,8 @@ export const updateUserProfile = async (userId, updateData) => {
 
         return { user: data, error: null };
     } else {
-        // 로컬스토리지 fallback
-        const currentUser = getUser();
+        // 로컬스토리지 fallback (ID가 아예 없거나 Supabase 비활성 시)
+        console.warn('[updateUserProfile] Falling back to localStorage update.');
         if (!currentUser) return { error: { message: '로그인 정보를 찾을 수 없습니다.' } };
 
         const updatedUser = { ...currentUser, ...patches };

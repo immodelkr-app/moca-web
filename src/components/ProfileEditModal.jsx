@@ -95,14 +95,19 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                 setErrorMsg('사용자 정보를 찾을 수 없습니다.');
                 return;
             }
+
+            console.log('[ProfileEditModal] Attempting update for user:', user.id || user.nickname);
             const { error } = await updateUserProfile(user.id, updates);
 
             if (error) {
+                console.error('[ProfileEditModal] Update error:', error);
                 setErrorMsg(error.message || '정보 수정에 실패했습니다.');
             } else {
+                console.log('[ProfileEditModal] Update successful');
                 onUpdateSuccess();
             }
         } catch (err) {
+            console.error('[ProfileEditModal] Exception in handleSubmit:', err);
             setErrorMsg('에러가 발생했습니다. 다시 시도해 주세요.');
         } finally {
             setLoading(false);
@@ -112,35 +117,31 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
     if (!user) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white border border-[#E8E0FA] rounded-3xl w-full max-w-sm max-h-[90vh] overflow-y-auto shadow-2xl relative">
-
-                {/* 닫기 버튼 */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-5 right-5 w-9 h-9 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#9333EA] hover:bg-[#EDE8FF] transition-colors"
-                >
-                    <span className="material-symbols-outlined text-[20px]">close</span>
-                </button>
-
-                <div className="p-8">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="w-12 h-12 rounded-2xl bg-[#9333EA]/10 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[#9333EA] text-[24px]">person_edit</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1F1235]/60 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white border border-[#E8E0FA] rounded-3xl w-full max-w-sm max-h-[85vh] flex flex-col shadow-2xl relative overflow-hidden">
+                
+                {/* Modal Header */}
+                <div className="relative px-6 py-5 border-b border-[#E8E0FA] bg-[#F8F5FF] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#9333EA]/10 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[#9333EA] text-[22px]">person_edit</span>
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-[#1F1235]">회원 정보 수정</h2>
-                            <p className="text-[#9CA3AF] text-[13px] font-bold">{user.nickname}님</p>
+                            <h2 className="text-lg font-black text-[#1F1235]">회원 정보 수정</h2>
+                            <p className="text-[#9CA3AF] text-[11px] font-bold">{user.nickname}님</p>
                         </div>
                     </div>
+                    <button
+                        onClick={onClose}
+                        className="w-8 h-8 rounded-full bg-white border border-[#E8E0FA] flex items-center justify-center text-[#9CA3AF] hover:bg-[#EDE8FF] hover:text-[#9333EA] transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">close</span>
+                    </button>
+                </div>
 
-                    {errorMsg && (
-                        <div className="mb-6 p-4 rounded-2xl bg-red-50 text-red-500 text-[13px] font-bold text-center border border-red-100 italic">
-                            {errorMsg}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Scrollable Form Content */}
+                <div className="flex-1 overflow-y-auto px-6 py-6">
+                    <form id="profileEditForm" onSubmit={handleSubmit} className="space-y-5 pb-4">
                         {/* 이름 */}
                         <div className="space-y-1.5">
                             <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">이름 (실명)</label>
@@ -269,17 +270,42 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading || !formData.terms_consent}
-                            className={`w-full py-4.5 rounded-[20px] text-white font-black text-base shadow-xl transition-all active:scale-[0.98] ${loading || !formData.terms_consent
-                                ? 'bg-[#9333EA]/50 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-[#9333EA] to-[#C084FC] hover:from-[#7C3AED] hover:to-[#9333EA] shadow-[#9333EA]/20'
-                                } mt-6`}
-                        >
-                            {loading ? '저장 중...' : '정보 저장하기'}
-                        </button>
                     </form>
+                </div>
+
+                {/* Sticky Footer with Save Button */}
+                <div className="px-6 py-5 bg-white border-t border-[#E8E0FA] shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+                    {errorMsg && (
+                        <div className="mb-4 p-3.5 rounded-2xl bg-red-50 text-red-500 text-[12px] font-bold text-center border border-red-100 flex items-center justify-center gap-2">
+                             <span className="material-symbols-outlined text-[16px]">error</span>
+                            {errorMsg}
+                        </div>
+                    )}
+                    
+                    <button
+                        form="profileEditForm"
+                        type="submit"
+                        disabled={loading || !formData.terms_consent}
+                        className={`w-full py-4 rounded-2xl text-white font-black text-base shadow-lg transition-all active:scale-[0.98] ${loading || !formData.terms_consent
+                            ? 'bg-[#9333EA]/40 cursor-not-allowed shadow-none'
+                            : 'bg-gradient-to-r from-[#9333EA] to-[#C084FC] hover:shadow-[#9333EA]/30 active:shadow-inner'
+                            }`}
+                    >
+                        {loading ? (
+                            <div className="flex items-center justify-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>저장 중...</span>
+                            </div>
+                        ) : '정보 저장하기'}
+                    </button>
+                    {!formData.terms_consent && (
+                        <p className="text-center text-[10px] text-red-400 mt-2 font-black">
+                            서비스 이용약관 동의가 필요합니다.
+                        </p>
+                    )}
+                    <p className="text-center text-[10px] text-[#9CA3AF] mt-3 font-medium">
+                        개인정보는 안전하게 보호됩니다.
+                    </p>
                 </div>
             </div>
         </div>
