@@ -426,7 +426,7 @@ const AdminPage = () => {
         }
     };
 
-    const grades = ['SILVER', 'GOLD', 'VIP'];
+    const grades = ['SILVER', 'GOLD', 'VIP', 'VVIP'];
 
     // 필터링된 유저
     const filteredUsers = users.map(u => {
@@ -1224,7 +1224,7 @@ const AdminPage = () => {
                                                                     }
                                                                     return (
                                                                         <option key={g} value={g} className="bg-white">
-                                                                            {GRADE_EMOJI[g]} {g === 'VIP' ? '전속모델' : g}
+                                                                            {GRADE_EMOJI[g]} {GRADE_INFO[g]?.label || g}
                                                                         </option>
                                                                     );
                                                                 })}
@@ -1251,7 +1251,8 @@ const AdminPage = () => {
                                                             <button
                                                                 onClick={() => {
                                                                     const name = user.name || user.nickname || '회원';
-                                                                    const msg = `안녕하세요, ${name}님 😊\n\n아임모델 MOCA 대표 김대희입니다.\n\n${name}님과 전속계약을 제안드리고 싶어 연락드립니다.\n아래 링크에서 계약서를 확인하고 서명해 주세요.\n\n👉 https://immoca.kr/home/contract\n\n궁금하신 점은 언제든 연락 주세요.\n감사합니다.`;
+                                                                    const contractUrl = `https://immoca.kr/contract?n=${encodeURIComponent(name)}`;
+                                                                    const msg = `안녕하세요, ${name}님 😊\n\n아임모델 MOCA 대표 김대희입니다.\n\n${name}님께 전속계약을 제안드립니다.\n아래 링크에서 계약서 내용을 확인하고 서명을 해주세요.\n\n👉 ${contractUrl}\n\n궁금하신 점은 언제든 연락 주세요.\n감사합니다.`;
                                                                     navigator.clipboard.writeText(msg).then(() => {
                                                                         setSuccessMsg(`✅ ${name}님 계약초대 메시지가 복사되었습니다! 카카오톡으로 직접 발송해주세요.`);
                                                                         setTimeout(() => setSuccessMsg(''), 4000);
@@ -1626,7 +1627,7 @@ const AdminPage = () => {
                                 </span>
                                 <button
                                     onClick={() => {
-                                        navigator.clipboard.writeText('https://immoca.kr/home/contract')
+                                        navigator.clipboard.writeText('https://immoca.kr/contract')
                                             .then(() => {
                                                 setSuccessMsg('✅ 계약 초대 링크가 복사되었습니다! 카카오톡 또는 문자로 발송해주세요.');
                                                 setTimeout(() => setSuccessMsg(''), 4000);

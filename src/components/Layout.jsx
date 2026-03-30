@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { logoutUser, getUser } from '../services/userService';
+import { logoutUser, getUser, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
 
 /* ── 환불 정책 모달 (A-Plan 색상 적용) ── */
 const RefundPolicyModal = ({ onClose }) => (
@@ -166,12 +166,11 @@ const Layout = () => {
         performSync();
     }, [location.pathname]); // 경로 이동 시마다 혹시 모를 변경 체크 (선택)
 
-    const gradeColor = userGrade === 'GOLD' || userGrade === 'VIP' || userGrade === 'VVIP'
+    const gradeInfo = GRADE_INFO[userGrade] || GRADE_INFO.SILVER;
+    const gradeColor = (userGrade === 'GOLD' || userGrade === 'VIP' || userGrade === 'VVIP')
         ? 'text-[#D97706]' : 'text-[#7C3AED]';
-    const gradeLabel = userGrade === 'GOLD' ? '골드모카'
-        : userGrade === 'VIP' ? 'VIP모카'
-        : userGrade === 'VVIP' ? 'VVIP모카'
-        : '실버모카';
+    const gradeLabel = gradeInfo.label;
+    const gradeEmoji = GRADE_EMOJI[userGrade] || '🤍';
 
     const handleLogout = () => {
         logoutUser();
@@ -189,6 +188,7 @@ const Layout = () => {
                     <p className="text-[10px] text-[#9CA3AF] mt-1 font-bold uppercase tracking-widest mb-4">아임모델 에이전시</p>
                     {userId && (
                         <div className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#F3E8FF] border border-[#E8E0FA] w-full justify-center">
+                            <span className="text-[14px]">{gradeEmoji}</span>
                             <span className={`font-black text-[11px] ${gradeColor}`}>{gradeLabel}</span>
                             <span className="text-[#1F1235] font-bold text-[11px]">{userId}님</span>
                         </div>
@@ -247,10 +247,11 @@ const Layout = () => {
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-2xl font-black tracking-tighter">MOCA</span>
                     <div className="flex items-center gap-2">
                         {userId && (
-                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#F3E8FF] border border-[#E8E0FA]">
-                                <span className={`font-black text-[10px] ${gradeColor}`}>{gradeLabel}</span>
-                                <span className="text-[#1F1235] font-bold text-[10px]">{userId}님</span>
-                            </div>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#F3E8FF] border border-[#E8E0FA]">
+                            <span className="text-[13px]">{gradeEmoji}</span>
+                            <span className={`font-black text-[10px] tracking-wide ${gradeColor}`}>{gradeLabel}</span>
+                            <span className="text-[#1F1235] font-bold text-[11px]">{userId}님</span>
+                        </div>
                         )}
                         <button
                             onClick={handleLogout}

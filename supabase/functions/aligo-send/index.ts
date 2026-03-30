@@ -47,15 +47,20 @@ serve(async (req) => {
         const authHeader = await getSolapiAuth();
 
         if (type === 'kakao') {
-            const { receivers, templateCode } = payload
+            const { receivers, templateCode, templateId: payloadTemplateId } = payload
+            // templateId 우선, 없으면 templateCode(하위호환) fallback
+            const defaultTemplateId = payloadTemplateId || templateCode;
 
-            if (!receivers || receivers.length === 0 || !templateCode) {
-                throw new Error('카카오 알림톡은 수신자 목록(receivers)과 템플릿 코드(templateCode)가 필수입니다.')
+            if (!receivers || receivers.length === 0 || !defaultTemplateId) {
+                throw new Error('카카오 알림톡은 수신자 목록(receivers)과 템플릿 ID(templateId)가 필수입니다.')
             }
 
             // 🟢 알리고 형식을 쏠라피 형식으로 변환 (단건 메시지로 발송하게 될 경우의 처리)
             const messages = receivers.map((user: any) => {
                 const cleanPhone = user.phone.replace(/-/g, '')
+                // receiver별 templateId/pfId가 있으면 우선 사용 (없으면 payload 전역값 사용)
+                const msgTemplateId = user.templateId || defaultTemplateId;
+                const msgPfId      = user.pfId || PF_ID;
 
                 const solapiButtons: any[] = [];
                 if (user.button && user.button.button && user.button.button.length > 0) {
@@ -70,7 +75,7 @@ serve(async (req) => {
                 }
 
                 // 변수 이름에 #{ } 씌우기 (쏠라피 필수 형식)
-                const formattedVariables: any = {};
+                const formattedVariables: any = {}
                 if (user.variables) {
                     for (const [key, value] of Object.entries(user.variables)) {
                         formattedVariables[`#{${key}}`] = String(value);
@@ -81,9 +86,9 @@ serve(async (req) => {
                     to: cleanPhone,
                     from: SOLAPI_SENDER,
                     kakaoOptions: {
-                        pfId: PF_ID,
-                        templateId: templateCode, // 쏠라피에서 복사해올 템플릿 ID (ex: 연동 후 12345 형태)
-                        variables: formattedVariables, // 만약 변수가 있다면 (옵션)
+                        pfId: msgPfId,
+                        templateId: msgTemplateId,
+                        variables: Object.keys(formattedVariables).length > 0 ? formattedVariables : undefined,
                         buttons: solapiButtons.length > 0 ? solapiButtons : undefined
                     }
                 }

@@ -106,9 +106,21 @@ export const getUser = () => {
     const data = localStorage.getItem(USER_KEY);
     if (!data) return null;
     try {
-        const parsed = JSON.parse(data);
+        let parsed = JSON.parse(data);
         if (typeof parsed === 'string') {
             return saveUser({ nickname: parsed, name: parsed });
+        }
+
+        // [Migration/Heal] 중첩 구조 보정 로직 (? { user: {...}, error: null })
+        if (parsed && parsed.user && typeof parsed.user === 'object' && parsed.user.nickname) {
+            console.log('[userService] Session nested structure detected. Healing session...', parsed.user.nickname);
+            const healedUser = { ...parsed.user };
+            // auth_expires_at 이나 기타 필드 보정
+            if (!healedUser.auth_expires_at) {
+                healedUser.auth_expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+            }
+            localStorage.setItem(USER_KEY, JSON.stringify(healedUser));
+            parsed = healedUser;
         }
 
         // 만료 시간 체크
@@ -288,20 +300,21 @@ export const syncUserGrade = async () => {
     if (!user || (!user.id && !user.nickname)) return;
 
     try {
-        let query = supabase.from('users').select('id, grade, grade_expires_at');
-        
-        if (user.id) {
-            query = query.eq('id', user.id);
-        } else {
-            query = query.eq('nickname', user.nickname);
-        }
+        // [개선] ID가 있더라도 닉네임으로 '최신' 레코드를 먼저 확인하여 세션을 교정함
+        // (어드민에서 중복 레코드 중 다른 것을 수정했을 경우를 대비)
+        const { data: dbRows, error: fetchError } = await supabase
+            .from('users')
+            .select('id, grade, grade_expires_at, name, phone, address, address_detail, nickname')
+            .eq('nickname', user.nickname)
+            .order('created_at', { ascending: false })
+            .limit(1);
 
-        const { data, error } = await query.order('created_at', { ascending: false }).limit(1).maybeSingle();
-        
-        if (error) {
-            console.error('[syncUserGrade] DB Fetch Error:', error);
+        if (fetchError) {
+            console.error('[syncUserGrade] DB Fetch Error:', fetchError);
             return;
         }
+
+        const data = dbRows && dbRows.length > 0 ? dbRows[0] : null;
 
         if (data) {
             let currentGrade = data.grade === 'BASIC' ? 'SILVER' : (data.grade || 'SILVER');
@@ -316,25 +329,33 @@ export const syncUserGrade = async () => {
                         .from('users')
                         .update({ grade: 'SILVER', grade_expires_at: null })
                         .eq('id', data.id);
-                    
                     if (!updateError) currentGrade = 'SILVER';
                 }
             }
 
-            // 로컬 데이터 동기화 (등급 차이, ID 부재, 또는 만료일 필드 부재 시)
-            const shouldSync = user.grade !== currentGrade || 
-                             user.id !== data.id || 
-                             user.grade_expires_at !== data.grade_expires_at;
+            // 로컬 데이터 동기화 (등급 차이, ID 불일치, 또는 만료일 필드 불일치 시)
+            const shouldSync = user.grade !== currentGrade ||
+                user.id !== data.id ||
+                user.grade_expires_at !== data.grade_expires_at;
 
             if (shouldSync) {
                 console.log(`[syncUserGrade] Syncing: ${user.grade} -> ${currentGrade}, ID: ${user.id} -> ${data.id}`);
-                saveUser({ 
-                    ...user, 
-                    id: data.id, 
-                    grade: currentGrade, 
-                    grade_expires_at: data.grade_expires_at 
+                saveUser({
+                    ...user,
+                    id: data.id, // 핵심: DB의 최신 ID로 로컬 세션 교정
+                    grade: currentGrade,
+                    grade_expires_at: data.grade_expires_at,
+                    // 이름, 연락처 등 기본 정보도 DB 기준으로 최신화
+                    name: data.name || user.name,
+                    phone: data.phone || user.phone,
+                    address: data.address || user.address,
+                    address_detail: data.address_detail || user.address_detail
                 });
+            } else {
+                console.log('[syncUserGrade] Already in sync, no update needed.');
             }
+        } else {
+            console.warn('[syncUserGrade] No matching user found in DB for nickname:', user.nickname);
         }
     } catch (e) {
         console.error('[syncUserGrade] Fatal Sync Error:', e);
@@ -348,6 +369,7 @@ export const GRADE_INFO = {
     SILVER: { label: 'SILVER', color: '#C0C0C0', bg: 'bg-slate-400/20', text: 'text-slate-300' },
     GOLD: { label: 'GOLD', color: '#F59E0B', bg: 'bg-yellow-500/20', text: 'text-yellow-300' },
     VIP: { label: '전속모델', color: '#A78BFA', bg: 'bg-purple-500/20', text: 'text-purple-300' },
+    VVIP: { label: 'VVIP모카', color: '#8B5CF6', bg: 'bg-indigo-500/20', text: 'text-indigo-300' },
 };
 
 /**
@@ -358,6 +380,7 @@ export const GRADE_EMOJI = {
     SILVER: '🤍',
     GOLD: '👑',
     VIP: '💜',
+    VVIP: '💎',
 };
 
 /**
@@ -440,21 +463,28 @@ export const updateUserProfile = async (userId, updateData) => {
 
     let targetId = userId;
     const currentUser = getUser();
-    
+
     // userId가 없거나 UUID 형식이 아닐 때(nickname인 경우) nickname으로 Supabase에서 ID 찾기 시도
+    // ※ .maybeSingle() 대신 limit(1) + 배열 인덱스 사용 → 중복 레코드 있어도 에러 없음
     if (isSupabaseEnabled() && (!targetId || targetId === currentUser?.nickname)) {
-        const { data: userInDb } = await supabase
+        const lookupNickname = currentUser?.nickname || userId;
+        const { data: dbRows } = await supabase
             .from('users')
             .select('id')
-            .eq('nickname', currentUser?.nickname || userId)
-            .maybeSingle();
-        
-        if (userInDb) {
-            targetId = userInDb.id;
+            .eq('nickname', lookupNickname)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (dbRows && dbRows.length > 0) {
+            targetId = dbRows[0].id;
+            console.log('[updateUserProfile] Resolved ID by nickname:', lookupNickname, '->', targetId);
+        } else {
+            console.warn('[updateUserProfile] No DB record found for nickname:', lookupNickname);
         }
     }
 
     if (isSupabaseEnabled() && targetId && targetId.length > 20) { // UUID check
+        console.log('[updateUserProfile] Updating DB record with ID:', targetId);
         const { data, error } = await supabase
             .from('users')
             .update(patches)
@@ -464,11 +494,16 @@ export const updateUserProfile = async (userId, updateData) => {
 
         if (error) {
             console.error('[updateUserProfile] Supabase Error:', error);
-            return { error: { message: '정보 수정에 실패했습니다.' } };
+            // 만약 인증 오류(RLS)라면 더 구체적인 메시지 제공
+            if (error.code === 'PGRST116') {
+                return { error: { message: '정보를 수정할 권한이 없거나 해당 레코드를 찾을 수 없습니다.' } };
+            }
+            return { error: { message: `정부 수정 중 오류가 발생했습니다: ${error.message || '알 수 없는 에러'}` } };
         }
 
         // 업데이트 된 정보 로컬스토리지 최신화
         if (currentUser && (currentUser.id === targetId || currentUser.nickname === data.nickname)) {
+            console.log('[updateUserProfile] Refreshing localStorage session');
             const updatedMeta = { ...currentUser, ...data };
             localStorage.setItem(USER_KEY, JSON.stringify(updatedMeta));
 
@@ -486,22 +521,62 @@ export const updateUserProfile = async (userId, updateData) => {
         return { user: data, error: null };
     } else {
         // 로컬스토리지 fallback (ID가 아예 없거나 Supabase 비활성 시)
-        console.warn('[updateUserProfile] Falling back to localStorage update.');
-        if (!currentUser) return { error: { message: '로그인 정보를 찾을 수 없습니다.' } };
-
-        const updatedUser = { ...currentUser, ...patches };
-        localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
-
-        const usersListRaw = localStorage.getItem(USERS_LIST_KEY);
-        let usersList = [];
-        try { usersList = JSON.parse(usersListRaw) || []; } catch (e) { }
-
-        const index = usersList.findIndex(u => u.nickname === updatedUser.nickname);
-        if (index >= 0) {
-            usersList[index] = { ...usersList[index], ...updatedUser };
-            localStorage.setItem(USERS_LIST_KEY, JSON.stringify(usersList));
+        console.warn('[updateUserProfile] Falling back to localStorage update. ID:', targetId);
+        if (currentUser) {
+            const updatedMeta = { ...currentUser, ...patches };
+            localStorage.setItem(USER_KEY, JSON.stringify(updatedMeta));
+            return { user: updatedMeta, error: null };
         }
-
-        return { user: updatedUser, error: null };
+        return { error: { message: '로그인 정보가 유효하지 않습니다.' } };
     }
 };
+
+/**
+ * 아이디(닉네임) 찾기: 이름 + 연락처로 닉네임 조회
+ * @param {string} name - 가입 시 입력한 실명
+ * @param {string} phone - 가입 시 입력한 연락처
+ * @returns {Promise<{nickname: string|null, error: object|null}>}
+ */
+export const findNicknameByNameAndPhone = async (name, phone) => {
+    if (isSupabaseEnabled()) {
+        const { data, error } = await supabase
+            .from('users')
+            .select('nickname')
+            .eq('name', name)
+            .eq('phone', phone)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error || !data) {
+            return { nickname: null, error: { message: '일치하는 회원 정보를 찾을 수 없습니다.\n입력하신 이름과 연락처를 다시 확인해 주세요.' } };
+        }
+        return { nickname: data.nickname, error: null };
+    } else {
+        // localStorage fallback
+        const usersListRaw = localStorage.getItem(USERS_LIST_KEY);
+        let usersList = [];
+        try { usersList = JSON.parse(usersListRaw || '[]'); } catch (e) { }
+        const user = usersList.find(u => u.name === name && u.phone === phone);
+        if (!user) {
+            return { nickname: null, error: { message: '일치하는 회원 정보를 찾을 수 없습니다.\n입력하신 이름과 연락처를 다시 확인해 주세요.' } };
+        }
+        return { nickname: user.nickname, error: null };
+    }
+};
+
+/**
+ * 닉네임 마스킹 유틸리티 (개인정보 보호)
+ * 예: '핸썸언니' → '핸썸*니', '모델A' → '모*A'
+ * @param {string} nickname
+ * @returns {string}
+ */
+export const maskNickname = (nickname) => {
+    if (!nickname) return '*';
+    if (nickname.length === 1) return '*';
+    if (nickname.length === 2) return nickname[0] + '*';
+    const mid = Math.floor(nickname.length / 2);
+    return nickname.slice(0, mid) + '*'.repeat(nickname.length - mid - 1) + nickname.slice(-1);
+};
+
+

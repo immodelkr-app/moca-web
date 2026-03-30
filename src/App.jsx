@@ -77,7 +77,7 @@ function AppContent() {
                         <Route path="benefits" element={<BenefitsHub />} />
                         <Route path="cert" element={<CertificationFeed />} />
                         <Route path="smart-profile" element={<SmartProfile />} />
-                        <Route path="contract" element={<ExclusiveContractPage />} />
+
                         <Route path="class" element={<ClassListPage />} />
                         <Route path="class/:id" element={<ClassDetailPage />} />
                     </Route>
@@ -91,6 +91,10 @@ function AppContent() {
 
                 {/* 업그레이드 (페이월) 페이지 */}
                 <Route path="/upgrade" element={<UpgradePage />} />
+
+                {/* 전속계약서 (공개 접근 허용) */}
+                <Route path="/contract" element={<ExclusiveContractPage />} />
+                <Route path="/home/contract" element={<Navigate to="/contract" replace />} />
 
             </Routes>
         </>

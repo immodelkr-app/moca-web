@@ -23,28 +23,28 @@ import { sendAlimtalk } from './aligoService';
 export const sendClassApplicationNotification = async ({ userName, phone, classTitle, classDate, location, paidPrice }) => {
     if (!phone) return;
 
-    // ⚠️ 솔라피에 심사 신청한 템플릿 코드로 교체 필요
-    const TEMPLATE_CODE = 'KA01TP_CLASS_CONFIRM'; // TODO: 실제 발급 코드로 교체
+    // ✅ 카카오 알림톡 실제 발급 정보
+    const TEMPLATE_ID  = 'KA01TP260329111909235Roqjyd7DMUl';
+    const CHANNEL_ID   = 'KA01PF260309085923456gdN56tP4xVG';
 
     const message =
 `안녕하세요 ${userName}님,
 모두의 캐스팅 매니저, 아임모카(IM MOCA)입니다.
-
 신청하신 모카 클래스 참가가 아래와 같이 확정되었습니다. 🎉
-
 ■ 클래스명: ${classTitle}
 ■ 일시: ${classDate}
 ■ 장소: ${location}
 ■ 결제 금액: ${paidPrice.toLocaleString()}원
-
 당일 10분 전까지 입실 부탁드립니다.
 
 아임모카와 함께하는 뜻깊은 시간이 되길 바랍니다. ✨`;
 
-    return sendAlimtalk(TEMPLATE_CODE, [{
+    return sendAlimtalk(TEMPLATE_ID, [{
         phone: phone.replace(/-/g, ''),
         name: userName,
         message,
+        templateId: TEMPLATE_ID,
+        pfId: CHANNEL_ID,
         variables: {
             '이름':     userName,
             '클래스명': classTitle,
@@ -55,7 +55,7 @@ export const sendClassApplicationNotification = async ({ userName, phone, classT
         button: {
             button: [
                 {
-                    name: '클래스 확인하기',
+                    name: '클래스일정 확인하기',
                     linkType: 'WL',
                     linkTypeName: '웹링크',
                     linkM: 'https://immoca.kr/home/calendar',

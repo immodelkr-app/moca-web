@@ -363,6 +363,33 @@ const ClassDetailPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* 4. Cancellation & Refund Policy (결제취소 및 환불 안내) */}
+                    <div className="mb-12">
+                        <h2 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2 mb-6 border-b border-[var(--moca-border)] pb-4">
+                            <span className="material-symbols-outlined text-orange-500">info</span>
+                            결제취소 및 환불 안내
+                        </h2>
+                        <div className="bg-orange-50/50 p-6 rounded-3xl border border-orange-100 space-y-4">
+                            <p className="text-[14px] font-bold text-orange-700 leading-relaxed">
+                                클래스 준비와 인원 확정 및 원활한 클래스 운영을 위해 아래 환불 규정이 고정 적용됩니다.
+                            </p>
+                            <div className="space-y-2">
+                                <p className="text-[13px] font-medium text-gray-600 flex items-start gap-2">
+                                    <span className="text-orange-500 font-bold mt-0.5">•</span>
+                                    <span>수업 시작 <strong className="text-orange-600 underline underline-offset-4 decoration-2">3일 전부터는 취소, 일정 변경 및 환불이 불가능</strong>합니다. (인원 확정에 따른 패널티 적용)</span>
+                                </p>
+                                <p className="text-[13px] font-medium text-gray-600 flex items-start gap-2">
+                                    <span className="text-orange-500 font-bold mt-0.5">•</span>
+                                    <span>수업 일정을 충분히 확인하신 후, 참석 가능한 경우에만 신중하게 신청 및 결제해 주시기 바랍니다.</span>
+                                </p>
+                                <p className="text-[13px] font-medium text-gray-600 flex items-start gap-2">
+                                    <span className="text-orange-500 font-bold mt-0.5">•</span>
+                                    <span>본 클래스는 상기 취소 및 환불 조건을 고정으로 운영합니다.</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

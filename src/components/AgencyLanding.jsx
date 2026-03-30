@@ -5,6 +5,7 @@ import { fetchAgencies } from '../services/agencyService';
 import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser } from '../services/userService';
 import ProfileEditModal from './ProfileEditModal';
 import TermsModal from './shop/TermsModal';
+import FindAccountModal from './FindAccountModal';
 
 // ── 환불 정책 모달 (A-Plan 색상 적용) ──
 const RefundPolicyModal = ({ onClose }) => (
@@ -117,6 +118,7 @@ const AgencyLanding = () => {
         nickname: '',
         password: '',
     });
+    const [findMode, setFindMode] = useState(null); // null | 'id' | 'password'
 
     useEffect(() => {
         const storedUser = getUser();
@@ -145,7 +147,9 @@ const AgencyLanding = () => {
         setLoginLoading(true);
         setLoginError('');
         try {
-            const user = await loginUser(loginForm.nickname, loginForm.password);
+            const { user, error: loginErr } = await loginUser(loginForm.nickname, loginForm.password);
+            if (loginErr) throw loginErr;
+            
             saveUser(user);
             setIsLoggedIn(true);
             setUserId(user.name || user.nickname || '');
@@ -178,10 +182,13 @@ const AgencyLanding = () => {
                 grade: 'SILVER',
                 created_at: new Date().toISOString(),
             };
-            await saveUserToSupabase(newUser);
-            saveUser(newUser);
+            const { data, error: signupErr } = await saveUserToSupabase(newUser);
+            if (signupErr) throw signupErr;
+
+            const finalUser = data || newUser;
+            saveUser(finalUser);
             setIsLoggedIn(true);
-            setUserId(newUser.name || newUser.nickname || '');
+            setUserId(finalUser.name || finalUser.nickname || '');
             setShowSignup(false);
             navigate('/home/dashboard');
         } catch (err) {
@@ -343,7 +350,25 @@ const AgencyLanding = () => {
                                 {loginLoading ? '로그인 중...' : '로그인'}
                             </button>
                         </form>
-                        <div className="mt-6 text-center">
+                        {/* 아이디 찾기 / 비밀번호 찾기 */}
+                        <div className="flex items-center justify-center gap-3 mt-5 mb-1">
+                            <button
+                                type="button"
+                                onClick={() => setFindMode('id')}
+                                className="text-[11px] text-[#9CA3AF] font-bold hover:text-[#9333EA] transition-colors"
+                            >
+                                아이디 찾기
+                            </button>
+                            <span className="text-[#E8E0FA] text-xs">|</span>
+                            <button
+                                type="button"
+                                onClick={() => setFindMode('password')}
+                                className="text-[11px] text-[#9CA3AF] font-bold hover:text-[#9333EA] transition-colors"
+                            >
+                                비밀번호 찾기
+                            </button>
+                        </div>
+                        <div className="mt-4 text-center">
                             <button onClick={() => { setShowLogin(false); setShowSignup(true); }} className="text-[#9CA3AF] text-sm font-bold hover:text-[#9333EA]">
                                 아직 회원이 아니신가요? <span className="text-[#9333EA]">무료 가입하기</span>
                             </button>
@@ -453,6 +478,19 @@ const AgencyLanding = () => {
             )}
 
             {showTerms && <TermsModal onClose={() => setShowTerms(false)} initialTab={0} />}
+
+            {/* 아이디/비밀번호 찾기 모달 */}
+            {findMode && (
+                <FindAccountModal
+                    mode={findMode}
+                    onClose={() => setFindMode(null)}
+                    onLoginWithNickname={(nick) => {
+                        setLoginForm(prev => ({ ...prev, nickname: nick }));
+                        setFindMode(null);
+                        setShowLogin(true);
+                    }}
+                />
+            )}
         </div>
     );
 };

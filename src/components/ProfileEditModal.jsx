@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { getUser, updateUserProfile } from '../services/userService';
 
+const USER_KEY = 'i_model_user';
+
 const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -15,22 +17,62 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
         address: '',
         address_detail: '',
         password: '',
+        marketing_consent: false,
+        terms_consent: false,
     });
 
     useEffect(() => {
-        const currentUser = getUser();
-        if (currentUser) {
-            setUser(currentUser);
-            setFormData({
-                name: currentUser.name || '',
-                phone: currentUser.phone || '',
-                address: currentUser.address || '',
-                address_detail: currentUser.address_detail || '',
-                password: '',
-                marketing_consent: currentUser.marketing_consent || false,
-                terms_consent: currentUser.terms_consent || false,
-            });
-        }
+        const initUser = async () => {
+            // 1차: 정상 세션에서 유저 가져오기
+            let currentUser = getUser();
+
+            // 2차: 세션 만료 등으로 null이면 localStorage 원시 데이터에서 nickname 추출 후 DB 직접 조회
+            if (!currentUser) {
+                try {
+                    const rawData = localStorage.getItem(USER_KEY);
+                    if (rawData) {
+                        const parsed = JSON.parse(rawData);
+                        const nickname = typeof parsed === 'object' ? parsed?.nickname : parsed;
+                        if (nickname && isSupabaseEnabled()) {
+                            console.log('[ProfileEditModal] Session expired, fetching from DB by nickname:', nickname);
+                            const { data: dbRows } = await supabase
+                                .from('users')
+                                .select('*')
+                                .eq('nickname', nickname)
+                                .order('created_at', { ascending: false })
+                                .limit(1);
+                            if (dbRows && dbRows.length > 0) {
+                                currentUser = dbRows[0];
+                                // 세션 갱신 (1시간 연장)
+                                const refreshed = {
+                                    ...currentUser,
+                                    auth_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                                };
+                                localStorage.setItem(USER_KEY, JSON.stringify(refreshed));
+                                console.log('[ProfileEditModal] Session refreshed from DB for:', nickname);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('[ProfileEditModal] Failed to recover session from DB:', e);
+                }
+            }
+
+            if (currentUser) {
+                setUser(currentUser);
+                setFormData({
+                    name: currentUser.name || '',
+                    phone: currentUser.phone || '',
+                    address: currentUser.address || '',
+                    address_detail: currentUser.address_detail || '',
+                    password: '',
+                    marketing_consent: currentUser.marketing_consent || false,
+                    terms_consent: currentUser.terms_consent || false,
+                });
+            }
+        };
+
+        initUser();
 
         // Daum Postcode 스크립트 로드
         const scriptId = 'daum-postcode-script';
@@ -96,15 +138,16 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                 return;
             }
 
-            console.log('[ProfileEditModal] Attempting update for user:', user.id || user.nickname);
-            const { error } = await updateUserProfile(user.id, updates);
+            console.log('[ProfileEditModal] Attempting update for user identifier:', user.id || user.nickname);
+            // userService.updateUserProfile 는 (userId, patches) 순서임
+            const { error: updateErr } = await updateUserProfile(user.id || user.nickname, updates);
 
-            if (error) {
-                console.error('[ProfileEditModal] Update error:', error);
-                setErrorMsg(error.message || '정보 수정에 실패했습니다.');
+            if (updateErr) {
+                console.error('[ProfileEditModal] Update error response:', updateErr);
+                setErrorMsg(updateErr.message || '정보 수정에 실패했습니다.');
             } else {
                 console.log('[ProfileEditModal] Update successful');
-                onUpdateSuccess();
+                onUpdateSuccess?.(); // HomeDashboard에서 window.location.reload() 수행함
             }
         } catch (err) {
             console.error('[ProfileEditModal] Exception in handleSubmit:', err);

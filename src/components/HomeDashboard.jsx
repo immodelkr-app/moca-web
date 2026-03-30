@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser, getUserGrade, syncUserGrade } from '../services/userService';
+import { getUser, getUserGrade, syncUserGrade, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
 import { fetchMessagesList } from '../services/messageService';
 import ProfileEditModal from './ProfileEditModal';
 
-const GRADE_EMOJI = { 'SILVER': '🤍', 'GOLD': '👑', 'VIP': '💎', 'VVIP': '💎', 'BASIC': '⭐' };
-const GRADE_LABEL = { 'SILVER': 'SILVER', 'GOLD': 'GOLD', 'VIP': '전속모델', 'VVIP': 'VVIP', 'BASIC': 'SILVER' };
+
 
 const MODEL_SUPPORT_ITEMS = [
     { icon: 'apartment',       label: '에이전시 리스트',  route: '/agencies',           color: 'from-[#9333EA] to-[#C084FC]', glow: 'shadow-[#9333EA]/25' },
@@ -59,8 +58,9 @@ const HomeDashboard = () => {
 
     const currentItems = activeTab === 'MODEL_SUPPORT' ? MODEL_SUPPORT_ITEMS : MOCA_BENEFITS_ITEMS;
 
-    const gradeColor = grade === 'GOLD' || grade === 'VIP' || grade === 'VVIP' ? 'text-[#D97706]' : 'text-[#7C3AED]';
-    const gradeBg    = grade === 'GOLD' || grade === 'VIP' || grade === 'VVIP' ? 'bg-amber-50 border-amber-200' : 'bg-[#F3E8FF] border-[#E8E0FA]';
+    const gradeInfo = GRADE_INFO[grade] || GRADE_INFO.SILVER;
+    const gradeColor = (grade === 'GOLD' || grade === 'VIP' || grade === 'VVIP') ? 'text-[#D97706]' : 'text-[#7C3AED]';
+    const gradeBg    = (grade === 'GOLD' || grade === 'VIP' || grade === 'VVIP') ? 'bg-amber-50 border-amber-200' : 'bg-[#F3E8FF] border-[#E8E0FA]';
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--moca-bg)' }}>
@@ -80,9 +80,9 @@ const HomeDashboard = () => {
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     {/* 등급 배지 */}
                     <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${gradeBg}`}>
-                        <span className="text-sm">{GRADE_EMOJI[grade] || '⭐'}</span>
+                        <span className="text-sm">{GRADE_EMOJI[grade] || '🤍'}</span>
                         <span className={`font-black text-[11px] tracking-wide ${gradeColor}`}>
-                            {GRADE_LABEL[grade] || '모카 회원'}
+                            {gradeInfo.label}
                         </span>
                     </div>
                     {/* 마이페이지 버튼 */}
