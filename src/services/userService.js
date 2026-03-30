@@ -281,14 +281,18 @@ export const updateGrade = (grade) => {
 export const syncUserGrade = async () => {
     if (!isSupabaseEnabled()) return;
     const user = getUser();
-    if (!user || !user.id) return;
+    if (!user || (!user.id && !user.nickname)) return;
 
     try {
-        const { data, error } = await supabase
-            .from('users')
-            .select('grade, grade_expires_at')
-            .eq('id', user.id)
-            .single();
+        let query = supabase.from('users').select('id, grade, grade_expires_at');
+        
+        if (user.id) {
+            query = query.eq('id', user.id);
+        } else {
+            query = query.eq('nickname', user.nickname);
+        }
+
+        const { data, error } = await query.single();
             
         if (!error && data) {
             // 골드 강등 체크 로직 (로그인 시와 동일)
@@ -300,12 +304,13 @@ export const syncUserGrade = async () => {
                     await supabase
                         .from('users')
                         .update({ grade: 'SILVER', grade_expires_at: null })
-                        .eq('id', user.id);
+                        .eq('id', data.id);
                     currentGrade = 'SILVER';
                 }
             }
-            if (user.grade !== currentGrade) {
-                updateGrade(currentGrade);
+            // ID가 없거나 등급이 다르면 로컬 회원 정보 전체 업데이트
+            if (user.grade !== currentGrade || !user.id) {
+                saveUser({ ...user, id: data.id, grade: currentGrade });
             }
         }
     } catch (e) {
