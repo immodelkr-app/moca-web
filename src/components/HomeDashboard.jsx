@@ -5,7 +5,7 @@ import { fetchMessagesList } from '../services/messageService';
 import ProfileEditModal from './ProfileEditModal';
 
 const GRADE_EMOJI = { 'SILVER': '🤍', 'GOLD': '👑', 'VIP': '💎', 'VVIP': '💎', 'BASIC': '⭐' };
-const GRADE_LABEL = { 'SILVER': '실버 모카', 'GOLD': '골드 모카', 'VIP': '전속모델', 'VVIP': 'VVIP', 'BASIC': '모카 회원' };
+const GRADE_LABEL = { 'SILVER': 'SILVER', 'GOLD': 'GOLD', 'VIP': '전속모델', 'VVIP': 'VVIP', 'BASIC': 'SILVER' };
 
 const MODEL_SUPPORT_ITEMS = [
     { icon: 'apartment',       label: '에이전시 리스트',  route: '/agencies',           color: 'from-[#9333EA] to-[#C084FC]', glow: 'shadow-[#9333EA]/25' },

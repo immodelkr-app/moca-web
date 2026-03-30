@@ -154,7 +154,7 @@ const MembershipBenefits = () => {
                             {/* Name & Title */}
                             <div className="flex flex-col justify-center gap-1">
                                 <h3 className="text-xl font-black text-[#1F1235]">{userName}</h3>
-                                <p className="text-[12px] font-bold text-[#5B4E7A]">{isGold ? '모카 골드멤버' : '모카 실버멤버'}</p>
+                                <p className="text-[12px] font-bold text-[#5B4E7A]">{isGold ? 'GOLD' : 'SILVER'}</p>
                             </div>
                         </div>
 

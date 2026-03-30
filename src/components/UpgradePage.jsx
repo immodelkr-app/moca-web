@@ -59,14 +59,14 @@ const UpgradePage = () => {
                     method: 'CARD',
                     amount: { currency: 'KRW', value: selectedPlan.price },
                     orderId,
-                    orderName: `골드모카 멤버십 ${selectedPlan.label} 구독`,
+                    orderName: `GOLD 멤버십 ${selectedPlan.label} 구독`,
                     customerName: user.name || user.nickname || '모카회원',
                     successUrl: `${window.location.origin}/upgrade?payment=success`,
                     failUrl: `${window.location.origin}/upgrade?payment=fail`,
                 });
             } else {
                 setIsProcessing(false);
-                alert(`[테스트] 골드모카 ${selectedPlan.label} 구독 결제 (${selectedPlan.price.toLocaleString()}원)`);
+                alert(`[테스트] GOLD ${selectedPlan.label} 구독 결제 (${selectedPlan.price.toLocaleString()}원)`);
             }
         } catch (err) {
             setIsProcessing(false);
@@ -124,7 +124,7 @@ const UpgradePage = () => {
                         localStorage.removeItem('moca_pending_subscription');
                     }
 
-                    alert('🎉 골드모카 구독이 완료되었습니다! 지금부터 골드 혜택을 이용하실 수 있습니다.');
+                    alert('🎉 GOLD 구독이 완료되었습니다! 지금부터 골드 혜택을 이용하실 수 있습니다.');
                 } catch (err) {
                     console.error('[Upgrade] 구독 처리 오류:', err);
                     alert('결제는 완료되었으나 등급 반영 중 오류가 발생했습니다. 관리자에게 문의해주세요.');
@@ -355,7 +355,7 @@ const UpgradePage = () => {
                         <button onClick={() => window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank')}
                             className="w-full flex items-center justify-center gap-2.5 py-5 rounded-[24px] bg-white border border-[#E8E0FA] text-[#5B4E7A] font-black text-sm hover:bg-[#F8F5FF] transition-all shadow-sm">
                             <span className="material-symbols-outlined text-[20px] text-[#9333EA]">chat</span>
-                            골드모카 문의하기
+                            GOLD 문의하기
                         </button>
 
                         {/* 안내 */}

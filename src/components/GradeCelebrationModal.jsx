@@ -61,7 +61,7 @@ const GradeCelebrationModal = () => {
                     <h3 className="text-[22px] font-black tracking-tight leading-tight">
                         <span className="text-[#1F1235]">이제 </span>
                         <span className="bg-gradient-to-r from-[#FFD700] via-[#FBC02D] to-[#F9A825] bg-clip-text text-transparent drop-shadow-sm font-black">
-                            골드 모카
+                            GOLD
                         </span>
                         <span className="text-[#1F1235]"> 입니다</span>
                     </h3>

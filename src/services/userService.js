@@ -148,7 +148,9 @@ export const loginUser = async (nickname, password) => {
             .select('*')
             .eq('nickname', nickname)
             .eq('password_hash', hash)
-            .single();
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
         if (error || !data) {
             return { user: null, error: { message: '닉네임 또는 비밀번호가 일치하지 않습니다.' } };
@@ -210,7 +212,9 @@ export const resetUserPassword = async (nickname, phone, newPassword) => {
             .select('id')
             .eq('nickname', nickname)
             .eq('phone', phone)
-            .single();
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
         if (findError || !user) {
             return { success: false, error: { message: '일치하는 통합 정보를 찾을 수 없습니다.' } };
@@ -292,7 +296,7 @@ export const syncUserGrade = async () => {
             query = query.eq('nickname', user.nickname);
         }
 
-        const { data, error } = await query.single();
+        const { data, error } = await query.order('created_at', { ascending: false }).limit(1).maybeSingle();
             
         if (!error && data) {
             // 골드 강등 체크 로직 (로그인 시와 동일)
