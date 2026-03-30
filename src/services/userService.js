@@ -297,28 +297,47 @@ export const syncUserGrade = async () => {
         }
 
         const { data, error } = await query.order('created_at', { ascending: false }).limit(1).maybeSingle();
-            
-        if (!error && data) {
-            // 골드 강등 체크 로직 (로그인 시와 동일)
-            let currentGrade = data.grade;
+        
+        if (error) {
+            console.error('[syncUserGrade] DB Fetch Error:', error);
+            return;
+        }
+
+        if (data) {
+            let currentGrade = data.grade === 'BASIC' ? 'SILVER' : (data.grade || 'SILVER');
+
+            // 골드 강등 체크 로직
             if (currentGrade === 'GOLD' && data.grade_expires_at) {
                 const now = new Date();
                 const expiresAt = new Date(data.grade_expires_at);
                 if (now > expiresAt) {
-                    await supabase
+                    console.log(`[syncUserGrade] Grade Expired (${data.grade_expires_at}). Downgrading to SILVER.`);
+                    const { error: updateError } = await supabase
                         .from('users')
                         .update({ grade: 'SILVER', grade_expires_at: null })
                         .eq('id', data.id);
-                    currentGrade = 'SILVER';
+                    
+                    if (!updateError) currentGrade = 'SILVER';
                 }
             }
-            // ID가 없거나 등급이 다르면 로컬 회원 정보 전체 업데이트
-            if (user.grade !== currentGrade || !user.id) {
-                saveUser({ ...user, id: data.id, grade: currentGrade });
+
+            // 로컬 데이터 동기화 (등급 차이, ID 부재, 또는 만료일 필드 부재 시)
+            const shouldSync = user.grade !== currentGrade || 
+                             user.id !== data.id || 
+                             user.grade_expires_at !== data.grade_expires_at;
+
+            if (shouldSync) {
+                console.log(`[syncUserGrade] Syncing: ${user.grade} -> ${currentGrade}, ID: ${user.id} -> ${data.id}`);
+                saveUser({ 
+                    ...user, 
+                    id: data.id, 
+                    grade: currentGrade, 
+                    grade_expires_at: data.grade_expires_at 
+                });
             }
         }
     } catch (e) {
-        console.error('Failed to sync user grade:', e);
+        console.error('[syncUserGrade] Fatal Sync Error:', e);
     }
 };
 

@@ -191,11 +191,15 @@ const AdminPage = () => {
             const updates = { grade: newGrade };
             let expiresAt = null;
 
-            if (newGrade === 'GOLD' && months) {
-                const date = new Date();
-                date.setMonth(date.getMonth() + months);
-                expiresAt = date.toISOString();
-                updates.grade_expires_at = expiresAt;
+            if (newGrade === 'GOLD') {
+                if (months) {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() + months);
+                    expiresAt = date.toISOString();
+                    updates.grade_expires_at = expiresAt;
+                } else {
+                    updates.grade_expires_at = null; // 기간 미지정인 경우 만료일 초기화 (조기 강등 방지)
+                }
             } else if (newGrade === 'SILVER') {
                 updates.grade_expires_at = null; // 실버로 강등 시 만료일 초기화
             }

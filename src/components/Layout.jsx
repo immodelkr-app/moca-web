@@ -146,11 +146,25 @@ const moreMenuItems = [
 const Layout = () => {
     const [showRefundPolicy, setShowRefundPolicy] = useState(false);
     const [showMoreMenu, setShowMoreMenu] = useState(false);
+    const [userGrade, setUserGrade] = useState(getUser()?.grade || 'BASIC');
     const navigate = useNavigate();
     const location = useLocation();
+    
     const user = getUser();
-    const userGrade = user?.grade || 'BASIC';
     const userId = user?.nickname || user?.name || '';
+
+    React.useEffect(() => {
+        // 레이아웃 차원에서 유저 정보(특히 등급) 동기화 수행
+        const performSync = async () => {
+            const { syncUserGrade } = await import('../services/userService');
+            await syncUserGrade();
+            const updatedUser = getUser();
+            if (updatedUser) {
+                setUserGrade(updatedUser.grade || 'BASIC');
+            }
+        };
+        performSync();
+    }, [location.pathname]); // 경로 이동 시마다 혹시 모를 변경 체크 (선택)
 
     const gradeColor = userGrade === 'GOLD' || userGrade === 'VIP' || userGrade === 'VVIP'
         ? 'text-[#D97706]' : 'text-[#7C3AED]';
