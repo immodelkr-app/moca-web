@@ -94,6 +94,7 @@ function AppContent() {
 
                 {/* 전속계약서 (공개 접근 허용) */}
                 <Route path="/contract" element={<ExclusiveContractPage />} />
+                <Route path="/contract/:name" element={<ExclusiveContractPage />} />
                 <Route path="/home/contract" element={<Navigate to="/contract" replace />} />
 
             </Routes>

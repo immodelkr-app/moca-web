@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
 import { getUser } from '../services/userService';
 import { saveContract } from '../services/adminService';
@@ -81,11 +81,12 @@ const SignatureModal = ({ isOpen, onClose, onConfirm, existingSignature }) => {
 const ExclusiveContractPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { name: paramName } = useParams();
     const user = getUser();
 
-    // 쿼리 파라미터에서 성함 추출 (?n=이름)
+    // 쿼리 파라미터(?n=이름) 또는 경로 변수(/contract/이름)에서 성함 추출
     const queryParams = new URLSearchParams(location.search);
-    const queryName = queryParams.get('n') || '';
+    const queryName = queryParams.get('n') || paramName || '';
 
     const [contractData, setContractData] = useState({
         startYear: '2026', startMonth: '03', startDay: '01',
