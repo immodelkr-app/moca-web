@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { applyForClass, saveClassCalendarEvent } from '../services/classService';
-import { getUser } from '../services/userService';
+import { getUser, syncUserGrade } from '../services/userService';
 
 const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
 
@@ -35,22 +35,13 @@ const ClassDetailPage = () => {
 
     const loadData = async () => {
         setLoading(true);
+        await syncUserGrade();
         const localUser = getUser();
         
         if (localUser) {
             let currentGrade = localUser.grade || 'SILVER';
 
             if (localUser.id) {
-                const { data: userData } = await supabase
-                    .from('users')
-                    .select('grade')
-                    .eq('id', localUser.id)
-                    .single();
-                
-                if (userData?.grade) {
-                    currentGrade = userData.grade;
-                }
-
                 const { data: app } = await supabase
                     .from('class_applications')
                     .select('id')

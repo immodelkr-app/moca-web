@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchClasses } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
 
-import { getUser } from '../services/userService';
+import { getUser, syncUserGrade } from '../services/userService';
 
 const ClassListPage = () => {
     const navigate = useNavigate();
@@ -19,14 +19,10 @@ const ClassListPage = () => {
     const loadData = async () => {
         setLoading(true);
         // 1. 유저 정보 (등급 확인용) - 최신 등급 DB 동기화
+        await syncUserGrade();
         const localUser = getUser();
         if (localUser && localUser.id) {
-            const { data: userData } = await supabase
-                .from('users')
-                .select('grade')
-                .eq('id', localUser.id)
-                .single();
-            setCurrentUser({ id: localUser.id, grade: userData?.grade || localUser.grade || 'SILVER' });
+            setCurrentUser({ id: localUser.id, grade: localUser.grade || 'SILVER' });
 
             // 2. 내가 신청한 클래스 목록
             const { data: apps } = await supabase
@@ -34,6 +30,8 @@ const ClassListPage = () => {
                 .select('class_id')
                 .eq('user_id', localUser.id);
             if (apps) setMyApplications(apps.map(a => a.class_id));
+        } else if (localUser) {
+            setCurrentUser({ id: localUser.id, grade: localUser.grade || 'SILVER' });
         }
 
         // 3. 클래스 목록
