@@ -276,6 +276,44 @@ export const updateGrade = (grade) => {
 };
 
 /**
+ * DB에서 최신 회원 정보(등급 포함)를 동기화하여 로컬스토리지에 반영
+ */
+export const syncUserGrade = async () => {
+    if (!isSupabaseEnabled()) return;
+    const user = getUser();
+    if (!user || !user.id) return;
+
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('grade, grade_expires_at')
+            .eq('id', user.id)
+            .single();
+            
+        if (!error && data) {
+            // 골드 강등 체크 로직 (로그인 시와 동일)
+            let currentGrade = data.grade;
+            if (currentGrade === 'GOLD' && data.grade_expires_at) {
+                const now = new Date();
+                const expiresAt = new Date(data.grade_expires_at);
+                if (now > expiresAt) {
+                    await supabase
+                        .from('users')
+                        .update({ grade: 'SILVER', grade_expires_at: null })
+                        .eq('id', user.id);
+                    currentGrade = 'SILVER';
+                }
+            }
+            if (user.grade !== currentGrade) {
+                updateGrade(currentGrade);
+            }
+        }
+    } catch (e) {
+        console.error('Failed to sync user grade:', e);
+    }
+};
+
+/**
  * 등급별 한글 라벨 / 컬러
  */
 export const GRADE_INFO = {

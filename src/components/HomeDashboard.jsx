@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser, getUserGrade } from '../services/userService';
+import { getUser, getUserGrade, syncUserGrade } from '../services/userService';
 import { fetchMessagesList } from '../services/messageService';
 import ProfileEditModal from './ProfileEditModal';
 
@@ -30,7 +30,7 @@ const MOCA_BENEFITS_ITEMS = [
 const HomeDashboard = () => {
     const navigate = useNavigate();
     const user = getUser();
-    const grade = getUserGrade() || 'SILVER';
+    const [grade, setGrade] = useState(getUserGrade() || 'SILVER');
     const nickname = user?.name || user?.nickname || '모카 회원';
 
     const [activeTab, setActiveTab] = useState('MODEL_SUPPORT');
@@ -39,6 +39,11 @@ const HomeDashboard = () => {
     const [animKey, setAnimKey] = useState(0);
 
     useEffect(() => {
+        // 최신 회원 등급 백그라운드 동기화
+        syncUserGrade().then(() => {
+            setGrade(getUserGrade() || 'SILVER');
+        });
+
         fetchMessagesList().then(data => {
             if (data && data.length > 0) {
                 setTicker(data[0]?.title || data[0]?.content?.slice(0, 40) || '');

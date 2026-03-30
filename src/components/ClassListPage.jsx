@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { fetchClasses } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
 
+import { getUser } from '../services/userService';
+
 const ClassListPage = () => {
     const navigate = useNavigate();
     const [classes, setClasses] = useState([]);
@@ -16,21 +18,21 @@ const ClassListPage = () => {
 
     const loadData = async () => {
         setLoading(true);
-        // 1. 유저 정보 (등급 확인용)
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
+        // 1. 유저 정보 (등급 확인용) - 최신 등급 DB 동기화
+        const localUser = getUser();
+        if (localUser && localUser.id) {
             const { data: userData } = await supabase
                 .from('users')
                 .select('grade')
-                .eq('id', user.id)
+                .eq('id', localUser.id)
                 .single();
-            setCurrentUser({ id: user.id, grade: userData?.grade || 'SILVER' });
+            setCurrentUser({ id: localUser.id, grade: userData?.grade || localUser.grade || 'SILVER' });
 
             // 2. 내가 신청한 클래스 목록
             const { data: apps } = await supabase
                 .from('class_applications')
                 .select('class_id')
-                .eq('user_id', user.id);
+                .eq('user_id', localUser.id);
             if (apps) setMyApplications(apps.map(a => a.class_id));
         }
 
@@ -50,7 +52,7 @@ const ClassListPage = () => {
         if (myGrade === 'GUEST' || myGrade === 'MEMBER') searchTerms.push('일반', '비회원', '기본', '베이직');
         if (myGrade === 'SILVER') searchTerms.push('실버', 'SILVER');
         if (myGrade === 'GOLD') searchTerms.push('골드', 'GOLD');
-        if (myGrade === 'VIP' || myGrade === 'VVIP') searchTerms.push('VIP', 'VVIP', '브이아이피');
+        if (myGrade === 'VIP' || myGrade === 'VVIP') searchTerms.push('VIP', 'VVIP', '브이아이피', '전속모델', '전속');
 
         const p = pricing.find(item => 
             searchTerms.some(term => item.grade_label.toUpperCase().includes(term))

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser, getUserGrade } from '../services/userService';
+import { getUser, getUserGrade, syncUserGrade } from '../services/userService';
 import { verifyPartnerPin, recordPartnerVisit } from '../services/adminService';
 import BenefitList from './Membership/BenefitList';
 
 const MembershipBenefits = () => {
     const navigate = useNavigate();
-    const grade = getUserGrade();
+    const [grade, setGrade] = useState(getUserGrade());
     const user = getUser();
     const userName = user?.name || user?.nickname || '회원';
 
@@ -20,9 +20,12 @@ const MembershipBenefits = () => {
     // Live clock state
     const [currentTime, setCurrentTime] = useState('');
 
-
-
     useEffect(() => {
+        // DB 최신 등급 동기화
+        syncUserGrade().then(() => {
+            setGrade(getUserGrade());
+        });
+        
         const updateClock = () => {
             const now = new Date();
             const year = now.getFullYear();

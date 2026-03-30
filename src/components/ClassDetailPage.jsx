@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { applyForClass, saveClassCalendarEvent } from '../services/classService';
+import { getUser } from '../services/userService';
 
 const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
 
@@ -34,22 +35,31 @@ const ClassDetailPage = () => {
 
     const loadData = async () => {
         setLoading(true);
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data: userData } = await supabase
-                .from('users')
-                .select('id, nickname, name, phone, grade')
-                .eq('id', user.id)
-                .single();
-            setCurrentUser(userData);
+        const localUser = getUser();
+        
+        if (localUser) {
+            let currentGrade = localUser.grade || 'SILVER';
 
-            const { data: app } = await supabase
-                .from('class_applications')
-                .select('id')
-                .eq('class_id', id)
-                .eq('user_id', user.id)
-                .maybeSingle();
-            if (app) setIsApplied(true);
+            if (localUser.id) {
+                const { data: userData } = await supabase
+                    .from('users')
+                    .select('grade')
+                    .eq('id', localUser.id)
+                    .single();
+                
+                if (userData?.grade) {
+                    currentGrade = userData.grade;
+                }
+
+                const { data: app } = await supabase
+                    .from('class_applications')
+                    .select('id')
+                    .eq('class_id', id)
+                    .eq('user_id', localUser.id)
+                    .maybeSingle();
+                if (app) setIsApplied(true);
+            }
+            setCurrentUser({ ...localUser, grade: currentGrade });
         }
 
         const { data: classData } = await supabase
@@ -76,7 +86,7 @@ const ClassDetailPage = () => {
         if (myGrade === 'GUEST' || myGrade === 'MEMBER') searchTerms.push('일반', '비회원', '기본', '베이직');
         if (myGrade === 'SILVER') searchTerms.push('실버', 'SILVER');
         if (myGrade === 'GOLD') searchTerms.push('골드', 'GOLD');
-        if (myGrade === 'VIP' || myGrade === 'VVIP') searchTerms.push('VIP', 'VVIP', '브이아이피');
+        if (myGrade === 'VIP' || myGrade === 'VVIP') searchTerms.push('VIP', 'VVIP', '브이아이피', '전속모델', '전속');
 
         const p = cls.class_pricing.find(item => 
             searchTerms.some(term => item.grade_label.toUpperCase().includes(term))
@@ -346,37 +356,21 @@ const ClassDetailPage = () => {
                                     <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.capacity}명</p>
                                 </div>
                             </div>
+                            <div className="flex items-start gap-4">
+                                <span className="material-symbols-outlined text-indigo-400 mt-0.5">payments</span>
+                                <div>
+                                    <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">수강료</p>
+                                    <p className="text-[15px] font-black text-[var(--moca-text)]">
+                                        ₩{myPrice.toLocaleString()}
+                                        {currentUser && myPriceInfo && (
+                                            <span className="ml-2 text-[11px] font-bold text-indigo-600 bg-indigo-100 px-2.5 py-0.5 rounded-full inline-block align-middle transform -translate-y-[1px]">
+                                                {myPriceInfo.grade_label} 혜택가
+                                            </span>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-
-                    {/* 4. Logged-in Grade Pricing Info */}
-                    <div className="mb-4 bg-indigo-50 border border-indigo-100 p-8 rounded-3xl flex flex-col items-center text-center">
-                        {currentUser ? (
-                            <>
-                                <p className="text-indigo-600 font-bold text-sm mb-2">
-                                    [<span className="font-black">{currentUser.grade}</span>] 등급 멤버십 혜택가가 적용됩니다.
-                                </p>
-                                <p className="text-3xl font-black text-indigo-900 tracking-tighter">
-                                    <span className="text-lg font-bold mr-1">₩</span>
-                                    {myPrice.toLocaleString()}
-                                </p>
-                                {currentUser.grade === 'SILVER' && (
-                                    <button onClick={() => navigate('/upgrade')} className="mt-5 px-5 py-2.5 bg-white rounded-full text-xs font-black text-indigo-600 shadow-sm hover:scale-105 transition-transform border border-indigo-200">
-                                        멤버십 UPGRADE 하고 추가 할인 받기 →
-                                    </button>
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                <p className="text-indigo-600 font-bold text-sm mb-2">로그인하시면 등급별 멤버십 혜택가를 안내해 드립니다.</p>
-                                <p className="text-2xl font-black text-[var(--moca-text-3)] opacity-50 tracking-tighter line-through">
-                                    ₩{myPrice.toLocaleString()}
-                                </p>
-                                <button onClick={() => navigate('/login')} className="mt-5 px-5 py-2.5 bg-indigo-600 rounded-full text-xs font-black text-white shadow-sm hover:scale-105 transition-transform active:bg-indigo-700">
-                                    로그인하고 클래스 혜택가 확인하기 →
-                                </button>
-                            </>
-                        )}
                     </div>
                 </div>
             </div>
@@ -397,7 +391,14 @@ const ClassDetailPage = () => {
                     </button>
                 ) : (
                     <button 
-                        onClick={() => setShowModal(true)}
+                        onClick={() => {
+                            if (!currentUser) {
+                                alert('로그인 후 이용 가능합니다.');
+                                navigate('/login');
+                                return;
+                            }
+                            setShowModal(true);
+                        }}
                         className="flex-1 bg-indigo-600 text-white py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                     >
                         결제 및 신청하기
