@@ -7,6 +7,69 @@ import ProfileEditModal from './ProfileEditModal';
 import TermsModal from './shop/TermsModal';
 import FindAccountModal from './FindAccountModal';
 
+// ── 약관 내용 ──
+const TERMS_CONTENT = {
+    service: `제1조 (목적)
+본 약관은 MOCA 서비스(앱 및 모카 에디트 쇼핑 등 포함, 이하 "서비스") 이용에 관한 조건 및 절차를 규정합니다.
+
+제2조 (서비스 이용)
+① 서비스는 MOCA 앱 가입 회원에게만 제공됩니다.
+② 회원은 타인의 계정을 사용할 수 없습니다.
+③ 상품 판매 시 모카 에디트 방식으로 설정 기간 내 구매가 가능합니다.
+
+제3조 (주문 및 결제)
+① 주문은 결제 완료 시점에 성립됩니다.
+② 결제는 토스페이먼츠를 통해 처리됩니다.
+③ 재고 소진 및 판매 시간 종료 후에는 구매가 불가합니다.
+
+제4조 (취소 및 환불)
+① 배송 전 취소: 100% 환불
+② 상품 하자: 수령 후 7일 이내 환불 가능
+③ 단순 변심: 미개봉 시 수령 후 7일 이내 반품 가능 (왕복 배송비 고객 부담)
+
+제5조 (책임 제한)
+회사는 서비스 중단, 오류 등으로 인한 손해에 대해 법이 허용하는 범위 내에서 책임을 집니다.`,
+    privacy: `■ 수집 항목
+- 필수: 닉네임, 휴대폰번호, 수령인명, 배송주소
+- 선택: 이메일, 배송 메모
+
+■ 수집 목적
+- 회원 식별, 앱 서비스 제공 및 주문 처리
+- 각종 배송 진행 및 CS 대응
+- 결제 처리 (카드정보는 결제대행사에서 직접 보관)
+
+■ 보유 기간
+- 회원 탈퇴 시 즉시 삭제 (단, 관련 법령에 따라 거래 기록 등은 법정 기간 보관)
+
+■ 동의 거부 시 불이익
+개인정보 수집·이용에 동의하지 않으실 수 있으나, 동의 거부 시 앱 서비스 가입 및 이용이 불가합니다.`,
+    third_party: `■ 제공받는 자
+- 개별 상품 판매사 (상품 발송 목적)
+- 택배사 (CJ대한통운, 한진택배, 롯데택배 등)
+
+■ 제공하는 개인정보 항목
+수령인명, 배송주소, 휴대폰번호, 주문상품명
+
+■ 제공 목적
+상품 배송 및 배송 현황 조회
+
+■ 보유 및 이용 기간
+배송 완료 후 3개월 또는 회원 탈퇴 시까지
+
+■ 동의 거부 시 불이익
+제3자 제공에 동의하지 않으실 경우, 상품 배송을 포함한 일부 서비스 이용이 제한될 수 있습니다.`,
+    marketing: `■ 수신 채널
+카카오톡 알림, SMS
+
+■ 발송 내용
+- 모카 에디트 오픈 알림
+- 회원 등급 전용 이벤트
+- 신상품 및 프로모션 안내
+
+■ 수신 동의는 언제든 철회 가능합니다.
+(앱 설정 > 알림 관리 > 마케팅 수신 해제)`,
+};
+
 // ── 환불 정책 모달 (A-Plan 색상 적용) ──
 const RefundPolicyModal = ({ onClose }) => (
     <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
@@ -119,6 +182,7 @@ const AgencyLanding = () => {
         password: '',
     });
     const [findMode, setFindMode] = useState(null); // null | 'id' | 'password'
+    const [expandedTerm, setExpandedTerm] = useState(null); // 약관 펼치기 상태
 
     // ── 닉네임 중복 확인 관련 상태 ──
     const [isNicknameChecked, setIsNicknameChecked] = useState(false);
@@ -217,7 +281,9 @@ const AgencyLanding = () => {
         try {
             const newUser = {
                 ...signupForm,
+                address_detail: signupForm.detailAddress || '',
                 grade: 'SILVER',
+                terms_consent: signupForm.agreed.service && signupForm.agreed.privacy,
                 created_at: new Date().toISOString(),
             };
             const { data, error: signupErr } = await saveUserToSupabase(newUser);
@@ -268,7 +334,7 @@ const AgencyLanding = () => {
                                 onClick={() => setShowSignup(true)}
                                 className="bg-[#9333EA] text-white px-5 py-2 rounded-full font-black text-sm shadow-moca hover:opacity-90 transition-all"
                             >
-                                무료 가입
+                                회원가입
                             </button>
                         </>
                     )}
@@ -408,7 +474,7 @@ const AgencyLanding = () => {
                         </div>
                         <div className="mt-4 text-center">
                             <button onClick={() => { setShowLogin(false); setShowSignup(true); }} className="text-[#9CA3AF] text-sm font-bold hover:text-[#9333EA]">
-                                아직 회원이 아니신가요? <span className="text-[#9333EA]">무료 가입하기</span>
+                                아직 회원이 아니신가요? <span className="text-[#9333EA]">회원가입</span>
                             </button>
                         </div>
                     </div>
@@ -422,7 +488,7 @@ const AgencyLanding = () => {
                         <button onClick={() => setShowSignup(false)} className="absolute top-6 right-6 text-[#9CA3AF] hover:text-[#1F1235]">
                             <span className="material-symbols-outlined">close</span>
                         </button>
-                        <h2 className="text-2xl font-black text-[#1F1235] mb-8 text-center">무료 회원가입</h2>
+                        <h2 className="text-2xl font-black text-[#1F1235] mb-8 text-center">회원가입</h2>
                         <form onSubmit={handleSignupSubmit} className="space-y-4">
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1">
@@ -494,22 +560,81 @@ const AgencyLanding = () => {
                             <div className="flex gap-2">
                                 <input
                                     type="text"
-                                    placeholder="주소"
+                                    placeholder="집 주소 (검색)"
                                     value={signupForm.address}
                                     readOnly
-                                    className="flex-1 px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
+                                    className="flex-1 px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold cursor-pointer"
+                                    onClick={() => setShowPostcode(true)}
                                 />
-                                <button type="button" onClick={() => setShowPostcode(true)} className="px-5 py-4 rounded-2xl bg-[#F3E8FF] text-[#9333EA] font-bold text-sm border border-[#E8E0FA]">검색</button>
+                                <button type="button" onClick={() => setShowPostcode(true)} className="px-5 py-4 rounded-2xl bg-[#F3E8FF] text-[#9333EA] font-bold text-sm border border-[#E8E0FA] whitespace-nowrap">검색</button>
                             </div>
-                            <div className="flex flex-col gap-2 p-4 bg-[#F8F5FF] rounded-2xl border border-[#E8E0FA]">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={signupForm.agreed.service} onChange={(e) => setSignupForm({ ...signupForm, agreed: { ...signupForm.agreed, service: e.target.checked } })} />
-                                    <span className="text-xs font-bold text-[#5B4E7A]">[필수] 서비스 이용약관 동의</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={signupForm.agreed.privacy} onChange={(e) => setSignupForm({ ...signupForm, agreed: { ...signupForm.agreed, privacy: e.target.checked } })} />
-                                    <span className="text-xs font-bold text-[#5B4E7A]">[필수] 개인정보처리방침 동의</span>
-                                </label>
+                            <input
+                                type="text"
+                                placeholder="상세주소 (동/호수 등)"
+                                value={signupForm.detailAddress}
+                                onChange={(e) => setSignupForm({ ...signupForm, detailAddress: e.target.value })}
+                                className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
+                            />
+                            {/* ── 약관 동의 ── */}
+                            <div className="rounded-2xl border border-[#E8E0FA] bg-[#F8F5FF] overflow-hidden">
+                                {/* 전체 동의 */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const allChecked = signupForm.agreed.service && signupForm.agreed.privacy && signupForm.agreed.third_party && signupForm.agreed.marketing;
+                                        setSignupForm(prev => ({ ...prev, agreed: { service: !allChecked, privacy: !allChecked, third_party: !allChecked, marketing: !allChecked } }));
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-3 border-b border-[#E8E0FA] hover:bg-[#F3E8FF] transition-colors"
+                                >
+                                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                        signupForm.agreed.service && signupForm.agreed.privacy && signupForm.agreed.third_party && signupForm.agreed.marketing
+                                            ? 'bg-[#9333EA] border-[#9333EA]' : 'border-[#9CA3AF]'
+                                    }`}>
+                                        {signupForm.agreed.service && signupForm.agreed.privacy && signupForm.agreed.third_party && signupForm.agreed.marketing &&
+                                            <span className="material-symbols-outlined text-white text-[13px]">check</span>}
+                                    </span>
+                                    <span className="text-sm font-black text-[#1F1235]">전체 약관 동의</span>
+                                    <span className="text-[11px] text-[#9CA3AF] ml-auto">(필수+선택 포함)</span>
+                                </button>
+                                {/* 개별 약관 */}
+                                {[
+                                    { id: 'service', label: '서비스 이용약관', required: true, content: TERMS_CONTENT.service },
+                                    { id: 'privacy', label: '개인정보처리방침', required: true, content: TERMS_CONTENT.privacy },
+                                    { id: 'third_party', label: '개인정보 제3자 제공', required: true, content: TERMS_CONTENT.third_party },
+                                    { id: 'marketing', label: '마케팅 수신 동의', required: false, content: TERMS_CONTENT.marketing },
+                                ].map((term) => (
+                                    <div key={term.id} className="border-b border-[#E8E0FA] last:border-b-0">
+                                        <div className="flex items-center gap-3 px-4 py-2.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSignupForm(prev => ({ ...prev, agreed: { ...prev.agreed, [term.id]: !prev.agreed[term.id] } }))}
+                                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                                    signupForm.agreed[term.id] ? 'bg-[#9333EA] border-[#9333EA]' : 'border-[#9CA3AF]'
+                                                }`}
+                                            >
+                                                {signupForm.agreed[term.id] && <span className="material-symbols-outlined text-white text-[11px]">check</span>}
+                                            </button>
+                                            <span className="text-xs font-bold text-[#5B4E7A] flex-1">
+                                                <span className={`font-black mr-1 ${term.required ? 'text-[#9333EA]' : 'text-[#9CA3AF]'}`}>{term.required ? '[필수]' : '[선택]'}</span>
+                                                {term.label}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setExpandedTerm(expandedTerm === term.id ? null : term.id)}
+                                                className="text-[10px] border border-[#E8E0FA] rounded-lg px-2 py-0.5 text-[#9CA3AF] hover:text-[#9333EA] hover:border-[#9333EA] transition-colors flex-shrink-0"
+                                            >
+                                                {expandedTerm === term.id ? '닫기' : '보기'}
+                                            </button>
+                                        </div>
+                                        {expandedTerm === term.id && (
+                                            <div className="px-4 pb-3">
+                                                <pre className="text-[10px] leading-relaxed whitespace-pre-wrap font-sans bg-white rounded-xl p-3 max-h-32 overflow-y-auto border border-[#E8E0FA] text-[#5B4E7A]">
+                                                    {term.content}
+                                                </pre>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                             {signupError && <p className="text-red-500 text-xs font-bold text-center">{signupError}</p>}
                             <button
@@ -517,7 +642,7 @@ const AgencyLanding = () => {
                                 disabled={signupLoading}
                                 className="w-full py-4 rounded-2xl bg-[#9333EA] text-white font-black text-lg shadow-moca hover:opacity-90 disabled:opacity-50 transition-all"
                             >
-                                {signupLoading ? '가입 중...' : '무료 가입하기'}
+                                {signupLoading ? '가입 중...' : '회원가입하기'}
                             </button>
                         </form>
                     </div>

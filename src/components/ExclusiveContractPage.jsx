@@ -43,7 +43,7 @@ const SignatureModal = ({ isOpen, onClose, onConfirm, existingSignature }) => {
                         <div className="w-8 h-8 rounded-lg bg-[#9333EA]/10 flex items-center justify-center">
                             <span className="material-symbols-outlined text-[#9333EA] text-[20px]">draw</span>
                         </div>
-                        <h3 className="text-[#1F1235] font-black text-lg">정자 서명</h3>
+                        <h3 className="text-[#1F1235] font-black text-lg">전자 서명</h3>
                     </div>
                     <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#EDE8FF] flex items-center justify-center hover:bg-[#E0DAFF] transition-colors">
                         <span className="material-symbols-outlined text-[#5B4E7A] text-[20px]">close</span>
@@ -51,13 +51,13 @@ const SignatureModal = ({ isOpen, onClose, onConfirm, existingSignature }) => {
                 </div>
                 
                 <div className="p-6">
-                    <p className="text-[#5B4E7A] text-sm mb-4 text-center font-medium">아래 영역에 이름을 정자로 서명해 주세요</p>
+                    <p className="text-[#5B4E7A] text-sm mb-4 text-center font-medium">아래 영역에 서명을 해주세요</p>
                     <div ref={containerRef} className="w-full bg-[#F8F5FF] rounded-2xl border-2 border-[#E8E0FA] overflow-hidden relative" style={{ touchAction: 'none' }} onTouchMove={preventScroll}>
                         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                             <div className="w-[90%] border-b-2 border-dashed border-[#E8E0FA]" />
                         </div>
                         <div className="absolute top-3 left-4 text-[10px] font-black tracking-widest text-[#9CA3AF] pointer-events-none uppercase">
-                            SIGN HERE (정자로 서명)
+                            SIGN HERE (서명해 주세요)
                         </div>
                         <SignatureCanvas ref={sigRef} penColor="#1F1235" minWidth={1.5} maxWidth={3} canvasProps={{ className: 'w-full cursor-crosshair', style: { height: '220px', width: '100%', touchAction: 'none' } }} />
                     </div>
@@ -276,7 +276,7 @@ const ExclusiveContractPage = () => {
                                         </div>
                                         <div className="text-center">
                                             <p className="text-[#9333EA] font-black text-sm">터치하여 서명하기</p>
-                                            <p className="text-[#9CA3AF] text-[10px] font-bold mt-0.5">이름을 정자로 서명해 주세요</p>
+                                            <p className="text-[#9CA3AF] text-[10px] font-bold mt-0.5">아래 영역에 서명을 해주세요</p>
                                         </div>
                                     </button>
                                 )}

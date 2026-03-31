@@ -42,13 +42,9 @@ export const saveUserToSupabase = async (userData) => {
             phone: userData.phone,
             email: userData.email || null,
             address: userData.address,
-            address_detail: userData.address_detail || null,
+            address_detail: userData.address_detail || userData.detailAddress || null,
             referral_source: userData.referralSource || [],
             grade: userData.grade || 'SILVER',
-            marketing_consent: userData.marketing_consent || false,
-            terms_consent: userData.terms_consent || false,
-            marketing_consent_at: userData.marketing_consent ? new Date().toISOString() : null,
-            terms_consent_at: userData.terms_consent ? new Date().toISOString() : null,
         }])
         .select()
         .single();
@@ -451,14 +447,6 @@ export const updateUserProfile = async (userId, updateData) => {
     if (patches.password) {
         patches.password_hash = simpleHash(patches.password);
         delete patches.password;
-    }
-
-    // 마케팅 동의 시점 기록
-    if (patches.marketing_consent === true) {
-        patches.marketing_consent_at = new Date().toISOString();
-    }
-    if (patches.terms_consent === true) {
-        patches.terms_consent_at = new Date().toISOString();
     }
 
     let targetId = userId;

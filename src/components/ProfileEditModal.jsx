@@ -125,8 +125,6 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                 phone: formData.phone,
                 address: formData.address,
                 address_detail: formData.address_detail || null,
-                marketing_consent: formData.marketing_consent,
-                terms_consent: formData.terms_consent,
             };
 
             if (formData.password?.trim()) {
