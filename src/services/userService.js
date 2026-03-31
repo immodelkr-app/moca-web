@@ -142,12 +142,30 @@ export const getUser = () => {
 export const isLoggedIn = () => !!getUser();
 
 /**
+ * 소셜 로그인 (간편 로그인) 시작
+ * @param {string} provider - 'kakao' | 'google'
+ */
+export const signInWithSocial = async (provider) => {
+    if (!isSupabaseEnabled()) {
+        throw new Error('Supabase가 활성화되지 않았습니다.');
+    }
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+            redirectTo: window.location.origin
+        }
+    });
+    if (error) throw error;
+};
+
+/**
  * 사용자 로그인 로직
  * @param {string} nickname
  * @param {string} password
  * @returns {Promise<{user, error}>}
  */
 export const loginUser = async (nickname, password) => {
+
     const hash = simpleHash(password);
 
     if (isSupabaseEnabled()) {

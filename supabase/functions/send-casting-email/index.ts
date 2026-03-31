@@ -10,8 +10,11 @@ serve(async (req) => {
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
-
     try {
+        const body = await req.json();
+
+        console.log("[send-casting-email] 요청 수신:", JSON.stringify(body));
+
         const {
             modelName,
             modelPhone,
@@ -24,14 +27,19 @@ serve(async (req) => {
             careerOther = "",
             agencyName,
             agencyEmail,
-        } = await req.json();
+            currentPhotoUrls = [],
+        } = body;
 
         const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-        if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY 환경변수가 설정되지 않았습니다.");
-        if (!agencyEmail) throw new Error("에이전시 이메일이 없습니다.");
-        if (!portfolioLink) throw new Error("프로필 링크가 없습니다.");
+        if (!RESEND_API_KEY) {
+            console.error("RESEND_API_KEY 환경변수가 누락되었습니다.");
+            throw new Error("서버 설정 오류 (API Key 미설정)");
+        }
+        if (!agencyEmail) throw new Error("에이전시 이메일 주소가 누락되었습니다.");
+        if (!portfolioLink) throw new Error("모델 프로필(포트폴리오) 링크가 없습니다.");
 
-        const subject = `광고모델 ${modelName}님의 프로필 정보입니다.`;
+        const subject = `[아임모카] 광고모델 ${modelName}님의 프로필 정보입니다.`;
+
 
         const currentYear = new Date().getFullYear();
         const manAge = modelAge ? currentYear - parseInt(modelAge) : null;

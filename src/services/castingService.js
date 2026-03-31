@@ -142,8 +142,6 @@ export const getSendInfo = (sends, agencyName) => {
     return { sent: true, timeAgo: getSendTimeAgo(record.sentAt) };
 };
 
-// ── 실제 이메일 발송 (Supabase Edge Function 호출) ───────────────
-
 /**
  * 이력서 이메일 발송
  * @param {Object} params
@@ -153,54 +151,40 @@ export const getSendInfo = (sends, agencyName) => {
  * @returns {Promise<{success: boolean, id?: string, error?: string}>}
  */
 export const sendCastingEmail = async ({ modelData, agencyName, agencyEmail, currentPhotoUrls = [] }) => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !anonKey) {
+    if (!isSupabaseEnabled()) {
         return { success: false, error: 'Supabase 환경변수가 설정되지 않았습니다.' };
     }
 
     try {
-        const response = await fetch(
-            `${supabaseUrl}/functions/v1/send-casting-email`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${anonKey}`,
-                },
-                body: JSON.stringify({
-                    modelName: modelData.name || modelData.nickname,
-                    modelPhone: modelData.phone || '',
-                    modelHeight: modelData.height || '',
-                    modelWeight: modelData.weight || '',
-                    modelAge: modelData.age || '',
-                    modelShoeSize: modelData.shoe_size || '',
-                    portfolioLink: modelData.portfolio_link,
-                    careerAd: modelData.career_ad || '',
-                    careerOther: modelData.career_other || '',
-                    currentPhotoUrls,
-                    agencyName,
-                    agencyEmail,
-                }),
-            }
-        );
+        console.log('[sendCastingEmail] 발송 시도:', { agencyName, agencyEmail });
 
-        let result;
-        try {
-            result = await response.json();
-        } catch (parseErr) {
-            console.error('[sendCastingEmail] JSON 파싱 실패, status:', response.status);
-            // Edge Function이 응답은 보냈지만 JSON이 아닌 경우
-            if (response.ok) return { success: true };
-            return { success: false, error: `서버 응답 오류 (${response.status})` };
+        const { data, error } = await supabase.functions.invoke('send-casting-email', {
+            body: {
+                modelName: modelData.name || modelData.nickname,
+                modelPhone: modelData.phone || '',
+                modelHeight: modelData.height || '',
+                modelWeight: modelData.weight || '',
+                modelAge: modelData.age || '',
+                modelShoeSize: modelData.shoe_size || '',
+                portfolioLink: modelData.portfolio_link,
+                careerAd: modelData.career_ad || '',
+                careerOther: modelData.career_other || '',
+                currentPhotoUrls,
+                agencyName,
+                agencyEmail,
+            }
+        });
+
+        if (error) {
+            console.error('[sendCastingEmail] Edge Function 호출 오류:', error);
+            return { success: false, error: error.message || '서버 통신 중 오류가 발생했습니다.' };
         }
 
-        console.log('[sendCastingEmail] 응답:', response.status, result);
-        return result;
+        console.log('[sendCastingEmail] 발송 결과:', data);
+        return data; // { success: true/false, id, error }
     } catch (err) {
-        console.error('[sendCastingEmail] 네트워크 오류:', err);
-        // 네트워크 타임아웃/연결 끊김 - 실제로는 발송됐을 가능성이 높음
-        return { success: true, networkError: true };
+        console.error('[sendCastingEmail] 예외 발생:', err);
+        return { success: false, error: '네트워크 연결 상태를 확인해주세요.' };
     }
 };
+

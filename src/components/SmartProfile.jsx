@@ -28,6 +28,7 @@ const SmartProfile = () => {
     const [saved, setSaved] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [pickerLoading, setPickerLoading] = useState(false);
+    const [isMobileApp, setIsMobileApp] = useState(false);
 
     // 현재모습 사진 관련
     const currentPhotoInputRef = useRef(null);
@@ -53,6 +54,12 @@ const SmartProfile = () => {
         if (user.id || user.nickname) {
             fetchUserCurrentPhotos(user.id, user.nickname).then(setCurrentPhotos);
         }
+
+        // 모바일 앱(Capacitor/WebView) 환경 감지
+        const isCapacitor = window.Capacitor?.platform !== 'web' || 
+                            /Capacitor/i.test(navigator.userAgent) || 
+                            window.webkit?.messageHandlers?.bridge;
+        setIsMobileApp(isCapacitor);
     }, []);
 
     const initTokenClient = () => {
@@ -169,10 +176,7 @@ const SmartProfile = () => {
                 } else if (attempts >= 25) {
                     clearInterval(retry);
                     setPickerLoading(false);
-                     const isCapacitor = window.Capacitor?.platform !== 'web' || /Capacitor/i.test(navigator.userAgent) || window.webkit?.messageHandlers?.bridge;
-                     setErrorMsg(isCapacitor 
-                         ? '모바일 앱(APK)은 구글 정책상 직접 로그인이 제한될 수 있습니다. 웹사이트(immoca.kr)에서 "스마트 프로필"을 등록하시면 앱에도 바로 반영됩니다.'
-                         : 'Google 연동 서비스에 응답이 없습니다. 잠시 후 새로고침하여 다시 시도해주세요.');
+                     setErrorMsg('Google 연동 서비스에 응답이 없습니다. 잠시 후 새로고침하여 다시 시도해주세요.');
                 }
             }, 200);
             return;
@@ -416,7 +420,7 @@ const SmartProfile = () => {
                         <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-500 text-[10px] font-black">필수</span>
                     </div>
                     <p className="text-[#5B4E7A] text-xs leading-relaxed mb-4">
-                        구글드라이브에서 파일 또는 폴더를 선택하면<br />링크가 자동으로 입력됩니다.
+                        구글드라이브에서 파일 또는 폴더를 선택하면<br/>링크가 자동으로 입력됩니다.
                     </p>
 
                     <button
@@ -443,6 +447,15 @@ const SmartProfile = () => {
                             </>
                         )}
                     </button>
+
+                    {isMobileApp && !formData.portfolio_link && (
+                        <div className="mt-1 mb-4 px-1">
+                            <p className="text-[10px] text-[#9333EA] font-bold leading-relaxed flex items-start gap-1">
+                                <span className="material-symbols-outlined text-[12px] mt-0.5">info</span>
+                                팁: 앱 내에서 연동이 안될 경우, 구글드라이브 앱에서 '링크 복사' 후 아래에 직접 붙여넣으셔도 됩니다.
+                            </p>
+                        </div>
+                    )}
 
                     {formData.portfolio_link && (
                         <div className={`flex items-center gap-2 p-3 rounded-xl border ${isDriveUrl(formData.portfolio_link)

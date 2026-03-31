@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DaumPostcode from 'react-daum-postcode';
 import { fetchAgencies } from '../services/agencyService';
-import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser, checkNicknameDuplicate } from '../services/userService';
+import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser, checkNicknameDuplicate, signInWithSocial } from '../services/userService';
+import { loginWithPasskey } from '../services/passkeyService';
 import ProfileEditModal from './ProfileEditModal';
 import TermsModal from './shop/TermsModal';
 import FindAccountModal from './FindAccountModal';
@@ -209,6 +210,20 @@ const AgencyLanding = () => {
             navigate(path);
         } else {
             handleLoginClick();
+        }
+    };
+
+    const handlePasskeyLogin = async () => {
+        try {
+            const { success } = await loginWithPasskey();
+            if (success) {
+                console.log('[Passkey] Login Success');
+                // useAuthSync will handle reload
+            }
+        } catch (err) {
+            console.error('[Passkey] Login Error:', err);
+            if (err.message?.includes('abandoned')) return;
+            alert('지문 인식에 실패했습니다. (등록된 기기가 아니거나 취소됨)');
         }
     };
 
@@ -454,8 +469,44 @@ const AgencyLanding = () => {
                                 {loginLoading ? '로그인 중...' : '로그인'}
                             </button>
                         </form>
+
+                        {/* 간편 로그인 섹션 */}
+                        <div className="mt-8">
+                            <div className="relative flex items-center justify-center mb-6">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-[#E8E0FA]"></div>
+                                </div>
+                                <span className="relative px-4 bg-white text-[11px] font-black text-[#9CA3AF] uppercase tracking-widest">간편 로그인</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-2">
+                                <button 
+                                    onClick={() => signInWithSocial('kakao')}
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#FEE500] text-[#191919] font-black text-sm hover:opacity-90 transition-all active:scale-[0.98]"
+                                >
+                                    <img src="https://developers.kakao.com/assets/img/about/logos/kakaotalksharing/kakaolink_help_icon.png" alt="Kakao" className="w-5 h-5 rounded-md" />
+                                    <span>카카오</span>
+                                </button>
+                                <button 
+                                    onClick={() => signInWithSocial('google')}
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border border-[#E8E0FA] text-[#1F1235] font-black text-sm hover:bg-[#F8F5FF] transition-all active:scale-[0.98]"
+                                >
+                                    <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
+                                    <span>Google</span>
+                                </button>
+                                <button 
+                                    onClick={handlePasskeyLogin}
+                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#9333EA] text-white font-black text-sm hover:opacity-90 transition-all active:scale-[0.98] shadow-moca"
+                                >
+                                    <span className="material-symbols-outlined text-[20px]">fingerprint</span>
+                                    <span>지문</span>
+                                </button>
+                            </div>
+                        </div>
+
+
                         {/* 아이디 찾기 / 비밀번호 찾기 */}
-                        <div className="flex items-center justify-center gap-3 mt-5 mb-1">
+                        <div className="flex items-center justify-center gap-3 mt-8 mb-1">
                             <button
                                 type="button"
                                 onClick={() => setFindMode('id')}
@@ -477,6 +528,7 @@ const AgencyLanding = () => {
                                 아직 회원이 아니신가요? <span className="text-[#9333EA]">회원가입</span>
                             </button>
                         </div>
+
                     </div>
                 </div>
             )}

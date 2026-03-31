@@ -33,11 +33,14 @@ import PaymentFail from './components/shop/PaymentFail';
 import ClassPaymentSuccess from './components/payment/ClassPaymentSuccess';
 import { usePageView } from './hooks/usePageView';
 import { useAutoLogout } from './hooks/useAutoLogout';
+import { useAuthSync } from './hooks/useAuthSync';
 import PopupBanner from './components/PopupBanner';
 
 function AppContent() {
     usePageView(); // 라우트 변경 감지 및 조회수 기록
     useAutoLogout(); // 자동 로그아웃 체크 타이머 등록
+    useAuthSync(); // 소셜 로그인 상태 감지 및 동기화
+
     const location = useLocation();
     const isAdmin = location.pathname.startsWith('/admin');
 
