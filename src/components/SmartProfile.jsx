@@ -648,10 +648,10 @@ const SmartProfile = () => {
                 {hasProfile && (
                     <button
                         onClick={() => navigate('/agencies')}
-                        className="w-full py-4 rounded-2xl text-[#7C3AED] font-black text-base border border-[#E8E0FA] bg-[#F3E8FF] hover:bg-[#EDE8FF] active:scale-[0.98] transition-all"
+                        className="w-full py-5 rounded-2xl text-white font-black text-lg bg-gradient-to-r from-[#7C3AED] to-[#9333EA] shadow-xl shadow-[#7C3AED]/30 hover:opacity-95 active:scale-[0.98] transition-all"
                     >
-                        <span className="flex items-center justify-center gap-2">
-                            <span className="material-symbols-outlined text-[20px]">forward_to_inbox</span>
+                        <span className="flex items-center justify-center gap-3">
+                            <span className="material-symbols-outlined text-[24px]">forward_to_inbox</span>
                             에이전시 리스트에서 프로필발송 →
                         </span>
                     </button>

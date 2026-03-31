@@ -195,7 +195,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
                 {/* 이력서 쏘기 버튼 */}
                 <button
                     onClick={() => onSend(agency)}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border transition-all cursor-pointer font-bold text-[13px] active:scale-[0.97] bg-[#10B981]/10 hover:bg-[#10B981]/20 border-[#10B981]/30 text-[#34D399]"
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl transition-all cursor-pointer font-black text-[13px] active:scale-[0.97] bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/25"
                 >
                     <span className="material-symbols-outlined text-[18px]">forward_to_inbox</span>
                     프로필발송
