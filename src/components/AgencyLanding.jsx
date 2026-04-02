@@ -461,40 +461,8 @@ const AgencyLanding = () => {
                             </button>
                         </form>
 
-                        {/* 간편 로그인 섹션 */}
-                        <div className="mt-8">
-                            <div className="relative flex items-center justify-center mb-6">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-[#E8E0FA]"></div>
-                                </div>
-                                <span className="relative px-4 bg-white text-[11px] font-black text-[#9CA3AF] uppercase tracking-widest">간편 로그인</span>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-3">
-                                <button 
-                                    onClick={() => signInWithSocial('kakao')}
-                                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-3xl bg-[#FEE500] text-[#191919] font-black text-[11px] hover:opacity-95 shadow-sm transition-all active:scale-[0.96]"
-                                >
-                                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/KakaoTalk_logo.svg" alt="Kakao" className="w-5 h-5" />
-                                    </div>
-                                    <span>카카오 로그인</span>
-                                </button>
-                                <button 
-                                    onClick={() => signInWithSocial('google')}
-                                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-3xl bg-white border border-[#E8E0FA] text-[#1F1235] font-black text-[11px] hover:bg-[#F8F5FF] shadow-sm transition-all active:scale-[0.96]"
-                                >
-                                    <div className="w-8 h-8 rounded-xl bg-[#F8F5FF] flex items-center justify-center">
-                                        <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                                    </div>
-                                    <span>Google 로그인</span>
-                                </button>
-                            </div>
-                        </div>
-
-
                         {/* 아이디 찾기 / 비밀번호 찾기 */}
-                        <div className="flex items-center justify-center gap-3 mt-8 mb-1">
+                        <div className="flex items-center justify-center gap-3 mt-6 mb-1">
                             <button
                                 type="button"
                                 onClick={() => setFindMode('id')}
