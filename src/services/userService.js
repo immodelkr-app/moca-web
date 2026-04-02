@@ -152,7 +152,7 @@ export const signInWithSocial = async (provider) => {
     const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-            redirectTo: window.location.origin
+            redirectTo: window.location.origin + '/'
         }
     });
     if (error) throw error;
@@ -282,9 +282,20 @@ export const resetUserPassword = async (nickname, phone, newPassword) => {
 /**
  * 로그아웃
  */
-export const logoutUser = () => {
+export const logoutUser = async () => {
+    // 1. 로컬 저장소를 먼저 비워 UI가 즉시 반응하게 함
     localStorage.removeItem(USER_KEY);
+
+    // 2. Supabase 세션 종료 (await으로 완전히 종료 후 반환)
+    try {
+        if (isSupabaseEnabled()) {
+            await supabase.auth.signOut();
+        }
+    } catch (error) {
+        console.error('[userService] SignOut Error:', error);
+    }
 };
+
 
 /**
  * 회원 등급 조회
@@ -314,21 +325,35 @@ export const syncUserGrade = async () => {
     if (!user || (!user.id && !user.nickname)) return;
 
     try {
-        // [개선] ID가 있더라도 닉네임으로 '최신' 레코드를 먼저 확인하여 세션을 교정함
-        // (어드민에서 중복 레코드 중 다른 것을 수정했을 경우를 대비)
+        // [개선] 닉네임으로 모든 레코드를 가져와서 가장 '높은 등급'을 가진 정보를 우선함
         const { data: dbRows, error: fetchError } = await supabase
             .from('users')
-            .select('id, grade, grade_expires_at, name, phone, address, address_detail, nickname')
+            .select('*')
             .eq('nickname', user.nickname)
-            .order('created_at', { ascending: false })
-            .limit(1);
+            .order('created_at', { ascending: false });
 
         if (fetchError) {
             console.error('[syncUserGrade] DB Fetch Error:', fetchError);
             return;
         }
 
-        const data = dbRows && dbRows.length > 0 ? dbRows[0] : null;
+        // ── [핵심] 가장 '좋은' 계정 선택 (어드민 설정 우선) ──
+        let data = null;
+        const gradePriority = { VVIP: 4, VIP: 3, GOLD: 2, SILVER: 1, BASIC: 1 };
+
+        if (dbRows && dbRows.length > 0) {
+            dbRows.forEach(u => {
+                if (!data) {
+                    data = u;
+                } else {
+                    const bestPrio = gradePriority[data.grade] || 0;
+                    const currentPrio = gradePriority[u.grade] || 0;
+                    if (currentPrio > bestPrio) {
+                        data = u; // 어드민에서 설정한 더 높은 등급 발견
+                    }
+                }
+            });
+        }
 
         if (data) {
             let currentGrade = data.grade === 'BASIC' ? 'SILVER' : (data.grade || 'SILVER');
@@ -347,10 +372,17 @@ export const syncUserGrade = async () => {
                 }
             }
 
-            // 로컬 데이터 동기화 (등급 차이, ID 불일치, 또는 만료일 필드 불일치 시)
+            // 로컬 데이터 동기화 (등급 차이, ID 불일치, 또는 프로필 데이터 불일치 시)
             const shouldSync = user.grade !== currentGrade ||
                 user.id !== data.id ||
-                user.grade_expires_at !== data.grade_expires_at;
+                user.grade_expires_at !== data.grade_expires_at ||
+                user.portfolio_link !== data.portfolio_link ||
+                user.shoe_size !== data.shoe_size ||
+                user.career_ad !== data.career_ad ||
+                user.career_other !== data.career_other ||
+                user.age !== data.age ||
+                user.height !== data.height ||
+                user.weight !== data.weight;
 
             if (shouldSync) {
                 console.log(`[syncUserGrade] Syncing: ${user.grade} -> ${currentGrade}, ID: ${user.id} -> ${data.id}`);
@@ -363,7 +395,14 @@ export const syncUserGrade = async () => {
                     name: data.name || user.name,
                     phone: data.phone || user.phone,
                     address: data.address || user.address,
-                    address_detail: data.address_detail || user.address_detail
+                    address_detail: data.address_detail || user.address_detail,
+                    portfolio_link: data.portfolio_link || user.portfolio_link,
+                    shoe_size: data.shoe_size || user.shoe_size,
+                    career_ad: data.career_ad || user.career_ad,
+                    career_other: data.career_other || user.career_other,
+                    age: data.age || user.age,
+                    height: data.height || user.height,
+                    weight: data.weight || user.weight
                 });
             } else {
                 console.log('[syncUserGrade] Already in sync, no update needed.');

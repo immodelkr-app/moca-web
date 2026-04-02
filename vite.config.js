@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [react()],
-    base: './', // Capacitor Android 로컬 파일 로딩을 위해 필요
+    base: '/', // Vercel 배포 및 딥 링크(/home/dashboard)에서 자산 경로를 정확히 잡기 위해 루트(/)로 변경
     server: {
         host: true, // open to local network
         port: 5173, // default port

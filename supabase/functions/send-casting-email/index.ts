@@ -95,7 +95,7 @@ serve(async (req) => {
   <div class="wrap">
     <div class="card">
       <div class="header">
-        <div class="header-badge">🎯 아임모카 · 스마트 캐스팅</div>
+        <div class="header-badge">🎯 아임모카 · 프로필 전달</div>
         <h1>
           <span>${agencyName} 담당자님께</span>
           광고모델 ${modelName}님의 프로필 정보입니다.
@@ -147,7 +147,7 @@ serve(async (req) => {
       <div class="footer">
         <p>
           이 메일은 <strong>아임모카 앱</strong>을 통해 자동 발송되었습니다.<br>
-          Powered by 아임모카 · 광고모델 스마트 캐스팅
+          Powered by 아임모카 · 광고모델 프로필 전달
         </p>
       </div>
     </div>
@@ -157,6 +157,14 @@ serve(async (req) => {
 
         console.log("[send-casting-email] 요청 시작:", { agencyEmail, agencyName, modelName });
 
+        // ── 수신자 리스트 생성 & 중복 제거 ─────────────────────────
+        // Resend API는 [A, A] 처럼 중복된 수신자가 있으면 400 에러를 냅니다.
+        const recipients = [agencyEmail];
+        if (body.userEmail && body.userEmail.trim() !== "") {
+            recipients.push(body.userEmail.trim());
+        }
+        const uniqueTo = Array.from(new Set(recipients.filter(email => email && email.includes('@'))));
+
         const resendResponse = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
@@ -165,7 +173,7 @@ serve(async (req) => {
             },
             body: JSON.stringify({
                 from: `아임모카 캐스팅 <immodel@immodel.kr>`,
-                to: [agencyEmail],
+                to: uniqueTo,
                 subject,
                 html,
             }),

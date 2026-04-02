@@ -26,7 +26,7 @@ const MOCA_BENEFITS_ITEMS = [
     { icon: 'card_membership',     label: '멤버십 구독',    route: '/upgrade',         color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/25' },
 ];
 
-import { isPasskeySupported, registerPasskey } from '../services/passkeyService';
+
 
 const HomeDashboard = () => {
     const navigate = useNavigate();
@@ -39,10 +39,7 @@ const HomeDashboard = () => {
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [animKey, setAnimKey] = useState(0);
 
-    const [passkeySupported, setPasskeySupported] = useState(false);
-
     useEffect(() => {
-        setPasskeySupported(isPasskeySupported());
         // 최신 회원 등급 백그라운드 동기화
         syncUserGrade().then(() => {
             setGrade(getUserGrade() || 'SILVER');
@@ -55,15 +52,7 @@ const HomeDashboard = () => {
         }).catch(() => { });
     }, []);
 
-    const handleRegisterPasskey = async () => {
-        try {
-            await registerPasskey();
-            alert('이 기기에 지문이 성공적으로 등록되었습니다.\n이제 지문 버튼만으로 로그인이 가능합니다.');
-        } catch (err) {
-            if (err.message?.includes('abandoned')) return;
-            alert('지문 등록에 실패했습니다. (기기 미지원 또는 취소)');
-        }
-    };
+
 
     const handleTabChange = (tab) => {
         if (tab === activeTab) return;
@@ -91,16 +80,7 @@ const HomeDashboard = () => {
                         </span>
                         님! 👋
                     </h1>
-                    {/* 지문 등록 안내 (지원 시에만) */}
-                    {passkeySupported && (
-                        <button 
-                            onClick={handleRegisterPasskey}
-                            className="mt-2 flex items-center gap-1 text-[11px] font-bold text-[#9333EA] hover:opacity-80 transition-opacity"
-                        >
-                            <span className="material-symbols-outlined text-[14px]">fingerprint</span>
-                            이 기기에 지문 로그인 등록하기
-                        </button>
-                    )}
+
                 </div>
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     {/* 등급 배지 */}

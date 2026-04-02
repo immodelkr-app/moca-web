@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import DaumPostcode from 'react-daum-postcode';
 import { fetchAgencies } from '../services/agencyService';
 import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser, checkNicknameDuplicate, signInWithSocial } from '../services/userService';
-import { loginWithPasskey } from '../services/passkeyService';
+
 import ProfileEditModal from './ProfileEditModal';
 import TermsModal from './shop/TermsModal';
 import FindAccountModal from './FindAccountModal';
@@ -150,6 +150,7 @@ const AgencyLanding = () => {
         }).catch(() => setLoaded(true));
     }, []);
 
+
     // ── Auth State ──
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userId, setUserId] = useState('');
@@ -213,19 +214,7 @@ const AgencyLanding = () => {
         }
     };
 
-    const handlePasskeyLogin = async () => {
-        try {
-            const { success } = await loginWithPasskey();
-            if (success) {
-                console.log('[Passkey] Login Success');
-                // useAuthSync will handle reload
-            }
-        } catch (err) {
-            console.error('[Passkey] Login Error:', err);
-            if (err.message?.includes('abandoned')) return;
-            alert('지문 인식에 실패했습니다. (등록된 기기가 아니거나 취소됨)');
-        }
-    };
+
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
@@ -428,8 +417,10 @@ const AgencyLanding = () => {
                         </div>
                         {showRefundPolicy && <RefundPolicyModal onClose={() => setShowRefundPolicy(false)} />}
                         <p className="text-[#9CA3AF] text-[10px] text-center md:text-right leading-loose">
-                            대표 : 김대희 | 사업자등록번호 : 365-22-00947 | 통신판매업 제2021-서울강남-05756호<br />
-                            서울시 영등포구 영중로 159, 7층 글로벌아임 | immodelkr@gmail.com | 호스팅서비스: Vercel Inc.
+                            <span className="font-bold text-[#7C3AED]">아임모카</span> 대표 : 김대희 | 사업자등록번호 : 365-22-00947 | 통신판매업 제2021-서울강남-05756호<br />
+                            서울시 영등포구 영중로 159, 7층<br />
+                            <span className="font-bold text-[#7C3AED]">글로벌아임</span> 서울시 강남구 도곡로17길 16, 102동 303호<br />
+                            immodelkr@gmail.com | 호스팅서비스: Vercel Inc.
                         </p>
                     </div>
                 </div>
@@ -479,27 +470,24 @@ const AgencyLanding = () => {
                                 <span className="relative px-4 bg-white text-[11px] font-black text-[#9CA3AF] uppercase tracking-widest">간편 로그인</span>
                             </div>
                             
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 gap-3">
                                 <button 
                                     onClick={() => signInWithSocial('kakao')}
-                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#FEE500] text-[#191919] font-black text-sm hover:opacity-90 transition-all active:scale-[0.98]"
+                                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-3xl bg-[#FEE500] text-[#191919] font-black text-[11px] hover:opacity-95 shadow-sm transition-all active:scale-[0.96]"
                                 >
-                                    <img src="https://developers.kakao.com/assets/img/about/logos/kakaotalksharing/kakaolink_help_icon.png" alt="Kakao" className="w-5 h-5 rounded-md" />
-                                    <span>카카오</span>
+                                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/KakaoTalk_logo.svg" alt="Kakao" className="w-5 h-5" />
+                                    </div>
+                                    <span>카카오 로그인</span>
                                 </button>
                                 <button 
                                     onClick={() => signInWithSocial('google')}
-                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border border-[#E8E0FA] text-[#1F1235] font-black text-sm hover:bg-[#F8F5FF] transition-all active:scale-[0.98]"
+                                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-3xl bg-white border border-[#E8E0FA] text-[#1F1235] font-black text-[11px] hover:bg-[#F8F5FF] shadow-sm transition-all active:scale-[0.96]"
                                 >
-                                    <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
-                                    <span>Google</span>
-                                </button>
-                                <button 
-                                    onClick={handlePasskeyLogin}
-                                    className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[#9333EA] text-white font-black text-sm hover:opacity-90 transition-all active:scale-[0.98] shadow-moca"
-                                >
-                                    <span className="material-symbols-outlined text-[20px]">fingerprint</span>
-                                    <span>지문</span>
+                                    <div className="w-8 h-8 rounded-xl bg-[#F8F5FF] flex items-center justify-center">
+                                        <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+                                    </div>
+                                    <span>Google 로그인</span>
                                 </button>
                             </div>
                         </div>
@@ -627,6 +615,18 @@ const AgencyLanding = () => {
                                 onChange={(e) => setSignupForm({ ...signupForm, detailAddress: e.target.value })}
                                 className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
                             />
+
+                            {/* [신규] 이메일 입력 (선택) */}
+                            <div className="flex flex-col gap-1">
+                                <input
+                                    type="email"
+                                    placeholder="이메일 주소 (선택)"
+                                    value={signupForm.email}
+                                    onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+                                    className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
+                                />
+                                <p className="text-[10px] text-[#9CA3AF] font-bold ml-2">프로필 발송 시 확인용 메일이 전송됩니다.</p>
+                            </div>
                             {/* ── 약관 동의 ── */}
                             <div className="rounded-2xl border border-[#E8E0FA] bg-[#F8F5FF] overflow-hidden">
                                 {/* 전체 동의 */}

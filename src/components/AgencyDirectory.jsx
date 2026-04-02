@@ -244,11 +244,13 @@ const AgencyDirectory = () => {
         setTimeout(() => setToast(null), 3500);
     };
 
+    const isUnlimited = grade === 'GOLD' || grade === 'VIP';
+
     const handleSend = async (agency) => {
         if (sending) return;
 
-        // 실버 멤버 하루 한도 체크
-        if (grade !== 'GOLD') {
+        // 실버 멤버 하루 한도 체크 (GOLD/VIP는 무제한)
+        if (!isUnlimited) {
             const status = getSilverStatus(userId);
             if (status.blocked) {
                 setSilverLimitModal({ isAlreadyBlocked: true, daysLeft: status.daysLeft });
@@ -269,7 +271,7 @@ const AgencyDirectory = () => {
         }
 
         const monthCount = getMonthlyCount(sendHistory);
-        if (grade !== 'GOLD' && monthCount >= SILVER_MONTHLY_LIMIT) {
+        if (!isUnlimited && monthCount >= SILVER_MONTHLY_LIMIT) {
             showToast(`이번 달 무료 발송(${SILVER_MONTHLY_LIMIT}회)을 모두 사용했습니다. 골드 멤버십으로 무제한 발송!`, 'error');
             setTimeout(() => navigate('/upgrade'), 1800);
             return;
@@ -296,25 +298,34 @@ const AgencyDirectory = () => {
             });
 
             if (!success) {
-                console.error('[프로필발송 오류]', error);
-                showToast(error || '발송 중 오류가 발생했습니다.', 'error');
+                console.error('[프로필발송 실패]', { agencyName: agency.name, error });
+                // 서버가 보내주는 구체적인 에러 메시지를 우선 표시
+                showToast(error || '발송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
                 return;
             }
 
             // 발송 기록 저장
             const record = await saveCastingSend(userId, agency.name);
-            setSendHistory(prev => [...prev.filter(s => s.agencyName !== agency.name), record]);
+            
+            // 상태 업데이트 (함수형 업데이트 사용으로 최신 상태 보장)
+            setSendHistory(prev => {
+                const filtered = prev.filter(s => s.agencyName !== agency.name);
+                const updated = [...filtered, record];
+                
+                // 남은 횟수 계산 (메시지 표시용)
+                const monthCount = getMonthlyCount(updated);
+                const remaining = isUnlimited ? '무제한' : `${SILVER_MONTHLY_LIMIT - monthCount}회 남음`;
+                
+                showToast(`✅ ${agency.name}에 프로필을 발송했습니다! (이번 달 ${remaining})`, 'success');
+                return updated;
+            });
 
-            const newHistory = [...sendHistory.filter(s => s.agencyName !== agency.name), record];
-            const remaining = grade === 'GOLD'
-                ? '무제한'
-                : `${SILVER_MONTHLY_LIMIT - getMonthlyCount(newHistory)}회 남음`;
-
-            showToast(`✅ ${agency.name}에 프로필을 발송했습니다! (이번 달 ${remaining})`, 'success');
             setCastingModal(null);
         } catch (err) {
             console.error('[프로필발송 예외]', err);
-            showToast('발송 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+            // 디테일한 에러 메시지가 있으면 표시, 없으면 공백 포함된 정확한 문구 표시
+            const msg = err?.message || '발송 중 오류가 발생했습니다. 다시 시도해 주세요.';
+            showToast(msg, 'error');
         } finally {
             setSending(false);
         }
@@ -352,8 +363,8 @@ const AgencyDirectory = () => {
     const handleActionClick = (e, agency, url) => {
         const currentGrade = getUserGrade();
 
-        // GOLD 모카는 무제한 패스
-        if (currentGrade === 'GOLD') {
+        // GOLD/VIP 모카는 무제한 패스
+        if (currentGrade === 'GOLD' || currentGrade === 'VIP') {
             if (!url) setSelectedAgency(agency);
             return;
         }
@@ -443,7 +454,23 @@ const AgencyDirectory = () => {
                 </div>
 
                 {/* 이력서 발송 현황 배너 */}
-                {grade !== 'GOLD' && (
+                {isUnlimited ? (
+                    <div
+                        className="flex items-center gap-4 px-6 py-4 rounded-3xl bg-white border border-[#E8E0FA] mb-6 cursor-pointer hover:bg-[#F8F5FF] transition-all shadow-sm group"
+                        onClick={() => navigate('/home/smart-profile')}
+                    >
+                        <div className="w-12 h-12 rounded-2xl bg-[#A78BFA]/10 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                            <span className="material-symbols-outlined text-[24px] text-[#A78BFA]">all_inclusive</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[#1F1235] font-black text-[15px]">
+                                이번 달 이력서 발송: <span className="text-[#A78BFA]">무제한</span>
+                            </p>
+                            <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold">✨ {grade === 'VIP' ? '전속모델' : '골드'} 혜택 · 무제한 발송 가능 · 탭하여 내 프로필 설정</p>
+                        </div>
+                        <span className="material-symbols-outlined text-[20px] text-[#E8E0FA] group-hover:text-[#9333EA] transition-colors">chevron_right</span>
+                    </div>
+                ) : (
                     <div
                         className="flex items-center gap-4 px-6 py-4 rounded-3xl bg-white border border-[#E8E0FA] mb-6 cursor-pointer hover:bg-[#F8F5FF] transition-all shadow-sm group"
                         onClick={() => navigate('/home/smart-profile')}

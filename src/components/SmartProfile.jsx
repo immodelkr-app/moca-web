@@ -494,62 +494,6 @@ const SmartProfile = () => {
                     )}
                 </div>
 
-                {/* ── 이메일 미리보기 ── */}
-                {hasProfile && (
-                    <div className="space-y-2.5">
-                        <div className="flex items-center gap-2 px-1">
-                            <span className="material-symbols-outlined text-[15px] text-[#9333EA]">preview</span>
-                            <p className="font-black text-[#5B4E7A] text-[11px] tracking-wide uppercase">에이전시가 받을 이메일 미리보기</p>
-                        </div>
-                        <div className="bg-white border border-[#E8E0FA] rounded-2xl overflow-hidden shadow-sm">
-                            <div className="px-5 py-3 border-b border-[#E8E0FA] bg-[#F8F5FF]">
-                                <p className="text-[#9CA3AF] text-[10px] mb-0.5">발신: casting@immoca.kr</p>
-                                <p className="text-[#1F1235] text-[13px] font-black">
-                                    광고모델 {formData.name || user?.name || user?.nickname}님의 프로필 정보입니다.
-                                </p>
-                            </div>
-                            <div className="px-5 py-4 space-y-3.5">
-                                <div>
-                                    <p className="font-black text-[#1F1235] text-base">{formData.name || user?.name || user?.nickname}</p>
-                                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                                        {formData.age && <span className="text-[#5B4E7A] text-xs font-medium">{formData.age}년생</span>}
-                                        {formData.height && <span className="text-[#5B4E7A] text-xs font-medium">키 {formData.height}cm</span>}
-                                        {formData.weight && <span className="text-[#5B4E7A] text-xs font-medium">{formData.weight}kg</span>}
-                                        {formData.shoe_size && <span className="text-[#5B4E7A] text-xs font-medium">신발 {formData.shoe_size}mm</span>}
-                                        {user?.phone && <span className="text-[#5B4E7A] text-xs font-medium">{user.phone}</span>}
-                                    </div>
-                                </div>
-                                {formData.career_ad && (
-                                    <div className="bg-[#F8F5FF] p-3 rounded-xl border border-[#E8E0FA]">
-                                        <p className="text-[#9333EA] text-[10px] font-black uppercase mb-1">광고모델 경력</p>
-                                        <p className="text-[#5B4E7A] text-xs leading-relaxed font-medium whitespace-pre-wrap">{formData.career_ad}</p>
-                                    </div>
-                                )}
-                                {formData.career_other && (
-                                    <div className="bg-[#F8F5FF] p-3 rounded-xl border border-[#E8E0FA]">
-                                        <p className="text-[#9333EA] text-[10px] font-black uppercase mb-1">그외 경력사항</p>
-                                        <p className="text-[#5B4E7A] text-xs leading-relaxed font-medium whitespace-pre-wrap">{formData.career_other}</p>
-                                    </div>
-                                )}
-                                <a
-                                    href={formData.portfolio_link}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#9333EA] border border-[#9333EA] hover:opacity-90 active:scale-[0.98] transition-all"
-                                >
-                                    <span className="material-symbols-outlined text-[18px] text-white">folder_open</span>
-                                    <span className="text-white text-sm font-black flex-1 truncate">
-                                        {formData.name || user?.name || user?.nickname}모델님 프로필 다운받기
-                                    </span>
-                                    <span className="material-symbols-outlined text-[14px] text-white/70">open_in_new</span>
-                                </a>
-                                <p className="text-[#9CA3AF] text-[10px] text-center">
-                                    Powered by 아임모카 · 광고모델 스마트 캐스팅
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {/* ── 현재모습 사진저장 ── */}
                 <div className="bg-white border border-[#E8E0FA] rounded-2xl p-5 shadow-sm">

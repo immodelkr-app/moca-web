@@ -172,9 +172,14 @@ const Layout = () => {
     const gradeLabel = gradeInfo.label;
     const gradeEmoji = GRADE_EMOJI[userGrade] || '🤍';
 
-    const handleLogout = () => {
-        logoutUser();
-        navigate('/');
+    const handleLogout = async () => {
+        try {
+            await logoutUser(); // Supabase signOut() 완료까지 대기
+        } catch (error) {
+            console.error('[Layout] Logout failed:', error);
+        } finally {
+            window.location.href = '/'; // 성공/실패 관계없이 메인으로
+        }
     };
 
     return (

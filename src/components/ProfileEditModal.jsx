@@ -16,6 +16,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
         phone: '',
         address: '',
         address_detail: '',
+        email: '',
         password: '',
         marketing_consent: false,
         terms_consent: false,
@@ -65,6 +66,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                     phone: currentUser.phone || '',
                     address: currentUser.address || '',
                     address_detail: currentUser.address_detail || '',
+                    email: currentUser.email || '',
                     password: '',
                     marketing_consent: currentUser.marketing_consent || false,
                     terms_consent: currentUser.terms_consent || false,
@@ -125,6 +127,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                 phone: formData.phone,
                 address: formData.address,
                 address_detail: formData.address_detail || null,
+                email: formData.email?.trim() || null,
             };
 
             if (formData.password?.trim()) {
@@ -245,6 +248,20 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                 placeholder="상세 주소 입력"
                                 className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                             />
+                        </div>
+
+                        {/* 이메일 (신규 추가) */}
+                        <div className="space-y-1.5">
+                            <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">이메일 (선택)</label>
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                placeholder="이메일 주소 입력 (프로필 발송 확인용)"
+                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
+                            />
+                            <p className="text-[10px] text-[#9CA3AF] ml-2 font-medium">※ 프로필 발송 시 동일한 내용의 확인 메일을 받으실 수 있습니다.</p>
                         </div>
 
                         {/* 동의 항목 - 완료되지 않은 경우에만 더 강조하거나 상단에 노출 가능하나, 일단 하단 배치 */}
