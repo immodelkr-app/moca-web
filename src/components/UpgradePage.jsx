@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser, saveUser } from '../services/userService';
-import { supabase } from '../services/supabaseClient';
-import { createSubscription, upgradeUserToGold } from '../services/subscriptionService';
+import { getUser } from '../services/userService';
 
-const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
+// 카카오 플러스채널 링크
+const KAKAO_CHANNEL_URL = 'http://pf.kakao.com/_zlMUxj/chat';
 
 const PLANS = [
     { id: 'gold_1m',  months: 1,  price: 10000,  label: '1개월',  monthly: 10000, popular: false },
@@ -17,7 +16,6 @@ const PLANS = [
 const FEATURES = [
     { name: '에이전시 조회', silver: '하루 8회', gold: '무제한', icon: 'search' },
     { name: '프로필 등록 & 이메일 발송', silver: true, gold: true, icon: 'forward_to_inbox' },
-    { name: '모카 에디트 (쇼핑)', silver: true, gold: true, icon: 'shopping_bag' },
     { name: '현재모습 사진등록', silver: false, gold: true, icon: 'photo_library' },
     { name: '디지털 멤버십 카드', silver: true, gold: true, icon: 'badge' },
     { name: '모카라운지 · 모카TV', silver: true, gold: true, icon: 'live_tv' },
@@ -33,113 +31,17 @@ const UpgradePage = () => {
     const isAlreadyGold = ['GOLD', 'VIP', 'VVIP'].includes(userGrade);
 
     const [selectedPlan, setSelectedPlan] = useState(PLANS[2]); // 6개월 기본 선택
-    const [isProcessing, setIsProcessing] = useState(false);
     const [activeTab, setActiveTab] = useState('compare'); // compare | plans
 
-    // ── 토스 결제 ───────────────────────────────────────────────────────────
-    const handlePayment = async () => {
-        if (!user) { alert('로그인이 필요합니다.'); navigate('/login'); return; }
-        setIsProcessing(true);
-        try {
-            const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk').catch(() => null) || {};
-            if (loadTossPayments) {
-                const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
-                const orderId = `SUBS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-                const safeCustomerKey = (user.id || user.nickname || 'guest').toString().replace(/[^a-zA-Z0-9_-]/g, '') || 'ANONYMOUS';
-
-                localStorage.setItem('moca_pending_subscription', JSON.stringify({
-                    planId: selectedPlan.id,
-                    months: selectedPlan.months,
-                    price: selectedPlan.price,
-                    userId: user.id || user.nickname,
-                }));
-
-                const payment = tossPayments.payment({ customerKey: safeCustomerKey });
-                await payment.requestPayment({
-                    method: 'CARD',
-                    amount: { currency: 'KRW', value: selectedPlan.price },
-                    orderId,
-                    orderName: `GOLD 멤버십 ${selectedPlan.label} 구독`,
-                    customerName: user.name || user.nickname || '모카회원',
-                    successUrl: `${window.location.origin}/upgrade?payment=success`,
-                    failUrl: `${window.location.origin}/upgrade?payment=fail`,
-                });
-            } else {
-                setIsProcessing(false);
-                alert(`[테스트] GOLD ${selectedPlan.label} 구독 결제 (${selectedPlan.price.toLocaleString()}원)`);
-            }
-        } catch (err) {
-            setIsProcessing(false);
-            if (err?.code !== 'USER_CANCEL') alert('결제 처리 중 오류가 발생했습니다.');
-        }
+    // ── 카카오 채널로 신청하기 ────────────────────────────────────────────────
+    const handleApply = () => {
+        // 선택된 플랜 정보를 카카오 채팅으로 자연스럽게 전달할 수 있도록 안내
+        const message = encodeURIComponent(
+            `안녕하세요! MOCA 앱에서 GOLD 멤버십 신청합니다.\n선택 플랜: ${selectedPlan.label} (${selectedPlan.price.toLocaleString()}원)`
+        );
+        // 카카오 플러스친구 채팅 오픈
+        window.open(KAKAO_CHANNEL_URL, '_blank');
     };
-
-    // ── 결제 결과 자동 처리 ─────────────────────────────────────────────────
-    useEffect(() => {
-        const handlePaymentResult = async () => {
-            const params = new URLSearchParams(window.location.search);
-            const payment = params.get('payment');
-
-            if (payment === 'success') {
-                const paymentKey = params.get('paymentKey');
-                const orderId = params.get('orderId');
-                const amount = Number(params.get('amount'));
-
-                // localStorage에서 구독 정보 복원
-                const pendingRaw = localStorage.getItem('moca_pending_subscription');
-                const pending = pendingRaw ? JSON.parse(pendingRaw) : null;
-
-                try {
-                    // 1) 토스 결제 승인
-                    if (paymentKey && orderId && amount) {
-                        const { data: confirmData, error: confirmError } = await supabase.functions.invoke('toss-confirm', {
-                            body: { paymentKey, orderId, amount },
-                        });
-                        if (confirmError || confirmData?.error) {
-                            console.error('[Upgrade] 결제 승인 실패:', confirmData?.error || confirmError);
-                        }
-                    }
-
-                    // 2) 구독 DB 저장
-                    if (pending && user) {
-                        await createSubscription({
-                            userId: user.id,
-                            userNickname: user.nickname,
-                            planId: pending.planId,
-                            months: pending.months,
-                            price: pending.price,
-                            paymentKey: paymentKey || '',
-                            orderId: orderId || '',
-                        });
-
-                        // 3) 유저 등급 GOLD로 업그레이드
-                        const { expiresAt } = await upgradeUserToGold(user.id, pending.months);
-
-                        // 4) localStorage 등급 갱신 (즉시 반영)
-                        const currentUser = getUser();
-                        if (currentUser) {
-                            saveUser({ ...currentUser, grade: 'GOLD', grade_expires_at: expiresAt });
-                        }
-
-                        localStorage.removeItem('moca_pending_subscription');
-                    }
-
-                    alert('🎉 GOLD 구독이 완료되었습니다! 지금부터 골드 혜택을 이용하실 수 있습니다.');
-                } catch (err) {
-                    console.error('[Upgrade] 구독 처리 오류:', err);
-                    alert('결제는 완료되었으나 등급 반영 중 오류가 발생했습니다. 관리자에게 문의해주세요.');
-                }
-
-                window.history.replaceState({}, document.title, window.location.pathname);
-                navigate('/home');
-            } else if (payment === 'fail') {
-                alert('결제가 취소되었거나 실패했습니다.');
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-        };
-
-        handlePaymentResult();
-    }, [navigate]);
 
     return (
         <div className="min-h-screen pb-32 bg-[#F8F5FF]">
@@ -151,8 +53,8 @@ const UpgradePage = () => {
                     <span className="material-symbols-outlined text-[20px] text-[#7C3AED]">arrow_back</span>
                 </button>
                 <div>
-                    <h1 className="text-xl font-black text-[#1F1235] tracking-tight">모카앱 플랜</h1>
-                    <p className="text-[#9CA3AF] text-xs mt-0.5">나에게 맞는 플랜을 선택하세요</p>
+                    <h1 className="text-xl font-black text-[#1F1235] tracking-tight">광고모델 활동 신청</h1>
+                    <p className="text-[#9CA3AF] text-xs mt-0.5">GOLD 멤버십으로 광고모델 활동을 시작하세요</p>
                 </div>
             </div>
 
@@ -170,7 +72,7 @@ const UpgradePage = () => {
                             현재 등급: {userGrade === 'VIP' ? '전속모델' : userGrade}
                         </p>
                         <p className="text-[#9CA3AF] text-xs">
-                            {isAlreadyGold ? '골드 혜택을 이용 중입니다' : '무료 실버 플랜 사용 중'}
+                            {isAlreadyGold ? 'GOLD 멤버십 이용 중입니다 👍' : '지금 신청하면 무제한 에이전시 조회!'}
                         </p>
                     </div>
                 </div>
@@ -179,7 +81,7 @@ const UpgradePage = () => {
                 <div className="flex gap-2 bg-[#F3E8FF] border border-[#E8E0FA] rounded-2xl p-1">
                     {[
                         { id: 'compare', label: '등급별 혜택 비교', icon: 'compare' },
-                        { id: 'plans', label: '구독 플랜 선택', icon: 'credit_card' },
+                        { id: 'plans', label: '구독 플랜 신청', icon: 'workspace_premium' },
                     ].map(tab => (
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                             className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all ${
@@ -215,7 +117,7 @@ const UpgradePage = () => {
                                 </div>
                                 <h3 className="text-[#9333EA] font-black text-base mb-1">GOLD</h3>
                                 <p className="text-[#7C3AED] font-black text-lg">월 10,000원~</p>
-                                <p className="text-[#9CA3AF] text-[10px] mt-1">프리미엄 회원</p>
+                                <p className="text-[#9CA3AF] text-[10px] mt-1">광고모델 활동</p>
                             </div>
                         </div>
 
@@ -259,15 +161,27 @@ const UpgradePage = () => {
                             <button onClick={() => setActiveTab('plans')}
                                 className="w-full py-5 rounded-3xl bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white font-black text-base shadow-xl shadow-[#9333EA]/20 hover:opacity-95 active:scale-[0.97] transition-all flex items-center justify-center gap-2">
                                 <span className="text-xl">👑</span>
-                                골드 구독하기
+                                GOLD 플랜 신청하기
                             </button>
                         )}
                     </div>
                 )}
 
-                {/* ══ 구독 플랜 선택 탭 ══ */}
+                {/* ══ 구독 플랜 신청 탭 ══ */}
                 {activeTab === 'plans' && (
                     <div className="space-y-4 animate-fadeIn">
+
+                        {/* 신청 안내 배너 */}
+                        <div className="bg-[#FFFBEB] border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+                            <span className="text-2xl flex-shrink-0">💛</span>
+                            <div>
+                                <p className="text-amber-700 font-black text-sm">카카오톡으로 간편 신청</p>
+                                <p className="text-amber-600 text-xs mt-1 leading-relaxed">
+                                    플랜을 선택하고 아래 버튼을 누르면 카카오 채널로 연결됩니다.<br/>
+                                    담당자가 결제 링크를 보내드리며, 결제 완료 후 GOLD 등급이 적용됩니다.
+                                </p>
+                            </div>
+                        </div>
 
                         {/* 플랜 카드들 */}
                         <div className="space-y-3">
@@ -317,46 +231,59 @@ const UpgradePage = () => {
                             })}
                         </div>
 
-                        {/* 선택된 플랜 요약 */}
+                        {/* 선택된 플랜 요약 + 신청 버튼 */}
                         <div className="bg-white border border-[#E8E0FA] rounded-[32px] p-6 shadow-sm">
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-[#5B4E7A] text-[15px] font-bold">선택한 플랜</span>
                                 <span className="text-[#9333EA] font-black text-[15px]">{selectedPlan.label} 구독</span>
                             </div>
                             <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#F8F5FF]">
-                                <span className="text-[#5B4E7A] text-sm font-medium">결제 금액</span>
+                                <span className="text-[#5B4E7A] text-sm font-medium">신청 금액</span>
                                 <span className="text-[#1F1235] font-black text-2xl">{selectedPlan.price.toLocaleString()}원</span>
                             </div>
 
-                            {/* 결제 버튼 */}
-                            <button onClick={handlePayment} disabled={isProcessing || isAlreadyGold}
-                                className={`w-full py-5 rounded-[24px] font-black text-lg shadow-xl transition-all flex items-center justify-center gap-2.5 ${
-                                    isAlreadyGold
-                                        ? 'bg-[#F8F5FF] text-[#9CA3AF] cursor-not-allowed shadow-none border border-[#E8E0FA]'
-                                        : 'bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white shadow-[#9333EA]/25 hover:opacity-95 active:scale-[0.97]'
-                                } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                {isAlreadyGold ? (
-                                    <>이미 골드 회원입니다</>
-                                ) : isProcessing ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        결제창 여는 중...
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="material-symbols-outlined text-[24px] font-black">credit_card</span>
-                                        {selectedPlan.price.toLocaleString()}원 결제하기
-                                    </>
-                                )}
-                            </button>
+                            {/* 카카오 신청 버튼 */}
+                            {isAlreadyGold ? (
+                                <div className="w-full py-5 rounded-[24px] bg-[#F8F5FF] text-[#9CA3AF] font-black text-base text-center border border-[#E8E0FA]">
+                                    이미 GOLD 회원입니다 👑
+                                </div>
+                            ) : (
+                                <button onClick={handleApply}
+                                    className="w-full py-5 rounded-[24px] font-black text-lg shadow-xl transition-all flex items-center justify-center gap-2.5 active:scale-[0.97]"
+                                    style={{ backgroundColor: '#FEE500', color: '#391B1B' }}>
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#391B1B">
+                                        <path d="M12 3C6.477 3 2 6.477 2 10.818c0 2.756 1.563 5.198 3.938 6.676L4.9 21l4.326-2.358C10.03 18.873 11 19 12 19c5.523 0 10-3.477 10-7.818C22 6.477 17.523 3 12 3z"/>
+                                    </svg>
+                                    카카오톡으로 신청하기
+                                </button>
+                            )}
                         </div>
 
-                        {/* 카카오 문의 */}
-                        <button onClick={() => window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank')}
-                            className="w-full flex items-center justify-center gap-2.5 py-5 rounded-[24px] bg-white border border-[#E8E0FA] text-[#5B4E7A] font-black text-sm hover:bg-[#F8F5FF] transition-all shadow-sm">
-                            <span className="material-symbols-outlined text-[20px] text-[#9333EA]">chat</span>
-                            GOLD 문의하기
-                        </button>
+                        {/* 신청 프로세스 안내 */}
+                        <div className="bg-white border border-[#E8E0FA] rounded-2xl p-5 space-y-4">
+                            <p className="text-[#1F1235] text-sm font-black flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[16px] text-[#9333EA]">info</span>
+                                신청 절차
+                            </p>
+                            <div className="space-y-3">
+                                {[
+                                    { step: '1', text: '플랜 선택 후 카카오톡 신청 버튼 클릭', icon: 'touch_app' },
+                                    { step: '2', text: '담당자가 결제 링크를 카카오톡으로 전송', icon: 'send' },
+                                    { step: '3', text: '링크에서 결제 완료 (블로그페이)', icon: 'payments' },
+                                    { step: '4', text: '영업일 1일 이내 GOLD 등급 자동 적용', icon: 'workspace_premium' },
+                                ].map(({ step, text, icon }) => (
+                                    <div key={step} className="flex items-center gap-3">
+                                        <div className="w-7 h-7 rounded-full bg-[#F3E8FF] flex items-center justify-center flex-shrink-0">
+                                            <span className="text-[#9333EA] text-xs font-black">{step}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-[15px] text-[#9CA3AF]">{icon}</span>
+                                            <span className="text-[#5B4E7A] text-xs font-bold">{text}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
                         {/* 안내 */}
                         <div className="bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl p-4 space-y-2">
@@ -365,8 +292,8 @@ const UpgradePage = () => {
                                 이용 안내
                             </p>
                             <ul className="text-[#9CA3AF] text-[11px] space-y-1 pl-4">
-                                <li>• 결제 완료 후 즉시 골드 등급이 적용됩니다.</li>
-                                <li>• 구독 기간 만료 시 자동으로 실버로 변경됩니다.</li>
+                                <li>• 결제 확인 후 영업일 1일 이내 GOLD 등급이 적용됩니다.</li>
+                                <li>• 구독 기간 만료 시 자동으로 SILVER로 변경됩니다.</li>
                                 <li>• 환불 문의는 카카오톡 채널로 연락해주세요.</li>
                                 <li>• 부가세(VAT) 포함 금액입니다.</li>
                             </ul>

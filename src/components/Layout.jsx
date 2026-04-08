@@ -83,6 +83,7 @@ const navGroups = [
         items: [
             { to: '/agencies', icon: 'apartment', label: '에이전시 목록' },
             { to: '/home/smart-profile', icon: 'forward_to_inbox', label: '나의 프로필 관리' },
+            { to: '/upgrade', icon: 'workspace_premium', label: '멤버십 구독' }, // 광고모델 활동 핵심
             { to: '/home/calendar', icon: 'calendar_month', label: '투어 캘린더' },
             { to: '/home/diary', icon: 'event_note', label: '투어일지' },
             { to: '/home/cert', icon: 'photo_camera', label: '투어스타그램' },
@@ -98,18 +99,19 @@ const navGroups = [
             { to: '/home/lounge', icon: 'forum', label: '모카 라운지' },
         ]
     },
-    {
-        title: '혜택 & 쇼핑',
-        icon: 'diamond',
-        items: [
-            { to: '/home/membership', icon: 'star', label: '멤버십 카드' },
-            { to: '/upgrade', icon: 'workspace_premium', label: '멤버십 구독' },
-            { to: '/home/coupons', icon: 'local_activity', label: '모델 쿠폰' },
-            { to: '/home/content', icon: 'shopping_bag', label: '제휴혜택' },
-            { to: '/home/shop', icon: 'local_fire_department', label: '모카 에디트' },
-            { to: '/home/benefits', icon: 'diamond', label: '혜택 허브' },
-        ]
-    },
+    // ── HIDDEN: 혜택 & 쇼핑 그룹 – Phase 2에서 복원 예정 ────────────────────
+    // {
+    //     title: '혜택 & 쇼핑',
+    //     icon: 'diamond',
+    //     items: [
+    //         { to: '/home/membership', icon: 'star', label: '멤버십 카드' },
+    //         { to: '/home/coupons', icon: 'local_activity', label: '모델 쿠폰' },
+    //         { to: '/home/content', icon: 'shopping_bag', label: '제휴혜택' },
+    //         { to: '/home/shop', icon: 'local_fire_department', label: '모카 에디트' },  // 토스 심사 후 복원
+    //         { to: '/home/benefits', icon: 'diamond', label: '혜택 허브' },
+    //     ]
+    // },
+    // ─────────────────────────────────────────────────────────────────────────
     {
         title: 'MY 서비스',
         icon: 'contract',
@@ -123,8 +125,8 @@ const navGroups = [
 const bottomTabs = [
     { to: '/home/dashboard', icon: 'home', label: '홈' },
     { to: '/agencies', icon: 'apartment', label: '에이전시' },
+    { to: '/upgrade', icon: 'workspace_premium', label: '모델활동' }, // 광고모델 구독 핵심 탭
     { to: '/home/smart-profile', icon: 'forward_to_inbox', label: '프로필' },
-    { to: '/home/benefits', icon: 'diamond', label: '혜택' },
 ];
 
 /* ── 더보기 메뉴 항목 ── */
@@ -136,11 +138,13 @@ const moreMenuItems = [
     { to: '/home/message',    icon: 'local_post_office',    label: '공지사항' },
     { to: '/home/lounge',     icon: 'forum',                label: '모카 라운지' },
     { to: '/home/class',      icon: 'school',               label: '모카 클래스' },
-    { to: '/home/membership', icon: 'star',                 label: '멤버십 카드' },
-    { to: '/upgrade',         icon: 'workspace_premium',    label: '멤버십 구독' },
-    { to: '/home/coupons',    icon: 'local_activity',       label: '모델 쿠폰' },
-    { to: '/home/content',    icon: 'shopping_bag',         label: '제휴혜택' },
-    { to: '/home/shop',       icon: 'local_fire_department',label: '모카 에디트' },
+    // ── HIDDEN: Phase 2 복원 예정 ─────────────────────────────────────────
+    // { to: '/home/membership', icon: 'star',                 label: '멤버십 카드' },
+    // { to: '/upgrade',         icon: 'workspace_premium',    label: '멤버십 구독' },   // 하단탭으로 이동
+    // { to: '/home/coupons',    icon: 'local_activity',       label: '모델 쿠폰' },
+    // { to: '/home/content',    icon: 'shopping_bag',         label: '제휴혜택' },
+    // { to: '/home/shop',       icon: 'local_fire_department',label: '모카 에디트' },   // 토스 심사 후 복원
+    // ─────────────────────────────────────────────────────────────────────
 ];
 
 const Layout = () => {
