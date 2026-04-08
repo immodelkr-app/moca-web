@@ -128,6 +128,8 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                 address: formData.address,
                 address_detail: formData.address_detail || null,
                 email: formData.email?.trim() || null,
+                terms_consent: formData.terms_consent,
+                marketing_consent: formData.marketing_consent,
             };
 
             if (formData.password?.trim()) {

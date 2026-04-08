@@ -23,10 +23,16 @@
 }
 
 @layer base {
+  html {
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
   body {
     @apply font-display antialiased min-h-screen;
     background-color: var(--moca-bg);
     color: var(--moca-text);
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 }
 

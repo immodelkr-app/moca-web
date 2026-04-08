@@ -321,7 +321,7 @@ const AgencyLanding = () => {
     return (
         <div className="min-h-screen flex flex-col font-display" style={{ backgroundColor: 'var(--moca-bg)' }}>
             {/* ── 상단 네비 바 ── */}
-            <nav className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-[#E8E0FA] z-[200] flex items-center justify-between px-5 md:px-10">
+            <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-[#E8E0FA] z-[200] flex items-center justify-between px-5 md:px-10 pb-3" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-2xl font-black tracking-tighter">MOCA</span>
                 <div className="flex items-center gap-3">
                     {isLoggedIn ? (
@@ -459,6 +459,10 @@ const AgencyLanding = () => {
                             >
                                 {loginLoading ? '로그인 중...' : '로그인'}
                             </button>
+
+
+
+
                         </form>
 
                         {/* 아이디 찾기 / 비밀번호 찾기 */}

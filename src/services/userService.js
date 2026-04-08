@@ -382,7 +382,9 @@ export const syncUserGrade = async () => {
                 user.career_other !== data.career_other ||
                 user.age !== data.age ||
                 user.height !== data.height ||
-                user.weight !== data.weight;
+                user.weight !== data.weight ||
+                user.terms_consent !== data.terms_consent ||
+                user.marketing_consent !== data.marketing_consent;
 
             if (shouldSync) {
                 console.log(`[syncUserGrade] Syncing: ${user.grade} -> ${currentGrade}, ID: ${user.id} -> ${data.id}`);
@@ -402,7 +404,10 @@ export const syncUserGrade = async () => {
                     career_other: data.career_other || user.career_other,
                     age: data.age || user.age,
                     height: data.height || user.height,
-                    weight: data.weight || user.weight
+                    weight: data.weight || user.weight,
+                    terms_consent: data.terms_consent ?? user.terms_consent,
+                    marketing_consent: data.marketing_consent ?? user.marketing_consent,
+                    email: data.email || user.email
                 });
             } else {
                 console.log('[syncUserGrade] Already in sync, no update needed.');
@@ -480,14 +485,39 @@ export const updateSmartProfile = async (userId, profileData) => {
     }
 
     // 2. Supabase 업데이트 (photo_base64 제외 - DB 용량 이슈, 로컬스토리지 유지)
-    if (isSupabaseEnabled() && userId) {
-        const { photo_base64, ...supabaseFields } = profileData;
-        const { error } = await supabase
-            .from('users')
-            .update(supabaseFields)
-            .eq('id', userId);
-        if (error) {
-            console.warn('[updateSmartProfile] Supabase 업데이트 실패 (마이그레이션 확인):', error.message);
+    if (isSupabaseEnabled()) {
+        let targetId = userId;
+
+        // userId가 없거나 UUID 형식이 아닐 때 nickname으로 ID 조회
+        if (!targetId || (typeof targetId === 'string' && targetId.length < 20)) {
+            const lookupNickname = currentUser?.nickname || targetId;
+            if (lookupNickname) {
+                const { data: dbRows } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('nickname', lookupNickname)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                if (dbRows && dbRows.length > 0) {
+                    targetId = dbRows[0].id;
+                    console.log('[updateSmartProfile] Resolved ID by nickname:', lookupNickname, '->', targetId);
+                }
+            }
+        }
+
+        if (targetId && typeof targetId === 'string' && targetId.length > 20) {
+            const { photo_base64, ...supabaseFields } = profileData;
+            const { error } = await supabase
+                .from('users')
+                .update(supabaseFields)
+                .eq('id', targetId);
+            if (error) {
+                console.warn('[updateSmartProfile] Supabase 업데이트 실패 (마이그레이션 확인):', error.message);
+            } else {
+                console.log('[updateSmartProfile] Supabase 업데이트 성공:', Object.keys(supabaseFields));
+            }
+        } else {
+            console.warn('[updateSmartProfile] No valid UUID found, skipping Supabase update');
         }
     }
 

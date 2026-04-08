@@ -248,7 +248,7 @@ const Layout = () => {
             <div className="flex-1 lg:ml-64 flex flex-col min-h-screen relative w-full max-w-full overflow-x-hidden">
 
                 {/* ── 모바일 탑 헤더 ── */}
-                <header className="lg:hidden flex items-center justify-between px-5 pt-5 pb-3 bg-white border-b border-[#E8E0FA] z-[100] sticky top-0 w-full shadow-sm">
+                <header className="lg:hidden flex items-center justify-between px-5 pb-3 bg-white border-b border-[#E8E0FA] z-[100] sticky top-0 w-full shadow-sm" style={{ paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 0px))' }}>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-2xl font-black tracking-tighter">MOCA</span>
                     <div className="flex items-center gap-2">
                         {userId && (
@@ -303,7 +303,7 @@ const Layout = () => {
                 </main>
 
                 {/* ── 모바일 5탭 하단 내비게이션 ── */}
-                <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-[#E8E0FA] shadow-moca-lg pb-[env(safe-area-inset-bottom,0)]">
+                <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-[#E8E0FA] shadow-moca-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
                     <div className="flex items-center justify-around h-16 max-w-[430px] mx-auto px-2">
                         {/* 4개 주요 탭 */}
                         {bottomTabs.map(({ to, icon, label }) => {
@@ -354,7 +354,7 @@ const Layout = () => {
                             onClick={() => setShowMoreMenu(false)}
                         />
                         {/* 패널 */}
-                        <div className="lg:hidden fixed bottom-16 left-0 right-0 z-[100] bg-white border-t border-[#E8E0FA] rounded-t-3xl shadow-moca-lg max-h-[65vh] overflow-y-auto pb-[env(safe-area-inset-bottom,16px)]">
+                        <div className="lg:hidden fixed left-0 right-0 z-[100] bg-white border-t border-[#E8E0FA] rounded-t-3xl shadow-moca-lg max-h-[65vh] overflow-y-auto" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))', paddingBottom: '16px' }}>
                             <div className="w-10 h-1 bg-[#E8E0FA] rounded-full mx-auto mt-3 mb-4" />
                             <p className="text-center text-[11px] font-black text-[#9CA3AF] uppercase tracking-widest mb-4">전체 메뉴</p>
                             <div className="grid grid-cols-3 gap-3 px-5 pb-6">
