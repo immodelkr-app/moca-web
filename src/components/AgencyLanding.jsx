@@ -405,7 +405,7 @@ const AgencyLanding = () => {
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
                     <div className="text-center md:text-left">
                         <span className="text-[#9333EA] text-xl font-black tracking-tighter">MOCA</span>
-                        <p className="text-[#9CA3AF] text-xs font-bold mt-2">© 2026 글로벌아임(IMMOCA). All rights reserved.</p>
+                        <p className="text-[#9CA3AF] text-xs font-bold mt-2">© 2026 글로벌 아임(IMMOCA). All rights reserved.</p>
                     </div>
                     <div className="flex flex-col items-center md:items-end gap-4">
                         <div className="flex items-center gap-4 text-xs font-bold text-[#5B4E7A]">
@@ -419,7 +419,7 @@ const AgencyLanding = () => {
                         <p className="text-[#9CA3AF] text-[10px] text-center md:text-right leading-loose">
                             <span className="font-bold text-[#7C3AED]">아임모카</span> 대표 : 김대희 | 사업자등록번호 : 365-22-00947 | 통신판매업 제2021-서울강남-05756호<br />
                             서울시 영등포구 영중로 159, 7층<br />
-                            <span className="font-bold text-[#7C3AED]">글로벌아임</span> 서울시 강남구 도곡로17길 16, 102동 303호<br />
+                            <span className="font-bold text-[#7C3AED]">글로벌 아임</span> 서울시 강남구 도곡로17길 16, 102동 303호<br />
                             immodelkr@gmail.com | 호스팅서비스: Vercel Inc.
                         </p>
                     </div>

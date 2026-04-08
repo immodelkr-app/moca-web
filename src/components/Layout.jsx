@@ -269,8 +269,10 @@ const Layout = () => {
                 </header>
 
                 {/* ── 콘텐츠 + 푸터 ── */}
-                <main className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar pb-28 lg:pb-8 w-full max-w-[430px] mx-auto">
-                    <Outlet />
+                <main className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar pb-28 lg:pb-8 w-full max-w-[430px] lg:max-w-none mx-auto lg:px-0 bg-[#F3F0FF]">
+                    <div className="w-full lg:max-w-5xl lg:mx-auto">
+                        <Outlet />
+                    </div>
 
                     {/* ── Footer ── */}
                     <footer className="w-full border-t border-[#E8E0FA] bg-[#F8F5FF] px-6 py-10 mt-8">
@@ -285,18 +287,18 @@ const Layout = () => {
                             </div>
                             {showRefundPolicy && <RefundPolicyModal onClose={() => setShowRefundPolicy(false)} />}
                             {/* 회사명 */}
-                            <p className="text-[#1F1235] text-sm font-black">글로벌아임</p>
+                            <p className="text-[#1F1235] text-sm font-black">글로벌 아임</p>
                             {/* 회사 정보 */}
                             <div className="text-[#9CA3AF] text-[11px] leading-7">
                                 <p>대표 : 김대희 | 사업자등록번호 : 365-22-00947</p>
                                 <p>통신판매업 신고번호 : 제2021-서울강남-05756호</p>
-                                <p>주소 : 서울시 영등포구 영중로 159, 7층 글로벌아임</p>
+                                <p>주소 : 서울시 영등포구 영중로 159, 7층 글로벌 아임</p>
                                 <p>이메일 : immodelkr@gmail.com</p>
                                 <p>호스팅서비스 : Vercel Inc.</p>
                             </div>
                             {/* 저작권 */}
                             <p className="text-[#9CA3AF] text-[11px] pt-1">
-                                © 2026 글로벌아임(IMMOCA). All rights reserved.
+                                © 2026 글로벌 아임(IMMOCA). All rights reserved.
                             </p>
                         </div>
                     </footer>
