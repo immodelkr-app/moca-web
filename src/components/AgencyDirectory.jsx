@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchAgencies } from '../services/agencyService';
-import { getUser, getUserGrade } from '../services/userService';
+import { getUser, getUserGrade, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
 
 import { fetchMessagesList } from '../services/messageService';
 import {
@@ -223,11 +223,7 @@ const AgencyDirectory = () => {
     const grade = getUserGrade();
 
 
-    const GRADE_EMOJI = {
-        'SILVER': '🤍',
-        'GOLD': '👑',
-        'VIP': '💎'
-    };
+
 
     const [recentMessages, setRecentMessages] = useState([]);
     const [tickerIndex, setTickerIndex] = useState(0);
@@ -408,8 +404,8 @@ const AgencyDirectory = () => {
                     </div>
                     {/* Grade Badge */}
                     <div className="flex items-center gap-1.5 bg-[#F3E8FF] border border-[#E8E0FA] rounded-full px-3 py-1.5">
-                        <span className="text-sm">{GRADE_EMOJI[grade] || '🌱'}</span>
-                        <span className="text-[#7C3AED] text-xs font-bold">{grade || 'BASIC'}</span>
+                        <span className="text-sm">{GRADE_EMOJI[grade] || '🤍'}</span>
+                        <span className="text-[#7C3AED] text-xs font-bold">{GRADE_INFO[grade]?.label || 'SILVER'}</span>
                     </div>
                 </div>
 

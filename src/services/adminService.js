@@ -260,3 +260,27 @@ export const deleteContract = async (contractId) => {
         .eq('id', contractId);
     return { error };
 };
+
+// ── 멤버십 등업 신청 관리 ──────────────────────────────────────────────────────
+
+/**
+ * 멤버십 등업 신청 데이터를 DB에 저장합니다.
+ */
+export const saveUpgradeRequest = async (requestData) => {
+    if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+    
+    // contractData 형식을 참조
+    const payload = {
+        user_nickname: requestData.userNickname,
+        member_name: requestData.memberName,
+        member_phone: requestData.memberPhone,
+        plan_months: requestData.planMonths,
+        price: requestData.price,
+        signature_image: requestData.signature, // base64 data URL
+        status: 'pending',
+        created_at: new Date().toISOString(),
+    };
+    
+    const { data, error } = await supabase.from('upgrade_requests').insert([payload]).select();
+    return { data, error };
+};

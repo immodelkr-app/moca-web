@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser, getUserGrade, syncUserGrade } from '../services/userService';
+import { getUser, getUserGrade, syncUserGrade, GRADE_INFO } from '../services/userService';
 import { verifyPartnerPin, recordPartnerVisit } from '../services/adminService';
 import BenefitList from './Membership/BenefitList';
 
@@ -149,12 +149,12 @@ const MembershipBenefits = () => {
                             <div className={`w-[60px] h-[60px] rounded-full bg-gradient-to-br ${badgeColors} flex items-center justify-center shadow-lg border-2 border-white relative overflow-hidden`}>
                                 {/* Shine effect */}
                                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
-                                <span className="font-black text-[12px] tracking-tight">{grade}</span>
+                                <span className="font-black text-[12px] tracking-tight">{GRADE_INFO[grade]?.label || grade}</span>
                             </div>
                             {/* Name & Title */}
                             <div className="flex flex-col justify-center gap-1">
                                 <h3 className="text-xl font-black text-[#1F1235]">{userName}</h3>
-                                <p className="text-[12px] font-bold text-[#5B4E7A]">{isGold ? 'GOLD' : 'SILVER'}</p>
+                                <p className="text-[12px] font-bold text-[#5B4E7A]">{GRADE_INFO[grade]?.label || grade}</p>
                             </div>
                         </div>
 
@@ -184,6 +184,26 @@ const MembershipBenefits = () => {
             {/* Benefits Content */}
             <div className="w-full max-w-lg mt-12 px-6 flex flex-col gap-10 z-10 pb-10">
                 <BenefitList />
+
+                {/* 하단 등업 신청 & 카톡 문의 버튼 영역 */}
+                <div className="flex flex-col gap-3 mt-4">
+                    <button 
+                        onClick={() => navigate('/upgrade-apply')}
+                        className="w-full bg-[#1F1235] text-white py-4.5 rounded-[20px] font-black text-[16px] shadow-[0_8px_16px_rgba(31,18,53,0.15)] flex items-center justify-center gap-2 hover:bg-black active:scale-[0.98] transition-all"
+                    >
+                        <span className="text-xl">👑</span>
+                        등업 신청하기
+                    </button>
+                    <button 
+                        onClick={() => window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank')}
+                        className="w-full bg-[#FEE500] text-[#391B1B] py-4.5 rounded-[20px] font-black text-[16px] shadow-sm flex items-center justify-center gap-2 hover:bg-[#F4DC00] active:scale-[0.98] transition-all"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#391B1B">
+                            <path d="M12 3C6.477 3 2 6.477 2 10.818c0 2.756 1.563 5.198 3.938 6.676L4.9 21l4.326-2.358C10.03 18.873 11 19 12 19c5.523 0 10-3.477 10-7.818C22 6.477 17.523 3 12 3z"/>
+                        </svg>
+                        카카오로 문의하기
+                    </button>
+                </div>
             </div>
 
             {/* PIN 인증 모달 */}

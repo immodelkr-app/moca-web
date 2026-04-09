@@ -284,7 +284,7 @@ const TourDiary = () => {
                                         <p className="text-2xl font-black text-[#9333EA]">
                                             {monthlyCount}
                                             <span className="text-[13px] font-bold text-[#9CA3AF] ml-1.5">
-                                                {grade === 'GOLD' ? '회' : `/ ${SILVER_MONTHLY_LIMIT}회`}
+                                                {['GOLD', 'VIP', 'VVIP'].includes(grade) ? '회' : `/ ${SILVER_MONTHLY_LIMIT}회`}
                                             </span>
                                         </p>
                                     </div>

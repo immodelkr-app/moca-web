@@ -176,7 +176,7 @@ const SmartProfile = () => {
                 } else if (attempts >= 25) {
                     clearInterval(retry);
                     setPickerLoading(false);
-                     setErrorMsg('Google 연동 서비스에 응답이 없습니다. 잠시 후 새로고침하여 다시 시도해주세요.');
+                    setErrorMsg('Google 연동 기능을 불러올 수 없습니다. 아래 입력칸에 구글드라이브(또는 인스타그램) 공유 링크를 직접 붙여넣어주세요.');
                 }
             }, 200);
             return;

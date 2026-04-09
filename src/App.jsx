@@ -14,6 +14,7 @@ import KimDaepyoTV from './components/KimDaepyoTV';
 import AgencyTourCalendar from './components/AgencyTourCalendar';
 import AdminPage from './components/AdminPage';
 import UpgradePage from './components/UpgradePage';
+import UpgradeApplicationPage from './components/UpgradeApplicationPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import MembershipBenefits from './components/MembershipBenefits';
 import ModelCoupons from './components/ModelCoupons';
@@ -94,6 +95,7 @@ function AppContent() {
 
                 {/* 업그레이드 (페이월) 페이지 */}
                 <Route path="/upgrade" element={<UpgradePage />} />
+                <Route path="/upgrade-apply" element={<UpgradeApplicationPage />} />
 
                 {/* 전속계약서 (공개 접근 허용) */}
                 <Route path="/contract" element={<ExclusiveContractPage />} />

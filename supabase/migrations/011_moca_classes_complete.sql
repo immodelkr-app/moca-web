@@ -48,11 +48,15 @@ ALTER TABLE public.class_applications ENABLE ROW LEVEL SECURITY;
 
 -- 5. Policies
 -- classes & class_pricing: Public read, Admin write
+DROP POLICY IF EXISTS "Classes public read" ON public.classes;
 CREATE POLICY "Classes public read" ON public.classes FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "Class pricing public read" ON public.class_pricing;
 CREATE POLICY "Class pricing public read" ON public.class_pricing FOR SELECT TO public USING (true);
 
 -- applications: User read/write own, Admin read all
+DROP POLICY IF EXISTS "Users browse own applications" ON public.class_applications;
 CREATE POLICY "Users browse own applications" ON public.class_applications FOR SELECT TO authenticated USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users create own applications" ON public.class_applications;
 CREATE POLICY "Users create own applications" ON public.class_applications FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 -- Admin policies (requires is_admin check)

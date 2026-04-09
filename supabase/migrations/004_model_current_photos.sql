@@ -19,5 +19,6 @@ CREATE INDEX IF NOT EXISTS idx_model_current_photos_created_at ON model_current_
 ALTER TABLE model_current_photos ENABLE ROW LEVEL SECURITY;
 
 -- 모든 인증된 사용자가 자신의 사진 조회/삽입/삭제 가능
+DROP POLICY IF EXISTS "Users can manage own photos" ON model_current_photos;
 CREATE POLICY "Users can manage own photos" ON model_current_photos
   FOR ALL USING (true) WITH CHECK (true);

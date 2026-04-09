@@ -15,12 +15,15 @@ CREATE TABLE IF NOT EXISTS shop_product_reviews (
 -- RLS 정책 (읽기: 모두 허용, 쓰기: 인증된 사용자만)
 ALTER TABLE shop_product_reviews ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "누구나 승인된 리뷰 조회" ON shop_product_reviews;
 CREATE POLICY "누구나 승인된 리뷰 조회" ON shop_product_reviews
     FOR SELECT USING (is_approved = true);
 
+DROP POLICY IF EXISTS "인증된 사용자 리뷰 작성" ON shop_product_reviews;
 CREATE POLICY "인증된 사용자 리뷰 작성" ON shop_product_reviews
     FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "관리자 전체 리뷰 조회" ON shop_product_reviews;
 CREATE POLICY "관리자 전체 리뷰 조회" ON shop_product_reviews
     FOR ALL USING (true);
 

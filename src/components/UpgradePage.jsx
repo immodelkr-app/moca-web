@@ -33,14 +33,9 @@ const UpgradePage = () => {
     const [selectedPlan, setSelectedPlan] = useState(PLANS[2]); // 6개월 기본 선택
     const [activeTab, setActiveTab] = useState('compare'); // compare | plans
 
-    // ── 카카오 채널로 신청하기 ────────────────────────────────────────────────
+    // ── 등업 신청서 페이지로 이동 ────────────────────────────────────────────────
     const handleApply = () => {
-        // 선택된 플랜 정보를 카카오 채팅으로 자연스럽게 전달할 수 있도록 안내
-        const message = encodeURIComponent(
-            `안녕하세요! MOCA 앱에서 GOLD 멤버십 신청합니다.\n선택 플랜: ${selectedPlan.label} (${selectedPlan.price.toLocaleString()}원)`
-        );
-        // 카카오 플러스친구 채팅 오픈
-        window.open(KAKAO_CHANNEL_URL, '_blank');
+        navigate('/upgrade-apply');
     };
 
     return (
@@ -242,20 +237,26 @@ const UpgradePage = () => {
                                 <span className="text-[#1F1235] font-black text-2xl">{selectedPlan.price.toLocaleString()}원</span>
                             </div>
 
-                            {/* 카카오 신청 버튼 */}
+                            {/* 등업 신청 버튼 */}
                             {isAlreadyGold ? (
                                 <div className="w-full py-5 rounded-[24px] bg-[#F8F5FF] text-[#9CA3AF] font-black text-base text-center border border-[#E8E0FA]">
                                     이미 GOLD 회원입니다 👑
                                 </div>
                             ) : (
-                                <button onClick={handleApply}
-                                    className="w-full py-5 rounded-[24px] font-black text-lg shadow-xl transition-all flex items-center justify-center gap-2.5 active:scale-[0.97]"
-                                    style={{ backgroundColor: '#FEE500', color: '#391B1B' }}>
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#391B1B">
-                                        <path d="M12 3C6.477 3 2 6.477 2 10.818c0 2.756 1.563 5.198 3.938 6.676L4.9 21l4.326-2.358C10.03 18.873 11 19 12 19c5.523 0 10-3.477 10-7.818C22 6.477 17.523 3 12 3z"/>
-                                    </svg>
-                                    카카오톡으로 신청하기
-                                </button>
+                                <div className="flex flex-col gap-3">
+                                    <button onClick={handleApply}
+                                        className="w-full py-5 rounded-[24px] font-black text-lg shadow-[0_8px_16px_rgba(31,18,53,0.15)] transition-all flex items-center justify-center gap-2.5 active:scale-[0.97] bg-[#1F1235] text-white">
+                                        <span className="text-xl">👑</span>
+                                        등업 신청하기
+                                    </button>
+                                    <button onClick={() => window.open(KAKAO_CHANNEL_URL, '_blank')}
+                                        className="w-full py-4 rounded-[24px] font-black text-sm shadow-sm border border-[#E8E0FA] transition-all flex items-center justify-center gap-2 active:scale-[0.97] bg-[#FEE500] text-[#391B1B]">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#391B1B">
+                                            <path d="M12 3C6.477 3 2 6.477 2 10.818c0 2.756 1.563 5.198 3.938 6.676L4.9 21l4.326-2.358C10.03 18.873 11 19 12 19c5.523 0 10-3.477 10-7.818C22 6.477 17.523 3 12 3z"/>
+                                        </svg>
+                                        카카오로 문의하기
+                                    </button>
+                                </div>
                             )}
                         </div>
 
@@ -267,10 +268,10 @@ const UpgradePage = () => {
                             </p>
                             <div className="space-y-3">
                                 {[
-                                    { step: '1', text: '플랜 선택 후 카카오톡 신청 버튼 클릭', icon: 'touch_app' },
-                                    { step: '2', text: '담당자가 결제 링크를 카카오톡으로 전송', icon: 'send' },
-                                    { step: '3', text: '링크에서 결제 완료 (블로그페이)', icon: 'payments' },
-                                    { step: '4', text: '영업일 1일 이내 GOLD 등급 자동 적용', icon: 'workspace_premium' },
+                                    { step: '1', text: '플랜 확인 후 신청서 작성 버튼 클릭', icon: 'touch_app' },
+                                    { step: '2', text: '자동 입력된 폼 확인 후 서명 제출', icon: 'draw' },
+                                    { step: '3', text: '담당자가 카카오톡으로 결제 링크 발송', icon: 'send' },
+                                    { step: '4', text: '영업일 1일 이내 등급별 혜택 자동 적용', icon: 'workspace_premium' },
                                 ].map(({ step, text, icon }) => (
                                     <div key={step} className="flex items-center gap-3">
                                         <div className="w-7 h-7 rounded-full bg-[#F3E8FF] flex items-center justify-center flex-shrink-0">

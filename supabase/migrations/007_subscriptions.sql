@@ -23,6 +23,7 @@ GRANT SELECT, INSERT, UPDATE ON public.subscriptions TO authenticated;
 -- RLS 정책
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow all for subscriptions" ON public.subscriptions;
 CREATE POLICY "Allow all for subscriptions" ON public.subscriptions
     FOR ALL USING (true) WITH CHECK (true);
 

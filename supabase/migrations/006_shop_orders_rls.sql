@@ -9,16 +9,19 @@ GRANT SELECT, INSERT, UPDATE ON public.shop_orders TO authenticated;
 ALTER TABLE public.shop_orders ENABLE ROW LEVEL SECURITY;
 
 -- 2. 모든 역할이 INSERT 가능
+DROP POLICY IF EXISTS "Allow insert for all" ON public.shop_orders;
 CREATE POLICY "Allow insert for all" ON public.shop_orders
     FOR INSERT
     WITH CHECK (true);
 
 -- 3. 모든 역할이 SELECT 가능
+DROP POLICY IF EXISTS "Allow select for all" ON public.shop_orders;
 CREATE POLICY "Allow select for all" ON public.shop_orders
     FOR SELECT
     USING (true);
 
 -- 4. 모든 역할이 UPDATE 가능 (어드민 상태 변경)
+DROP POLICY IF EXISTS "Allow update for all" ON public.shop_orders;
 CREATE POLICY "Allow update for all" ON public.shop_orders
     FOR UPDATE
     USING (true)

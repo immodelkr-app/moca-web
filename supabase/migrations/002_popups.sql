@@ -13,5 +13,7 @@ CREATE TABLE IF NOT EXISTS popups (
 
 -- 공개 읽기 허용 (팝업은 로그인 없이도 보여야 함)
 ALTER TABLE popups ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "popups_public_read" ON popups;
 CREATE POLICY "popups_public_read" ON popups FOR SELECT USING (true);
+DROP POLICY IF EXISTS "popups_admin_all" ON popups;
 CREATE POLICY "popups_admin_all" ON popups FOR ALL USING (true);
