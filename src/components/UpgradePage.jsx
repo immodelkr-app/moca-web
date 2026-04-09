@@ -42,7 +42,7 @@ const UpgradePage = () => {
         <div className="min-h-screen pb-32 bg-[#F8F5FF]">
 
             {/* ── 헤더 ── */}
-            <div className="relative z-10 px-5 pt-8 pb-2 flex items-center gap-3">
+            <div className="relative z-10 px-5 pt-14 pb-2 flex items-center gap-3">
                 <button onClick={() => navigate(-1)}
                     className="w-9 h-9 rounded-xl bg-[#F3E8FF] border border-[#E8E0FA] flex items-center justify-center hover:bg-[#EDE8FF] transition-colors flex-shrink-0">
                     <span className="material-symbols-outlined text-[20px] text-[#7C3AED]">arrow_back</span>

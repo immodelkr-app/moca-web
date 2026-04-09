@@ -161,7 +161,7 @@ const AgencyTourCalendar = () => {
     return (
         <div className="p-4 lg:p-6 pb-28 lg:pb-10 max-w-5xl mx-auto min-h-screen" style={{ backgroundColor: 'var(--moca-bg)' }}>
             {/* Header */}
-            <header className="mb-6 pt-2">
+            <header className="mb-6 pt-10">
                 <div className="flex items-center justify-between mb-6">
                     <button
                         onClick={() => navigate('/home/diary')}
