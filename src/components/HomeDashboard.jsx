@@ -15,6 +15,7 @@ const MODEL_SUPPORT_ITEMS = [
     { icon: 'calendar_month',  label: '투어 캘린더',      route: '/home/calendar',      color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/25' },
     { icon: 'photo_camera',    label: '투어스타그램',      route: '/home/cert',          color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/25' },
     { icon: 'smart_display',   label: '모카TV',           route: '/home/tv',            color: 'from-[#EF4444] to-[#FCA5A5]', glow: 'shadow-[#EF4444]/25' },
+    { icon: 'forum',           label: 'Q&A 게시판',       route: '/home/qna',           color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/25', badge: 'NEW' },
 ];
 
 const MOCA_BENEFITS_ITEMS = [

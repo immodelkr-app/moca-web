@@ -97,6 +97,7 @@ const navGroups = [
             { to: '/home/tv', icon: 'smart_display', label: '모카TV' },
             { to: '/home/message', icon: 'local_post_office', label: '공지사항' },
             { to: '/home/lounge', icon: 'forum', label: '모카 라운지' },
+            { to: '/home/qna', icon: 'forum', label: 'Q&A 게시판' },
         ]
     },
     // ── HIDDEN: 혜택 & 쇼핑 그룹 – Phase 2에서 복원 예정 ────────────────────
@@ -138,6 +139,7 @@ const moreMenuItems = [
     { to: '/home/message',    icon: 'local_post_office',    label: '공지사항' },
     { to: '/home/lounge',     icon: 'forum',                label: '모카 라운지' },
     { to: '/home/class',      icon: 'school',               label: '모카 클래스' },
+    { to: '/home/qna',        icon: 'forum',                label: 'Q&A 게시판' },
     // ── HIDDEN: Phase 2 복원 예정 ─────────────────────────────────────────
     // { to: '/home/membership', icon: 'star',                 label: '멤버십 카드' },
     // { to: '/upgrade',         icon: 'workspace_premium',    label: '멤버십 구독' },   // 하단탭으로 이동

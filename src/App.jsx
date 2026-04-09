@@ -26,6 +26,7 @@ import MocaShop from './components/MocaShop';
 import BenefitsHub from './components/BenefitsHub';
 import CertificationFeed from './components/CertificationFeed';
 import SmartProfile from './components/SmartProfile';
+import QnABoard from './components/QnABoard';
 import ExclusiveContractPage from './components/ExclusiveContractPage';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
@@ -81,6 +82,7 @@ function AppContent() {
                         <Route path="benefits" element={<BenefitsHub />} />
                         <Route path="cert" element={<CertificationFeed />} />
                         <Route path="smart-profile" element={<SmartProfile />} />
+                        <Route path="qna" element={<QnABoard />} />
 
                         <Route path="class" element={<ClassListPage />} />
                         <Route path="class/:id" element={<ClassDetailPage />} />

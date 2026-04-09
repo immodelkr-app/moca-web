@@ -14,6 +14,7 @@ import AdminClasses from './AdminClasses';
 import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost } from '../services/certificationService';
 import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '../services/currentPhotosService';
+import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
 import * as XLSX from 'xlsx';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
@@ -69,6 +70,13 @@ const AdminPage = () => {
     const [currentPhotosLoading, setCurrentPhotosLoading] = useState(false);
     const [currentPhotosFilter, setCurrentPhotosFilter] = useState('all'); // 'all' | 'pending' | 'approved' | 'needs_more'
     const [currentPhotosSearch, setCurrentPhotosSearch] = useState('');
+
+    // Q&A 게시판 관리 State
+    const [qnaPosts, setQnaPosts] = useState([]);
+    const [qnaLoading, setQnaLoading] = useState(false);
+    const [qnaFilter, setQnaFilter] = useState('all'); // 'all' | 'unanswered'
+    const [qnaReplyInputs, setQnaReplyInputs] = useState({}); // { [postId]: replyText }
+    const [qnaExpanded, setQnaExpanded] = useState({}); // { [postId]: boolean }
 
     const handleLogout = () => {
         logoutUser();
@@ -795,6 +803,18 @@ const AdminPage = () => {
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'currentphotos' ? 'border-cyan-500 text-cyan-700 bg-cyan-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
                         📸 현재모습 사진
+                    </button>
+                    <button
+                        onClick={async () => {
+                            setActiveTab('qna');
+                            setQnaLoading(true);
+                            const data = await fetchAllQnaPostsForAdmin();
+                            setQnaPosts(data);
+                            setQnaLoading(false);
+                        }}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'qna' ? 'border-teal-500 text-teal-700 bg-teal-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                    >
+                        💬 Q&A 게시판
                     </button>
 
                 </div>
@@ -2280,6 +2300,200 @@ const AdminPage = () => {
                         </div>
                     );
                 })()}
+
+                {/* ── Q&A 게시판 탭 ── */}
+                {activeTab === 'qna' && (() => {
+                    const filteredQna = qnaFilter === 'unanswered'
+                        ? qnaPosts.filter(p => !p.admin_reply)
+                        : qnaPosts;
+
+                    const handleReply = async (postId) => {
+                        const reply = qnaReplyInputs[postId] || '';
+                        if (!reply.trim()) return;
+                        const { data, error } = await updateAdminReply(postId, reply.trim());
+                        if (!error) {
+                            setQnaPosts(prev => prev.map(p => p.id === postId ? { ...p, admin_reply: reply.trim(), replied_at: new Date().toISOString() } : p));
+                            setQnaReplyInputs(prev => ({ ...prev, [postId]: '' }));
+                            setSuccessMsg('✅ 답변이 등록되었습니다.');
+                            setTimeout(() => setSuccessMsg(''), 3000);
+                        }
+                    };
+
+                    const handleDeletePost = async (postId, title) => {
+                        if (!window.confirm(`"${title}" 게시글을 삭제하시겠습니까?`)) return;
+                        await deleteQnaPost(postId);
+                        setQnaPosts(prev => prev.filter(p => p.id !== postId));
+                    };
+
+                    return (
+                        <div className="animate-fadeIn space-y-6">
+                            {/* 필터 + 통계 */}
+                            <div className="flex items-center justify-between flex-wrap gap-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[var(--moca-text)] font-black text-lg">💬 Q&A 게시판 관리</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 text-xs font-black">{qnaPosts.length}건</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-black">
+                                        미답변 {qnaPosts.filter(p => !p.admin_reply).length}건
+                                    </span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setQnaFilter('all')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${qnaFilter === 'all' ? 'bg-teal-500 text-white border-teal-500' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                    >
+                                        전체
+                                    </button>
+                                    <button
+                                        onClick={() => setQnaFilter('unanswered')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${qnaFilter === 'unanswered' ? 'bg-amber-500 text-white border-amber-500' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                    >
+                                        미답변만
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            setQnaLoading(true);
+                                            const data = await fetchAllQnaPostsForAdmin();
+                                            setQnaPosts(data);
+                                            setQnaLoading(false);
+                                        }}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1"
+                                    >
+                                        <span className="material-symbols-outlined text-[14px]">refresh</span>
+                                        새로고침
+                                    </button>
+                                </div>
+                            </div>
+
+                            {qnaLoading ? (
+                                <div className="flex justify-center py-16">
+                                    <div className="w-8 h-8 rounded-full border-2 border-teal-500 border-t-transparent animate-spin" />
+                                </div>
+                            ) : filteredQna.length === 0 ? (
+                                <div className="flex flex-col items-center py-16 text-gray-400 gap-2">
+                                    <span className="material-symbols-outlined text-[48px]">forum</span>
+                                    <p className="font-bold">Q&A 게시글이 없습니다</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {filteredQna.map(post => {
+                                        const cat = getCategoryInfo(post.category);
+                                        const isExpanded = qnaExpanded[post.id];
+                                        const replyText = qnaReplyInputs[post.id] || '';
+
+                                        return (
+                                            <div key={post.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                                                {/* 게시글 헤더 */}
+                                                <div
+                                                    className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                                                    onClick={() => setQnaExpanded(prev => ({ ...prev, [post.id]: !prev[post.id] }))}
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: cat.bg }}>
+                                                            <span className="material-symbols-outlined text-[16px]" style={{ color: cat.color }}>{cat.icon}</span>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ backgroundColor: cat.bg, color: cat.color }}>
+                                                                    {cat.label}
+                                                                </span>
+                                                                {post.is_locked && (
+                                                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 flex items-center gap-0.5">
+                                                                        <span className="material-symbols-outlined text-[11px]">lock</span> 비공개
+                                                                    </span>
+                                                                )}
+                                                                {post.admin_reply ? (
+                                                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">답변완료</span>
+                                                                ) : (
+                                                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">미답변</span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-[#1F1235] font-black text-sm truncate">{post.title}</p>
+                                                            <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold mt-0.5">
+                                                                <span>{post.user_name}</span>
+                                                                <span>·</span>
+                                                                <span>{new Date(post.created_at).toLocaleDateString('ko-KR')}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id, post.title); }}
+                                                                className="w-7 h-7 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center transition"
+                                                                title="삭제"
+                                                            >
+                                                                <span className="material-symbols-outlined text-[14px]">delete</span>
+                                                            </button>
+                                                            <span className={`material-symbols-outlined text-[18px] text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>expand_more</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* 확장: 내용 + 답변 */}
+                                                {isExpanded && (
+                                                    <div className="border-t border-gray-100 p-4 space-y-4 bg-gray-50">
+                                                        {/* 원문 내용 */}
+                                                        <div>
+                                                            <p className="text-[11px] font-black text-gray-400 mb-2 uppercase tracking-wider">문의 내용</p>
+                                                            <div className="bg-white rounded-xl p-4 border border-gray-200">
+                                                                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* 기존 답변 표시 */}
+                                                        {post.admin_reply && (
+                                                            <div>
+                                                                <p className="text-[11px] font-black text-teal-600 mb-2 uppercase tracking-wider">현재 답변</p>
+                                                                <div className="bg-teal-50 rounded-xl p-4 border border-teal-200">
+                                                                    <p className="text-teal-800 text-sm leading-relaxed whitespace-pre-wrap">{post.admin_reply}</p>
+                                                                    <p className="text-teal-400 text-[10px] mt-2 font-bold">{post.replied_at ? new Date(post.replied_at).toLocaleString('ko-KR') : ''}</p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* 답변 입력 */}
+                                                        <div>
+                                                            <p className="text-[11px] font-black text-[var(--moca-primary)] mb-2 uppercase tracking-wider">
+                                                                {post.admin_reply ? '답변 수정하기' : '답변 작성하기'}
+                                                            </p>
+                                                            <textarea
+                                                                value={replyText}
+                                                                onChange={e => setQnaReplyInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                                                placeholder={post.admin_reply || '답변을 입력해주세요...'}
+                                                                rows={4}
+                                                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[var(--moca-primary)] focus:ring-2 focus:ring-[var(--moca-primary)]/10 resize-none transition-colors"
+                                                            />
+                                                            <div className="flex gap-2 mt-2">
+                                                                <button
+                                                                    onClick={() => handleReply(post.id)}
+                                                                    disabled={!replyText.trim()}
+                                                                    className="flex-1 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-black hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                                                >
+                                                                    {post.admin_reply ? '답변 수정' : '답변 등록'}
+                                                                </button>
+                                                                {post.admin_reply && (
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            if (!window.confirm('답변을 삭제하시겠습니까?')) return;
+                                                                            await updateAdminReply(post.id, null);
+                                                                            setQnaPosts(prev => prev.map(p => p.id === post.id ? { ...p, admin_reply: null, replied_at: null } : p));
+                                                                        }}
+                                                                        className="px-4 py-2.5 rounded-xl bg-red-50 text-red-500 text-sm font-bold hover:bg-red-100 transition-all"
+                                                                    >
+                                                                        답변 삭제
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
+
             </div>
         </div>
     );
