@@ -114,10 +114,10 @@ const HomeDashboard = () => {
                 </div>
             )}
 
-            {/* ── 탭 토글 ── */}
+            {/* ── 탭 토글 ── (Phase 2에서 복원 예정) */}
+            {/* 
             <div className="px-5 mb-6">
                 <div className="relative flex bg-[#F3E8FF] border border-[#E8E0FA] p-1 rounded-full overflow-hidden">
-                    {/* 슬라이딩 배경 */}
                     <div
                         className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-lg
                         ${activeTab === 'MODEL_SUPPORT'
@@ -143,6 +143,7 @@ const HomeDashboard = () => {
                     </button>
                 </div>
             </div>
+            */}
 
             {/* ── 2열 아이콘 그리드 ── */}
             <div className="px-5 pb-32 grid grid-cols-2 gap-3.5">
