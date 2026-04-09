@@ -180,8 +180,8 @@ const AgencyTourCalendar = () => {
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-8 rounded-full bg-gradient-to-b from-[#9333EA] to-[#C084FC]" />
-                        <h1 className="text-2xl font-black text-[#1F1235] tracking-tight flex items-center gap-2">
+                        <div className="w-1.5 h-7 rounded-full bg-gradient-to-b from-[#9333EA] to-[#C084FC]" />
+                        <h1 className="text-xl font-black text-[#1F1235] tracking-tight flex items-center gap-2">
                             투어 캘린더 일지
                         </h1>
                     </div>
@@ -209,16 +209,16 @@ const AgencyTourCalendar = () => {
 
                 {/* Calendar Control */}
                 <div className="p-4 sm:p-6 border-b border-[#E8E0FA] flex items-center justify-center gap-4 sm:gap-6 bg-white sticky top-0 z-10 pt-10 sm:pt-6">
-                    <button onClick={handlePrevMonth} className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#7C3AED] hover:bg-[#EDE8FF] transition-all">
-                        <span className="material-symbols-outlined text-[24px]">chevron_left</span>
+                    <button onClick={handlePrevMonth} className="w-9 h-9 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#7C3AED] hover:bg-[#EDE8FF] transition-all">
+                        <span className="material-symbols-outlined text-[20px]">chevron_left</span>
                     </button>
 
-                    <h2 className="text-xl sm:text-2xl font-black text-[#1F1235] min-w-[140px] text-center tracking-tight">
+                    <h2 className="text-base sm:text-lg font-black text-[#1F1235] min-w-[100px] text-center tracking-tight">
                         {year}년 {month + 1}월
                     </h2>
 
-                    <button onClick={handleNextMonth} className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#7C3AED] hover:bg-[#EDE8FF] transition-all">
-                        <span className="material-symbols-outlined text-[24px]">chevron_right</span>
+                    <button onClick={handleNextMonth} className="w-9 h-9 rounded-full bg-[#F3E8FF] flex items-center justify-center text-[#7C3AED] hover:bg-[#EDE8FF] transition-all">
+                        <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                     </button>
                 </div>
 
@@ -289,7 +289,7 @@ const AgencyTourCalendar = () => {
                                         {dayClassEvt.length > 0 && (
                                             <div className="mt-1 space-y-0.5 z-10 relative">
                                                 {dayClassEvt.slice(0, 1).map((evt, eIdx) => (
-                                                    <div key={eIdx} className="w-full truncate text-[9px] sm:text-[10px] font-black bg-indigo-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md shadow-sm">
+                                                    <div key={eIdx} className="w-full truncate text-[9px] sm:text-[10px] font-bold bg-indigo-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md shadow-sm">
                                                         🏫 {evt.title}
                                                     </div>
                                                 ))}
@@ -299,7 +299,7 @@ const AgencyTourCalendar = () => {
                                         {/* 투어 일지 칩 (보라) */}
                                         <div className="flex-1 mt-0.5 space-y-1 overflow-hidden z-10 relative">
                                             {dayDiaries.slice(0, dayClassEvt.length > 0 ? 1 : 2).map((memo, mIdx) => (
-                                                <div key={mIdx} className="w-full truncate text-[9px] sm:text-[10px] font-black bg-white border border-[#E8E0FA] text-[#7C3AED] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md shadow-sm">
+                                                <div key={mIdx} className="w-full truncate text-[9px] sm:text-[10px] font-bold bg-white border border-[#E8E0FA] text-[#7C3AED] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md shadow-sm">
                                                     {memo.agencyName}
                                                 </div>
                                             ))}

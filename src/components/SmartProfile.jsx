@@ -125,7 +125,7 @@ const SmartProfile = () => {
     const openPicker = (token) => {
         if (!window.google || !window.google.picker) {
             setPickerLoading(false);
-            setErrorMsg('Google Picker 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+            setErrorMsg('Google 연동 서비스에 응답이 없습니다. 잠시 후 새로고침하여 다시 시도해주세요.');
             return;
         }
 
@@ -161,6 +161,7 @@ const SmartProfile = () => {
 
     const handlePickerClick = () => {
         setPickerLoading(true);
+        setErrorMsg('');
 
         if (!gisInited.current || !tokenClient.current) {
             if (window.google?.accounts?.oauth2) {
@@ -176,7 +177,7 @@ const SmartProfile = () => {
                 } else if (attempts >= 25) {
                     clearInterval(retry);
                     setPickerLoading(false);
-                    setErrorMsg('Google 연동 기능을 불러올 수 없습니다. 아래 입력칸에 구글드라이브(또는 인스타그램) 공유 링크를 직접 붙여넣어주세요.');
+                    setErrorMsg('Google 연동 서비스에 응답이 없습니다. 잠시 후 새로고침하여 다시 시도해주세요.');
                 }
             }, 200);
             return;
@@ -577,9 +578,17 @@ const SmartProfile = () => {
 
                 {/* Error */}
                 {errorMsg && (
-                    <div className="flex items-center gap-2 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20">
-                        <span className="material-symbols-outlined text-[16px] text-red-400 flex-shrink-0">error</span>
-                        <p className="text-red-400 text-sm font-bold">{errorMsg}</p>
+                    <div className="flex flex-col gap-2 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+                        <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[18px] text-red-500 flex-shrink-0">error</span>
+                            <p className="text-red-500 text-sm font-black leading-relaxed">{errorMsg}</p>
+                        </div>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="bg-red-500/20 hover:bg-red-500/30 text-red-600 text-xs font-black py-2 rounded-xl transition-colors"
+                        >
+                            페이지 새로고침하기
+                        </button>
                     </div>
                 )}
 
