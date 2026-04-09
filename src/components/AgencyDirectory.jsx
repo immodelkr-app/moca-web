@@ -392,7 +392,7 @@ const AgencyDirectory = () => {
 
 
             {/* Header */}
-            <div className="relative z-10 px-5 lg:px-10 pt-8 pb-4 max-w-7xl mx-auto w-full">
+            <div className="relative z-10 px-5 lg:px-10 pt-14 pb-4 max-w-7xl mx-auto w-full">
                 {/* Title row with grade badge */}
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">

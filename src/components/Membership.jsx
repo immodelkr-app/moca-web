@@ -10,7 +10,7 @@ const Membership = () => {
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#6C63FF]/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
             <div className="absolute bottom-[-100px] left-[-100px] w-[600px] h-[600px] bg-[#818CF8]/10 rounded-full blur-[150px] pointer-events-none mix-blend-screen" />
 
-            <div className="max-w-md mx-auto px-5 pt-8 lg:pt-12 relative z-10 flex flex-col items-center">
+            <div className="max-w-md mx-auto px-5 pt-14 lg:pt-16 relative z-10 flex flex-col items-center">
                 {/* 1. 디지털 명함 (상단) */}
                 <DigitalCard />
 

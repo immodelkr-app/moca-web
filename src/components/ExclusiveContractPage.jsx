@@ -141,7 +141,7 @@ const ExclusiveContractPage = () => {
 
     return (
         <div className="min-h-screen bg-[#F8F5FF] text-[#1F1235] pb-24 font-sans flex flex-col items-center">
-            <header className="w-full max-w-4xl px-6 py-5 flex items-center bg-white border-b border-[#E8E0FA] sticky top-0 z-50">
+            <header className="w-full max-w-4xl px-6 pt-14 pb-5 flex items-center bg-white border-b border-[#E8E0FA] sticky top-0 z-50">
                 <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center hover:bg-[#EDE8FF] transition-colors text-[#9333EA] mr-4">
                     <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                 </button>

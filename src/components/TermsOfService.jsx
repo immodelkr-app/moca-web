@@ -26,7 +26,7 @@ const TermsOfService = () => {
     return (
         <div className="min-h-screen bg-[#F8F5FF] text-[#1F1235]">
             {/* Header */}
-            <div className="sticky top-0 z-20 bg-[#F8F5FF]/90 backdrop-blur-xl border-b border-[#E8E0FA] px-5 py-4 flex items-center gap-3">
+            <div className="sticky top-0 z-20 bg-[#F8F5FF]/90 backdrop-blur-xl border-b border-[#E8E0FA] px-5 pt-14 pb-4 flex items-center gap-3">
                 <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-2xl bg-white border border-[#E8E0FA] flex items-center justify-center hover:bg-[#F8F5FF] transition-all shadow-sm group">
                     <span className="material-symbols-outlined text-[20px] text-[#5B4E7A] group-hover:text-[#9333EA]">arrow_back</span>
                 </button>
