@@ -160,6 +160,12 @@ const SmartProfile = () => {
     };
 
     const handlePickerClick = () => {
+        const isWebView = isMobileApp || /Android.*wv/.test(navigator.userAgent) || (/iPhone|iPod|iPad/i.test(navigator.userAgent) && !/Safari/i.test(navigator.userAgent));
+        if (isWebView) {
+            setErrorMsg('앱 내부에서는 구글 보안 정책으로 인해 드라이브 원클릭 연동이 제한됩니다. 구글 드라이브 앱에서 포트폴리오 링크를 직접 복사하여 하단 빈칸에 붙여넣어주세요.');
+            return;
+        }
+
         setPickerLoading(true);
         setErrorMsg('');
 
@@ -174,10 +180,10 @@ const SmartProfile = () => {
                     clearInterval(retry);
                     accessToken.current = null;
                     tokenClient.current.requestAccessToken({ prompt: 'select_account' });
-                } else if (attempts >= 25) {
+                } else if (attempts >= 50) {
                     clearInterval(retry);
                     setPickerLoading(false);
-                    setErrorMsg('Google 연동 서비스에 응답이 없습니다. 잠시 후 새로고침하여 다시 시도해주세요.');
+                    setErrorMsg('Google 스크립트 로드 지연 또는 브라우저 차단으로 인해 연동에 실패했습니다. 번거로우시겠지만 하단의 링크 직접 입력을 이용해주세요.');
                 }
             }, 200);
             return;
@@ -576,19 +582,13 @@ const SmartProfile = () => {
                     )}
                 </div>
 
-                {/* Error */}
+                {/* Notice / Error */}
                 {errorMsg && (
-                    <div className="flex flex-col gap-2 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
-                        <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[18px] text-red-500 flex-shrink-0">error</span>
-                            <p className="text-red-500 text-sm font-black leading-relaxed">{errorMsg}</p>
+                    <div className="flex flex-col gap-2 p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                        <div className="flex items-start gap-2">
+                            <span className="material-symbols-outlined text-[18px] text-amber-500 flex-shrink-0 mt-0.5">error</span>
+                            <p className="text-amber-700 text-xs font-black leading-relaxed whitespace-pre-wrap">{errorMsg}</p>
                         </div>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="bg-red-500/20 hover:bg-red-500/30 text-red-600 text-xs font-black py-2 rounded-xl transition-colors"
-                        >
-                            페이지 새로고침하기
-                        </button>
                     </div>
                 )}
 
