@@ -51,7 +51,7 @@ const WriteModal = ({ onClose, onSuccess, user }) => {
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
                     {/* 카테고리 */}
                     <div>
                         <label className="text-[#5B4E7A] text-[11px] font-bold ml-1 block mb-2">카테고리 선택</label>
@@ -121,18 +121,21 @@ const WriteModal = ({ onClose, onSuccess, user }) => {
 
                     {/* 에러 */}
                     {error && (
-                        <p className="text-red-500 text-sm font-bold text-center">{error}</p>
+                        <p className="text-red-500 text-sm font-bold text-center mb-2">{error}</p>
                     )}
-
-                    {/* 제출 */}
+                </div>
+                
+                {/* 하단 고정 영역 (제출 버튼) */}
+                <div className="p-6 pt-2 sm:pt-4 border-t border-[#E8E0FA] bg-white">
                     <button
                         type="submit"
+                        onClick={handleSubmit}
                         disabled={submitting}
                         className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-white font-black text-base shadow-lg shadow-[#9333EA]/20 hover:opacity-95 active:scale-[0.98] transition-all disabled:opacity-50"
                     >
                         {submitting ? '등록 중...' : '질문 등록하기'}
                     </button>
-                </form>
+                </div>
             </div>
         </div>
     );

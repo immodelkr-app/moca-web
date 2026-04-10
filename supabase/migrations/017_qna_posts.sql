@@ -18,9 +18,7 @@ ALTER TABLE qna_posts ENABLE ROW LEVEL SECURITY;
 -- RLS: 비잠금 게시글 누구나 조회 / 잠금은 작성자만
 DROP POLICY IF EXISTS "qna_select_policy" ON qna_posts;
 CREATE POLICY "qna_select_policy" ON qna_posts
-  FOR SELECT USING (
-    is_locked = false OR user_id = current_setting('app.user_id', true)
-  );
+  FOR SELECT USING (true);
 
 -- RLS: 로그인 여부 관계없이 INSERT 허용 (닉네임 기반)
 DROP POLICY IF EXISTS "qna_insert_policy" ON qna_posts;
