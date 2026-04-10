@@ -213,21 +213,16 @@ const DetailModal = ({ postId, currentUserId, onClose, onDelete }) => {
                                 </div>
                             )}
 
-                            {!post.admin_reply && (
-                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-[16px] text-amber-500">schedule</span>
-                                    <p className="text-amber-700 text-xs font-bold">답변 대기 중입니다. 영업일 기준 1~2일 내 답변드립니다.</p>
-                                </div>
-                            )}
-
                             {/* 삭제 버튼 (본인만) */}
                             {isOwner && (
-                                <button
-                                    onClick={() => { onDelete(post.id); onClose(); }}
-                                    className="w-full py-3 rounded-2xl bg-red-50 border border-red-200 text-red-500 text-sm font-bold hover:bg-red-100 transition-colors"
-                                >
-                                    게시글 삭제
-                                </button>
+                                <div className="pt-4 pb-6">
+                                    <button
+                                        onClick={() => { onDelete(post.id); onClose(); }}
+                                        className="w-full py-4 rounded-2xl bg-red-50 border border-red-200 text-red-500 text-sm font-bold hover:bg-red-100 transition-colors shadow-sm active:scale-[0.98]"
+                                    >
+                                        게시글 삭제
+                                    </button>
+                                </div>
                             )}
                         </>
                     )}
