@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { applyForClass, saveClassCalendarEvent } from '../services/classService';
+import { saveClassCalendarEvent } from '../services/classService';
 import { getUser, syncUserGrade } from '../services/userService';
+import ClassApplyModal from './ClassApplyModal';
 
-const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
-
-// 카카오뱅크 계좌 정보
-const BANK_INFO = {
-    bankName: '카카오뱅크',
-    accountNumber: '3333-34-9903852',
-    accountHolder: '아임모델 (김대희)',
-};
 
 const ClassDetailPage = () => {
     const { id } = useParams();
@@ -19,15 +12,11 @@ const ClassDetailPage = () => {
     const [cls, setCls] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [isApplying, setIsApplying] = useState(false);
+    const [showApplyModal, setShowApplyModal] = useState(false);
     const [isApplied, setIsApplied] = useState(false);
-    const [showModal, setShowModal] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState('transfer'); // 'transfer' | 'card'
-    const [isTossLoading, setIsTossLoading] = useState(false);
-    const [copySuccess, setCopySuccess] = useState(false);
     const [shareSuccess, setShareSuccess] = useState(false);
     const [calendarSaved, setCalendarSaved] = useState(false);
+
 
     useEffect(() => {
         loadData();
@@ -44,7 +33,7 @@ const ClassDetailPage = () => {
             if (localUser.id) {
                 const { data: app } = await supabase
                     .from('class_applications')
-                    .select('id')
+                    .select('id, approval_status')
                     .eq('class_id', id)
                     .eq('user_id', localUser.id)
                     .maybeSingle();
@@ -153,91 +142,6 @@ const ClassDetailPage = () => {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-    };
-
-    // 계좌이체 신청 처리
-    const handleTransferApply = async () => {
-        if (!currentUser) { alert('로그인이 필요합니다.'); return; }
-        setIsApplying(true);
-        const { error } = await applyForClass({
-            classId: cls.id,
-            userId: currentUser.id,
-            userGrade: myPriceInfo?.grade_label || currentUser.grade,
-            appliedPrice: myPrice,
-            paymentType: 'transfer',
-        });
-        if (error) {
-            alert('신청 중 오류: ' + error.message);
-        } else {
-            setSuccess(true);
-            setIsApplied(true);
-            await saveClassCalendarEvent({
-                userId: currentUser.id,
-                classId: cls.id,
-                title: cls.title,
-                classDate: cls.class_date,
-                location: cls.location,
-                description: cls.description,
-            });
-        }
-        setIsApplying(false);
-    };
-
-    // 카드결제 (토스페이먼츠) 처리
-    const handleCardApply = async () => {
-        if (!currentUser) { alert('로그인이 필요합니다.'); return; }
-        setIsTossLoading(true);
-
-        try {
-            const { data: application, error: applyError } = await applyForClass({
-                classId: cls.id,
-                userId: currentUser.id,
-                userGrade: myPriceInfo?.grade_label || currentUser.grade,
-                appliedPrice: myPrice,
-                paymentType: 'card',
-            });
-            if (applyError) throw applyError;
-
-            const orderId = `CLASS-${cls.id.slice(0, 8).toUpperCase()}-${Date.now()}`;
-
-            localStorage.setItem('moca_pending_class_order', JSON.stringify({
-                orderId,
-                classId: cls.id,
-                applicationId: application?.id,
-                classTitle: cls.title,
-                finalPrice: myPrice,
-                userGrade: currentUser.grade,
-                userName: currentUser.name || currentUser.nickname,
-            }));
-
-            const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
-            const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
-            const safeCustomerKey = (currentUser.nickname || 'ANONYMOUS').replace(/[^a-zA-Z0-9_-]/g, '') || 'ANONYMOUS';
-            const payment = tossPayments.payment({ customerKey: safeCustomerKey });
-
-            await payment.requestPayment({
-                method: 'CARD',
-                amount: { currency: 'KRW', value: myPrice },
-                orderId,
-                orderName: `모카 클래스 - ${cls.title}`,
-                successUrl: `${window.location.origin}/payment/class-success`,
-                failUrl: `${window.location.origin}/payment/fail`,
-                customerName: currentUser.name || currentUser.nickname,
-                customerMobilePhone: (currentUser.phone || '').replace(/-/g, ''),
-            });
-        } catch (err) {
-            if (err?.code !== 'USER_CANCEL') {
-                alert('결제 중 오류: ' + (err?.message || JSON.stringify(err)));
-            }
-        } finally {
-            setIsTossLoading(false);
-        }
-    };
-
-    const handleCopyAccount = () => {
-        navigator.clipboard.writeText(`${BANK_INFO.accountNumber}`);
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000);
     };
 
     const handleShare = async () => {
@@ -393,7 +297,7 @@ const ClassDetailPage = () => {
                 </div>
             </div>
 
-            {/* Sticky Floating CTA - Adjusted bottom to avoid mobile nav bar block */}
+            {/* Sticky Floating CTA */}
             <div className="fixed bottom-[65px] lg:bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[var(--moca-border)] px-6 py-4 lg:py-6 flex items-center justify-between gap-4 lg:gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] animate-slideUp">
                 <div className="hidden sm:block">
                     <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">{myPriceInfo?.grade_label || 'Special Price'}</p>
@@ -408,128 +312,33 @@ const ClassDetailPage = () => {
                         신청 완료
                     </button>
                 ) : (
-                    <button 
+                    <button
                         onClick={() => {
                             if (!currentUser) {
                                 alert('로그인 후 이용 가능합니다.');
                                 navigate('/login');
                                 return;
                             }
-                            setShowModal(true);
+                            setShowApplyModal(true);
                         }}
                         className="flex-1 bg-indigo-600 text-white py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                     >
-                        결제 및 신청하기
-                        <span className="material-symbols-outlined font-black">arrow_forward</span>
+                        <span className="material-symbols-outlined font-black">edit_note</span>
+                        수강 참여 신청하기
                     </button>
                 )}
             </div>
 
-            {/* Application Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto">
-                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md" onClick={() => !isApplying && !isTossLoading && setShowModal(false)} />
-                    <div className="relative w-full max-w-xl bg-white rounded-t-[40px] sm:rounded-[40px] shadow-2xl z-10 animate-slideUp overflow-hidden">
-                        
-                        {success ? (
-                            <div className="p-10 text-center">
-                                <div className="w-20 h-20 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-green-500/20">
-                                    <span className="material-symbols-outlined text-4xl font-black">done_all</span>
-                                </div>
-                                <h3 className="text-2xl font-black text-[var(--moca-text)] mb-2">거의 다 되었습니다!</h3>
-                                <p className="text-[var(--moca-text-3)] text-sm font-bold mb-10 leading-relaxed">신청 정보가 접수되었습니다.<br/>아래 계좌로 입금해주시면 매니저가 연락드립니다.</p>
-
-                                <div className="grid grid-cols-3 gap-3 mb-10">
-                                    <button onClick={handleSaveMocaCalendar} className={`flex flex-col items-center gap-2 p-4 rounded-3xl border-2 transition-all ${calendarSaved ? 'bg-indigo-500 border-indigo-400 text-white' : 'border-[var(--moca-border)] bg-gray-50 text-[var(--moca-text-3)]'}`}>
-                                        <span className="text-2xl">{calendarSaved ? '✓' : '📱'}</span>
-                                        <span className="text-[10px] font-black">내 캘린더</span>
-                                    </button>
-                                    <button onClick={handleAddGoogleCalendar} className="flex flex-col items-center gap-2 p-4 rounded-3xl border-2 border-[var(--moca-border)] bg-gray-50 text-[var(--moca-text-3)] hover:bg-blue-50 transition-all">
-                                        <span className="text-2xl">📆</span>
-                                        <span className="text-[10px] font-black">Google</span>
-                                    </button>
-                                    <button onClick={handleDownloadIcs} className="flex flex-col items-center gap-2 p-4 rounded-3xl border-2 border-[var(--moca-border)] bg-gray-50 text-[var(--moca-text-3)] hover:bg-green-50 transition-all">
-                                        <span className="text-2xl">📥</span>
-                                        <span className="text-[10px] font-black">CSV/ICS</span>
-                                    </button>
-                                </div>
-
-                                <div className="bg-indigo-600 rounded-[32px] p-8 text-white text-left mb-8 shadow-2xl shadow-indigo-600/20 relative overflow-hidden">
-                                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <span className="material-symbols-outlined text-[100px]">account_balance</span>
-                                     </div>
-                                     <div className="relative z-10">
-                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4">Payment Info</p>
-                                        <div className="flex justify-between items-start mb-6">
-                                            <div>
-                                                <p className="text-xl font-black mb-1">{BANK_INFO.bankName}</p>
-                                                <p className="text-2xl font-black tracking-tight">{BANK_INFO.accountNumber}</p>
-                                                <p className="text-white/60 text-sm font-bold mt-1">{BANK_INFO.accountHolder}</p>
-                                            </div>
-                                            <button onClick={handleCopyAccount} className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all ${copySuccess ? 'bg-white text-green-600' : 'bg-white/10 border border-white/20 text-white hover:bg-white/20'}`}>
-                                                {copySuccess ? '복사됨' : '복사하기'}
-                                            </button>
-                                        </div>
-                                        <div className="pt-6 border-t border-white/10 flex justify-between items-center">
-                                            <span className="text-sm font-bold text-white/60">최종 입금액</span>
-                                            <span className="text-2xl font-black tracking-tighter">₩{myPrice.toLocaleString()}</span>
-                                        </div>
-                                     </div>
-                                </div>
-
-                                <button onClick={() => { setShowModal(false); setSuccess(false); }} className="w-full bg-[var(--moca-text)] text-white font-black py-5 rounded-[28px] shadow-xl hover:scale-[1.02] transition-all">확인했습니다</button>
-                            </div>
-                        ) : (
-                            <div className="p-10">
-                                <div className="flex items-center justify-between mb-10">
-                                    <h3 className="text-2xl font-black text-[var(--moca-text)] tracking-tight">수강 신청 진행</h3>
-                                    <button onClick={() => setShowModal(false)} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[var(--moca-text-3)] hover:bg-gray-200 transition-all"><span className="material-symbols-outlined text-[20px]">close</span></button>
-                                </div>
-
-                                <div className="space-y-6 mb-12">
-                                    <div className="p-6 rounded-3xl bg-gray-50 border border-[var(--moca-border)] space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs font-black text-[var(--moca-text-3)] uppercase">Applicant</span>
-                                            <span className="text-sm font-black text-[var(--moca-text)]">{currentUser?.name || currentUser?.nickname}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs font-black text-[var(--moca-text-3)] uppercase">Grade</span>
-                                            <span className="text-sm font-black text-indigo-500">{myPriceInfo?.grade_label || currentUser?.grade}</span>
-                                        </div>
-                                        <div className="pt-4 border-t border-dashed border-[var(--moca-border)] flex justify-between items-center">
-                                            <span className="text-xs font-black text-[var(--moca-text-3)] uppercase">Total Amount</span>
-                                            <span className="text-xl font-black text-[var(--moca-text)]">₩{myPrice.toLocaleString()}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <button onClick={() => setPaymentMethod('transfer')} className={`p-6 rounded-[32px] border-2 flex flex-col items-center gap-2 transition-all ${paymentMethod === 'transfer' ? 'border-indigo-500 bg-indigo-50' : 'border-[var(--moca-border)] bg-white hover:border-indigo-200'}`}>
-                                            <span className="material-symbols-outlined text-indigo-500 text-3xl font-black">payments</span>
-                                            <span className="text-xs font-black text-[var(--moca-text-2)]">무통장 입금</span>
-                                        </button>
-                                        <button onClick={() => setPaymentMethod('card')} className={`p-6 rounded-[32px] border-2 flex flex-col items-center gap-2 transition-all ${paymentMethod === 'card' ? 'border-indigo-500 bg-indigo-50' : 'border-[var(--moca-border)] bg-white hover:border-indigo-200'}`}>
-                                            <span className="material-symbols-outlined text-indigo-500 text-3xl font-black">credit_card</span>
-                                            <span className="text-xs font-black text-[var(--moca-text-2)]">신용카드 결제</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    {paymentMethod === 'transfer' ? (
-                                        <button onClick={handleTransferApply} disabled={isApplying} className="w-full bg-indigo-600 text-white font-black py-5 rounded-[28px] shadow-2xl shadow-indigo-500/30 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3">
-                                            {isApplying ? '처리 중입니다...' : '무통장 입금으로 신청 개시'}
-                                        </button>
-                                    ) : (
-                                        <button onClick={handleCardApply} disabled={isTossLoading} className="w-full bg-indigo-600 text-white font-black py-5 rounded-[28px] shadow-2xl shadow-indigo-500/30 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3">
-                                            {isTossLoading ? '카드 결제창 준비 중...' : `신용카드로 ₩${myPrice.toLocaleString()} 결제`}
-                                        </button>
-                                    )}
-                                    <p className="text-[10px] text-center text-[var(--moca-text-3)] font-medium leading-relaxed opacity-60">* 신청 즉시 매니저에게 알림이 발송되며,<br/>입금 확인 후 수강 확정 안내가 전송됩니다.</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
+            {/* Apply Modal */}
+            {showApplyModal && (
+                <ClassApplyModal
+                    cls={cls}
+                    currentUser={currentUser}
+                    myPriceInfo={myPriceInfo}
+                    myPrice={myPrice}
+                    onClose={() => setShowApplyModal(false)}
+                    onSuccess={() => setIsApplied(true)}
+                />
             )}
         </div>
     );

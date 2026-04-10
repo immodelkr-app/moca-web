@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchClasses, createClass, updateClass, deleteClass, fetchApplications, updatePaymentStatus, sendClassApplicationNotification } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
+import { sendBulkMessage } from '../services/aligoService';
 
 const CLASS_BUCKET = 'class-images';
 const MAX_FILE_MB = 10;
@@ -177,28 +178,108 @@ const AdminClasses = () => {
         setLoading(false);
     };
 
-    const handleUpdatePayment = async (appId, status) => {
-        if (!window.confirm(`${status === 'paid' ? '입금 확인' : '대기 처리'} 하시겠습니까?`)) return;
-        const { error } = await updatePaymentStatus(appId, status);
-        if (!error) {
-            setApplicants(prev => prev.map(a => a.id === appId ? { ...a, payment_status: status } : a));
-            setSuccessMsg('✅ 상태 업데이트 완료');
-            if (status === 'paid' && selectedClass) {
-                const app = applicants.find(a => a.id === appId);
-                if (app?.users?.phone) {
-                    sendClassApplicationNotification({
-                        userName: app.users.name || app.users.nickname,
-                        phone: app.users.phone,
-                        classTitle: selectedClass.title,
-                        classDate: selectedClass.class_date,
-                        location: selectedClass.location,
-                        paidPrice: app.applied_price
-                    }).catch(console.error);
-                }
+    const BANK_INFO = '카카오뱅크 3333-34-9903852 (아임모델 김대희)';
+
+    // 승인 + 문자 발송
+    const handleApprove = async (app) => {
+        const blogpayUrl = window.prompt(
+            `[${app.users?.name || app.users?.nickname}] 승인 처리\n\n블로그페이 카드결제 링크를 입력하세요.\n(없으면 빈칸으로 확인 클릭 → 무통장 안내만 발송)`,
+            ''
+        );
+        if (blogpayUrl === null) return; // 취소
+
+        setIsSubmitting(true);
+        try {
+            // DB 상태 업데이트
+            const { error: updateErr } = await supabase
+                .from('class_applications')
+                .update({
+                    approval_status: 'approved',
+                    payment_status: 'pending',
+                    blogpay_url: blogpayUrl || null,
+                    approved_at: new Date().toISOString(),
+                })
+                .eq('id', app.id);
+            if (updateErr) throw updateErr;
+
+            // 문자 메시지 구성
+            const name = app.users?.name || app.users?.nickname || '회원';
+            const phone = (app.users?.phone || app.user_phone || '').replace(/-/g, '');
+            const price = (app.applied_price || 0).toLocaleString();
+            const classTitle = selectedClass?.title || '클래스';
+            const classDate = selectedClass?.class_date || '';
+
+            let msg = `[아임모델 MOCA] 수강 신청 승인 안내\n\n안녕하세요, ${name}님!\n${classTitle} 수강 신청이 승인되었습니다.\n\n💰 수강료: ${price}원\n\n[무통장 입금]\n${BANK_INFO}\n입금 후 담당자가 확정 안내 드립니다.`;
+
+            if (blogpayUrl) {
+                msg += `\n\n[카드결제]\n${blogpayUrl}`;
             }
+
+            msg += `\n\n문의: 카카오채널 @아임모델MOCA`;
+
+            if (phone) {
+                await sendBulkMessage([phone], msg, 'sms');
+            }
+
+            setApplicants(prev => prev.map(a =>
+                a.id === app.id ? { ...a, approval_status: 'approved', blogpay_url: blogpayUrl } : a
+            ));
+            setSuccessMsg(`✅ ${name}님 승인 완료 + 문자 발송 성공!`);
+        } catch (err) {
+            alert('승인 처리 중 오류: ' + (err.message || JSON.stringify(err)));
+        } finally {
+            setIsSubmitting(false);
+            setTimeout(() => setSuccessMsg(''), 4000);
         }
-        setTimeout(() => setSuccessMsg(''), 3000);
     };
+
+    // 결제 확인 처리
+    const handleConfirmPayment = async (app) => {
+        if (!window.confirm(`[${app.users?.name || app.users?.nickname}] 입금 확인 처리 하시겠습니까?`)) return;
+        setIsSubmitting(true);
+        try {
+            const { error } = await supabase
+                .from('class_applications')
+                .update({ approval_status: 'paid', payment_status: 'paid', paid_at: new Date().toISOString() })
+                .eq('id', app.id);
+            if (error) throw error;
+
+            const name = app.users?.name || app.users?.nickname || '회원';
+            const phone = (app.users?.phone || app.user_phone || '').replace(/-/g, '');
+            const classTitle = selectedClass?.title || '클래스';
+            if (phone) {
+                const msg = `[아임모델 MOCA] 수강 확정 안내\n\n${name}님 입금 확인 완료!\n${classTitle} 수강이 최종 확정되었습니다.\n\n수업 당일 뵙겠습니다 😊`;
+                await sendBulkMessage([phone], msg, 'sms').catch(console.error);
+            }
+
+            setApplicants(prev => prev.map(a =>
+                a.id === app.id ? { ...a, approval_status: 'paid', payment_status: 'paid' } : a
+            ));
+            setSuccessMsg(`✅ ${name}님 입금 확인 완료!`);
+        } catch (err) {
+            alert('오류: ' + err.message);
+        } finally {
+            setIsSubmitting(false);
+            setTimeout(() => setSuccessMsg(''), 4000);
+        }
+    };
+
+    // 취소 처리
+    const handleCancelApplication = async (app) => {
+        if (!window.confirm(`[${app.users?.name || app.users?.nickname}] 취소 처리하시겠습니까?`)) return;
+        const { error } = await supabase
+            .from('class_applications')
+            .update({ approval_status: 'cancelled', payment_status: 'cancelled' })
+            .eq('id', app.id);
+        if (!error) {
+            setApplicants(prev => prev.map(a =>
+                a.id === app.id ? { ...a, approval_status: 'cancelled', payment_status: 'cancelled' } : a
+            ));
+            setSuccessMsg('✅ 취소 처리 완료');
+            setTimeout(() => setSuccessMsg(''), 3000);
+        }
+    };
+
 
     const handleDeleteClass = async (id) => {
         if (!window.confirm('정말 삭제하시겠습니까?')) return;
@@ -603,72 +684,130 @@ const AdminClasses = () => {
                                     <span className="material-symbols-outlined text-[18px]">download</span>
                                     Excel 다운로드
                                 </button>
-                                <div className="bg-white/5 border border-white/10 p-4 rounded-3xl text-center min-w-[100px]">
-                                    <p className="text-[10px] font-black text-white/40 mb-1 uppercase tracking-tighter">Total</p>
+                                <div className="bg-white/5 border border-white/10 p-4 rounded-3xl text-center min-w-[90px]">
+                                    <p className="text-[10px] font-black text-white/40 mb-1 uppercase tracking-tighter">신청</p>
                                     <p className="text-xl font-black">{applicants.length}명</p>
                                 </div>
-                                <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-3xl text-center min-w-[100px]">
-                                    <p className="text-[10px] font-black text-green-400/60 mb-1 uppercase tracking-tighter">Confirmed</p>
-                                    <p className="text-xl font-black text-green-400">{applicants.filter(a => a.payment_status === 'paid').length}명</p>
+                                <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-3xl text-center min-w-[90px]">
+                                    <p className="text-[10px] font-black text-amber-400/60 mb-1 uppercase tracking-tighter">승인</p>
+                                    <p className="text-xl font-black text-amber-400">{applicants.filter(a => a.approval_status === 'approved').length}명</p>
+                                </div>
+                                <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-3xl text-center min-w-[90px]">
+                                    <p className="text-[10px] font-black text-green-400/60 mb-1 uppercase tracking-tighter">결제완료</p>
+                                    <p className="text-xl font-black text-green-400">{applicants.filter(a => a.approval_status === 'paid').length}명</p>
                                 </div>
                             </div>
                         </div>
 
                         <div className="p-6 overflow-x-auto">
-                            <table className="w-full min-w-[800px]">
-                                <thead>
-                                    <tr className="border-b border-[var(--moca-border)] text-left">
-                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center w-16">번호</th>
-                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] uppercase tracking-widest">수강생 정보</th>
-                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] uppercase tracking-widest">멤버 등급</th>
-                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-right">수강 금액</th>
-                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center">결제 상태</th>
-                                        <th className="px-6 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center">관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-[var(--moca-border)]">
-                                    {applicants.map((app, idx) => (
-                                        <tr key={app.id} className="hover:bg-gray-50/50 transition-colors group">
-                                            <td className="px-6 py-5 text-center text-xs font-bold text-[var(--moca-text-3)]">{applicants.length - idx}</td>
-                                            <td className="px-6 py-5">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-500 text-xs">
-                                                        {(app.users?.name || app.users?.nickname || '?')[0]}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-black text-[var(--moca-text)]">{app.users?.name || app.users?.nickname}</p>
-                                                        <p className="text-[11px] font-bold text-[var(--moca-text-3)]">{app.users?.phone}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <span className="px-3 py-1 rounded-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[10px] font-black text-[var(--moca-text-2)] uppercase">
-                                                    {app.grade_label || app.users?.grade || 'SILVER'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-5 text-right font-black text-sm text-[var(--moca-text)]">
-                                                {app.applied_price?.toLocaleString()}원
-                                            </td>
-                                            <td className="px-6 py-5 text-center">
-                                                <div className="flex flex-col items-center gap-1">
-                                                    <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black border tracking-tighter ${app.payment_status === 'paid' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
-                                                        {app.payment_status === 'paid' ? '승인완료' : '입금대기'}
-                                                    </span>
-                                                    <span className="text-[9px] font-bold text-[var(--moca-text-3)] opacity-60 uppercase">{app.payment_type}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-5 text-center">
-                                                <button
-                                                    onClick={() => handleUpdatePayment(app.id, app.payment_status === 'paid' ? 'pending' : 'paid')}
-                                                    className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all ${app.payment_status === 'paid' ? 'bg-gray-100 text-[var(--moca-text-3)] hover:bg-gray-200' : 'bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg shadow-indigo-500/20'}`}
-                                                >
-                                                    {app.payment_status === 'paid' ? '취소하기' : '승인하기'}
-                                                </button>
-                                            </td>
+                            {loading ? (
+                                <div className="py-16 text-center text-[var(--moca-text-3)] font-black">불러오는 중...</div>
+                            ) : applicants.length === 0 ? (
+                                <div className="py-16 text-center">
+                                    <span className="material-symbols-outlined text-5xl text-gray-200 block mb-3">inbox</span>
+                                    <p className="text-[var(--moca-text-3)] font-black">아직 신청자가 없습니다</p>
+                                </div>
+                            ) : (
+                                <table className="w-full min-w-[900px]">
+                                    <thead>
+                                        <tr className="border-b border-[var(--moca-border)] text-left">
+                                            <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center w-12">번호</th>
+                                            <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] uppercase tracking-widest">신청자</th>
+                                            <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] uppercase">등급</th>
+                                            <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-right">수강료</th>
+                                            <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center">상태</th>
+                                            <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center">관리</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-[var(--moca-border)]">
+                                        {applicants.map((app, idx) => {
+                                            const status = app.approval_status || (app.payment_status === 'paid' ? 'paid' : 'pending');
+                                            const isPending = status === 'pending';
+                                            const isApproved = status === 'approved';
+                                            const isPaid = status === 'paid';
+                                            const isCancelled = status === 'cancelled';
+
+                                            const statusBadge = isPaid
+                                                ? { label: '결제완료', cls: 'bg-green-50 text-green-600 border-green-200' }
+                                                : isApproved
+                                                ? { label: '승인완료', cls: 'bg-amber-50 text-amber-600 border-amber-200' }
+                                                : isCancelled
+                                                ? { label: '취소', cls: 'bg-red-50 text-red-500 border-red-100' }
+                                                : { label: '신청대기', cls: 'bg-blue-50 text-blue-500 border-blue-100' };
+
+                                            return (
+                                                <tr key={app.id} className={`transition-colors group ${isCancelled ? 'opacity-40' : 'hover:bg-gray-50/50'}`}>
+                                                    <td className="px-4 py-5 text-center text-xs font-bold text-[var(--moca-text-3)]">{applicants.length - idx}</td>
+                                                    <td className="px-4 py-5">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-9 h-9 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-500 text-xs flex-shrink-0">
+                                                                {(app.users?.name || app.users?.nickname || '?')[0]}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-black text-[var(--moca-text)]">{app.users?.name || app.users?.nickname}</p>
+                                                                <p className="text-[11px] font-bold text-[var(--moca-text-3)]">{app.users?.phone || app.user_phone}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-5">
+                                                        <span className="px-2.5 py-1 rounded-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[10px] font-black text-[var(--moca-text-2)] uppercase">
+                                                            {app.grade_label || app.users?.grade || 'SILVER'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-5 text-right font-black text-sm text-[var(--moca-text)]">
+                                                        {app.applied_price?.toLocaleString()}원
+                                                    </td>
+                                                    <td className="px-4 py-5 text-center">
+                                                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black border ${statusBadge.cls}`}>
+                                                            {statusBadge.label}
+                                                        </span>
+                                                        {app.blogpay_url && (
+                                                            <p className="text-[9px] text-indigo-400 font-bold mt-1 truncate max-w-[100px] mx-auto">
+                                                                카드링크 있음
+                                                            </p>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-5">
+                                                        <div className="flex justify-center gap-2">
+                                                            {isPending && (
+                                                                <button
+                                                                    onClick={() => handleApprove(app)}
+                                                                    disabled={isSubmitting}
+                                                                    className="px-3 py-2 rounded-xl text-[11px] font-black bg-indigo-500 text-white hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+                                                                >
+                                                                    승인 + 문자발송
+                                                                </button>
+                                                            )}
+                                                            {isApproved && (
+                                                                <button
+                                                                    onClick={() => handleConfirmPayment(app)}
+                                                                    disabled={isSubmitting}
+                                                                    className="px-3 py-2 rounded-xl text-[11px] font-black bg-green-500 text-white hover:bg-green-600 transition-all shadow-lg shadow-green-500/20 disabled:opacity-50"
+                                                                >
+                                                                    입금확인
+                                                                </button>
+                                                            )}
+                                                            {isPaid && (
+                                                                <span className="px-3 py-2 rounded-xl text-[11px] font-black bg-gray-100 text-[var(--moca-text-3)]">
+                                                                    완료
+                                                                </span>
+                                                            )}
+                                                            {!isCancelled && !isPaid && (
+                                                                <button
+                                                                    onClick={() => handleCancelApplication(app)}
+                                                                    className="px-3 py-2 rounded-xl text-[11px] font-black bg-red-50 text-red-400 hover:bg-red-100 border border-red-100 transition-all"
+                                                                >
+                                                                    취소
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            )}
                         </div>
                     </div>
                 </div>
