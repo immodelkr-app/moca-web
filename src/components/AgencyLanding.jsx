@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import DaumPostcode from 'react-daum-postcode';
 import { fetchAgencies } from '../services/agencyService';
 import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser, checkNicknameDuplicate, signInWithSocial } from '../services/userService';
+import { isPasskeySupported, loginWithPasskey } from '../services/passkeyService';
+import { fetchHomepageSettings } from '../services/settingsService';
+
 
 import ProfileEditModal from './ProfileEditModal';
 import TermsModal from './shop/TermsModal';
@@ -143,11 +146,27 @@ const AgencyLanding = () => {
     const [agencyCount, setAgencyCount] = useState(0);
     const [loaded, setLoaded] = useState(false);
 
+    const [homeSettings, setHomeSettings] = useState({
+        heroBadgeGuest: 'I\'m Model Agency Platform',
+        heroTitle1: '당신의 모델 활동을',
+        heroTitle2: '더 스마트하게, 아임모카',
+        heroHighlightWord: '아임모카',
+        heroSubtitle1: 'HOT한 중요 이상의 정보를',
+        heroSubtitle2: '한눈에 확인하고, 광고모델 전문 프로필을 단 1분만에 완성하여 스마트한 광고모델 활동을 시작해보세요!'
+    });
+
     useEffect(() => {
         fetchAgencies().then(data => {
             setAgencyCount(data.length);
             setTimeout(() => setLoaded(true), 100);
         }).catch(() => setLoaded(true));
+
+        // 홈화면 설정 불러오기
+        fetchHomepageSettings().then(({ data }) => {
+            if (data && Object.keys(data).length > 0) {
+                setHomeSettings(prev => ({ ...prev, ...data }));
+            }
+        });
     }, []);
 
 
@@ -236,6 +255,31 @@ const AgencyLanding = () => {
             setLoginLoading(false);
         }
     };
+
+    // [신규] 지문/생체 로그인 처리
+    const handlePasskeyLogin = async () => {
+        setLoginLoading(true);
+        setLoginError('');
+        try {
+            const { success, user } = await loginWithPasskey();
+            if (success && user) {
+                setIsLoggedIn(true);
+                setUserId(user.name || user.nickname || '');
+                setUserGrade(user.grade || 'BASIC');
+                setShowLogin(false);
+                navigate('/home/dashboard', { replace: true });
+            }
+        } catch (err) {
+            console.error('[Passkey] Login handler failed:', err);
+            // 에러 메시지 처리 (취소한 경우는 제외하는 것이 좋음)
+            if (err.name !== 'NotAllowedError' && err.name !== 'AbortError') {
+                setLoginError('생체 인증 로그인에 실패했습니다. (등록 여부 확인 필요)');
+            }
+        } finally {
+            setLoginLoading(false);
+        }
+    };
+
 
     // ── 닉네임 중복 확인 ──
     const handleCheckNickname = async () => {
@@ -349,16 +393,21 @@ const AgencyLanding = () => {
             <section className="pt-32 pb-20 px-5 text-center">
                 <div className={`transition-all duration-1000 transform ${loaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
                     <span className="inline-block px-4 py-1.5 rounded-full bg-[#F3E8FF] text-[#9333EA] text-xs font-black tracking-widest mb-4 uppercase">
-                        I'm Model Agency Platform
+                        {homeSettings.heroBadgeGuest}
                     </span>
                     <h1 className="text-4xl md:text-6xl font-black text-[#1F1235] leading-tight tracking-tight mb-6">
-                        당신의 모델 활동을<br />
-                        <span className="text-[#9333EA]">더 스마트하게, 아임모카</span>
+                        {homeSettings.heroTitle1}<br />
+                        <span className="text-[#9333EA]">
+                            {homeSettings.heroTitle2}
+                        </span>
                     </h1>
                     <p className="text-[#5B4E7A] text-lg max-w-lg mx-auto mb-10 leading-relaxed font-medium">
-                        HOT한 중요 {agencyCount}개 이상의 정보를<br />
-                        한눈에 확인하고, 광고모델 전문 프로필을 단 1분만에 완성하여<br />
-                        스마트한 광고모델 활동을 시작해보세요!
+                        {homeSettings.heroSubtitle1.includes('{{count}}') 
+                            ? homeSettings.heroSubtitle1.replace('{{count}}', agencyCount)
+                            : homeSettings.heroSubtitle1.replace(' 이상의 정보를', ` ${agencyCount}개 이상의 정보를`)
+                        }
+                        <br />
+                        {homeSettings.heroSubtitle2}
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button
@@ -459,6 +508,20 @@ const AgencyLanding = () => {
                             >
                                 {loginLoading ? '로그인 중...' : '로그인'}
                             </button>
+
+                            {/* [신규] 지문/생체인식 로그인 버튼 */}
+                            {isPasskeySupported() && (
+                                <button
+                                    type="button"
+                                    onClick={handlePasskeyLogin}
+                                    disabled={loginLoading}
+                                    className="w-full py-4 rounded-2xl bg-[#F3E8FF] text-[#7C3AED] font-black text-lg border-2 border-[#E8D5FF] flex items-center justify-center gap-2 hover:bg-[#EDE0FF] transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-[24px]">fingerprint</span>
+                                    <span>지문 / 생체인식 로그인</span>
+                                </button>
+                            )}
+
 
 
 

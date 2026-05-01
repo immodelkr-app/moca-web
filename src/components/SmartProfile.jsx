@@ -162,7 +162,7 @@ const SmartProfile = () => {
     const handlePickerClick = () => {
         const isWebView = isMobileApp || /Android.*wv/.test(navigator.userAgent) || (/iPhone|iPod|iPad/i.test(navigator.userAgent) && !/Safari/i.test(navigator.userAgent));
         if (isWebView) {
-            setErrorMsg('앱 내부에서는 구글 보안 정책으로 인해 드라이브 원클릭 연동이 제한됩니다. 구글 드라이브 앱에서 포트폴리오 링크를 직접 복사하여 하단 빈칸에 붙여넣어주세요.');
+            setErrorMsg('구글드라이브 원클릭이 안될시, 구글드라이브앱에서 링크를 직접 복사하여 하단 빈칸에 붙여넣어주세요.');
             return;
         }
 

@@ -16,53 +16,9 @@ import VisitMemoModal from './VisitMemoModal';
 import ProfileEditModal from './ProfileEditModal';
 import AgencyMap from './AgencyMap';
 import CastingEmailModal from './CastingEmailModal';
-import SilverLimitModal from './SilverLimitModal';
 
-// ── 실버 멤버 하루 8회 / 3일 쿨다운 로직 ──────────────────────────
-const SILVER_DAILY_LIMIT = 8;
-const SILVER_BLOCK_DAYS = 3;
-const silverKey = (userId) => `silver_daily_limit_${userId}`;
 
-const getSilverStatus = (userId) => {
-    try {
-        const raw = localStorage.getItem(silverKey(userId));
-        if (!raw) return { blocked: false, count: 0, daysLeft: 0 };
-        const data = JSON.parse(raw);
 
-        if (data.blockedUntil) {
-            const blockedUntil = new Date(data.blockedUntil);
-            const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            if (now < blockedUntil) {
-                const daysLeft = Math.ceil((blockedUntil - now) / (1000 * 60 * 60 * 24));
-                return { blocked: true, count: data.count || 0, daysLeft };
-            }
-        }
-
-        const today = new Date().toLocaleDateString('ko-KR');
-        if (data.date === today) return { blocked: false, count: data.count || 0, daysLeft: 0 };
-        return { blocked: false, count: 0, daysLeft: 0 };
-    } catch {
-        return { blocked: false, count: 0, daysLeft: 0 };
-    }
-};
-
-const incrementSilverCount = (userId) => {
-    const today = new Date().toLocaleDateString('ko-KR');
-    const status = getSilverStatus(userId);
-    const newCount = status.count + 1;
-    const data = { date: today, count: newCount };
-
-    if (newCount >= SILVER_DAILY_LIMIT) {
-        const blockedUntil = new Date();
-        blockedUntil.setDate(blockedUntil.getDate() + SILVER_BLOCK_DAYS);
-        blockedUntil.setHours(0, 0, 0, 0);
-        data.blockedUntil = blockedUntil.toISOString();
-    }
-
-    localStorage.setItem(silverKey(userId), JSON.stringify(data));
-    return { newCount, hitLimit: newCount >= SILVER_DAILY_LIMIT };
-};
 
 const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
     const naverMapsUrl = `https://map.naver.com/v5/search/${encodeURIComponent(agency.address || agency.name)}`;
@@ -229,7 +185,7 @@ const AgencyDirectory = () => {
     const [tickerIndex, setTickerIndex] = useState(0);
     const [tickerVisible, setTickerVisible] = useState(true);
     const [activeTab, setActiveTab] = useState('MODEL_SUPPORT'); // 'MODEL_SUPPORT' | 'MOCA_SHOPPING'
-    const [silverLimitModal, setSilverLimitModal] = useState(null); // { isAlreadyBlocked, daysLeft }
+
 
     useEffect(() => {
         getCastingSends(userId).then(setSendHistory).catch(() => { });
@@ -245,19 +201,7 @@ const AgencyDirectory = () => {
     const handleSend = async (agency) => {
         if (sending) return;
 
-        // 실버 멤버 하루 한도 체크 (GOLD/VIP는 무제한)
-        if (!isUnlimited) {
-            const status = getSilverStatus(userId);
-            if (status.blocked) {
-                setSilverLimitModal({ isAlreadyBlocked: true, daysLeft: status.daysLeft });
-                return;
-            }
-            const { hitLimit } = incrementSilverCount(userId);
-            if (hitLimit) {
-                setSilverLimitModal({ isAlreadyBlocked: false, daysLeft: SILVER_BLOCK_DAYS });
-                return;
-            }
-        }
+
 
         const currentUser = getUser();
         if (!currentUser?.portfolio_link) {
@@ -357,29 +301,6 @@ const AgencyDirectory = () => {
     );
 
     const handleActionClick = (e, agency, url) => {
-        const currentGrade = getUserGrade();
-
-        // GOLD/VIP 모카는 무제한 패스
-        if (currentGrade === 'GOLD' || currentGrade === 'VIP') {
-            if (!url) setSelectedAgency(agency);
-            return;
-        }
-
-        // 실버 멤버 하루 한도 체크
-        const status = getSilverStatus(userId);
-        if (status.blocked) {
-            e.preventDefault();
-            setSilverLimitModal({ isAlreadyBlocked: true, daysLeft: status.daysLeft });
-            return;
-        }
-
-        const { hitLimit } = incrementSilverCount(userId);
-        if (hitLimit) {
-            e.preventDefault();
-            setSilverLimitModal({ isAlreadyBlocked: false, daysLeft: SILVER_BLOCK_DAYS });
-            return;
-        }
-
         if (!url) {
             setSelectedAgency(agency);
         }
@@ -514,20 +435,90 @@ const AgencyDirectory = () => {
                         <span className="material-symbols-outlined text-[48px] text-white/20">search_off</span>
                         <p className="text-white/30 text-sm">검색 결과가 없습니다</p>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {filtered.map((agency, i) => (
-                            <AgencyCard
-                                key={i}
-                                agency={agency}
-                                index={i}
-                                onAction={handleActionClick}
-                                onSend={handleSend}
-                                sendInfo={getSendInfo(sendHistory, agency.name)}
-                            />
-                        ))}
-                    </div>
-                )}
+                ) : (() => {
+                    // 실버 회원: 최대 6개 노출 / 골드·VIP: 전체 노출
+                    const SILVER_AGENCY_LIMIT = 6;
+                    const visibleAgencies = isUnlimited ? filtered : filtered.slice(0, SILVER_AGENCY_LIMIT);
+                    const hiddenCount = isUnlimited ? 0 : Math.max(0, filtered.length - SILVER_AGENCY_LIMIT);
+                    // 검색 중엔 검색 결과 전체를 보여줌 (필터 결과가 6 이하이면 제한 없음)
+                    const isSearching = search.trim().length > 0;
+                    const displayAgencies = isSearching ? filtered : visibleAgencies;
+                    const showPaywall = !isUnlimited && !isSearching && hiddenCount > 0;
+
+                    return (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                {displayAgencies.map((agency, i) => (
+                                    <AgencyCard
+                                        key={i}
+                                        agency={agency}
+                                        index={i}
+                                        onAction={handleActionClick}
+                                        onSend={handleSend}
+                                        sendInfo={getSendInfo(sendHistory, agency.name)}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* 실버 회원 페이월 — 골드 업그레이드 유도 */}
+                            {showPaywall && (
+                                <div className="mt-6 relative rounded-[32px] overflow-hidden border border-[#FFD700]/30 shadow-xl shadow-[#F9A825]/10">
+                                    {/* 블러 배경 */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-[#FFF9E6] via-[#FFFDE7] to-[#FFF3CD]" />
+                                    <div className="absolute inset-0 backdrop-blur-[2px]" />
+
+                                    {/* 자물쇠 장식 */}
+                                    <div className="absolute -right-6 -top-6 text-[#FFD700]/10 pointer-events-none">
+                                        <span className="material-symbols-outlined text-[120px]">lock</span>
+                                    </div>
+
+                                    <div className="relative z-10 px-6 py-8 flex flex-col items-center text-center gap-5">
+                                        {/* 아이콘 */}
+                                        <div className="w-16 h-16 rounded-2xl bg-[#FFD700]/15 border border-[#FFD700]/30 flex items-center justify-center shadow-inner">
+                                            <span className="text-3xl">👑</span>
+                                        </div>
+
+                                        {/* 텍스트 */}
+                                        <div>
+                                            <p className="text-[#1F1235] font-black text-lg leading-tight mb-1.5">
+                                                골드 멤버 전용 에이전시
+                                            </p>
+                                            <p className="text-[#7C3AED] font-black text-2xl mb-1">
+                                                +{hiddenCount}곳 더 있어요
+                                            </p>
+                                            <p className="text-[#9CA3AF] text-sm font-bold">
+                                                실버 회원은 상위 {SILVER_AGENCY_LIMIT}개 에이전시까지 열람 가능합니다
+                                            </p>
+                                        </div>
+
+                                        {/* 혜택 요약 */}
+                                        <div className="w-full max-w-xs flex flex-col gap-2">
+                                            {[
+                                                { icon: 'apartment', text: `전체 ${agencies.length}개 에이전시 열람` },
+                                                { icon: 'forward_to_inbox', text: '프로필 월 무제한 발송' },
+                                                { icon: 'mail', text: '에이전시 이메일 주소 공개' },
+                                                { icon: 'edit_note', text: '투어일지 무제한 작성' },
+                                            ].map((item) => (
+                                                <div key={item.text} className="flex items-center gap-3 px-4 py-2.5 bg-white/70 rounded-xl border border-[#FFD700]/20">
+                                                    <span className="material-symbols-outlined text-[16px] text-[#F9A825]">{item.icon}</span>
+                                                    <span className="text-[#1F1235] text-sm font-bold">{item.text}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* CTA 버튼 */}
+                                        <button
+                                            onClick={() => navigate('/upgrade')}
+                                            className="w-full max-w-xs py-4 rounded-[20px] bg-gradient-to-r from-[#FFD700] to-[#F9A825] text-[#1F1235] font-black text-base shadow-lg shadow-[#FFD700]/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                        >
+                                            골드 멤버십 업그레이드
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    );
+                })()}
             </div>
 
             {/* 전체 에이전시 지도 (하단) */}
@@ -581,14 +572,7 @@ const AgencyDirectory = () => {
                 />
             )}
 
-            {/* 실버 멤버 한도 도달 모달 */}
-            {silverLimitModal && (
-                <SilverLimitModal
-                    isAlreadyBlocked={silverLimitModal.isAlreadyBlocked}
-                    daysLeft={silverLimitModal.daysLeft}
-                    onClose={() => setSilverLimitModal(null)}
-                />
-            )}
+
         </div >
     );
 };

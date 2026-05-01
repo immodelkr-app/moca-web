@@ -1,4 +1,5 @@
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { saveUser } from './userService';
 
 /**
  * 지능 인식(Passkey) 관련 서비스
@@ -51,10 +52,32 @@ export const loginWithPasskey = async () => {
             throw error;
         }
         
-        console.log('[Passkey] Logged in successfully:', data);
-        return { success: true, user: data.user };
+        console.log('[Passkey] Logged in successfully via Supabase Auth:', data);
+        
+        // Supabase Auth 유저 정보를 바탕으로 'users' 테이블의 추가 정보를 가져옵니다.
+        // 이 앱은 'users' 테이블에 별도 정보를 관리하므로 동기화가 필요합니다.
+        const { data: dbUser, error: dbError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', data.user.email)
+            .maybeSingle();
+
+        if (dbError) {
+            console.error('[Passkey] DB Profile fetch error:', dbError);
+        }
+
+        const finalUser = dbUser || {
+            nickname: data.user.email?.split('@')[0] || 'moca_user',
+            name: data.user.user_metadata?.full_name || '모카 회원',
+            ...data.user
+        };
+        
+        saveUser(finalUser);
+        
+        return { success: true, user: finalUser };
     } catch (err) {
         console.error('[Passkey] Login failed:', err);
         throw err;
     }
 };
+

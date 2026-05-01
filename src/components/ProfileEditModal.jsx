@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { getUser, updateUserProfile } from '../services/userService';
+import { isPasskeySupported, registerPasskey } from '../services/passkeyService';
+
 
 const USER_KEY = 'i_model_user';
 
@@ -160,6 +162,26 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
         }
     };
 
+    // [신규] 지문/생체 인증 등록 처리
+    const handleRegisterPasskey = async () => {
+        setLoading(true);
+        setErrorMsg('');
+        try {
+            const { success } = await registerPasskey();
+            if (success) {
+                alert('지문/생체 인증이 성공적으로 등록되었습니다. 다음 로그인부터 사용하실 수 있습니다.');
+            }
+        } catch (err) {
+            console.error('[Passkey] Registration handler failed:', err);
+            if (err.name !== 'NotAllowedError' && err.name !== 'AbortError') {
+                setErrorMsg('생체 인증 등록에 실패했습니다. (이미 등록되었거나 장치 미지원)');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     if (!user) return null;
 
     return (
@@ -304,7 +326,31 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                             )}
                         </div>
 
+                        {/* [신규] 보안 및 로그인 설정 (지문/생체 인증) */}
+                        {isPasskeySupported() && (
+                            <div className="pt-4 border-t border-[#E8E0FA] mt-2 space-y-3">
+                                <p className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">보안 및 로그인 설정</p>
+                                <button
+                                    type="button"
+                                    onClick={handleRegisterPasskey}
+                                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#F3E8FF] transition-all group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-[#9333EA]/10 flex items-center justify-center group-hover:bg-[#9333EA]/20 transition-colors">
+                                            <span className="material-symbols-outlined text-[#9333EA] text-[20px]">fingerprint</span>
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-[#1F1235] text-[13px] font-bold">지문 / 생체로그인 등록하기</p>
+                                            <p className="text-[#9CA3AF] text-[10px] font-medium">기기의 생체 정보를 사용하여 간편하게 로그인</p>
+                                        </div>
+                                    </div>
+                                    <span className="material-symbols-outlined text-[#9CA3AF] text-[18px] group-hover:text-[#9333EA] transition-colors">add_circle</span>
+                                </button>
+                            </div>
+                        )}
+
                         {/* 비밀번호 변경 */}
+
                         <div className="space-y-1.5 pt-4 border-t border-[#E8E0FA] mt-2">
                             <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">
                                 비밀번호 변경 (선택)

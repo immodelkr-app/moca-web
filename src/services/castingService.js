@@ -11,7 +11,7 @@
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 
-export const SILVER_MONTHLY_LIMIT = 5;
+export const SILVER_MONTHLY_LIMIT = 3;
 
 const LOCAL_KEY = (nickname) => `moca_casting_sends_${nickname}`;
 
@@ -84,13 +84,16 @@ export const saveCastingSend = async (nickname, agencyName) => {
 
     // 2. Supabase UPSERT (에러 무시 - 로컬은 이미 저장됨)
     if (isSupabaseEnabled()) {
-        await supabase
-            .from('casting_sends')
-            .upsert(
-                { user_nickname: nickname, agency_name: agencyName, sent_at: record.sentAt },
-                { onConflict: 'user_nickname,agency_name' }
-            )
-            .catch(() => { });
+        try {
+            await supabase
+                .from('casting_sends')
+                .upsert(
+                    { user_nickname: nickname, agency_name: agencyName, sent_at: record.sentAt },
+                    { onConflict: 'user_nickname,agency_name' }
+                );
+        } catch (err) {
+            // 무시 - 로컬에는 이미 저장됨
+        }
     }
 
     return record;

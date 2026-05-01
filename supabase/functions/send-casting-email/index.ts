@@ -38,7 +38,7 @@ serve(async (req) => {
         if (!agencyEmail) throw new Error("에이전시 이메일 주소가 누락되었습니다.");
         if (!portfolioLink) throw new Error("모델 프로필(포트폴리오) 링크가 없습니다.");
 
-        const subject = `[아임모카] 광고모델 ${modelName}님의 프로필 정보입니다.`;
+        const subject = `광고모델 ${modelName}님의 프로필입니다.`;
 
 
         const currentYear = new Date().getFullYear();
@@ -98,7 +98,7 @@ serve(async (req) => {
         <div class="header-badge">🎯 아임모카 · 프로필 전달</div>
         <h1>
           <span>${agencyName} 담당자님께</span>
-          광고모델 ${modelName}님의 프로필 정보입니다.
+          광고모델 ${modelName}님의 프로필입니다.
         </h1>
       </div>
 

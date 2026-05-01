@@ -11,6 +11,7 @@ import AdminShop from './AdminShop';
 import AdminSubscriptions from './AdminSubscriptions';
 import AdminPopups from './AdminPopups';
 import AdminClasses from './AdminClasses';
+import AdminHomepage from './AdminHomepage';
 import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost } from '../services/certificationService';
 import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '../services/currentPhotosService';
@@ -816,6 +817,12 @@ const AdminPage = () => {
                     >
                         💬 Q&A 게시판
                     </button>
+                    <button
+                        onClick={() => setActiveTab('homepage')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'homepage' ? 'border-sky-500 text-sky-700 bg-sky-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                    >
+                        🏠 홈화면 관리
+                    </button>
 
                 </div>
 
@@ -1539,6 +1546,13 @@ const AdminPage = () => {
                             )}
                         </div>
                     </div>
+                )}
+
+                {activeTab === 'homepage' && (
+                    <AdminHomepage
+                        setSuccessMsg={setSuccessMsg}
+                        setError={setError}
+                    />
                 )}
 
                 {activeTab === 'message' && (

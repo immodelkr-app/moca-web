@@ -1,6 +1,6 @@
 {
   "appId": "com.immodel.moca",
-  "appName": "아임모델 MOCA",
+  "appName": "모두의 캐스팅 아임모델 모카",
   "webDir": "dist",
   "android": {
     "allowMixedContent": true,
@@ -21,3 +21,4 @@
     }
   }
 }
+
