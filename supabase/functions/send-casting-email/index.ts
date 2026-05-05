@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -10,6 +10,15 @@ serve(async (req) => {
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
+
+    // 부안전한 외부 입력을 HTML에 삽입하기 전에 반드시 escape
+    const esc = (s: unknown): string =>
+        String(s ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     try {
         const body = await req.json();
 
@@ -38,7 +47,7 @@ serve(async (req) => {
         if (!agencyEmail) throw new Error("에이전시 이메일 주소가 누락되었습니다.");
         if (!portfolioLink) throw new Error("모델 프로필(포트폴리오) 링크가 없습니다.");
 
-        const subject = `광고모델 ${modelName}님의 프로필입니다.`;
+        const subject = `광고모델 ${esc(modelName)}님의 프로필입니다.`;
 
 
         const currentYear = new Date().getFullYear();
@@ -97,15 +106,15 @@ serve(async (req) => {
       <div class="header">
         <div class="header-badge">🎯 아임모카 · 프로필 전달</div>
         <h1>
-          <span>${agencyName} 담당자님께</span>
-          광고모델 ${modelName}님의 프로필입니다.
+          <span>${esc(agencyName)} 담당자님께</span>
+          광고모델 ${esc(modelName)}님의 프로필입니다.
         </h1>
       </div>
 
       <div class="body">
         <p class="greeting">
-          안녕하세요, <strong>${agencyName}</strong> 담당자님!<br>
-          광고모델 <strong>${modelName}</strong>입니다.<br>
+          안녕하세요, <strong>${esc(agencyName)}</strong> 담당자님!<br>
+          광고모델 <strong>${esc(modelName)}</strong>입니다.<br>
           아래는 저의 프로필 정보입니다. 확인 부탁드립니다.<br>
           앞으로 좋은 광고건으로 함께하고 싶습니다. 🙏✨
         </p>
@@ -114,11 +123,11 @@ serve(async (req) => {
         <div class="specs">
           <div class="section-title">모델 프로필</div>
           <div class="specs-grid">
-            ${modelAge ? `<div class="spec-item"><div class="spec-label">출생년도</div><div class="spec-value">${modelAge}년생${manAge ? ` (만 ${manAge}세)` : ''}</div></div>` : ""}
-            ${modelHeight ? `<div class="spec-item"><div class="spec-label">키</div><div class="spec-value">${modelHeight}cm</div></div>` : ""}
-            ${modelWeight ? `<div class="spec-item"><div class="spec-label">몸무게</div><div class="spec-value">${modelWeight}kg</div></div>` : ""}
-            ${modelShoeSize ? `<div class="spec-item"><div class="spec-label">신발사이즈</div><div class="spec-value">${modelShoeSize}mm</div></div>` : ""}
-            ${modelPhone ? `<div class="spec-item"><div class="spec-label">연락처</div><div class="spec-value">${modelPhone}</div></div>` : ""}
+            ${modelAge ? `<div class="spec-item"><div class="spec-label">출생년도</div><div class="spec-value">${esc(modelAge)}년생${manAge ? ` (만 ${manAge}세)` : ''}</div></div>` : ""}
+            ${modelHeight ? `<div class="spec-item"><div class="spec-label">키</div><div class="spec-value">${esc(modelHeight)}cm</div></div>` : ""}
+            ${modelWeight ? `<div class="spec-item"><div class="spec-label">몸무게</div><div class="spec-value">${esc(modelWeight)}kg</div></div>` : ""}
+            ${modelShoeSize ? `<div class="spec-item"><div class="spec-label">신발사이즈</div><div class="spec-value">${esc(modelShoeSize)}mm</div></div>` : ""}
+            ${modelPhone ? `<div class="spec-item"><div class="spec-label">연락처</div><div class="spec-value">${esc(modelPhone)}</div></div>` : ""}
           </div>
         </div>
 
@@ -129,17 +138,17 @@ serve(async (req) => {
           ${careerAd ? `
           <div class="career-item">
             <div class="career-label">광고모델 경력</div>
-            <div class="career-value">${careerAd}</div>
+            <div class="career-value">${esc(careerAd)}</div>
           </div>` : ""}
           ${careerOther ? `
           <div class="career-item">
             <div class="career-label">그외 경력사항 (방송·연극·패션쇼)</div>
-            <div class="career-value">${careerOther}</div>
+            <div class="career-value">${esc(careerOther)}</div>
           </div>` : ""}
         </div>` : ""}
 
-        <a href="${portfolioLink}" class="portfolio-btn">
-          📁 ${modelName}모델님 프로필 다운받기
+        <a href="${esc(portfolioLink)}" class="portfolio-btn">
+          📁 ${esc(modelName)}모델님 프로필 다운받기
         </a>
 
       </div>
@@ -192,9 +201,11 @@ serve(async (req) => {
         );
 
     } catch (err) {
+        console.error('[send-casting-email] 오류 발생:', err);
+        // ⚠️ Supabase JS SDK 호환성: 에러도 HTTP 200 반환
         return new Response(
             JSON.stringify({ success: false, error: (err as Error).message }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     }
 });

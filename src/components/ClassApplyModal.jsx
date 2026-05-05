@@ -65,7 +65,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                         <p className="text-[var(--moca-text-3)] text-sm font-bold leading-relaxed mb-8">
                             수강 신청서가 접수되었습니다.<br />
                             담당자 검토 후 <span className="text-indigo-600 font-black">카카오톡 또는 문자</span>로<br />
-                            결제 안내를 드립니다. (영업일 기준 1일 내)
+                            수강 참여 및 승인 안내를 드립니다. (영업일 기준 1일 내)
                         </p>
                         <button
                             onClick={onClose}
@@ -133,8 +133,8 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                     <span className="text-sm font-black text-[var(--moca-text)]">{cls.location}</span>
                                 </div>
                                 <div className="pt-3 border-t border-indigo-100 flex justify-between items-center">
-                                    <span className="text-xs font-black text-indigo-500 uppercase">수강료</span>
-                                    <span className="text-xl font-black text-[var(--moca-text)]">₩{myPrice.toLocaleString()}</span>
+                                    <span className="text-xs font-black text-indigo-500 uppercase">참가 구분</span>
+                                    <span className="text-xl font-black text-[var(--moca-text)]">멤버십 회원</span>
                                 </div>
                             </div>
                         </div>
@@ -161,7 +161,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                     {agreed2 && <span className="material-symbols-outlined text-white text-[14px]">check</span>}
                                 </div>
                                 <p className="text-sm font-bold text-[var(--moca-text)] leading-relaxed">
-                                    결제는 담당자 확인 후 카카오톡/문자로 안내를 받아 진행하겠습니다.
+                                    상세 내용은 담당자 확인 후 카카오톡/문자로 안내를 받아 진행하겠습니다.
                                 </p>
                             </label>
                         </div>
@@ -195,7 +195,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                         </button>
 
                         <p className="text-[10px] text-center text-[var(--moca-text-3)] font-medium mt-3 leading-relaxed opacity-60">
-                            * 신청 즉시 담당자에게 알림이 전달되며,<br />영업일 기준 1일 내로 결제 안내를 드립니다.
+                            * 신청 즉시 담당자에게 알림이 전달되며,<br />영업일 기준 1일 내로 확인 및 승인 안내를 드립니다.
                         </p>
                     </div>
                 )}

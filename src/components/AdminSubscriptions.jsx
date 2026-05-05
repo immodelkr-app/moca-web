@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAllSubscriptions, updateSubscriptionStatus, expireOverdueSubscriptions } from '../services/subscriptionService';
-import { sendAlimtalk } from '../services/aligoService';
+import { sendAlimtalk } from '../services/solapiService';
 
 const STATUS_MAP = {
     active: { label: '활성', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },

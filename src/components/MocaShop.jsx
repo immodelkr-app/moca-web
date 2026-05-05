@@ -7,7 +7,7 @@ import CountdownTimer from './shop/CountdownTimer';
 import OrderModal from './shop/OrderModal';
 import PaymentResult from './shop/PaymentResult';
 import ProductDetailModal from './shop/ProductDetailModal';
-import { sendAlimtalk } from '../services/aligoService';
+import { sendAlimtalk } from '../services/solapiService';
 
 // 토스페이먼츠 클라이언트 키 (테스트)
 const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';

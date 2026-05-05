@@ -17,6 +17,8 @@
         "@capacitor/core": "^8.1.0",
         "@supabase/supabase-js": "^2.97.0",
         "@tosspayments/tosspayments-sdk": "^2.6.0",
+        "canvas-confetti": "^1.9.4",
+        "capacitor-native-biometric": "^4.2.2",
         "leaflet": "^1.9.4",
         "lucide-react": "^0.344.0",
         "papaparse": "^5.4.1",

@@ -210,6 +210,11 @@ const AgencyLanding = () => {
     const [nicknameCheckedValue, setNicknameCheckedValue] = useState('');
     const [nicknameCheckLoading, setNicknameCheckLoading] = useState(false);
     const [nicknameCheckMessage, setNicknameCheckMessage] = useState('');
+    const [biometricSupported, setBiometricSupported] = useState(false);
+
+    useEffect(() => {
+        isPasskeySupported().then(setBiometricSupported);
+    }, []);
 
     useEffect(() => {
         const storedUser = getUser();
@@ -442,7 +447,7 @@ const AgencyLanding = () => {
                         </div>
                         <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
                             <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">event_note</span>
-                            <h3 className="text-xl font-black text-[#1F1235] mb-3">투어일지 & 캘린더</h3>
+                            <h3 className="text-xl font-black text-[#1F1235] mb-3">모델 다이어리 & 캘린더</h3>
                             <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">내가 보낸 프로필과 투어 일정을 체계적으로 관리하고 다른 모델들과 정보를 공유하세요.</p>
                         </div>
                     </div>
@@ -510,7 +515,7 @@ const AgencyLanding = () => {
                             </button>
 
                             {/* [신규] 지문/생체인식 로그인 버튼 */}
-                            {isPasskeySupported() && (
+                            {biometricSupported && (
                                 <button
                                     type="button"
                                     onClick={handlePasskeyLogin}

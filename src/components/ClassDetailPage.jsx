@@ -254,12 +254,12 @@ const ClassDetailPage = () => {
                             <div className="flex items-start gap-4">
                                 <span className="material-symbols-outlined text-indigo-400 mt-0.5">payments</span>
                                 <div>
-                                    <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">수강료</p>
+                                    <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">참가 신청</p>
                                     <p className="text-[15px] font-black text-[var(--moca-text)]">
-                                        ₩{myPrice.toLocaleString()}
+                                        멤버십 등급별 혜택 적용 대상
                                         {currentUser && myPriceInfo && (
                                             <span className="ml-2 text-[11px] font-bold text-indigo-600 bg-indigo-100 px-2.5 py-0.5 rounded-full inline-block align-middle transform -translate-y-[1px]">
-                                                {myPriceInfo.grade_label} 혜택가
+                                                {myPriceInfo.grade_label} 회원
                                             </span>
                                         )}
                                     </p>
@@ -272,7 +272,7 @@ const ClassDetailPage = () => {
                     <div className="mb-12">
                         <h2 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2 mb-6 border-b border-[var(--moca-border)] pb-4">
                             <span className="material-symbols-outlined text-orange-500">info</span>
-                            결제취소 및 환불 안내
+                            신청취소 및 환불 안내
                         </h2>
                         <div className="bg-orange-50/50 p-6 rounded-3xl border border-orange-100 space-y-4">
                             <p className="text-[14px] font-bold text-orange-700 leading-relaxed">
@@ -285,7 +285,7 @@ const ClassDetailPage = () => {
                                 </p>
                                 <p className="text-[13px] font-medium text-gray-600 flex items-start gap-2">
                                     <span className="text-orange-500 font-bold mt-0.5">•</span>
-                                    <span>수업 일정을 충분히 확인하신 후, 참석 가능한 경우에만 신중하게 신청 및 결제해 주시기 바랍니다.</span>
+                                    <span>수업 일정을 충분히 확인하신 후, 참석 가능한 경우에만 신중하게 신청해 주시기 바랍니다.</span>
                                 </p>
                                 <p className="text-[13px] font-medium text-gray-600 flex items-start gap-2">
                                     <span className="text-orange-500 font-bold mt-0.5">•</span>
@@ -300,10 +300,9 @@ const ClassDetailPage = () => {
             {/* Sticky Floating CTA */}
             <div className="fixed bottom-[65px] lg:bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[var(--moca-border)] px-6 py-4 lg:py-6 flex items-center justify-between gap-4 lg:gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] animate-slideUp">
                 <div className="hidden sm:block">
-                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">{myPriceInfo?.grade_label || 'Special Price'}</p>
+                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">{myPriceInfo?.grade_label || 'Special Benefit'}</p>
                     <p className="text-2xl font-black text-[var(--moca-text)] tracking-tighter">
-                        <span className="text-sm font-bold mr-1">₩</span>
-                        {myPrice.toLocaleString()}
+                        참여 신청하기
                     </p>
                 </div>
                 {isApplied ? (

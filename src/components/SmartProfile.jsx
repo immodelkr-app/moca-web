@@ -79,10 +79,12 @@ const SmartProfile = () => {
         gisInited.current = true;
     };
 
-    const loadScript = (id, src, onload) => {
+    const loadScript = (id, src, onReadyCheck) => {
         if (document.getElementById(id)) {
+            // 스크립트 태그는 이미 있음 → 로드 완료 여부를 폴링으로 확인
+            if (onReadyCheck()) return; // 이미 준비됨
             const interval = setInterval(() => {
-                if (onload()) clearInterval(interval);
+                if (onReadyCheck()) clearInterval(interval);
             }, 200);
             setTimeout(() => clearInterval(interval), 10000);
         } else {
@@ -91,7 +93,17 @@ const SmartProfile = () => {
             script.src = src;
             script.async = true;
             script.defer = true;
-            script.onload = onload;
+            script.onload = () => {
+                // 로드 직후 즉시 체크, 아직 준비 안됐으면 짧게 폴링
+                if (onReadyCheck()) return;
+                const interval = setInterval(() => {
+                    if (onReadyCheck()) clearInterval(interval);
+                }, 200);
+                setTimeout(() => clearInterval(interval), 5000);
+            };
+            script.onerror = () => {
+                console.warn(`[SmartProfile] 스크립트 로드 실패: ${src}`);
+            };
             document.body.appendChild(script);
         }
     };

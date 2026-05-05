@@ -1,15 +1,17 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// 쏠라피 키 연동 (사장님께서 제공해주신 최신 키)
-const SOLAPI_API_KEY = "NCSX2JQEWPNP6K4R";
-const SOLAPI_SECRET_KEY = "IB1PHQULIRPJAY6VGWMLCQEWJIU9NUND";
-const PF_ID = "KA01PF260309085923456gdN56tP4xVG"; // 카톡 채널 PF ID
-const SOLAPI_SENDER = "01055439674"; // 인증된 발신번호
+// 🔐 쏠라피 키 — Supabase Edge Function Secrets에서 로드 (절대 하드코딩 금지)
+// Supabase 대시보드 > Edge Functions > aligo-send > Secrets 에 아래 키 등록 필요:
+//   SOLAPI_API_KEY, SOLAPI_SECRET_KEY, SOLAPI_PF_ID, SOLAPI_SENDER
+const SOLAPI_API_KEY    = Deno.env.get("SOLAPI_API_KEY") ?? "";
+const SOLAPI_SECRET_KEY = Deno.env.get("SOLAPI_SECRET_KEY") ?? "";
+const PF_ID             = Deno.env.get("SOLAPI_PF_ID") ?? ""; // 카톡 채널 PF ID
+const SOLAPI_SENDER     = Deno.env.get("SOLAPI_SENDER") ?? "01055439674"; // 인증된 발신번호
 
 // 쏠라피 인증 헤더 생성기 (Web Crypto API 사용)
 async function getSolapiAuth() {
@@ -41,6 +43,18 @@ serve(async (req) => {
     }
 
     try {
+        // 🔐 환경변수 누락 조기 검증
+        if (!SOLAPI_API_KEY || !SOLAPI_SECRET_KEY) {
+            console.error('[aligo-send] SOLAPI_API_KEY 또는 SOLAPI_SECRET_KEY 환경변수가 설정되지 않았습니다.');
+            return new Response(
+                JSON.stringify({ success: false, error: '서버 설정 오류: 메시지 발송 키가 등록되지 않았습니다. 관리자에게 문의하세요.' }),
+                { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+        if (!PF_ID) {
+            console.warn('[aligo-send] SOLAPI_PF_ID 환경변수가 없습니다. 카카오 알림톡이 실패할 수 있습니다.');
+        }
+
         const payload = await req.json()
         const type = payload.type || 'sms'
         
@@ -56,7 +70,13 @@ serve(async (req) => {
             }
 
             // 🟢 알리고 형식을 쏠라피 형식으로 변환 (단건 메시지로 발송하게 될 경우의 처리)
-            const messages = receivers.map((user: any) => {
+            // 빈 전화번호 필터링
+            const validReceivers = receivers.filter((u: any) => u?.phone);
+            if (validReceivers.length === 0) {
+                throw new Error('유효한 수신자 전화번호가 없습니다.');
+            }
+
+            const messages = validReceivers.map((user: any) => {
                 const cleanPhone = user.phone.replace(/-/g, '')
                 // receiver별 templateId/pfId가 있으면 우선 사용 (없으면 payload 전역값 사용)
                 const msgTemplateId = user.templateId || defaultTemplateId;
@@ -94,6 +114,7 @@ serve(async (req) => {
                 }
             })
 
+            console.log(`[aligo-send] 카카오 알림톡 ${validReceivers.length}건 발송 시작`);
             const response = await fetch('https://api.solapi.com/messages/v4/send-many', {
                 method: 'POST',
                 headers: {
@@ -111,7 +132,7 @@ serve(async (req) => {
             return new Response(
                 JSON.stringify({
                     success: true,
-                    message: `${receivers.length}건 카카오 알림톡 발송 성공 (쏠라피)`,
+                    message: `${validReceivers.length}건 카카오 알림톡 발송 성공 (쏠라피)`,
                     data: responseData
                 }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
@@ -124,7 +145,12 @@ serve(async (req) => {
                 throw new Error('친구톡은 수신자 목록(receivers)이 필수입니다.')
             }
 
-            const messages = receivers.map((user: any) => {
+            const validFTReceivers = receivers.filter((u: any) => u?.phone && u?.content);
+            if (validFTReceivers.length === 0) {
+                throw new Error('유효한 수신자(전화번호+내용)가 없습니다.');
+            }
+
+            const messages = validFTReceivers.map((user: any) => {
                 const cleanPhone = user.phone.replace(/-/g, '')
                 const solapiButtons: any[] = user.buttons || []
 
@@ -158,7 +184,7 @@ serve(async (req) => {
             return new Response(
                 JSON.stringify({
                     success: true,
-                    message: `${receivers.length}건 친구톡 발송 성공 (쏠라피)`,
+                    message: `${validFTReceivers.length}건 친구톡 발송 성공 (쏠라피)`,
                     data: responseData
                 }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
@@ -202,10 +228,12 @@ serve(async (req) => {
         }
 
     } catch (error: any) {
-        console.error("발송 에러:", error);
+        console.error('[aligo-send] 발송 에러:', error);
+        // ⚠️ 에러도 HTTP 200으로 반환해야 Supabase JS SDK가 data를 정상 파싱함
+        // (status 400/500이면 SDK가 자동으로 error 객체로 변환 → data가 null이 됨)
         return new Response(
             JSON.stringify({ success: false, error: error.message }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         )
     }
 })

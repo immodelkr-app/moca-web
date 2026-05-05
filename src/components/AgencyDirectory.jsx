@@ -146,7 +146,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
                     className="w-full flex items-center justify-center gap-2 py-3 mt-1 rounded-xl bg-[#6C63FF]/15 hover:bg-[#6C63FF]/25 border border-[#9B8AFB]/35 transition-colors cursor-pointer text-[#9B8AFB] font-bold text-[13px]"
                 >
                     <span className="material-symbols-outlined text-[18px]">edit_note</span>
-                    에이전시 투어 일지
+                    모델 다이어리
                 </button>
                 {/* 이력서 쏘기 버튼 */}
                 <button
@@ -497,7 +497,7 @@ const AgencyDirectory = () => {
                                                 { icon: 'apartment', text: `전체 ${agencies.length}개 에이전시 열람` },
                                                 { icon: 'forward_to_inbox', text: '프로필 월 무제한 발송' },
                                                 { icon: 'mail', text: '에이전시 이메일 주소 공개' },
-                                                { icon: 'edit_note', text: '투어일지 무제한 작성' },
+                                                { icon: 'edit_note', text: '모델 다이어리 무제한 작성' },
                                             ].map((item) => (
                                                 <div key={item.text} className="flex items-center gap-3 px-4 py-2.5 bg-white/70 rounded-xl border border-[#FFD700]/20">
                                                     <span className="material-symbols-outlined text-[16px] text-[#F9A825]">{item.icon}</span>

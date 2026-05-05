@@ -5,9 +5,9 @@ import { getUser } from '../services/userService';
 import { saveUpgradeRequest } from '../services/adminService';
 
 const PLANS = [
-    { id: 'gold_3m',  months: 3,  price: 30000,  label: '3개월' },
-    { id: 'gold_6m',  months: 6,  price: 50000,  label: '6개월' },
-    { id: 'gold_12m', months: 12, price: 100000, label: '12개월' },
+    { id: 'gold_3m',  months: 3,  price: 0,  label: '3개월' },
+    { id: 'gold_6m',  months: 6,  price: 0,  label: '6개월' },
+    { id: 'gold_12m', months: 12, price: 0, label: '12개월' },
 ];
 
 /* ── 서명 팝업 모달 ── */
@@ -142,7 +142,7 @@ const UpgradeApplicationPage = () => {
         try {
             const { error } = await saveUpgradeRequest(requestPayload);
             if (error) throw error;
-            alert('🎉 멤버십 등업 신청서가 제출되었습니다!\n\n담당자가 확인 후 카카오톡으로 결제 및 승인 안내를 드립니다.');
+            alert('🎉 멤버십 등업 신청서가 제출되었습니다!\n\n담당자가 확인 후 등업 승인 및 절차 안내를 드립니다.');
             navigate('/home/dashboard');
         } catch (err) {
             console.error('Upgrade request save error:', err);
@@ -202,7 +202,7 @@ const UpgradeApplicationPage = () => {
                                             </span>
                                         </div>
                                         <span className={`text-xl font-black ${isSelected ? 'text-[#1F1235]' : 'text-[#5B4E7A]'}`}>
-                                            {plan.price.toLocaleString()}원
+                                            선택됨
                                         </span>
                                     </button>
                                 );
@@ -216,9 +216,9 @@ const UpgradeApplicationPage = () => {
                             2. 규정 및 혜택 안내
                         </h3>
                         <div className="bg-[#F8F5FF] rounded-2xl p-6 text-sm text-[#5B4E7A] space-y-4">
-                            <p>1. 신청 후 담당자가 카카오톡으로 결제 안내를 발송하며, 결제 완료 후 GOLD 등급이 즉시 반영됩니다.</p>
+                            <p>1. 신청 후 담당자가 확인 안내를 발송하며, 신청 승인 후 GOLD 등급이 즉시 반영됩니다.</p>
                             <p>2. GOLD 등급 회원은 앱 내 무제한 에이전시 조회 기능과 캐스팅 등록, 사진 등록 권한을 얻습니다.</p>
-                            <p>3. 부가세(VAT)가 포함된 금액이며, 서비스 이용 기간 중 환불은 회사 규약에 따라 진행됩니다.</p>
+                            <p>3. 서비스 이용 기간 중 멤버십 변경은 회사 규약에 따라 진행됩니다.</p>
                             <p>4. 제출되는 개인정보와 서명 기록은 등업 및 본인 확인 목적으로 안전하게 보관됩니다.</p>
                         </div>
                     </div>
@@ -296,7 +296,7 @@ const UpgradeApplicationPage = () => {
                         등업 신청서 최종 제출하기
                     </button>
                     <p className="text-center text-[12px] text-[#9CA3AF] font-bold">
-                        * 제출 버튼 클릭 시 신청이 완료되며, 개별 카카오톡 안내를 드립니다.
+                        * 제출 버튼 클릭 시 신청이 완료되며, 개별 확인 안내를 드립니다.
                     </p>
                 </div>
             </div>

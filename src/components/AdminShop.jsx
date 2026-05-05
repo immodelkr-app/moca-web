@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { MOCK_PRODUCTS, fetchAllReviews, toggleReviewApproval, deleteReview } from '../services/shopService';
-import { sendFriendtalk } from '../services/aligoService';
+import { sendFriendtalk } from '../services/solapiService';
 
 const BUCKET = 'shop-images';
 const MAX_FILE_MB = 5;

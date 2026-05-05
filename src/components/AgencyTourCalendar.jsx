@@ -193,7 +193,7 @@ const AgencyTourCalendar = () => {
                         </span>
                         <span className="flex items-center gap-1">
                             <span className="w-2.5 h-2.5 rounded-sm bg-white border border-[#E8E0FA] inline-block" />
-                            <span className="text-[#9CA3AF]">투어일지</span>
+                            <span className="text-[#9CA3AF]">모델 다이어리</span>
                         </span>
                     </div>
                 </div>
@@ -296,7 +296,7 @@ const AgencyTourCalendar = () => {
                                             </div>
                                         )}
 
-                                        {/* 투어 일지 칩 (보라) */}
+                                        {/* 모델 다이어리 칩 (보라) */}
                                         <div className="flex-1 mt-0.5 space-y-1 overflow-hidden z-10 relative">
                                             {dayDiaries.slice(0, dayClassEvt.length > 0 ? 1 : 2).map((memo, mIdx) => (
                                                 <div key={mIdx} className="w-full truncate text-[9px] sm:text-[10px] font-bold bg-white border border-[#E8E0FA] text-[#7C3AED] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md shadow-sm">

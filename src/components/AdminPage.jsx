@@ -5,7 +5,7 @@ import { GRADE_INFO, GRADE_EMOJI, logoutUser } from '../services/userService';
 import { fetchPartners, fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
 import { fetchLatestAnnouncement } from '../services/chatService';
 import { postMessage, fetchMessagesList, deleteMessage, updateMessage } from '../services/messageService';
-import { sendBulkMessage, sendAlimtalk, sendFriendtalk } from '../services/aligoService';
+import { sendBulkMessage, sendAlimtalk, sendFriendtalk } from '../services/solapiService';
 import AdminPartners from './AdminPartners';
 import AdminShop from './AdminShop';
 import AdminSubscriptions from './AdminSubscriptions';

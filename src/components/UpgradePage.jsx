@@ -6,10 +6,10 @@ import { getUser } from '../services/userService';
 const KAKAO_CHANNEL_URL = 'http://pf.kakao.com/_zlMUxj/chat';
 
 const PLANS = [
-    { id: 'gold_1m',  months: 1,  price: 10000,  label: '1개월',  monthly: 10000, popular: false },
-    { id: 'gold_3m',  months: 3,  price: 30000,  label: '3개월',  monthly: 10000, popular: false },
-    { id: 'gold_6m',  months: 6,  price: 50000,  label: '6개월',  monthly: 8333,  popular: true,  discountPct: 17 },
-    { id: 'gold_12m', months: 12, price: 100000, label: '12개월', monthly: 8333,  popular: false, discountPct: 17 },
+    { id: 'gold_1m',  months: 1,  price: 0,  label: '1개월',  monthly: 0, popular: false },
+    { id: 'gold_3m',  months: 3,  price: 0,  label: '3개월',  monthly: 0, popular: false },
+    { id: 'gold_6m',  months: 6,  price: 0,  label: '6개월',  monthly: 0,  popular: true,  discountPct: 0 },
+    { id: 'gold_12m', months: 12, price: 0, label: '12개월', monthly: 0,  popular: false, discountPct: 0 },
 ];
 
 // ── 등급별 혜택 비교 데이터 ──────────────────────────────────────────────────
@@ -76,7 +76,7 @@ const UpgradePage = () => {
                 <div className="flex gap-2 bg-[#F3E8FF] border border-[#E8E0FA] rounded-2xl p-1">
                     {[
                         { id: 'compare', label: '등급별 혜택 비교', icon: 'compare' },
-                        { id: 'plans', label: '구독 플랜 신청', icon: 'workspace_premium' },
+                        { id: 'plans', label: '멤버십 혜택 신청', icon: 'workspace_premium' },
                     ].map(tab => (
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                             className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all ${
@@ -111,7 +111,7 @@ const UpgradePage = () => {
                                     <span className="text-2xl">👑</span>
                                 </div>
                                 <h3 className="text-[#9333EA] font-black text-base mb-1">GOLD</h3>
-                                <p className="text-[#7C3AED] font-black text-lg">월 10,000원~</p>
+                                <p className="text-[#7C3AED] font-black text-lg">상담 후 승인</p>
                                 <p className="text-[#9CA3AF] text-[10px] mt-1">광고모델 활동</p>
                             </div>
                         </div>
@@ -170,10 +170,10 @@ const UpgradePage = () => {
                         <div className="bg-[#FFFBEB] border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
                             <span className="text-2xl flex-shrink-0">💛</span>
                             <div>
-                                <p className="text-amber-700 font-black text-sm">카카오톡으로 간편 신청</p>
+                                <p className="text-amber-700 font-black text-sm">상담 후 등급 승인 안내</p>
                                 <p className="text-amber-600 text-xs mt-1 leading-relaxed">
-                                    플랜을 선택하고 아래 버튼을 누르면 카카오 채널로 연결됩니다.<br/>
-                                    담당자가 결제 링크를 보내드리며, 결제 완료 후 GOLD 등급이 적용됩니다.
+                                    플랜을 선택하고 아래 버튼을 누르면 신청서 작성이 시작됩니다.<br/>
+                                    담당자가 확인 후 등업 승인 및 절차 안내를 드리며, 확인 완료 후 GOLD 등급이 적용됩니다.
                                 </p>
                             </div>
                         </div>
@@ -206,13 +206,13 @@ const UpgradePage = () => {
                                                         {plan.label}
                                                     </p>
                                                     <p className="text-[#9CA3AF] text-[13px] font-bold mt-0.5">
-                                                        월 {plan.monthly.toLocaleString()}원
+                                                        멤버십 전용 혜택
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
                                                 <p className={`text-2xl font-black ${isSelected ? 'text-[#9333EA]' : 'text-[#1F1235]'}`}>
-                                                    {plan.price.toLocaleString()}원
+                                                    선택
                                                 </p>
                                                 {plan.discountPct && (
                                                     <span className="text-[11px] font-black text-[#EC4899] bg-[#EC4899]/10 px-2 py-0.5 rounded-full">
@@ -232,9 +232,9 @@ const UpgradePage = () => {
                                 <span className="text-[#5B4E7A] text-[15px] font-bold">선택한 플랜</span>
                                 <span className="text-[#9333EA] font-black text-[15px]">{selectedPlan.label} 구독</span>
                             </div>
-                            <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#F8F5FF]">
-                                <span className="text-[#5B4E7A] text-sm font-medium">신청 금액</span>
-                                <span className="text-[#1F1235] font-black text-2xl">{selectedPlan.price.toLocaleString()}원</span>
+                             <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#F8F5FF]">
+                                <span className="text-[#5B4E7A] text-sm font-medium">신청 구분</span>
+                                <span className="text-[#1F1235] font-black text-2xl">멤버십 등업</span>
                             </div>
 
                             {/* 등업 신청 버튼 */}
@@ -270,8 +270,8 @@ const UpgradePage = () => {
                                 {[
                                     { step: '1', text: '플랜 확인 후 신청서 작성 버튼 클릭', icon: 'touch_app' },
                                     { step: '2', text: '자동 입력된 폼 확인 후 서명 제출', icon: 'draw' },
-                                    { step: '3', text: '담당자가 카카오톡으로 결제 링크 발송', icon: 'send' },
-                                    { step: '4', text: '영업일 1일 이내 등급별 혜택 자동 적용', icon: 'workspace_premium' },
+                                    { step: '3', text: '담당자가 신청 내역 확인 및 개별 연락', icon: 'send' },
+                                    { step: '4', text: '영업일 1일 이내 등급별 혜택 승인 완료', icon: 'workspace_premium' },
                                 ].map(({ step, text, icon }) => (
                                     <div key={step} className="flex items-center gap-3">
                                         <div className="w-7 h-7 rounded-full bg-[#F3E8FF] flex items-center justify-center flex-shrink-0">
@@ -293,10 +293,9 @@ const UpgradePage = () => {
                                 이용 안내
                             </p>
                             <ul className="text-[#9CA3AF] text-[11px] space-y-1 pl-4">
-                                <li>• 결제 확인 후 영업일 1일 이내 GOLD 등급이 적용됩니다.</li>
+                                <li>• 신청 확인 후 영업일 1일 이내 GOLD 등급이 적용됩니다.</li>
                                 <li>• 구독 기간 만료 시 자동으로 SILVER로 변경됩니다.</li>
-                                <li>• 환불 문의는 카카오톡 채널로 연락해주세요.</li>
-                                <li>• 부가세(VAT) 포함 금액입니다.</li>
+                                <li>• 멤버십 관련 문의는 카카오톡 채널로 연락해주세요.</li>
                             </ul>
                         </div>
                     </div>

@@ -11,6 +11,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [biometricSupported, setBiometricSupported] = useState(false);
 
     // 폼 상태
     const [formData, setFormData] = useState({
@@ -77,6 +78,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
         };
 
         initUser();
+        isPasskeySupported().then(setBiometricSupported);
 
         // Daum Postcode 스크립트 로드
         const scriptId = 'daum-postcode-script';
@@ -327,7 +329,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                         </div>
 
                         {/* [신규] 보안 및 로그인 설정 (지문/생체 인증) */}
-                        {isPasskeySupported() && (
+                        {biometricSupported && (
                             <div className="pt-4 border-t border-[#E8E0FA] mt-2 space-y-3">
                                 <p className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">보안 및 로그인 설정</p>
                                 <button

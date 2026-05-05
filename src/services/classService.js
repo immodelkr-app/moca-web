@@ -3,7 +3,7 @@
  * MOCA 클래스 관리 및 신청 관련 서비스
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
-import { sendAlimtalk } from './aligoService';
+import { sendAlimtalk } from './solapiService';
 
 // ────────────────────────────────────────────────────────
 // 📣 클래스 신청 완료 알림톡 발송 템플릿

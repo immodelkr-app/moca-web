@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchClasses, createClass, updateClass, deleteClass, fetchApplications, updatePaymentStatus, sendClassApplicationNotification } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
-import { sendBulkMessage } from '../services/aligoService';
+import { sendBulkMessage } from '../services/solapiService';
 
 const CLASS_BUCKET = 'class-images';
 const MAX_FILE_MB = 10;

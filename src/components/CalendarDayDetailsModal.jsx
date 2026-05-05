@@ -79,7 +79,7 @@ END:VCALENDAR`;
                         </div>
                         <div>
                             <h2 className="text-2xl font-black text-[#1F1235] leading-none tracking-tight">{dateStr}</h2>
-                            <p className="text-[13px] text-[#9CA3AF] font-bold mt-1.5 uppercase tracking-wider">나의 투어 일지</p>
+                            <p className="text-[13px] text-[#9CA3AF] font-bold mt-1.5 uppercase tracking-wider">나의 모델 다이어리</p>
                         </div>
                     </div>
                     <button
@@ -98,7 +98,7 @@ END:VCALENDAR`;
                                 <span className="material-symbols-outlined text-[40px] text-[#9333EA]/30">edit_note</span>
                             </div>
                             <p className="text-[#5B4E7A] font-bold text-center text-sm leading-relaxed">
-                                이 날 작성된 투어 일지가 없습니다.<br/>
+                                이 날 작성된 기록이 없습니다.<br/>
                                 <span className="text-[#9CA3AF] text-xs font-medium">활동 내용을 기록해보세요!</span>
                             </p>
                         </div>
@@ -157,7 +157,7 @@ END:VCALENDAR`;
                         className="w-full py-4.5 bg-[#F3E8FF] hover:bg-[#EDE8FF] text-[#7C3AED] text-[15px] font-black tracking-wide rounded-[20px] transition-all border border-[#E8E0FA] flex items-center justify-center gap-2.5 group active:scale-[0.98]"
                     >
                         <span className="material-symbols-outlined text-[22px] font-black transition-transform group-hover:scale-110">add_circle</span>
-                        새 투어 일지 추가
+                        새 기록 추가
                     </button>
                 </div>
             </div>

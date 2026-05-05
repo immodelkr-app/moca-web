@@ -10,6 +10,7 @@ import TourDiary from './components/TourDiary';
 import AffiliatedAgencies from './components/AffiliatedAgencies';
 import AgencyLanding from './components/AgencyLanding';
 import AgencyDirectory from './components/AgencyDirectory';
+import AgencyMapScreen from './components/AgencyMapScreen';
 import KimDaepyoTV from './components/KimDaepyoTV';
 import AgencyTourCalendar from './components/AgencyTourCalendar';
 import AdminPage from './components/AdminPage';
@@ -83,6 +84,7 @@ function AppContent() {
                         <Route path="cert" element={<CertificationFeed />} />
                         <Route path="smart-profile" element={<SmartProfile />} />
                         <Route path="qna" element={<QnABoard />} />
+                        <Route path="agency-map" element={<AgencyMapScreen />} />
 
                         <Route path="class" element={<ClassListPage />} />
                         <Route path="class/:id" element={<ClassDetailPage />} />
