@@ -21,11 +21,7 @@ const COMMUNITY_ITEMS = [
     { icon: 'photo_camera', label: '투어스타그램', route: '/home/cert', color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/20' },
     { icon: 'smart_display', label: '모카TV', route: '/home/tv', color: 'from-[#EF4444] to-[#FCA5A5]', glow: 'shadow-[#EF4444]/20' },
     { icon: 'forum', label: 'Q&A 게시판', route: '/home/qna', color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/20' },
-];
-
-const QUICK_ACTIONS = [
-    { icon: 'workspace_premium', label: '등급 업그레이드', route: '/upgrade', color: 'text-[#D97706]', bg: 'bg-[#FFFBEB]', border: 'border-[#FDE68A]' },
-    { icon: 'contract', label: '전속계약 요청', route: '/home/contract', color: 'text-[#059669]', bg: 'bg-[#ECFDF5]', border: 'border-[#A7F3D0]' },
+    { icon: 'workspace_premium', label: '등급 신청하기', route: '/upgrade', color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/20' },
 ];
 
 const HomeDashboard = () => {
@@ -118,20 +114,6 @@ const HomeDashboard = () => {
                         <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm relative z-10 border border-white/30">
                             <span className="material-symbols-outlined text-white text-[24px]">{item.icon}</span>
                         </div>
-                    </button>
-                ))}
-            </div>
-
-            {/* ── 퀵 액션 (등급업, 계약) ── */}
-            <div className="px-5 mb-8 grid grid-cols-2 gap-3">
-                {QUICK_ACTIONS.map(action => (
-                    <button
-                        key={action.label}
-                        onClick={() => navigate(action.route)}
-                        className={`flex items-center justify-center gap-2 py-3.5 rounded-2xl border ${action.bg} ${action.border} hover:opacity-80 active:scale-95 transition-all shadow-sm`}
-                    >
-                        <span className={`material-symbols-outlined text-[18px] ${action.color}`}>{action.icon}</span>
-                        <span className={`font-black text-[12px] ${action.color}`}>{action.label}</span>
                     </button>
                 ))}
             </div>
