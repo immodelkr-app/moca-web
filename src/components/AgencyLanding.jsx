@@ -56,8 +56,8 @@ const AgencyLanding = () => {
 
     const [homeSettings, setHomeSettings] = useState({
         heroBadgeGuest: 'I\'m Model Agency Platform',
-        heroTitle1: '당신의 모델 활동을',
-        heroTitle2: '더 스마트하게, 아임모카',
+        heroTitle1: '스마트한 광고모델\n활동을 위한',
+        heroTitle2: '나의 광고모델다이어리\n아임모카',
         heroHighlightWord: '아임모카',
         heroSubtitle1: '중요 이상의 정보를',
         heroSubtitle2: '한눈에 확인하고, 광고모델 전문 프로필을 단 1분만에 완성하여 스마트한 광고모델 활동을 시작해보세요!',
@@ -318,9 +318,13 @@ const AgencyLanding = () => {
                         {homeSettings.heroBadgeGuest}
                     </span>
                     <h1 className="text-4xl md:text-6xl font-black text-[#1F1235] leading-tight tracking-tight mb-6">
-                        {homeSettings.heroTitle1}<br />
+                        {homeSettings.heroTitle1?.split('\n').map((line, i) => (
+                            <React.Fragment key={i}>{line}<br /></React.Fragment>
+                        ))}
                         <span className="text-[#9333EA]">
-                            {homeSettings.heroTitle2}
+                            {homeSettings.heroTitle2?.split('\n').map((line, i) => (
+                                <React.Fragment key={i}>{line}{i < homeSettings.heroTitle2.split('\n').length - 1 ? <br /> : ''}</React.Fragment>
+                            ))}
                         </span>
                     </h1>
                     <p className="text-[#5B4E7A] text-lg max-w-lg mx-auto mb-10 leading-relaxed font-medium">
