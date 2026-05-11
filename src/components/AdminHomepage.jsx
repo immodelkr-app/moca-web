@@ -34,6 +34,15 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
         heroHighlightWord: '',
         heroSubtitle1: '',
         heroSubtitle2: '',
+        feature1Icon: 'verified',
+        feature1Title: '',
+        feature1Desc: '',
+        feature2Icon: 'group',
+        feature2Title: '',
+        feature2Desc: '',
+        feature3Icon: 'auto_graph',
+        feature3Title: '',
+        feature3Desc: '',
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -138,6 +147,33 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
                             value={content.heroSubtitle2} 
                             onChange={v => update('heroSubtitle2', v)} 
                         />
+                    </section>
+
+                    <section className="bg-[var(--moca-bg)] p-6 rounded-2xl border border-[var(--moca-border)]">
+                        <h2 className="text-lg font-bold text-[var(--moca-text)] flex items-center gap-2 mb-4">
+                            🃏 주요 기능 카드 설정
+                        </h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="space-y-4 p-4 bg-white/50 rounded-xl border border-[var(--moca-border)]">
+                                <h3 className="font-bold text-sm text-[var(--moca-primary)]">기능 1</h3>
+                                <Field label="아이콘" hint="Material Icon 이름" value={content.feature1Icon} onChange={v => update('feature1Icon', v)} />
+                                <Field label="제목" value={content.feature1Title} onChange={v => update('feature1Title', v)} />
+                                <Field label="설명" value={content.feature1Desc} onChange={v => update('feature1Desc', v)} large />
+                            </div>
+                            <div className="space-y-4 p-4 bg-white/50 rounded-xl border border-[var(--moca-border)]">
+                                <h3 className="font-bold text-sm text-[var(--moca-primary)]">기능 2</h3>
+                                <Field label="아이콘" hint="Material Icon 이름" value={content.feature2Icon} onChange={v => update('feature2Icon', v)} />
+                                <Field label="제목" value={content.feature2Title} onChange={v => update('feature2Title', v)} />
+                                <Field label="설명" value={content.feature2Desc} onChange={v => update('feature2Desc', v)} large />
+                            </div>
+                            <div className="space-y-4 p-4 bg-white/50 rounded-xl border border-[var(--moca-border)]">
+                                <h3 className="font-bold text-sm text-[var(--moca-primary)]">기능 3</h3>
+                                <Field label="아이콘" hint="Material Icon 이름" value={content.feature3Icon} onChange={v => update('feature3Icon', v)} />
+                                <Field label="제목" value={content.feature3Title} onChange={v => update('feature3Title', v)} />
+                                <Field label="설명" value={content.feature3Desc} onChange={v => update('feature3Desc', v)} large />
+                            </div>
+                        </div>
                     </section>
 
                     <div className="flex justify-end pt-4">

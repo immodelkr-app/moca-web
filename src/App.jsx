@@ -31,9 +31,6 @@ import QnABoard from './components/QnABoard';
 import ExclusiveContractPage from './components/ExclusiveContractPage';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
-import PaymentSuccess from './components/shop/PaymentSuccess';
-import PaymentFail from './components/shop/PaymentFail';
-import ClassPaymentSuccess from './components/payment/ClassPaymentSuccess';
 import { usePageView } from './hooks/usePageView';
 import { useAutoLogout } from './hooks/useAutoLogout';
 import { useAuthSync } from './hooks/useAuthSync';
@@ -57,10 +54,6 @@ function AppContent() {
                 {/* 공개 페이지 (로그인 불필요) */}
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
-                {/* 토스페이먼츠 결제 콜백 (로그인 없이 접근 가능해야 함) */}
-                <Route path="/payment/success" element={<PaymentSuccess />} />
-                <Route path="/payment/class-success" element={<ClassPaymentSuccess />} />
-                <Route path="/payment/fail" element={<PaymentFail />} />
                 {/* 보호된 라우트 (로그인 필요) */}
                 <Route element={<ProtectedRoute />}>
                     <Route path="/agencies" element={<Layout />}>

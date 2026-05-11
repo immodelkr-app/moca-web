@@ -284,3 +284,57 @@ export const saveUpgradeRequest = async (requestData) => {
     const { data, error } = await supabase.from('upgrade_requests').insert([payload]).select();
     return { data, error };
 };
+
+/**
+ * 멤버십 등업 신청 목록을 조회합니다.
+ */
+export const fetchUpgradeRequests = async () => {
+    if (!supabase) return { data: [], error: new Error('Supabase not configured') };
+    const { data, error } = await supabase
+        .from('upgrade_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+    return { data: data || [], error };
+};
+
+/**
+ * 멤버십 등업 신청을 승인하고 사용자 등급을 GOLD로 상향합니다.
+ */
+export const approveUpgradeRequest = async (requestId, userNickname, months) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+
+    // 1. 신청서 상태 업데이트
+    const { error: requestError } = await supabase
+        .from('upgrade_requests')
+        .update({ status: 'approved', approved_at: new Date().toISOString() })
+        .eq('id', requestId);
+
+    if (requestError) return { error: requestError };
+
+    // 2. 만료일 계산
+    const expirationDate = new Date();
+    expirationDate.setMonth(expirationDate.getMonth() + parseInt(months));
+
+    // 3. 사용자 등급 업데이트 (닉네임으로 식별)
+    const { error: gradeError } = await supabase
+        .from('users')
+        .update({ 
+            grade: 'GOLD', 
+            grade_expires_at: expirationDate.toISOString() 
+        })
+        .eq('nickname', userNickname);
+
+    return { error: gradeError };
+};
+
+/**
+ * 멤버십 등업 신청을 반려합니다.
+ */
+export const rejectUpgradeRequest = async (requestId) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+    const { error } = await supabase
+        .from('upgrade_requests')
+        .update({ status: 'rejected' })
+        .eq('id', requestId);
+    return { error };
+};

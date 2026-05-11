@@ -294,27 +294,4 @@ export const deleteClassCalendarEvent = async (userId, classId) => {
     return { error };
 };
 
-/**
- * 클래스 결제 승인 확인 (토스페이먼츠)
- * Supabase Edge Function 'toss-confirm'을 호출하여 결제 검증 및 상태 업데이트
- */
-export const confirmClassPayment = async ({ paymentKey, orderId, amount, applicationId }) => {
-    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
 
-    // 1. 토스 결제 승인 호출
-    const { data: confirmData, error: confirmError } = await supabase.functions.invoke('toss-confirm', {
-        body: { paymentKey, orderId, amount }
-    });
-
-    if (confirmError || confirmData?.error) {
-        return { error: confirmError || confirmData?.error };
-    }
-
-    // 2. 클래스 신청 상태 업데이트
-    const { error: updateError } = await supabase
-        .from('class_applications')
-        .update({ payment_status: 'paid' })
-        .eq('id', applicationId);
-
-    return { data: confirmData, error: updateError };
-};

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { GRADE_INFO, GRADE_EMOJI, logoutUser } from '../services/userService';
@@ -7,8 +7,7 @@ import { fetchLatestAnnouncement } from '../services/chatService';
 import { postMessage, fetchMessagesList, deleteMessage, updateMessage } from '../services/messageService';
 import { sendBulkMessage, sendAlimtalk, sendFriendtalk } from '../services/solapiService';
 import AdminPartners from './AdminPartners';
-import AdminShop from './AdminShop';
-import AdminSubscriptions from './AdminSubscriptions';
+import AdminUpgradeRequests from './AdminUpgradeRequests';
 import AdminPopups from './AdminPopups';
 import AdminClasses from './AdminClasses';
 import AdminHomepage from './AdminHomepage';
@@ -437,26 +436,35 @@ const AdminPage = () => {
 
     const grades = ['SILVER', 'GOLD', 'VIP', 'VVIP'];
 
-    // 필터링된 유저
-    const filteredUsers = users.map(u => {
-        // 호환성을 위해 옛 등급 수정
+    // 모든 유저의 등급을 일관되게 매핑 (BASIC -> SILVER 등)
+    const processedUsers = useMemo(() => users.map(u => {
         let currentGrade = u.grade || 'SILVER';
         if (currentGrade === 'BASIC') currentGrade = 'SILVER';
         return { ...u, grade: currentGrade };
-    }).filter(u => {
+    }), [users]);
+
+    // 필터링된 유저 (표에 표시될 데이터)
+    const filteredUsers = useMemo(() => processedUsers.filter(u => {
         const matchGrade = filterGrade === 'ALL' || u.grade === filterGrade;
         const matchSearch = !searchQuery ||
             u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             u.name?.includes(searchQuery) ||
             u.phone?.includes(searchQuery);
         return matchGrade && matchSearch;
-    });
+    }), [processedUsers, filterGrade, searchQuery]);
 
-    // 등급별 통계
-    const gradeStats = grades.reduce((acc, g) => {
-        acc[g] = filteredUsers.filter(u => u.grade === g).length;
+    // 등급별 통계 (전체 회원 대상, 검색어가 있다면 검색 결과 대상)
+    // 상단 카드는 선택된 '등급 필터'에 영향을 받지 않고 전체 분포를 보여줍니다.
+    const gradeStats = useMemo(() => grades.reduce((acc, g) => {
+        const baseListForStats = searchQuery ? processedUsers.filter(u => 
+            u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            u.name?.includes(searchQuery) ||
+            u.phone?.includes(searchQuery)
+        ) : processedUsers;
+
+        acc[g] = baseListForStats.filter(u => u.grade === g).length;
         return acc;
-    }, {});
+    }, {}), [processedUsers, searchQuery]);
 
     // 조회수 통계 계산
     const now = new Date();
@@ -747,13 +755,6 @@ const AdminPage = () => {
                         메시지 발송
                     </button>
                     <button
-                        onClick={() => setActiveTab('shop')}
-                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'shop' ? 'border-orange-500 text-orange-700 bg-orange-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
-                            }`}
-                    >
-                        🔥 모카 에디트 관리
-                    </button>
-                    <button
                         onClick={async () => {
                             setActiveTab('certifications');
                             setCertLoading(true);
@@ -791,7 +792,7 @@ const AdminPage = () => {
                         onClick={() => setActiveTab('subscriptions')}
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'subscriptions' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
-                        👑 구독 관리
+                        👑 등업 신청 관리
                     </button>
                     <button
                         onClick={async () => {
@@ -1072,7 +1073,13 @@ const AdminPage = () => {
                                                 {info.label}
                                             </span>
                                         </div>
-                                        <p className="text-3xl font-black text-[var(--moca-text)]">{gradeStats[grade] || 0}</p>
+                                        <p className="text-3xl font-black text-[var(--moca-text)]">
+                                            {loading ? (
+                                                <span className="text-sm font-medium text-[var(--moca-text-3)] animate-pulse">불러오는 중...</span>
+                                            ) : (
+                                                gradeStats[grade] || 0
+                                            )}
+                                        </p>
                                         <p className="text-[var(--moca-text-3)] text-xs mt-1">명</p>
                                     </div>
                                 );
@@ -1635,12 +1642,9 @@ const AdminPage = () => {
                     <AdminPopups />
                 )}
 
-                {activeTab === 'shop' && (
-                    <AdminShop successMsg={successMsg} setSuccessMsg={setSuccessMsg} />
-                )}
 
                 {activeTab === 'subscriptions' && (
-                    <AdminSubscriptions />
+                    <AdminUpgradeRequests setSuccessMsg={setSuccessMsg} setError={setError} />
                 )}
 
                 {activeTab === 'classes' && (

@@ -8,137 +8,45 @@ import { fetchHomepageSettings } from '../services/settingsService';
 
 
 import ProfileEditModal from './ProfileEditModal';
-import TermsModal from './shop/TermsModal';
+import TermsModal from './TermsModal';
 import FindAccountModal from './FindAccountModal';
 
 // ── 약관 내용 ──
 const TERMS_CONTENT = {
     service: `제1조 (목적)
-본 약관은 MOCA 서비스(앱 및 모카 에디트 쇼핑 등 포함, 이하 "서비스") 이용에 관한 조건 및 절차를 규정합니다.
+본 약관은 MOCA 서비스(이하 "서비스") 이용에 관한 조건 및 절차를 규정합니다.
 
 제2조 (서비스 이용)
 ① 서비스는 MOCA 앱 가입 회원에게만 제공됩니다.
 ② 회원은 타인의 계정을 사용할 수 없습니다.
-③ 상품 판매 시 모카 에디트 방식으로 설정 기간 내 구매가 가능합니다.
+③ 회원은 서비스를 통해 에이전시 정보 조회, 프로필 발송, 광고모델 활동 지원 기능을 이용할 수 있습니다.
 
-제3조 (주문 및 결제)
-① 주문은 결제 완료 시점에 성립됩니다.
-② 결제는 토스페이먼츠를 통해 처리됩니다.
-③ 재고 소진 및 판매 시간 종료 후에는 구매가 불가합니다.
-
-제4조 (취소 및 환불)
-① 배송 전 취소: 100% 환불
-② 상품 하자: 수령 후 7일 이내 환불 가능
-③ 단순 변심: 미개봉 시 수령 후 7일 이내 반품 가능 (왕복 배송비 고객 부담)
-
-제5조 (책임 제한)
+제3조 (책임 제한)
 회사는 서비스 중단, 오류 등으로 인한 손해에 대해 법이 허용하는 범위 내에서 책임을 집니다.`,
     privacy: `■ 수집 항목
-- 필수: 닉네임, 휴대폰번호, 수령인명, 배송주소
-- 선택: 이메일, 배송 메모
+- 필수: 닉네임, 휴대폰번호, 성함
+- 선택: 이메일, 주소
 
 ■ 수집 목적
-- 회원 식별, 앱 서비스 제공 및 주문 처리
-- 각종 배송 진행 및 CS 대응
-- 결제 처리 (카드정보는 결제대행사에서 직접 보관)
+- 회원 식별 및 앱 서비스 제공
+- 광고모델 활동 지원 및 에이전시 연결 서비스
 
 ■ 보유 기간
-- 회원 탈퇴 시 즉시 삭제 (단, 관련 법령에 따라 거래 기록 등은 법정 기간 보관)
+- 회원 탈퇴 시 즉시 삭제
 
 ■ 동의 거부 시 불이익
 개인정보 수집·이용에 동의하지 않으실 수 있으나, 동의 거부 시 앱 서비스 가입 및 이용이 불가합니다.`,
-    third_party: `■ 제공받는 자
-- 개별 상품 판매사 (상품 발송 목적)
-- 택배사 (CJ대한통운, 한진택배, 롯데택배 등)
-
-■ 제공하는 개인정보 항목
-수령인명, 배송주소, 휴대폰번호, 주문상품명
-
-■ 제공 목적
-상품 배송 및 배송 현황 조회
-
-■ 보유 및 이용 기간
-배송 완료 후 3개월 또는 회원 탈퇴 시까지
-
-■ 동의 거부 시 불이익
-제3자 제공에 동의하지 않으실 경우, 상품 배송을 포함한 일부 서비스 이용이 제한될 수 있습니다.`,
     marketing: `■ 수신 채널
 카카오톡 알림, SMS
 
 ■ 발송 내용
-- 모카 에디트 오픈 알림
-- 회원 등급 전용 이벤트
-- 신상품 및 프로모션 안내
+- 멤버 등급 전용 이벤트 안내
+- 서비스 업데이트 및 공지사항
 
 ■ 수신 동의는 언제든 철회 가능합니다.
 (앱 설정 > 알림 관리 > 마케팅 수신 해제)`,
 };
 
-// ── 환불 정책 모달 (A-Plan 색상 적용) ──
-const RefundPolicyModal = ({ onClose }) => (
-    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
-        <div className="bg-white border border-[#E8E0FA] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-moca-lg" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-[#E8E0FA] px-5 py-4 flex items-center justify-between">
-                <h2 className="text-[#1F1235] font-black text-base">교환 · 반품 · 취소 · 환불 정책</h2>
-                <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#1F1235] transition-colors">
-                    <span className="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div className="px-5 py-5 space-y-5 text-xs text-[#5B4E7A] leading-relaxed">
-                <div>
-                    <p className="text-blue-600 font-bold mb-2">🚫 결제 취소</p>
-                    <ul className="space-y-1.5 list-none">
-                        <li>① 배송 시작 전(배송 준비 전)까지 100% 전액 취소 가능합니다.</li>
-                        <li>② 이용약관 신청 후 회사로부터 상담이 미제공된 경우 취소 가능합니다.</li>
-                        <li>③ 취소 신청: immodelkr@gmail.com (주문번호 포함)</li>
-                    </ul>
-                </div>
-                <hr className="border-[#E8E0FA]" />
-                <div>
-                    <p className="text-emerald-600 font-bold mb-2">🔄 반품 · 교환</p>
-                    <ul className="space-y-1.5 list-none">
-                        <li>① 상품 수령 후 <strong className="text-[#1F1235]">3일 이내</strong> 반품·교환 신청 가능</li>
-                        <li>② 단순 변심: 미개봉·미사용 상태 한정, 왕복 배송비 고객 부담</li>
-                        <li>③ 상품 하자·오배송: 3일 이내 사진 첨부 접수 시 배송비 회사 부담으로 교환·환불</li>
-                        <li>④ 개봉 후 사용 상품은 단순 변심 반품 불가</li>
-                    </ul>
-                </div>
-                <hr className="border-[#E8E0FA]" />
-                <div>
-                    <p className="text-yellow-600 font-bold mb-2">💰 환불 정책</p>
-                    <p className="text-[#9CA3AF] text-[11px] font-bold mb-1">📦 실물 상품</p>
-                    <ul className="space-y-1 mb-3 list-none">
-                        <li>① 배송 전 취소: 100% 전액 환불</li>
-                        <li>② 수령 후 3일 이내·미사용: 환불 가능 (왕복 배송비 고객 부담)</li>
-                        <li>③ 상품 하자·오배송: 수령 후 3일 이내 100% 환불</li>
-                    </ul>
-                    <p className="text-[#9CA3AF] text-[11px] font-bold mb-1">👑 멤버십 구독</p>
-                    <ul className="space-y-1 list-none">
-                        <li>① 정기결제: 이용일수 제외 일할 계산 환불 (결제 후 24시간 이후 ~ 15일까지)</li>
-                        <li>② 연간결제: 전체 연간금액 ÷ 12 × 잔여개월 기준 환불</li>
-                        <li>③ 프로필카드 2회 이상 수령 시 위약금 10% 제외 후 부분 환불</li>
-                        <li>④ 회사 귀책사유(오류·서비스 중단): 전액 환불</li>
-                    </ul>
-                </div>
-                <hr className="border-[#E8E0FA]" />
-                <div>
-                    <p className="text-red-500 font-bold mb-2">🚫 환불 불가 항목</p>
-                    <ul className="space-y-1 list-none">
-                        <li>• 멤버십 결제 후 7일 초과</li>
-                        <li>• 상품 수령 후 3일 초과</li>
-                        <li>• 콘텐츠 다운로드·실질 이용 후</li>
-                        <li>• 고객 사용·훼손으로 가치 감소</li>
-                        <li>• 개봉 후 사용 상품의 단순 변심</li>
-                    </ul>
-                </div>
-                <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mt-2">
-                    <p className="text-orange-600 font-bold">📞 문의: immodelkr@gmail.com</p>
-                    <p className="text-[#9CA3AF] mt-1">주문번호, 결제일자, 사유를 포함해 주세요. (영업일 1~2일 내 답변)</p>
-                </div>
-            </div>
-        </div>
-    </div>
-);
 
 const AgencyLanding = () => {
 
@@ -152,7 +60,16 @@ const AgencyLanding = () => {
         heroTitle2: '더 스마트하게, 아임모카',
         heroHighlightWord: '아임모카',
         heroSubtitle1: 'HOT한 중요 이상의 정보를',
-        heroSubtitle2: '한눈에 확인하고, 광고모델 전문 프로필을 단 1분만에 완성하여 스마트한 광고모델 활동을 시작해보세요!'
+        heroSubtitle2: '한눈에 확인하고, 광고모델 전문 프로필을 단 1분만에 완성하여 스마트한 광고모델 활동을 시작해보세요!',
+        feature1Icon: 'apartment',
+        feature1Title: '전국 에이전시 리스트',
+        feature1Desc: '실시간으로 업데이트되는 {{count}}개 에이전시의 주소와 연락처, 특징을 한눈에.',
+        feature2Icon: 'forward_to_inbox',
+        feature2Title: '간편 프로필 발송',
+        feature2Desc: '번거로운 이메일 발송은 이제 그만. 클릭 한 번으로 수십 곳의 에이전시에 프로필을 전달하세요.',
+        feature3Icon: 'event_note',
+        feature3Title: '모델 다이어리 & 캘린더',
+        feature3Desc: '내가 보낸 프로필과 투어 일정을 체계적으로 관리하고 다른 모델들과 정보를 공유하세요.',
     });
 
     useEffect(() => {
@@ -187,7 +104,7 @@ const AgencyLanding = () => {
         address: '',
         detailAddress: '',
         referralSource: [],
-        agreed: { service: false, privacy: false, third_party: false, marketing: false },
+        agreed: { service: false, privacy: false, marketing: false },
     });
 
     const [showPostcode, setShowPostcode] = useState(false);
@@ -436,19 +353,28 @@ const AgencyLanding = () => {
                 <div className="max-w-6xl mx-auto px-5">
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
-                            <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">apartment</span>
-                            <h3 className="text-xl font-black text-[#1F1235] mb-3">전국 에이전시 리스트</h3>
-                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">실시간으로 업데이트되는 {agencyCount}개 에이전시의 주소와 연락처, 특징을 한눈에.</p>
+                            <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">{homeSettings.feature1Icon || 'apartment'}</span>
+                            <h3 className="text-xl font-black text-[#1F1235] mb-3">{homeSettings.feature1Title || '전국 에이전시 리스트'}</h3>
+                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">
+                                {(homeSettings.feature1Desc || '실시간으로 업데이트되는 {{count}}개 에이전시의 주소와 연락처, 특징을 한눈에.')
+                                    .replace('{{count}}', agencyCount)}
+                            </p>
                         </div>
                         <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
-                            <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">forward_to_inbox</span>
-                            <h3 className="text-xl font-black text-[#1F1235] mb-3">간편 프로필 발송</h3>
-                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">번거로운 이메일 발송은 이제 그만. 클릭 한 번으로 수십 곳의 에이전시에 프로필을 전달하세요.</p>
+                            <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">{homeSettings.feature2Icon || 'forward_to_inbox'}</span>
+                            <h3 className="text-xl font-black text-[#1F1235] mb-3">{homeSettings.feature2Title || '간편 프로필 발송'}</h3>
+                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">
+                                {(homeSettings.feature2Desc || '번거로운 이메일 발송은 이제 그만. 클릭 한 번으로 수십 곳의 에이전시에 프로필을 전달하세요.')
+                                    .replace('{{count}}', agencyCount)}
+                            </p>
                         </div>
                         <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
-                            <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">event_note</span>
-                            <h3 className="text-xl font-black text-[#1F1235] mb-3">모델 다이어리 & 캘린더</h3>
-                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">내가 보낸 프로필과 투어 일정을 체계적으로 관리하고 다른 모델들과 정보를 공유하세요.</p>
+                            <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">{homeSettings.feature3Icon || 'event_note'}</span>
+                            <h3 className="text-xl font-black text-[#1F1235] mb-3">{homeSettings.feature3Title || '모델 다이어리 & 캘린더'}</h3>
+                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">
+                                {(homeSettings.feature3Desc || '내가 보낸 프로필과 투어 일정을 체계적으로 관리하고 다른 모델들과 정보를 공유하세요.')
+                                    .replace('{{count}}', agencyCount)}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -673,16 +599,16 @@ const AgencyLanding = () => {
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        const allChecked = signupForm.agreed.service && signupForm.agreed.privacy && signupForm.agreed.third_party && signupForm.agreed.marketing;
-                                        setSignupForm(prev => ({ ...prev, agreed: { service: !allChecked, privacy: !allChecked, third_party: !allChecked, marketing: !allChecked } }));
+                                        const allChecked = signupForm.agreed.service && signupForm.agreed.privacy && signupForm.agreed.marketing;
+                                        setSignupForm(prev => ({ ...prev, agreed: { service: !allChecked, privacy: !allChecked, marketing: !allChecked } }));
                                     }}
                                     className="w-full flex items-center gap-3 px-4 py-3 border-b border-[#E8E0FA] hover:bg-[#F3E8FF] transition-colors"
                                 >
                                     <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                                        signupForm.agreed.service && signupForm.agreed.privacy && signupForm.agreed.third_party && signupForm.agreed.marketing
+                                        signupForm.agreed.service && signupForm.agreed.privacy && signupForm.agreed.marketing
                                             ? 'bg-[#9333EA] border-[#9333EA]' : 'border-[#9CA3AF]'
                                     }`}>
-                                        {signupForm.agreed.service && signupForm.agreed.privacy && signupForm.agreed.third_party && signupForm.agreed.marketing &&
+                                        {signupForm.agreed.service && signupForm.agreed.privacy && signupForm.agreed.marketing &&
                                             <span className="material-symbols-outlined text-white text-[13px]">check</span>}
                                     </span>
                                     <span className="text-sm font-black text-[#1F1235]">전체 약관 동의</span>
@@ -692,7 +618,6 @@ const AgencyLanding = () => {
                                 {[
                                     { id: 'service', label: '서비스 이용약관', required: true, content: TERMS_CONTENT.service },
                                     { id: 'privacy', label: '개인정보처리방침', required: true, content: TERMS_CONTENT.privacy },
-                                    { id: 'third_party', label: '개인정보 제3자 제공', required: true, content: TERMS_CONTENT.third_party },
                                     { id: 'marketing', label: '마케팅 수신 동의', required: false, content: TERMS_CONTENT.marketing },
                                 ].map((term) => (
                                     <div key={term.id} className="border-b border-[#E8E0FA] last:border-b-0">

@@ -6,10 +6,10 @@ import { getUser } from '../services/userService';
 const KAKAO_CHANNEL_URL = 'http://pf.kakao.com/_zlMUxj/chat';
 
 const PLANS = [
-    { id: 'gold_1m',  months: 1,  price: 0,  label: '1개월',  monthly: 0, popular: false },
-    { id: 'gold_3m',  months: 3,  price: 0,  label: '3개월',  monthly: 0, popular: false },
-    { id: 'gold_6m',  months: 6,  price: 0,  label: '6개월',  monthly: 0,  popular: true,  discountPct: 0 },
-    { id: 'gold_12m', months: 12, price: 0, label: '12개월', monthly: 0,  popular: false, discountPct: 0 },
+    { id: 'gold_1m', months: 1, price: 0, label: '1개월', monthly: 0, popular: false },
+    { id: 'gold_3m', months: 3, price: 0, label: '3개월', monthly: 0, popular: false },
+    { id: 'gold_6m', months: 6, price: 0, label: '6개월', monthly: 0, popular: true, discountPct: 0 },
+    { id: 'gold_12m', months: 12, price: 0, label: '12개월', monthly: 0, popular: false, discountPct: 0 },
 ];
 
 // ── 등급별 혜택 비교 데이터 ──────────────────────────────────────────────────
@@ -79,11 +79,10 @@ const UpgradePage = () => {
                         { id: 'plans', label: '멤버십 혜택 신청', icon: 'workspace_premium' },
                     ].map(tab => (
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all ${
-                                activeTab === tab.id
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id
                                     ? 'bg-[#9333EA]/20 text-[#9333EA] border border-[#9333EA]/30'
                                     : 'text-[#5B4E7A] hover:text-[#1F1235]'
-                            }`}>
+                                }`}>
                             <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
                             {tab.label}
                         </button>
@@ -101,12 +100,11 @@ const UpgradePage = () => {
                                     <span className="text-2xl">🤍</span>
                                 </div>
                                 <h3 className="text-[#1F1235] font-black text-base mb-1">SILVER</h3>
-                                <p className="text-emerald-400 font-black text-lg">무료</p>
+                                <p className="text-[#5B4E7A] font-black text-lg">기본 회원</p>
                                 <p className="text-[#9CA3AF] text-[10px] mt-1">기본 회원</p>
                             </div>
                             {/* 골드 카드 */}
                             <div className="bg-white border-2 border-[#9333EA] rounded-2xl p-4 text-center relative overflow-hidden shadow-lg shadow-[#9333EA]/10">
-                                <div className="absolute top-0 right-0 bg-[#9333EA] text-white text-[9px] font-black px-2.5 py-0.5 rounded-bl-xl">추천</div>
                                 <div className="w-12 h-12 mx-auto rounded-full bg-[#F3E8FF] flex items-center justify-center mb-3">
                                     <span className="text-2xl">👑</span>
                                 </div>
@@ -172,7 +170,7 @@ const UpgradePage = () => {
                             <div>
                                 <p className="text-amber-700 font-black text-sm">상담 후 등급 승인 안내</p>
                                 <p className="text-amber-600 text-xs mt-1 leading-relaxed">
-                                    플랜을 선택하고 아래 버튼을 누르면 신청서 작성이 시작됩니다.<br/>
+                                    플랜을 선택하고 아래 버튼을 누르면 신청서 작성이 시작됩니다.<br />
                                     담당자가 확인 후 등업 승인 및 절차 안내를 드리며, 확인 완료 후 GOLD 등급이 적용됩니다.
                                 </p>
                             </div>
@@ -184,21 +182,14 @@ const UpgradePage = () => {
                                 const isSelected = selectedPlan.id === plan.id;
                                 return (
                                     <button key={plan.id} onClick={() => setSelectedPlan(plan)}
-                                        className={`w-full relative p-6 rounded-[32px] border-2 transition-all text-left overflow-hidden ${
-                                            isSelected
+                                        className={`w-full relative p-6 rounded-[32px] border-2 transition-all text-left overflow-hidden ${isSelected
                                                 ? 'border-[#9333EA] bg-[#F3E8FF] shadow-lg shadow-[#9333EA]/10'
                                                 : 'border-[#E8E0FA] bg-white hover:border-[#9333EA]/30'
-                                        }`}>
-                                        {plan.popular && (
-                                            <span className="absolute -top-0 right-0 bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white text-[10px] font-black px-4 py-1 rounded-bl-2xl shadow-sm">
-                                                BEST
-                                            </span>
-                                        )}
+                                            }`}>
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                                                    isSelected ? 'border-[#9333EA] bg-[#9333EA]' : 'border-[#E8E0FA]'
-                                                }`}>
+                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-[#9333EA] bg-[#9333EA]' : 'border-[#E8E0FA]'
+                                                    }`}>
                                                     {isSelected && <span className="material-symbols-outlined text-[16px] text-white font-black">check</span>}
                                                 </div>
                                                 <div>
@@ -214,11 +205,7 @@ const UpgradePage = () => {
                                                 <p className={`text-2xl font-black ${isSelected ? 'text-[#9333EA]' : 'text-[#1F1235]'}`}>
                                                     선택
                                                 </p>
-                                                {plan.discountPct && (
-                                                    <span className="text-[11px] font-black text-[#EC4899] bg-[#EC4899]/10 px-2 py-0.5 rounded-full">
-                                                        {plan.discountPct}% 할인
-                                                    </span>
-                                                )}
+
                                             </div>
                                         </div>
                                     </button>
@@ -230,9 +217,9 @@ const UpgradePage = () => {
                         <div className="bg-white border border-[#E8E0FA] rounded-[32px] p-6 shadow-sm">
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-[#5B4E7A] text-[15px] font-bold">선택한 플랜</span>
-                                <span className="text-[#9333EA] font-black text-[15px]">{selectedPlan.label} 구독</span>
+                                <span className="text-[#9333EA] font-black text-[15px]">{selectedPlan.label} 활동 기간</span>
                             </div>
-                             <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#F8F5FF]">
+                            <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#F8F5FF]">
                                 <span className="text-[#5B4E7A] text-sm font-medium">신청 구분</span>
                                 <span className="text-[#1F1235] font-black text-2xl">멤버십 등업</span>
                             </div>
@@ -252,7 +239,7 @@ const UpgradePage = () => {
                                     <button onClick={() => window.open(KAKAO_CHANNEL_URL, '_blank')}
                                         className="w-full py-4 rounded-[24px] font-black text-sm shadow-sm border border-[#E8E0FA] transition-all flex items-center justify-center gap-2 active:scale-[0.97] bg-[#FEE500] text-[#391B1B]">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="#391B1B">
-                                            <path d="M12 3C6.477 3 2 6.477 2 10.818c0 2.756 1.563 5.198 3.938 6.676L4.9 21l4.326-2.358C10.03 18.873 11 19 12 19c5.523 0 10-3.477 10-7.818C22 6.477 17.523 3 12 3z"/>
+                                            <path d="M12 3C6.477 3 2 6.477 2 10.818c0 2.756 1.563 5.198 3.938 6.676L4.9 21l4.326-2.358C10.03 18.873 11 19 12 19c5.523 0 10-3.477 10-7.818C22 6.477 17.523 3 12 3z" />
                                         </svg>
                                         카카오로 문의하기
                                     </button>
@@ -294,7 +281,6 @@ const UpgradePage = () => {
                             </p>
                             <ul className="text-[#9CA3AF] text-[11px] space-y-1 pl-4">
                                 <li>• 신청 확인 후 영업일 1일 이내 GOLD 등급이 적용됩니다.</li>
-                                <li>• 구독 기간 만료 시 자동으로 SILVER로 변경됩니다.</li>
                                 <li>• 멤버십 관련 문의는 카카오톡 채널로 연락해주세요.</li>
                             </ul>
                         </div>

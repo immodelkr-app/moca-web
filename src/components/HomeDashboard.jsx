@@ -8,25 +8,26 @@ import ProfileEditModal from './ProfileEditModal';
 
 const MODEL_SUPPORT_ITEMS = [
     { icon: 'apartment',       label: '에이전시 리스트',  route: '/agencies',           color: 'from-[#9333EA] to-[#C084FC]', glow: 'shadow-[#9333EA]/25' },
-    {icon: 'map',             label: '내 주변 에이전시', route: '/home/agency-map',    color: 'from-[#10B981] to-[#34D399]', glow: 'shadow-[#10B981]/25', badge: 'NEW' },
+    {icon: 'map',             label: '내 주변 에이전시', route: '/home/agency-map',    color: 'from-[#10B981] to-[#34D399]', glow: 'shadow-[#10B981]/25' },
     { icon: 'event_note',      label: '모델 다이어리',     route: '/home/diary',         color: 'from-[#0EA5E9] to-[#38BDF8]', glow: 'shadow-[#0EA5E9]/25' },
     { icon: 'manage_accounts', label: '모델프로필 관리',   route: '/home/smart-profile', color: 'from-[#7C3AED] to-[#A78BFA]', glow: 'shadow-[#7C3AED]/25' },
     { icon: 'school',          label: '모카 클래스',     route: '/home/class',         color: 'from-[#4F46E5] to-[#818CF8]', glow: 'shadow-[#4F46E5]/25' },
     { icon: 'forward_to_inbox',label: '프로필 메일발송',   route: '/home/smart-profile', color: 'from-[#059669] to-[#34D399]', glow: 'shadow-[#059669]/25' },
-    { icon: 'calendar_month',  label: '투어 캘린더',      route: '/home/calendar',      color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/25' },
+    { icon: 'calendar_month',  label: '투어 캐린더',      route: '/home/calendar',      color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/25' },
     { icon: 'photo_camera',    label: '투어스타그램',      route: '/home/cert',          color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/25' },
     { icon: 'smart_display',   label: '모카TV',           route: '/home/tv',            color: 'from-[#EF4444] to-[#FCA5A5]', glow: 'shadow-[#EF4444]/25' },
-    { icon: 'forum',           label: 'Q&A 게시판',       route: '/home/qna',           color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/25', badge: 'NEW' },
+    { icon: 'forum',           label: 'Q&A 게시판',       route: '/home/qna',           color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/25' },
 ];
 
 const MOCA_BENEFITS_ITEMS = [
     { icon: 'star',                label: '멤버십 카드',   route: '/home/membership', color: 'from-[#9333EA] to-[#C084FC]', glow: 'shadow-[#9333EA]/25' },
     { icon: 'local_fire_department',label: '모카 에디트',   route: '/home/shop',       color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/25' },
     { icon: 'diamond',             label: '혜택 모아보기',  route: '/home/benefits',   color: 'from-[#3B82F6] to-[#93C5FD]', glow: 'shadow-[#3B82F6]/25' },
-    { icon: 'local_activity',      label: '할인쿠폰',      route: '/home/coupons',    color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/25' },
+    { icon: 'local_activity',      label: '제휴 쿠폰',      route: '/home/coupons',    color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/25' },
     { icon: 'shopping_bag',        label: '제휴혜택',      route: '/home/content',    color: 'from-[#F43F5E] to-[#FCA5A5]', glow: 'shadow-[#F43F5E]/25' },
-    { icon: 'card_membership',     label: '멤버십 구독',    route: '/upgrade',         color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/25' },
+    { icon: 'assignment',          label: '활동 신청',    route: '/upgrade',         color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/25' },
 ];
+
 
 
 
