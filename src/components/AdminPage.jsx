@@ -10,6 +10,7 @@ import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost } from '../services/certificationService';
 import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '../services/currentPhotosService';
 import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
+import { fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
 import * as XLSX from 'xlsx';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
