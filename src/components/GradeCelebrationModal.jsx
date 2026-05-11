@@ -68,7 +68,7 @@ const GradeCelebrationModal = () => {
                 </div>
 
                 <p className="relative text-[#5B4E7A] text-[14px] leading-relaxed mb-10 break-keep font-medium">
-                    일일 조회 제한 없이 에이전시 정보를 자유롭게 확인하고, 특별한 골드 멤버십 혜택을 마음껏 누려보세요. 지금부터 진짜 수익 창출을 위한 모델 활동이 시작됩니다.
+                    일일 조회 제한 없이 에이전시 정보를 자유롭게 확인하고, 특별한 GOLD 등급 혜택을 마음껏 누려보세요. 지금부터 진짜 수익 창출을 위한 모델 활동이 시작됩니다.
                 </p>
 
                 <div className="relative w-full mt-2">

@@ -4,32 +4,29 @@ import { getUser, getUserGrade, syncUserGrade, GRADE_INFO, GRADE_EMOJI } from '.
 import { fetchMessagesList } from '../services/messageService';
 import ProfileEditModal from './ProfileEditModal';
 
-
-
-const MODEL_SUPPORT_ITEMS = [
-    { icon: 'apartment',       label: '에이전시 리스트',  route: '/agencies',           color: 'from-[#9333EA] to-[#C084FC]', glow: 'shadow-[#9333EA]/25' },
-    {icon: 'map',             label: '내 주변 에이전시', route: '/home/agency-map',    color: 'from-[#10B981] to-[#34D399]', glow: 'shadow-[#10B981]/25' },
-    { icon: 'event_note',      label: '모델 다이어리',     route: '/home/diary',         color: 'from-[#0EA5E9] to-[#38BDF8]', glow: 'shadow-[#0EA5E9]/25' },
-    { icon: 'manage_accounts', label: '모델프로필 관리',   route: '/home/smart-profile', color: 'from-[#7C3AED] to-[#A78BFA]', glow: 'shadow-[#7C3AED]/25' },
-    { icon: 'school',          label: '모카 클래스',     route: '/home/class',         color: 'from-[#4F46E5] to-[#818CF8]', glow: 'shadow-[#4F46E5]/25' },
-    { icon: 'forward_to_inbox',label: '프로필 메일발송',   route: '/home/smart-profile', color: 'from-[#059669] to-[#34D399]', glow: 'shadow-[#059669]/25' },
-    { icon: 'calendar_month',  label: '투어 캐린더',      route: '/home/calendar',      color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/25' },
-    { icon: 'photo_camera',    label: '투어스타그램',      route: '/home/cert',          color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/25' },
-    { icon: 'smart_display',   label: '모카TV',           route: '/home/tv',            color: 'from-[#EF4444] to-[#FCA5A5]', glow: 'shadow-[#EF4444]/25' },
-    { icon: 'forum',           label: 'Q&A 게시판',       route: '/home/qna',           color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/25' },
+const HIGHLIGHT_ITEMS = [
+    { icon: 'apartment', label: '에이전시 리스트', desc: '나에게 맞는 에이전시 찾기', route: '/agencies', color: 'from-[#9333EA] to-[#C084FC]', glow: 'shadow-[#9333EA]/30' },
+    { icon: 'forward_to_inbox', label: '프로필 메일발송', desc: '클릭 한 번으로 지원하기', route: '/home/smart-profile', color: 'from-[#7C3AED] to-[#A78BFA]', glow: 'shadow-[#7C3AED]/30' },
 ];
 
-const MOCA_BENEFITS_ITEMS = [
-    { icon: 'star',                label: '멤버십 카드',   route: '/home/membership', color: 'from-[#9333EA] to-[#C084FC]', glow: 'shadow-[#9333EA]/25' },
-    { icon: 'local_fire_department',label: '모카 에디트',   route: '/home/shop',       color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/25' },
-    { icon: 'diamond',             label: '혜택 모아보기',  route: '/home/benefits',   color: 'from-[#3B82F6] to-[#93C5FD]', glow: 'shadow-[#3B82F6]/25' },
-    { icon: 'local_activity',      label: '제휴 쿠폰',      route: '/home/coupons',    color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/25' },
-    { icon: 'shopping_bag',        label: '제휴혜택',      route: '/home/content',    color: 'from-[#F43F5E] to-[#FCA5A5]', glow: 'shadow-[#F43F5E]/25' },
-    { icon: 'assignment',          label: '활동 신청',    route: '/upgrade',         color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/25' },
+const TOUR_ITEMS = [
+    { icon: 'map', label: '내 주변 에이전시', route: '/home/agency-map', color: 'from-[#10B981] to-[#34D399]', glow: 'shadow-[#10B981]/20' },
+    { icon: 'calendar_month', label: '투어 캘린더', route: '/home/calendar', color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/20' },
+    { icon: 'event_note', label: '모델 다이어리', route: '/home/diary', color: 'from-[#0EA5E9] to-[#38BDF8]', glow: 'shadow-[#0EA5E9]/20' },
+    { icon: 'manage_accounts', label: '프로필 관리', route: '/home/smart-profile', color: 'from-[#059669] to-[#34D399]', glow: 'shadow-[#059669]/20' },
 ];
 
+const COMMUNITY_ITEMS = [
+    { icon: 'school', label: '모카 클래스', route: '/home/class', color: 'from-[#4F46E5] to-[#818CF8]', glow: 'shadow-[#4F46E5]/20' },
+    { icon: 'photo_camera', label: '투어스타그램', route: '/home/cert', color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/20' },
+    { icon: 'smart_display', label: '모카TV', route: '/home/tv', color: 'from-[#EF4444] to-[#FCA5A5]', glow: 'shadow-[#EF4444]/20' },
+    { icon: 'forum', label: 'Q&A 게시판', route: '/home/qna', color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/20' },
+];
 
-
+const QUICK_ACTIONS = [
+    { icon: 'workspace_premium', label: '등급 업그레이드', route: '/upgrade', color: 'text-[#D97706]', bg: 'bg-[#FFFBEB]', border: 'border-[#FDE68A]' },
+    { icon: 'contract', label: '전속계약 요청', route: '/home/contract', color: 'text-[#059669]', bg: 'bg-[#ECFDF5]', border: 'border-[#A7F3D0]' },
+];
 
 const HomeDashboard = () => {
     const navigate = useNavigate();
@@ -37,10 +34,8 @@ const HomeDashboard = () => {
     const [grade, setGrade] = useState(getUserGrade() || 'SILVER');
     const nickname = user?.name || user?.nickname || '모카 회원';
 
-    const [activeTab, setActiveTab] = useState('MODEL_SUPPORT');
     const [ticker, setTicker] = useState('');
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const [animKey, setAnimKey] = useState(0);
 
     useEffect(() => {
         // 최신 회원 등급 백그라운드 동기화
@@ -55,39 +50,28 @@ const HomeDashboard = () => {
         }).catch(() => { });
     }, []);
 
-
-
-    const handleTabChange = (tab) => {
-        if (tab === activeTab) return;
-        setActiveTab(tab);
-        setAnimKey(k => k + 1);
-    };
-
-    const currentItems = activeTab === 'MODEL_SUPPORT' ? MODEL_SUPPORT_ITEMS : MOCA_BENEFITS_ITEMS;
-
     const gradeInfo = GRADE_INFO[grade] || GRADE_INFO.SILVER;
     const gradeColor = (grade === 'GOLD' || grade === 'VIP' || grade === 'VVIP') ? 'text-[#D97706]' : 'text-[#7C3AED]';
-    const gradeBg    = (grade === 'GOLD' || grade === 'VIP' || grade === 'VVIP') ? 'bg-amber-50 border-amber-200' : 'bg-[#F3E8FF] border-[#E8E0FA]';
+    const gradeBg = (grade === 'GOLD' || grade === 'VIP' || grade === 'VVIP') ? 'bg-amber-50 border-amber-200' : 'bg-[#F3E8FF] border-[#E8E0FA]';
 
     return (
-        <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--moca-bg)' }}>
+        <div className="min-h-screen flex flex-col pb-24" style={{ backgroundColor: 'var(--moca-bg)' }}>
 
             {/* ── 웰컴 헤더 ── */}
             <header className="flex items-start gap-3 px-5 pt-5 pb-4">
                 <div className="flex-1 min-w-0">
-                    <p className="text-[#9CA3AF] text-[10px] font-bold tracking-widest uppercase mb-0.5">Welcome back</p>
-                    <h1 className="text-[#1F1235] font-black text-xl leading-tight">
-                        안녕하세요,{' '}
+                    <p className="text-[#9CA3AF] text-[10px] font-black tracking-widest uppercase mb-0.5">Welcome back</p>
+                    <h1 className="text-[#1F1235] font-black text-2xl leading-tight">
+                        안녕하세요, <br/>
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9333EA] to-[#C084FC]">
                             {nickname}
                         </span>
                         님! 👋
                     </h1>
-
                 </div>
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     {/* 등급 배지 */}
-                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${gradeBg}`}>
+                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border shadow-sm ${gradeBg}`}>
                         <span className="text-sm">{GRADE_EMOJI[grade] || '🤍'}</span>
                         <span className={`font-black text-[11px] tracking-wide ${gradeColor}`}>
                             {gradeInfo.label}
@@ -96,80 +80,106 @@ const HomeDashboard = () => {
                     {/* 마이페이지 버튼 */}
                     <button
                         onClick={() => setIsProfileModalOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F3E8FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#E8E0FA] hover:bg-[#F8F5FF] shadow-sm transition-all active:scale-95"
                     >
-                        <span className="material-symbols-outlined text-[#9333EA] text-[14px]">person</span>
-                        <span className="text-[#7C3AED] font-black text-[11px] tracking-wide">마이페이지</span>
+                        <span className="material-symbols-outlined text-[#5B4E7A] text-[14px]">person</span>
+                        <span className="text-[#5B4E7A] font-black text-[11px] tracking-wide">마이페이지</span>
                     </button>
                 </div>
             </header>
 
-
             {/* ── 공지 티커 ── */}
             {ticker && (
                 <div
-                    className="mx-5 mb-5 flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#F3E8FF] border border-[#E8E0FA] cursor-pointer hover:bg-[#EDE8FF] transition-colors"
+                    className="mx-5 mb-6 flex items-center gap-3 px-4 py-3 rounded-2xl bg-white border border-[#E8E0FA] shadow-sm cursor-pointer hover:bg-[#F8F5FF] transition-colors"
                     onClick={() => navigate('/home/message')}
                 >
-                    <span className="material-symbols-outlined text-[#9333EA] text-[18px] flex-shrink-0">campaign</span>
-                    <p className="text-[#5B4E7A] text-sm font-medium flex-1 truncate">{ticker}</p>
+                    <span className="material-symbols-outlined text-[#9333EA] text-[18px] flex-shrink-0 animate-pulse">campaign</span>
+                    <p className="text-[#5B4E7A] text-xs font-bold flex-1 truncate">{ticker}</p>
                     <span className="material-symbols-outlined text-[#9CA3AF] text-[16px]">chevron_right</span>
                 </div>
             )}
 
-            {/* ── 탭 토글 ── (Phase 2에서 복원 예정) */}
-            {/* 
-            <div className="px-5 mb-6">
-                <div className="relative flex bg-[#F3E8FF] border border-[#E8E0FA] p-1 rounded-full overflow-hidden">
-                    <div
-                        className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-lg
-                        ${activeTab === 'MODEL_SUPPORT'
-                            ? 'left-1 bg-gradient-to-r from-[#9333EA] to-[#C084FC] shadow-[#9333EA]/30'
-                            : 'left-[calc(50%+2px)] bg-gradient-to-r from-[#EC4899] to-[#F9A8D4] shadow-[#EC4899]/30'
-                        }`}
-                    />
+            {/* ── 핵심 기능 (Highlight) ── */}
+            <div className="px-5 mb-8 flex flex-col gap-3">
+                {HIGHLIGHT_ITEMS.map((item, idx) => (
                     <button
-                        onClick={() => handleTabChange('MODEL_SUPPORT')}
-                        className={`relative flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black transition-all z-10
-                        ${activeTab === 'MODEL_SUPPORT' ? 'text-white' : 'text-[#9CA3AF]'}`}
-                    >
-                        <span className="material-symbols-outlined text-[18px]">rocket_launch</span>
-                        광고모델 활동
-                    </button>
-                    <button
-                        onClick={() => handleTabChange('MOCA_SHOPPING')}
-                        className={`relative flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black transition-all z-10
-                        ${activeTab === 'MOCA_SHOPPING' ? 'text-white' : 'text-[#9CA3AF]'}`}
-                    >
-                        <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
-                        모카 모델 혜택
-                    </button>
-                </div>
-            </div>
-            */}
-
-            {/* ── 2열 아이콘 그리드 ── */}
-            <div className="px-5 pb-32 grid grid-cols-2 gap-3.5">
-                {currentItems.map((item, idx) => (
-                    <button
-                        key={`${animKey}-${item.label}`}
+                        key={item.label}
                         onClick={() => navigate(item.route)}
-                        className="relative flex flex-col items-center justify-center gap-2.5 w-full bg-white border border-[#E8E0FA] hover:border-[#C084FC]/50 hover:shadow-moca rounded-3xl py-5 transition-all active:scale-95"
-                        style={{ animationDelay: `${idx * 0.06}s` }}
+                        className={`relative w-full flex items-center p-5 rounded-[24px] bg-gradient-to-r ${item.color} shadow-lg ${item.glow} hover:scale-[1.02] active:scale-[0.98] transition-all overflow-hidden`}
                     >
-                        {item.badge && (
-                            <span className="absolute top-3 right-3 px-1.5 py-0.5 rounded-md bg-emerald-500 text-white text-[9px] font-black tracking-wide">
-                                {item.badge}
-                            </span>
-                        )}
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-xl ${item.glow}`}>
-                            <span className="material-symbols-outlined text-white text-[30px]">{item.icon}</span>
+                        {/* Glassmorphism 빛반사 효과 */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+                        
+                        <div className="flex-1 text-left relative z-10">
+                            <p className="text-white/80 text-[11px] font-bold mb-1">{item.desc}</p>
+                            <h3 className="text-white font-black text-[18px] tracking-tight">{item.label}</h3>
                         </div>
-                        <span className="text-[#1F1235] font-black text-[14px] tracking-tight text-center break-keep leading-tight px-2">
-                            {item.label}
-                        </span>
+                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm relative z-10 border border-white/30">
+                            <span className="material-symbols-outlined text-white text-[24px]">{item.icon}</span>
+                        </div>
                     </button>
                 ))}
+            </div>
+
+            {/* ── 퀵 액션 (등급업, 계약) ── */}
+            <div className="px-5 mb-8 grid grid-cols-2 gap-3">
+                {QUICK_ACTIONS.map(action => (
+                    <button
+                        key={action.label}
+                        onClick={() => navigate(action.route)}
+                        className={`flex items-center justify-center gap-2 py-3.5 rounded-2xl border ${action.bg} ${action.border} hover:opacity-80 active:scale-95 transition-all shadow-sm`}
+                    >
+                        <span className={`material-symbols-outlined text-[18px] ${action.color}`}>{action.icon}</span>
+                        <span className={`font-black text-[12px] ${action.color}`}>{action.label}</span>
+                    </button>
+                ))}
+            </div>
+
+            {/* ── 모델 투어 관리 ── */}
+            <div className="px-5 mb-8">
+                <h2 className="text-[#1F1235] font-black text-[16px] mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#9333EA] text-[20px]">explore</span>
+                    모델 투어 관리
+                </h2>
+                <div className="grid grid-cols-2 gap-3">
+                    {TOUR_ITEMS.map((item) => (
+                        <button
+                            key={item.label}
+                            onClick={() => navigate(item.route)}
+                            className="flex items-center gap-3 p-3 bg-white border border-[#E8E0FA] rounded-[20px] shadow-sm hover:border-[#C084FC] hover:shadow-md group active:scale-95 transition-all"
+                        >
+                            <div className="w-12 h-12 rounded-[16px] flex items-center justify-center relative overflow-hidden flex-shrink-0">
+                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-15`}></div>
+                                <span className={`material-symbols-outlined text-[24px] text-[#5B4E7A] group-hover:text-[#9333EA] transition-colors`}>{item.icon}</span>
+                            </div>
+                            <span className="text-[#1F1235] font-black text-[13px] text-left leading-tight break-keep">{item.label}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* ── 커뮤니티 & 활동 ── */}
+            <div className="px-5 mb-8">
+                <h2 className="text-[#1F1235] font-black text-[16px] mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#9333EA] text-[20px]">diversity_3</span>
+                    커뮤니티 & 활동
+                </h2>
+                <div className="grid grid-cols-2 gap-3">
+                    {COMMUNITY_ITEMS.map((item) => (
+                        <button
+                            key={item.label}
+                            onClick={() => navigate(item.route)}
+                            className="flex items-center gap-3 p-3 bg-white border border-[#E8E0FA] rounded-[20px] shadow-sm hover:border-[#C084FC] hover:shadow-md group active:scale-95 transition-all"
+                        >
+                            <div className="w-12 h-12 rounded-[16px] flex items-center justify-center relative overflow-hidden flex-shrink-0">
+                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-15`}></div>
+                                <span className={`material-symbols-outlined text-[24px] text-[#5B4E7A] group-hover:text-[#9333EA] transition-colors`}>{item.icon}</span>
+                            </div>
+                            <span className="text-[#1F1235] font-black text-[13px] text-left leading-tight break-keep">{item.label}</span>
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Profile Edit Modal */}
@@ -187,3 +197,4 @@ const HomeDashboard = () => {
 };
 
 export default HomeDashboard;
+

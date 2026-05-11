@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchClasses, createClass, updateClass, deleteClass, fetchApplications, updatePaymentStatus, sendClassApplicationNotification } from '../services/classService';
+import { fetchClasses, createClass, updateClass, deleteClass, fetchApplications, sendClassApplicationNotification } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
 import { sendBulkMessage } from '../services/solapiService';
 
@@ -107,11 +107,7 @@ const AdminClasses = () => {
         start_time: '14:00'
     });
 
-    const [pricing, setPricing] = useState([
-        { grade_label: '🥈 SILVER', price: 50000 },
-        { grade_label: '🌟 GOLD', price: 30000 },
-        { grade_label: '👑 전속모델', price: 10000 }
-    ]);
+
 
     const [formError, setFormError] = useState('');
 
@@ -127,7 +123,6 @@ const AdminClasses = () => {
 
     const resetForm = () => {
         setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', start_date: '', end_date: '', day_of_week: [], start_time: '14:00' });
-        setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
         setFormError('');
         setEditingClassId(null);
     };
@@ -145,7 +140,7 @@ const AdminClasses = () => {
         }
 
         if (editingClassId) {
-            const { error } = await updateClass(editingClassId, { ...newClass, class_date: finalClassDate }, pricing);
+            const { error } = await updateClass(editingClassId, { ...newClass, class_date: finalClassDate }, []);
             if (error) {
                 setFormError(error.message);
             } else {
@@ -155,7 +150,7 @@ const AdminClasses = () => {
                 resetForm();
             }
         } else {
-            const { error } = await createClass({ ...newClass, class_date: finalClassDate }, pricing);
+            const { error } = await createClass({ ...newClass, class_date: finalClassDate }, []);
             if (error) {
                 setFormError(error.message);
             } else {
@@ -182,11 +177,7 @@ const AdminClasses = () => {
 
     // 승인 + 문자 발송
     const handleApprove = async (app) => {
-        const blogpayUrl = window.prompt(
-            `[${app.users?.name || app.users?.nickname}] 승인 처리\n\n블로그페이 카드결제 링크를 입력하세요.\n(없으면 빈칸으로 확인 클릭 → 무통장 안내만 발송)`,
-            ''
-        );
-        if (blogpayUrl === null) return; // 취소
+        if (!window.confirm(`[${app.users?.name || app.users?.nickname}] 승인 처리하시겠습니까?`)) return;
 
         setIsSubmitting(true);
         try {
@@ -196,7 +187,6 @@ const AdminClasses = () => {
                 .update({
                     approval_status: 'approved',
                     payment_status: 'pending',
-                    blogpay_url: blogpayUrl || null,
                     approved_at: new Date().toISOString(),
                 })
                 .eq('id', app.id);
@@ -205,24 +195,16 @@ const AdminClasses = () => {
             // 문자 메시지 구성
             const name = app.users?.name || app.users?.nickname || '회원';
             const phone = (app.users?.phone || app.user_phone || '').replace(/-/g, '');
-            const price = (app.applied_price || 0).toLocaleString();
             const classTitle = selectedClass?.title || '클래스';
-            const classDate = selectedClass?.class_date || '';
 
-            let msg = `[아임모델 MOCA] 수강 신청 승인 안내\n\n안녕하세요, ${name}님!\n${classTitle} 수강 신청이 승인되었습니다.\n\n💰 수강료: ${price}원\n\n[무통장 입금]\n${BANK_INFO}\n입금 후 담당자가 확정 안내 드립니다.`;
-
-            if (blogpayUrl) {
-                msg += `\n\n[카드결제]\n${blogpayUrl}`;
-            }
-
-            msg += `\n\n문의: 카카오채널 @아임모델MOCA`;
+            const msg = `[아임모델 MOCA] 수강 신청 승인 안내\n\n안녕하세요, ${name}님!\n${classTitle} 수강 신청이 승인되었습니다.\n\n문의: 카카오채널 @아임모델MOCA`;
 
             if (phone) {
                 await sendBulkMessage([phone], msg, 'sms');
             }
 
             setApplicants(prev => prev.map(a =>
-                a.id === app.id ? { ...a, approval_status: 'approved', blogpay_url: blogpayUrl } : a
+                a.id === app.id ? { ...a, approval_status: 'approved' } : a
             ));
             setSuccessMsg(`✅ ${name}님 승인 완료 + 문자 발송 성공!`);
         } catch (err) {
@@ -233,9 +215,9 @@ const AdminClasses = () => {
         }
     };
 
-    // 결제 확인 처리
+    // 참석 확정 처리
     const handleConfirmPayment = async (app) => {
-        if (!window.confirm(`[${app.users?.name || app.users?.nickname}] 입금 확인 처리 하시겠습니까?`)) return;
+        if (!window.confirm(`[${app.users?.name || app.users?.nickname}] 참석 확정 처리 하시겠습니까?`)) return;
         setIsSubmitting(true);
         try {
             const { error } = await supabase
@@ -248,14 +230,14 @@ const AdminClasses = () => {
             const phone = (app.users?.phone || app.user_phone || '').replace(/-/g, '');
             const classTitle = selectedClass?.title || '클래스';
             if (phone) {
-                const msg = `[아임모델 MOCA] 수강 확정 안내\n\n${name}님 입금 확인 완료!\n${classTitle} 수강이 최종 확정되었습니다.\n\n수업 당일 뵙겠습니다 😊`;
+                const msg = `[아임모델 MOCA] 수강 확정 안내\n\n${name}님 참석 확정이 완료되었습니다.\n${classTitle} 수강이 최종 확정되었습니다.\n\n수업 당일 뵙겠습니다 😊`;
                 await sendBulkMessage([phone], msg, 'sms').catch(console.error);
             }
 
             setApplicants(prev => prev.map(a =>
                 a.id === app.id ? { ...a, approval_status: 'paid', payment_status: 'paid' } : a
             ));
-            setSuccessMsg(`✅ ${name}님 입금 확인 완료!`);
+            setSuccessMsg(`✅ ${name}님 참석 확정 완료!`);
         } catch (err) {
             alert('오류: ' + err.message);
         } finally {
@@ -300,20 +282,7 @@ const AdminClasses = () => {
         }));
     };
 
-    const addPrice = () => {
-        if (pricing.length >= 5) return;
-        setPricing([...pricing, { grade_label: '새 등급', price: 0 }]);
-    };
 
-    const removePrice = (idx) => {
-        setPricing(pricing.filter((_, i) => i !== idx));
-    };
-
-    const updatePrice = (idx, field, value) => {
-        const next = [...pricing];
-        next[idx][field] = value;
-        setPricing(next);
-    };
 
     const handleDownloadExcel = () => {
         if (!selectedClass || applicants.length === 0) {
@@ -321,15 +290,13 @@ const AdminClasses = () => {
             return;
         }
 
-        const headers = ['번호', '이름', '연락처', '멤버등급', '수강금액(원)', '결제상태', '결제수단'];
+        const headers = ['번호', '이름', '연락처', '멤버등급', '승인상태'];
         const rows = applicants.map((app, idx) => [
             applicants.length - idx,
             app.users?.name || app.users?.nickname || '-',
             app.users?.phone || '-',
             app.grade_label || app.users?.grade || 'SILVER',
-            app.applied_price?.toLocaleString() || '0',
-            app.payment_status === 'paid' ? '승인완료' : '입금대기',
-            app.payment_type || '-'
+            app.approval_status === 'approved' ? '승인' : '대기'
         ]);
 
         const csvContent = [
@@ -607,36 +574,7 @@ const AdminClasses = () => {
                                         onError={setFormError}
                                     />
 
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <label className="block text-sm font-black text-slate-700">수강료 설정 (최대 5개)</label>
-                                            <button type="button" onClick={addPrice} disabled={pricing.length >= 5} className="text-xs font-black text-moca-primary hover:underline disabled:opacity-30">+ 추가</button>
-                                        </div>
-                                        <div className="space-y-3">
-                                            {pricing.map((p, i) => (
-                                                <div key={i} className="flex gap-2 items-center group animate-fadeIn">
-                                                    <input
-                                                        type="text" value={p.grade_label} onChange={e => updatePrice(i, 'grade_label', e.target.value)}
-                                                        className="w-1/3 bg-white border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-black focus:outline-none focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
-                                                        placeholder="회원 등급명"
-                                                    />
-                                                    <div className="flex-1 relative">
-                                                        <input
-                                                            type="number" value={p.price} onChange={e => updatePrice(i, 'price', e.target.value)}
-                                                            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-black focus:outline-none focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
-                                                            placeholder="60,000"
-                                                        />
-                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-black">원</span>
-                                                    </div>
-                                                    {pricing.length > 1 && (
-                                                        <button type="button" onClick={() => removePrice(i)} className="p-2 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <span className="material-symbols-outlined text-[18px]">remove_circle_outline</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+
                                 </div>
 
                                 {/* Detailed Description */}
@@ -644,7 +582,7 @@ const AdminClasses = () => {
                                     <label className="block text-sm font-black text-slate-700 mb-3">상세 내용 및 소개</label>
                                     <textarea
                                         value={newClass.description} onChange={e => setNewClass({ ...newClass, description: e.target.value })}
-                                        rows={8} placeholder="클래스의 상세 커리큘럼, 준비물, 환불 규정 등을 설명해주세요."
+                                        rows={8} placeholder="클래스의 상세 커리큘럼, 준비물 등을 설명해주세요."
                                         className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-[28px] px-6 py-5 text-sm font-medium transition-all outline-none resize-none leading-relaxed focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
                                     />
                                 </div>
@@ -693,7 +631,7 @@ const AdminClasses = () => {
                                     <p className="text-xl font-black text-amber-400">{applicants.filter(a => a.approval_status === 'approved').length}명</p>
                                 </div>
                                 <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-3xl text-center min-w-[90px]">
-                                    <p className="text-[10px] font-black text-green-400/60 mb-1 uppercase tracking-tighter">결제완료</p>
+                                    <p className="text-[10px] font-black text-green-400/60 mb-1 uppercase tracking-tighter">수강확정</p>
                                     <p className="text-xl font-black text-green-400">{applicants.filter(a => a.approval_status === 'paid').length}명</p>
                                 </div>
                             </div>
@@ -714,7 +652,6 @@ const AdminClasses = () => {
                                             <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center w-12">번호</th>
                                             <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] uppercase tracking-widest">신청자</th>
                                             <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] uppercase">등급</th>
-                                            <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-right">수강료</th>
                                             <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center">상태</th>
                                             <th className="px-4 py-5 text-[11px] font-black text-[var(--moca-text-3)] text-center">관리</th>
                                         </tr>
@@ -728,7 +665,7 @@ const AdminClasses = () => {
                                             const isCancelled = status === 'cancelled';
 
                                             const statusBadge = isPaid
-                                                ? { label: '결제완료', cls: 'bg-green-50 text-green-600 border-green-200' }
+                                                ? { label: '수강확정', cls: 'bg-green-50 text-green-600 border-green-200' }
                                                 : isApproved
                                                 ? { label: '승인완료', cls: 'bg-amber-50 text-amber-600 border-amber-200' }
                                                 : isCancelled
@@ -754,18 +691,11 @@ const AdminClasses = () => {
                                                             {app.grade_label || app.users?.grade || 'SILVER'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-5 text-right font-black text-sm text-[var(--moca-text)]">
-                                                        {app.applied_price?.toLocaleString()}원
-                                                    </td>
                                                     <td className="px-4 py-5 text-center">
                                                         <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black border ${statusBadge.cls}`}>
                                                             {statusBadge.label}
                                                         </span>
-                                                        {app.blogpay_url && (
-                                                            <p className="text-[9px] text-indigo-400 font-bold mt-1 truncate max-w-[100px] mx-auto">
-                                                                카드링크 있음
-                                                            </p>
-                                                        )}
+
                                                     </td>
                                                     <td className="px-4 py-5">
                                                         <div className="flex justify-center gap-2">
@@ -784,7 +714,7 @@ const AdminClasses = () => {
                                                                     disabled={isSubmitting}
                                                                     className="px-3 py-2 rounded-xl text-[11px] font-black bg-green-500 text-white hover:bg-green-600 transition-all shadow-lg shadow-green-500/20 disabled:opacity-50"
                                                                 >
-                                                                    입금확인
+                                                                    참석확정
                                                                 </button>
                                                             )}
                                                             {isPaid && (

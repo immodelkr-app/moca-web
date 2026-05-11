@@ -2,71 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { logoutUser, getUser, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
 
-/* ── 환불 정책 모달 (A-Plan 색상 적용) ── */
-const RefundPolicyModal = ({ onClose }) => (
-    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
-        <div className="bg-white border border-[#E8E0FA] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-moca-lg" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-[#E8E0FA] px-5 py-4 flex items-center justify-between">
-                <h2 className="text-[#1F1235] font-black text-base">교환 · 반품 · 취소 · 환불 정책</h2>
-                <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#1F1235] transition-colors">
-                    <span className="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div className="px-5 py-5 space-y-5 text-xs text-[#5B4E7A] leading-relaxed">
-                <div>
-                    <p className="text-blue-600 font-bold mb-2">🚫 결제 취소</p>
-                    <ul className="space-y-1.5 list-none">
-                        <li>① 배송 시작 전(배송 준비 전)까지 100% 전액 취소 가능합니다.</li>
-                        <li>② 이용약관 신청 후 회사로부터 상담이 미제공된 경우 취소 가능합니다.</li>
-                        <li>③ 취소 신청: immodelkr@gmail.com (주문번호 포함)</li>
-                    </ul>
-                </div>
-                <hr className="border-[#E8E0FA]" />
-                <div>
-                    <p className="text-emerald-600 font-bold mb-2">🔄 반품 · 교환</p>
-                    <ul className="space-y-1.5 list-none">
-                        <li>① 상품 수령 후 <strong className="text-[#1F1235]">3일 이내</strong> 반품·교환 신청 가능</li>
-                        <li>② 단순 변심: 미개봉·미사용 상태 한정, 왕복 배송비 고객 부담</li>
-                        <li>③ 상품 하자·오배송: 3일 이내 사진 첨부 접수 시 배송비 회사 부담으로 교환·환불</li>
-                        <li>④ 개봉 후 사용 상품은 단순 변심 반품 불가</li>
-                    </ul>
-                </div>
-                <hr className="border-[#E8E0FA]" />
-                <div>
-                    <p className="text-yellow-600 font-bold mb-2">💰 환불 정책</p>
-                    <p className="text-[#9CA3AF] text-[11px] font-bold mb-1">📦 실물 상품</p>
-                    <ul className="space-y-1 mb-3 list-none">
-                        <li>① 배송 전 취소: 100% 전액 환불</li>
-                        <li>② 수령 후 3일 이내·미사용: 환불 가능 (왕복 배송비 고객 부담)</li>
-                        <li>③ 상품 하자·오배송: 수령 후 3일 이내 100% 환불</li>
-                    </ul>
-                    <p className="text-[#9CA3AF] text-[11px] font-bold mb-1">👑 멤버십 구독</p>
-                    <ul className="space-y-1 list-none">
-                        <li>① 정기결제: 이용일수 제외 일할 계산 환불 (결제 후 24시간 이후 ~ 15일까지)</li>
-                        <li>② 연간결제: 전체 연간금액 ÷ 12 × 잔여개월 기준 환불</li>
-                        <li>③ 프로필카드 2회 이상 수령 시 위약금 10% 제외 후 부분 환불</li>
-                        <li>④ 회사 귀책사유(오류·서비스 중단): 전액 환불</li>
-                    </ul>
-                </div>
-                <hr className="border-[#E8E0FA]" />
-                <div>
-                    <p className="text-red-500 font-bold mb-2">🚫 환불 불가 항목</p>
-                    <ul className="space-y-1 list-none">
-                        <li>• 멤버십 결제 후 7일 초과</li>
-                        <li>• 상품 수령 후 3일 초과</li>
-                        <li>• 콘텐츠 다운로드·실질 이용 후</li>
-                        <li>• 고객 사용·훼손으로 가치 감소</li>
-                        <li>• 개봉 후 사용 상품의 단순 변심</li>
-                    </ul>
-                </div>
-                <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mt-2">
-                    <p className="text-orange-600 font-bold">📞 문의: immodelkr@gmail.com</p>
-                    <p className="text-[#9CA3AF] mt-1">주문번호, 결제일자, 사유를 포함해 주세요. (영업일 1~2일 내 답변)</p>
-                </div>
-            </div>
-        </div>
-    </div>
-);
+
 
 /* ── PC 사이드바 대분류/중분류 구조 ── */
 const navGroups = [
@@ -83,7 +19,7 @@ const navGroups = [
         items: [
             { to: '/agencies', icon: 'apartment', label: '에이전시 목록' },
             { to: '/home/smart-profile', icon: 'forward_to_inbox', label: '나의 프로필 관리' },
-            { to: '/upgrade', icon: 'workspace_premium', label: '멤버십 구독' }, // 광고모델 활동 핵심
+            { to: '/upgrade', icon: 'workspace_premium', label: '모델활동 신청' }, // 광고모델 활동 핵심
             { to: '/home/calendar', icon: 'calendar_month', label: '투어 캘린더' },
             { to: '/home/diary', icon: 'event_note', label: '모델 다이어리' },
             { to: '/home/cert', icon: 'photo_camera', label: '투어스타그램' },
@@ -101,18 +37,7 @@ const navGroups = [
         ]
     },
     // ── HIDDEN: 혜택 & 쇼핑 그룹 – Phase 2에서 복원 예정 ────────────────────
-    // {
-    //     title: '혜택 & 쇼핑',
-    //     icon: 'diamond',
-    //     items: [
-    //         { to: '/home/membership', icon: 'star', label: '멤버십 카드' },
-    //         { to: '/home/coupons', icon: 'local_activity', label: '모델 쿠폰' },
-    //         { to: '/home/content', icon: 'shopping_bag', label: '제휴혜택' },
-    //         { to: '/home/shop', icon: 'local_fire_department', label: '모카 에디트' },  // 토스 심사 후 복원
-    //         { to: '/home/benefits', icon: 'diamond', label: '혜택 허브' },
-    //     ]
-    // },
-    // ─────────────────────────────────────────────────────────────────────────
+
     {
         title: 'MY 서비스',
         icon: 'contract',
@@ -132,7 +57,7 @@ const bottomTabs = [
 
 /* ── 더보기 메뉴 항목 ── */
 const moreMenuItems = [
-    { to: '/upgrade',         icon: 'workspace_premium',    label: '모델활동' },
+    { to: '/upgrade',         icon: 'workspace_premium',    label: '등급 업그레이드' },
     { to: '/home/smart-profile', icon: 'forward_to_inbox',  label: '프로필 관리' },
     { to: '/home/cert',       icon: 'photo_camera',         label: '투어스타그램' },
     { to: '/home/tv',         icon: 'smart_display',        label: '모카TV' },
@@ -140,17 +65,10 @@ const moreMenuItems = [
     { to: '/home/lounge',     icon: 'forum',                label: '모카 라운지' },
     { to: '/home/class',      icon: 'school',               label: '모카 클래스' },
     { to: '/home/qna',        icon: 'forum',                label: 'Q&A 게시판' },
-    // ── HIDDEN: Phase 2 복원 예정 ─────────────────────────────────────────
-    // { to: '/home/membership', icon: 'star',                 label: '멤버십 카드' },
-    // { to: '/upgrade',         icon: 'workspace_premium',    label: '멤버십 구독' },   // 하단탭으로 이동
-    // { to: '/home/coupons',    icon: 'local_activity',       label: '모델 쿠폰' },
-    // { to: '/home/content',    icon: 'shopping_bag',         label: '제휴혜택' },
-    // { to: '/home/shop',       icon: 'local_fire_department',label: '모카 에디트' },   // 토스 심사 후 복원
-    // ─────────────────────────────────────────────────────────────────────
+
 ];
 
 const Layout = () => {
-    const [showRefundPolicy, setShowRefundPolicy] = useState(false);
     const [showMoreMenu, setShowMoreMenu] = useState(false);
     const [userGrade, setUserGrade] = useState(getUser()?.grade || 'BASIC');
     const navigate = useNavigate();
@@ -288,10 +206,7 @@ const Layout = () => {
                                 <a href="/privacy" className="text-[#5B4E7A] text-xs font-bold hover:text-[#9333EA] transition-colors">개인정보처리방침</a>
                                 <span className="text-[#C8C0E0] text-xs">|</span>
                                 <a href="/terms" className="text-[#5B4E7A] text-xs font-bold hover:text-[#9333EA] transition-colors">서비스 이용약관</a>
-                                <span className="text-[#C8C0E0] text-xs">|</span>
-                                <button onClick={() => setShowRefundPolicy(true)} className="text-orange-500 text-xs font-bold hover:text-orange-600 transition-colors">교환·반품·환불 정책</button>
                             </div>
-                            {showRefundPolicy && <RefundPolicyModal onClose={() => setShowRefundPolicy(false)} />}
                             {/* 회사명 */}
                             <p className="text-[#1F1235] text-sm font-black">글로벌 아임</p>
                             {/* 회사 정보 */}
@@ -321,12 +236,12 @@ const Layout = () => {
                                 <NavLink
                                     key={to}
                                     to={to}
-                                    className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all"
+                                    className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all active:scale-95"
                                     onClick={() => setShowMoreMenu(false)}
                                 >
                                     {({ isActive }) => (
                                         <>
-                                            <span className={`material-symbols-outlined text-[26px] transition-all ${isActive ? 'fill-1 text-[#9333EA]' : 'text-[#9CA3AF]'}`}>
+                                            <span className={`material-symbols-outlined text-[26px] transition-all duration-300 ${isActive ? 'fill-1 text-[#9333EA] drop-shadow-md scale-110' : 'text-[#9CA3AF]'}`}>
                                                 {icon}
                                             </span>
                                             <span className={`text-[10px] font-black transition-all ${isActive ? 'text-[#9333EA]' : 'text-[#9CA3AF]'}`}>
@@ -340,10 +255,10 @@ const Layout = () => {
 
                         {/* 더보기 탭 */}
                         <button
-                            className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all"
+                            className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all active:scale-95"
                             onClick={() => setShowMoreMenu(prev => !prev)}
                         >
-                            <span className={`material-symbols-outlined text-[26px] transition-all ${showMoreMenu ? 'text-[#9333EA]' : 'text-[#9CA3AF]'}`}>
+                            <span className={`material-symbols-outlined text-[26px] transition-all duration-300 ${showMoreMenu ? 'text-[#9333EA] drop-shadow-md scale-110' : 'text-[#9CA3AF]'}`}>
                                 more_horiz
                             </span>
                             <span className={`text-[10px] font-black transition-all ${showMoreMenu ? 'text-[#9333EA]' : 'text-[#9CA3AF]'}`}>
@@ -358,41 +273,45 @@ const Layout = () => {
                     <>
                         {/* 딤 배경 */}
                         <div
-                            className="lg:hidden fixed inset-0 z-[99] bg-black/20 backdrop-blur-sm"
+                            className="lg:hidden fixed inset-0 z-[99] bg-black/20 backdrop-blur-sm transition-opacity"
                             onClick={() => setShowMoreMenu(false)}
                         />
                         {/* 패널 */}
-                        <div className="lg:hidden fixed left-0 right-0 z-[100] bg-white border-t border-[#E8E0FA] rounded-t-3xl shadow-moca-lg max-h-[65vh] overflow-y-auto" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))', paddingBottom: '16px' }}>
-                            <div className="w-10 h-1 bg-[#E8E0FA] rounded-full mx-auto mt-3 mb-4" />
-                            <p className="text-center text-[11px] font-black text-[#9CA3AF] uppercase tracking-widest mb-4">전체 메뉴</p>
-                            <div className="grid grid-cols-3 gap-3 px-5 pb-6">
+                        <div className="lg:hidden fixed left-0 right-0 z-[100] bg-[#F8F5FF] border-t border-[#E8E0FA] rounded-t-[32px] shadow-2xl max-h-[75vh] overflow-y-auto transition-transform" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))', paddingBottom: '16px' }}>
+                            <div className="sticky top-0 bg-[#F8F5FF] z-10 pt-3 pb-2 flex flex-col items-center">
+                                <div className="w-12 h-1.5 bg-[#D1C5EC] rounded-full mb-3" />
+                                <p className="text-center text-[11px] font-black text-[#7C3AED] uppercase tracking-widest">전체 메뉴</p>
+                            </div>
+                            <div className="grid grid-cols-4 gap-2 px-4 pb-6 mt-2">
                                 {moreMenuItems.map(({ to, icon, label }) => (
                                     <NavLink
                                         key={to}
                                         to={to}
                                         onClick={() => setShowMoreMenu(false)}
                                         className={({ isActive }) =>
-                                            `flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border transition-all text-center
+                                            `flex flex-col items-center gap-1.5 py-3 px-1 rounded-[20px] transition-all text-center
                                             ${isActive
-                                                ? 'bg-[#F3E8FF] border-[#9333EA]/30 text-[#7C3AED]'
-                                                : 'bg-[#F8F5FF] border-[#E8E0FA] text-[#5B4E7A] hover:bg-[#F3E8FF] hover:text-[#9333EA]'
+                                                ? 'bg-gradient-to-b from-[#F3E8FF] to-white border border-[#C084FC]/40 text-[#7C3AED] shadow-sm scale-95'
+                                                : 'bg-white border border-transparent text-[#5B4E7A] hover:bg-[#F3E8FF] hover:border-[#E8E0FA] active:scale-95'
                                             }`
                                         }
                                     >
                                         {({ isActive }) => (
                                             <>
-                                                <span className={`material-symbols-outlined text-[24px] ${isActive ? 'fill-1' : ''}`}>{icon}</span>
-                                                <span className="text-[10px] font-black leading-tight">{label}</span>
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isActive ? 'bg-[#9333EA]/10' : 'bg-[#F3F0FF]'}`}>
+                                                    <span className={`material-symbols-outlined text-[22px] ${isActive ? 'fill-1 text-[#9333EA]' : 'text-[#7C3AED]'}`}>{icon}</span>
+                                                </div>
+                                                <span className="text-[10px] font-black leading-tight break-keep">{label}</span>
                                             </>
                                         )}
                                     </NavLink>
                                 ))}
                             </div>
                             {/* 로그아웃 */}
-                            <div className="border-t border-[#E8E0FA] mx-5 pt-4 pb-6">
+                            <div className="border-t border-[#E8E0FA]/50 mx-5 pt-4 pb-4">
                                 <button
                                     onClick={() => { setShowMoreMenu(false); handleLogout(); }}
-                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] text-[#9CA3AF] font-bold text-sm hover:bg-[#F3E8FF] hover:text-[#9333EA] transition-all"
+                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-white border border-[#E8E0FA] text-[#9CA3AF] font-bold text-sm hover:bg-[#FFF] hover:text-[#EF4444] hover:border-[#FCA5A5] transition-all active:scale-95 shadow-sm"
                                 >
                                     <span className="material-symbols-outlined text-[18px]">logout</span>
                                     로그아웃

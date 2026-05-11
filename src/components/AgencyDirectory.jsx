@@ -212,7 +212,7 @@ const AgencyDirectory = () => {
 
         const monthCount = getMonthlyCount(sendHistory);
         if (!isUnlimited && monthCount >= SILVER_MONTHLY_LIMIT) {
-            showToast(`이번 달 무료 발송(${SILVER_MONTHLY_LIMIT}회)을 모두 사용했습니다. 골드 멤버십으로 무제한 발송!`, 'error');
+            showToast(`이번 달 무료 발송(${SILVER_MONTHLY_LIMIT}회)을 모두 사용했습니다. GOLD 등급으로 무제한 발송!`, 'error');
             setTimeout(() => navigate('/upgrade'), 1800);
             return;
         }
@@ -399,7 +399,7 @@ const AgencyDirectory = () => {
                             <p className="text-[#1F1235] font-black text-[15px]">
                                 이번 달 이력서 발송: <span className="text-[#10B981]">{getMonthlyCount(sendHistory)}</span>/{SILVER_MONTHLY_LIMIT}회 사용
                             </p>
-                            <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold">골드 멤버십 → 무제한 · 탭하여 내 프로필 설정</p>
+                            <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold">GOLD 등급 → 무제한 · 탭하여 내 프로필 설정</p>
                         </div>
                         <span className="material-symbols-outlined text-[20px] text-[#E8E0FA] group-hover:text-[#9333EA] transition-colors">chevron_right</span>
                     </div>
@@ -481,7 +481,7 @@ const AgencyDirectory = () => {
                                         {/* 텍스트 */}
                                         <div>
                                             <p className="text-[#1F1235] font-black text-lg leading-tight mb-1.5">
-                                                골드 멤버 전용 에이전시
+                                                GOLD 등급 전용 에이전시
                                             </p>
                                             <p className="text-[#7C3AED] font-black text-2xl mb-1">
                                                 +{hiddenCount}곳 더 있어요
@@ -511,7 +511,7 @@ const AgencyDirectory = () => {
                                             onClick={() => navigate('/upgrade')}
                                             className="w-full max-w-xs py-4 rounded-[20px] bg-gradient-to-r from-[#FFD700] to-[#F9A825] text-[#1F1235] font-black text-base shadow-lg shadow-[#FFD700]/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                         >
-                                            골드 멤버십 업그레이드
+                                            GOLD 등급 업그레이드
                                         </button>
                                     </div>
                                 </div>

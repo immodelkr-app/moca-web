@@ -49,7 +49,7 @@ const PrivacyPolicy = () => {
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]" />
                                 선택 항목
                             </p>
-                            <p className="text-[#5B4E7A] text-[15px] font-medium leading-relaxed">프로필 사진, 포트폴리오 (Google Drive), 키/몸무게/나이/신발사이즈, 배송 메모</p>
+                            <p className="text-[#5B4E7A] text-[15px] font-medium leading-relaxed">프로필 사진, 포트폴리오 (Google Drive), 키/몸무게/나이/신발사이즈</p>
                         </div>
                         <div className="bg-[#ECFDF5] p-4 rounded-2xl border border-[#D1FAE5]">
                             <p className="text-[#059669] text-xs font-black mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
@@ -70,8 +70,7 @@ const PrivacyPolicy = () => {
                     <div className="bg-white border border-[#E8E0FA] rounded-3xl p-6 shadow-sm">
                         <ul className="text-[#5B4E7A] text-[15px] space-y-3 font-medium">
                             <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>회원 가입 및 관리: 본인 식별, 가입 의사 확인, 서비스 부정 이용 방지</li>
-                            <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>서비스 제공: 에이전시 프로필 전송, 스마트 캐스팅, 모카 에디트 쇼핑</li>
-                            <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>주문 및 배송: 상품 주문 처리, 배송 진행, CS 대응</li>
+                            <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>서비스 제공: 에이전시 프로필 전송, 스마트 캐스팅</li>
                             <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>Google Drive 연동: 사용자의 Google Drive에서 포트폴리오 파일을 선택하기 위한 읽기 전용 접근</li>
                             <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>마케팅 및 이벤트 안내 (선택 동의 시)</li>
                         </ul>
@@ -89,8 +88,6 @@ const PrivacyPolicy = () => {
                             <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>회원 탈퇴 시 즉시 삭제</li>
                             <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>단, 관련 법령에 따라 아래 기간 보관:
                                 <ul className="ml-6 mt-2 space-y-2 bg-[#F8F5FF] p-4 rounded-2xl border border-[#E8E0FA]/50">
-                                    <li className="flex justify-between items-center text-sm font-bold"><span>계약 또는 청약철회 기록</span> <span className="text-[#9333EA]">5년</span></li>
-                                    <li className="flex justify-between items-center text-sm font-bold"><span>대금결제 및 재화 공급 기록</span> <span className="text-[#9333EA]">5년</span></li>
                                     <li className="flex justify-between items-center text-sm font-bold"><span>소비자 불만 또는 분쟁처리</span> <span className="text-[#9333EA]">3년</span></li>
                                     <li className="flex justify-between items-center text-sm font-bold"><span>접속 기록</span> <span className="text-[#9333EA]">3개월</span></li>
                                 </ul>
@@ -105,21 +102,10 @@ const PrivacyPolicy = () => {
                         <span className="w-8 h-8 rounded-xl bg-[#9333EA]/10 flex items-center justify-center text-[#9333EA] text-sm font-black shadow-sm">4</span>
                         개인정보의 제3자 제공
                     </h2>
-                    <div className="bg-white border border-[#E8E0FA] rounded-3xl p-6 shadow-sm space-y-4">
-                        <div className="flex flex-col gap-3">
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-black bg-[#F8F5FF] text-[#9333EA] px-2 py-1 rounded-md border border-[#E8E0FA]">제공받는 자</span>
-                                <p className="text-[#5B4E7A] text-[15px] font-bold">개별 판매사, 택배사 (CJ, 한진, 롯데 등)</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-black bg-[#F8F5FF] text-[#9333EA] px-2 py-1 rounded-md border border-[#E8E0FA]">제공 항목</span>
-                                <p className="text-[#5B4E7A] text-[15px] font-bold">수령인명, 주소, 휴대폰번호, 주문상품명</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-black bg-[#F8F5FF] text-[#9333EA] px-2 py-1 rounded-md border border-[#E8E0FA]">제공 목적</span>
-                                <p className="text-[#5B4E7A] text-[15px] font-bold">상품 배송 및 현황 조회</p>
-                            </div>
-                        </div>
+                    <div className="bg-white border border-[#E8E0FA] rounded-3xl p-6 shadow-sm">
+                        <p className="text-[#5B4E7A] text-[15px] font-medium leading-relaxed">
+                            회사는 이용자의 개인정보를 원칙적으로 외부에 제공하지 않습니다.
+                        </p>
                     </div>
                 </section>
 

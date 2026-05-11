@@ -36,7 +36,7 @@ const SilverLimitModal = ({ onClose, daysLeft = 3, isAlreadyBlocked = false }) =
                     {/* Title */}
                     <div className="text-center">
                         <h2 className="text-[#1F1235] font-black text-xl leading-tight mb-1">
-                            골드 멤버십 안내
+                            GOLD 등급 안내
                         </h2>
                         <p className="text-[#9CA3AF] text-[13px] font-bold">
                             실버 멤버 일일 한도 소진
@@ -98,7 +98,7 @@ const SilverLimitModal = ({ onClose, daysLeft = 3, isAlreadyBlocked = false }) =
                             onClick={handleUpgrade}
                             className="w-full py-4.5 rounded-[20px] bg-gradient-to-r from-[#FFD700] to-[#F9A825] text-[#1F1235] font-black text-base shadow-xl shadow-[#FFD700]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                         >
-                            골드 멤버십 업그레이드
+                            GOLD 등급 업그레이드
                         </button>
                         <button
                             onClick={onClose}

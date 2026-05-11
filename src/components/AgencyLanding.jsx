@@ -59,7 +59,7 @@ const AgencyLanding = () => {
         heroTitle1: '당신의 모델 활동을',
         heroTitle2: '더 스마트하게, 아임모카',
         heroHighlightWord: '아임모카',
-        heroSubtitle1: 'HOT한 중요 이상의 정보를',
+        heroSubtitle1: '중요 이상의 정보를',
         heroSubtitle2: '한눈에 확인하고, 광고모델 전문 프로필을 단 1분만에 완성하여 스마트한 광고모델 활동을 시작해보세요!',
         feature1Icon: 'apartment',
         feature1Title: '전국 에이전시 리스트',
@@ -392,10 +392,7 @@ const AgencyLanding = () => {
                             <a href="/privacy" className="hover:text-[#9333EA]">개인정보처리방침</a>
                             <span className="text-[#E8E0FA]">|</span>
                             <button onClick={() => setShowTerms(true)} className="hover:text-[#9333EA]">이용약관</button>
-                            <span className="text-[#E8E0FA]">|</span>
-                            <button onClick={() => setShowRefundPolicy(true)} className="text-orange-500 hover:text-orange-600">교환·반품·환불 정책</button>
                         </div>
-                        {showRefundPolicy && <RefundPolicyModal onClose={() => setShowRefundPolicy(false)} />}
                         <p className="text-[#9CA3AF] text-[10px] text-center md:text-right leading-loose">
                             <span className="font-bold text-[#7C3AED]">아임모카</span> 대표 : 김대희 | 사업자등록번호 : 365-22-00947 | 통신판매업 제2021-서울강남-05756호<br />
                             서울시 영등포구 영중로 159, 7층<br />

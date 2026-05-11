@@ -7,7 +7,6 @@ import Layout from './components/Layout';
 import HomeDashboard from './components/HomeDashboard';
 
 import TourDiary from './components/TourDiary';
-import AffiliatedAgencies from './components/AffiliatedAgencies';
 import AgencyLanding from './components/AgencyLanding';
 import AgencyDirectory from './components/AgencyDirectory';
 import AgencyMapScreen from './components/AgencyMapScreen';
@@ -17,14 +16,9 @@ import AdminPage from './components/AdminPage';
 import UpgradePage from './components/UpgradePage';
 import UpgradeApplicationPage from './components/UpgradeApplicationPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import MembershipBenefits from './components/MembershipBenefits';
-import ModelCoupons from './components/ModelCoupons';
-import Membership from './components/Membership';
 import KimDaepyoMessage from './components/KimDaepyoMessage';
 import MocaLounge from './components/MocaLounge';
 import GradeCelebrationModal from './components/GradeCelebrationModal';
-import MocaShop from './components/MocaShop';
-import BenefitsHub from './components/BenefitsHub';
 import CertificationFeed from './components/CertificationFeed';
 import SmartProfile from './components/SmartProfile';
 import QnABoard from './components/QnABoard';
@@ -66,14 +60,9 @@ function AppContent() {
                         <Route path="dashboard" element={<HomeDashboard />} />
                         <Route path="diary" element={<TourDiary />} />
                         <Route path="calendar" element={<AgencyTourCalendar />} />
-                        <Route path="content" element={<AffiliatedAgencies />} />
                         <Route path="tv" element={<KimDaepyoTV />} />
-                        <Route path="membership" element={<MembershipBenefits />} />
-                        <Route path="coupons" element={<ModelCoupons />} />
                         <Route path="message" element={<KimDaepyoMessage />} />
                         <Route path="lounge" element={<MocaLounge />} />
-                        <Route path="shop" element={<MocaShop />} />
-                        <Route path="benefits" element={<BenefitsHub />} />
                         <Route path="cert" element={<CertificationFeed />} />
                         <Route path="smart-profile" element={<SmartProfile />} />
                         <Route path="qna" element={<QnABoard />} />

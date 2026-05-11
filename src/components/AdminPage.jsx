@@ -2,11 +2,6 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { GRADE_INFO, GRADE_EMOJI, logoutUser } from '../services/userService';
-import { fetchPartners, fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
-import { fetchLatestAnnouncement } from '../services/chatService';
-import { postMessage, fetchMessagesList, deleteMessage, updateMessage } from '../services/messageService';
-import { sendBulkMessage, sendAlimtalk, sendFriendtalk } from '../services/solapiService';
-import AdminPartners from './AdminPartners';
 import AdminUpgradeRequests from './AdminUpgradeRequests';
 import AdminPopups from './AdminPopups';
 import AdminClasses from './AdminClasses';
@@ -27,8 +22,6 @@ const AdminPage = () => {
 
     const [users, setUsers] = useState([]);
     const [pageViews, setPageViews] = useState([]);
-    const [partners, setPartners] = useState([]);
-    const [partnerVisits, setPartnerVisits] = useState([]); // Add state for partner visits
     const [tourDiaries, setTourDiaries] = useState([]);
     // 인증샷 관리
     const [certPosts, setCertPosts] = useState([]);
@@ -132,19 +125,6 @@ const AdminPage = () => {
                 setPageViews(viewsData || []);
             }
 
-            // 3. 파트너 데이터
-            const pRes = await fetchPartners();
-            setPartners(pRes.data);
-
-            // 4. 파트너 제휴사 방문 내역 데이터
-            const { data: partnerVisitsData, error: partnerVisitsError } = await supabase
-                .from('partner_visits')
-                .select('*')
-                .order('visited_at', { ascending: false });
-            if (!partnerVisitsError) {
-                setPartnerVisits(partnerVisitsData || []);
-            }
-
             // 5. 전속계약서 목록
             const { data: contractsData } = await fetchContracts();
             if (contractsData) setContracts(contractsData);
@@ -235,7 +215,7 @@ const AdminPage = () => {
                 } else if (newGrade === 'VIP') {
                     displayGrade = '전속모델';
                 }
-                const templateText = `안녕하세요 ${userName}님,\n모두의 캐스팅 매니저, 아임모카(IM MOCA)입니다.\n\n${userName}님의 모카(MOCA)멤버 등급이 아래와 같이 변경되어 안내해 드립니다.\n\n■ 변경 등급: ${displayGrade}\n■ 적용 일자: ${todayStr}\n■ 멤버십 만료일: ${expiresStr}\n\n새로운 멤버십 단계로 상향되심을 축하드립니다!\n업그레이드된 등급으로 새롭게 제공되는 스페셜 혜택들은 아임모카(IM MOCA)에서 상세히 확인하실 수 있습니다.`;
+                const templateText = `안녕하세요 ${userName}님,\n모두의 캐스팅 매니저, 아임모카(IM MOCA)입니다.\n\n${userName}님의 모카(MOCA) 등급이 아래와 같이 변경되어 안내해 드립니다.\n\n■ 변경 등급: ${displayGrade}\n■ 적용 일자: ${todayStr}\n■ ${newGrade === 'VIP' ? '전속모델' : 'GOLD 등급'} 만료일: ${expiresStr}\n\n새로운 등급으로 상향되심을 축하드립니다!\n업그레이드된 등급으로 새롭게 제공되는 스페셜 혜택들은 아임모카(IM MOCA)에서 상세히 확인하실 수 있습니다.`;
 
                 sendAlimtalk('KA01TP26030909163775811k3Q5BZRBk', [{
                     phone: userInfo.phone,
@@ -250,11 +230,11 @@ const AdminPage = () => {
                     button: {
                         "button": [
                             {
-                                "name": "멤버십 혜택 보러가기",
+                                "name": "등급 혜택 보러가기",
                                 "linkType": "WL",
                                 "linkTypeName": "웹링크",
-                                "linkM": "https://immoca.kr/home/membership",
-                                "linkP": "https://immoca.kr/home/membership"
+                                "linkM": "https://immoca.kr/upgrade",
+                                "linkP": "https://immoca.kr/upgrade"
                             }
                         ]
                     }
@@ -508,20 +488,9 @@ const AdminPage = () => {
         return statsMonth === 0 ? true : (dDate.getMonth() + 1) === statsMonth;
     });
 
-    // 파트너(제휴업체) 방문 내역 포함
-    const thisMonthPartnerVisits = partnerVisits.filter(pv => {
-        const dDate = new Date(pv.visited_at);
-        if (dDate.getFullYear() !== currentYear) return false;
-        return statsMonth === 0 ? true : (dDate.getMonth() + 1) === statsMonth;
-    });
-
     const monthlyUserCount = {};
     thisMonthDiaries.forEach(d => {
         const nick = d.nickname || 'guest';
-        if (nick !== 'guest') monthlyUserCount[nick] = (monthlyUserCount[nick] || 0) + 1;
-    });
-    thisMonthPartnerVisits.forEach(pv => {
-        const nick = pv.user_nickname || 'guest';
         if (nick !== 'guest') monthlyUserCount[nick] = (monthlyUserCount[nick] || 0) + 1;
     });
 
@@ -538,21 +507,10 @@ const AdminPage = () => {
         const dDate = new Date(d.date || d.timestamp || d.created_at);
         return dDate.getFullYear() === currentYear;
     });
-    const thisYearPartnerVisits = partnerVisits.filter(pv => {
-        const dDate = new Date(pv.visited_at);
-        return dDate.getFullYear() === currentYear;
-    });
-
     const placeCount = {};
     thisYearDiaries.forEach(d => {
         const agency = d.agency_name || '알 수 없음';
         placeCount[agency] = (placeCount[agency] || 0) + 1;
-    });
-    thisYearPartnerVisits.forEach(pv => {
-        // Find partner name
-        const p = partners.find(p => p.id === pv.partner_id);
-        const pName = p ? p.name : '알 수 없음';
-        placeCount[pName] = (placeCount[pName] || 0) + 1;
     });
 
     const top5Places = Object.entries(placeCount)
@@ -597,40 +555,7 @@ const AdminPage = () => {
         XLSX.writeFile(workbook, `아임모델_회원목록_${new Date().toISOString().slice(0, 10)}.xlsx`);
     };
 
-    // 제휴사 방문 내역 엑셀 다운로드
-    const handleExportPartnerVisitsExcel = () => {
-        if (partnerVisits.length === 0) {
-            alert('다운로드할 제휴사 방문 내역이 없습니다.');
-            return;
-        }
 
-        const excelData = partnerVisits.map(pv => {
-            const partnerInfo = partners.find(p => p.id === pv.partner_id);
-            return {
-                '방문일시': new Date(pv.visited_at).toLocaleString('ko-KR'),
-                '사용자 닉네임': pv.user_nickname || '알수없음',
-                '제휴업체명': partnerInfo ? partnerInfo.name : '알수없음(삭제됨)',
-                '적용 혜택': partnerInfo ? partnerInfo.discount_text : '',
-                '카테고리': partnerInfo ? (partnerInfo.category === 'hair_makeup' ? '헤어/메이크업' : partnerInfo.category === 'studio' ? '스튜디오' : partnerInfo.category === 'skincare' ? '피부관리' : '카페') : ''
-            };
-        });
-
-        const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-        const wscols = [
-            { wch: 25 }, // 방문일시
-            { wch: 15 }, // 사용자 닉네임
-            { wch: 20 }, // 제휴업체명
-            { wch: 30 }, // 적용 혜택
-            { wch: 15 }, // 카테고리
-        ];
-        worksheet['!cols'] = wscols;
-
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, '제휴방문내역');
-
-        XLSX.writeFile(workbook, `아임모델_제휴방문내역_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    };
 
 
     // 인증 전 - 비밀번호 입력 화면
@@ -733,13 +658,7 @@ const AdminPage = () => {
                     >
                         조회수 통계
                     </button>
-                    <button
-                        onClick={() => setActiveTab('partners')}
-                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'partners' ? 'border-emerald-600 text-emerald-700 bg-emerald-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
-                            }`}
-                    >
-                        제휴사 관리
-                    </button>
+
                     <button
                         onClick={() => { setActiveTab('lounge'); setLoungeView('list'); loadAnnouncements(); }}
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'lounge' ? 'border-violet-500 text-violet-700 bg-violet-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
@@ -1317,25 +1236,7 @@ const AdminPage = () => {
                     </div>
                 )}
 
-                {activeTab === 'partners' && (
-                    <div className="animate-fadeIn relative">
-                        <div className="flex justify-end mb-4">
-                            <button
-                                onClick={handleExportPartnerVisitsExcel}
-                                className="flex items-center gap-2 bg-[var(--moca-primary-lt)] hover:bg-[var(--moca-primary)]/20 border border-[var(--moca-primary)]/50 text-[var(--moca-accent)] px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-lg"
-                            >
-                                <span className="material-symbols-outlined text-[18px]">download</span>
-                                방문내역 엑셀
-                            </button>
-                        </div>
-                        <AdminPartners
-                            partners={partners}
-                            setPartners={setPartners}
-                            setSuccessMsg={setSuccessMsg}
-                            setError={setError}
-                        />
-                    </div>
-                )}
+
 
 
                 {activeTab === 'lounge' && (

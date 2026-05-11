@@ -47,8 +47,8 @@ const AdminContractViewerModal = ({ contract, onClose }) => {
                             </div>
 
                             <div>
-                                <h3 className="font-extrabold text-black text-lg mb-2">제2조 [계약 기간 및 의무 수강]</h3>
-                                <p>1. 계약 기간: 본 계약의 기간은 
+                                <h3 className="font-extrabold text-black text-lg mb-2">제2조 [계약 기간]</h3>
+                                <p>계약 기간: 본 계약의 기간은 
                                     <span className="font-bold underline mx-1">{startDate.year}</span>년 
                                     <span className="font-bold underline mx-1">{startDate.month}</span>월 
                                     <span className="font-bold underline mx-1">{startDate.day}</span>일 부터 
@@ -56,8 +56,6 @@ const AdminContractViewerModal = ({ contract, onClose }) => {
                                     <span className="font-bold underline mx-1">{endDate.month}</span>월 
                                     <span className="font-bold underline mx-1">{endDate.day}</span>일 까지로 한다.
                                 </p>
-                                <p>2. 의무 수강 기간 (원칙): "을"은 광고모델로서의 기본기를 다지고 실질적인 에이전시 홍보 효과를 거두기 위하여, 최소 6개월간 '에이전시 투어반' 과정을 의무적으로 수강 및 유지하여야 한다.</p>
-                                <p>3. [기간 단축 예외]: 단, "을"의 실력이 현저히 향상되었다고 판단될 경우, "갑"의 내부 테스트 및 실력 체크를 통해 상호 협의 하에 의무 수강 기간을 조정(단축)할 수 있다.</p>
                             </div>
 
                             <div>
@@ -98,14 +96,7 @@ const AdminContractViewerModal = ({ contract, onClose }) => {
                             </div>
 
                             <div>
-                                <h3 className="font-extrabold text-black text-lg mb-2">제8조 [중도 해지 및 환불]</h3>
-                                <p>1. "을"이 제2조의 의무 수강 기간(6개월)을 채우지 못하고 중도 포기하거나 단순 변심으로 계약을 해지할 경우, "갑"은 기 진행된 교육 횟수 공제 및 위약금을 제외한 잔액을 환불 규정에 따라 반환한다.</p>
-                                <p>2. 단, "을"이 제5조의 의무를 위반하거나 정당한 사유 없이 교육에 불참하여 강제 해지되는 경우, 이는 "을"의 귀책사유로 간주된다.</p>
-                                <p>3. 계약을 해지 해도 제 7조 사항들은 유지된다.</p>
-                            </div>
-
-                            <div>
-                                <h3 className="font-extrabold text-black text-lg mb-2">제9조 [관할 법원]</h3>
+                                <h3 className="font-extrabold text-black text-lg mb-2">제8조 [관할 법원]</h3>
                                 <p>본 협약과 관련하여 분쟁이 발생할 경우 "갑"의 본점 소재지 관할 법원을 1심 관할 법원으로 한다.</p>
                                 <p className="mt-4 font-bold">위 내용을 증명하기 위해 협약서 2통을 작성하여 서명 날인 후 "갑"과 "을"이 각각 1통씩 보관한다.</p>
                             </div>

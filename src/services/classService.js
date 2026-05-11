@@ -18,9 +18,8 @@ import { sendAlimtalk } from './solapiService';
  * @param {string} params.classTitle 클래스 제목
  * @param {string} params.classDate  클래스 날짜/시간 문자열
  * @param {string} params.location   장소
- * @param {number} params.paidPrice  최종 결제 금액
  */
-export const sendClassApplicationNotification = async ({ userName, phone, classTitle, classDate, location, paidPrice }) => {
+export const sendClassApplicationNotification = async ({ userName, phone, classTitle, classDate, location }) => {
     if (!phone) return;
 
     // ✅ 카카오 알림톡 실제 발급 정보
@@ -34,10 +33,8 @@ export const sendClassApplicationNotification = async ({ userName, phone, classT
 ■ 클래스명: ${classTitle}
 ■ 일시: ${classDate}
 ■ 장소: ${location}
-■ 결제 금액: ${paidPrice.toLocaleString()}원
 당일 10분 전까지 입실 부탁드립니다.
-
-아임모카와 함께하는 뜻깊은 시간이 되길 바랍니다. ✨`;
+`;
 
     return sendAlimtalk(TEMPLATE_ID, [{
         phone: phone.replace(/-/g, ''),
@@ -50,7 +47,6 @@ export const sendClassApplicationNotification = async ({ userName, phone, classT
             '클래스명': classTitle,
             '일시':     classDate,
             '장소':     location,
-            '결제금액': `${paidPrice.toLocaleString()}원`,
         },
         button: {
             button: [
@@ -107,15 +103,19 @@ export const createClass = async (classData, pricingArray) => {
 
     // 2. 등급별 가격 정보 저장
     // pricingArray: [{ grade_label: 'SILVER', price: 50000 }, ...]
-    const pricingToInsert = pricingArray.map(p => ({
-        class_id: newClass.id,
-        grade_label: p.grade_label,
-        price: parseInt(p.price, 10) || 0
-    }));
+    let pricingError = null;
+    if (pricingArray && pricingArray.length > 0) {
+        const pricingToInsert = pricingArray.map(p => ({
+            class_id: newClass.id,
+            grade_label: p.grade_label,
+            price: parseInt(p.price, 10) || 0
+        }));
 
-    const { error: pricingError } = await supabase
-        .from('class_pricing')
-        .insert(pricingToInsert);
+        const { error } = await supabase
+            .from('class_pricing')
+            .insert(pricingToInsert);
+        pricingError = error;
+    }
 
     return { data: newClass, error: pricingError };
 };
@@ -207,15 +207,7 @@ export const fetchAllApplications = async () => {
     return { data, error };
 };
 
-// 결제 상태 업데이트 (어드민 수동 입금 확인용)
-export const updatePaymentStatus = async (applicationId, status) => {
-    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
-    const { error } = await supabase
-        .from('class_applications')
-        .update({ payment_status: status })
-        .eq('id', applicationId);
-    return { error };
-};
+
 
 // 클래스 신청 (멤버용)
 export const applyForClass = async (applicationData) => {

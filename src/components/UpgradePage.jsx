@@ -17,11 +17,9 @@ const FEATURES = [
     { name: '에이전시 조회', silver: '하루 8회', gold: '무제한', icon: 'search' },
     { name: '프로필 등록 & 이메일 발송', silver: true, gold: true, icon: 'forward_to_inbox' },
     { name: '현재모습 사진등록', silver: false, gold: true, icon: 'photo_library' },
-    { name: '디지털 멤버십 카드', silver: true, gold: true, icon: 'badge' },
     { name: '모카라운지 · 모카TV', silver: true, gold: true, icon: 'live_tv' },
     { name: '투어 다이어리', silver: true, gold: true, icon: 'auto_stories' },
     { name: '우선 캐스팅 노출', silver: false, gold: true, icon: 'star' },
-    { name: '전용 쿠폰 혜택', silver: false, gold: true, icon: 'confirmation_number' },
 ];
 
 const UpgradePage = () => {
@@ -49,7 +47,7 @@ const UpgradePage = () => {
                 </button>
                 <div>
                     <h1 className="text-xl font-black text-[#1F1235] tracking-tight">광고모델 활동 신청</h1>
-                    <p className="text-[#9CA3AF] text-xs mt-0.5">GOLD 멤버십으로 광고모델 활동을 시작하세요</p>
+                    <p className="text-[#9CA3AF] text-xs mt-0.5">GOLD 등급으로 광고모델 활동을 시작하세요</p>
                 </div>
             </div>
 
@@ -67,7 +65,7 @@ const UpgradePage = () => {
                             현재 등급: {userGrade === 'VIP' ? '전속모델' : userGrade}
                         </p>
                         <p className="text-[#9CA3AF] text-xs">
-                            {isAlreadyGold ? 'GOLD 멤버십 이용 중입니다 👍' : '지금 신청하면 무제한 에이전시 조회!'}
+                            {isAlreadyGold ? 'GOLD 등급 이용 중입니다 👍' : '지금 신청하면 무제한 에이전시 조회!'}
                         </p>
                     </div>
                 </div>
@@ -76,7 +74,7 @@ const UpgradePage = () => {
                 <div className="flex gap-2 bg-[#F3E8FF] border border-[#E8E0FA] rounded-2xl p-1">
                     {[
                         { id: 'compare', label: '등급별 혜택 비교', icon: 'compare' },
-                        { id: 'plans', label: '멤버십 혜택 신청', icon: 'workspace_premium' },
+                        { id: 'plans', label: '등급 업그레이드 신청', icon: 'workspace_premium' },
                     ].map(tab => (
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                             className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id
@@ -149,18 +147,18 @@ const UpgradePage = () => {
                             ))}
                         </div>
 
-                        {/* 구독하기 CTA */}
+                        {/* 등급 신청 CTA */}
                         {!isAlreadyGold && (
                             <button onClick={() => setActiveTab('plans')}
                                 className="w-full py-5 rounded-3xl bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white font-black text-base shadow-xl shadow-[#9333EA]/20 hover:opacity-95 active:scale-[0.97] transition-all flex items-center justify-center gap-2">
                                 <span className="text-xl">👑</span>
-                                GOLD 플랜 신청하기
+                                GOLD 등급 신청하기
                             </button>
                         )}
                     </div>
                 )}
 
-                {/* ══ 구독 플랜 신청 탭 ══ */}
+                {/* ══ 등급 신청 탭 ══ */}
                 {activeTab === 'plans' && (
                     <div className="space-y-4 animate-fadeIn">
 
@@ -170,7 +168,7 @@ const UpgradePage = () => {
                             <div>
                                 <p className="text-amber-700 font-black text-sm">상담 후 등급 승인 안내</p>
                                 <p className="text-amber-600 text-xs mt-1 leading-relaxed">
-                                    플랜을 선택하고 아래 버튼을 누르면 신청서 작성이 시작됩니다.<br />
+                                    등급을 선택하고 아래 버튼을 누르면 신청서 작성이 시작됩니다.<br />
                                     담당자가 확인 후 등업 승인 및 절차 안내를 드리며, 확인 완료 후 GOLD 등급이 적용됩니다.
                                 </p>
                             </div>
@@ -197,7 +195,7 @@ const UpgradePage = () => {
                                                         {plan.label}
                                                     </p>
                                                     <p className="text-[#9CA3AF] text-[13px] font-bold mt-0.5">
-                                                        멤버십 전용 혜택
+                                                        GOLD 등급 혜택
                                                     </p>
                                                 </div>
                                             </div>
@@ -213,21 +211,21 @@ const UpgradePage = () => {
                             })}
                         </div>
 
-                        {/* 선택된 플랜 요약 + 신청 버튼 */}
+                        {/* 선택된 등급 요약 + 신청 버튼 */}
                         <div className="bg-white border border-[#E8E0FA] rounded-[32px] p-6 shadow-sm">
                             <div className="flex items-center justify-between mb-3">
-                                <span className="text-[#5B4E7A] text-[15px] font-bold">선택한 플랜</span>
+                                <span className="text-[#5B4E7A] text-[15px] font-bold">선택한 등급</span>
                                 <span className="text-[#9333EA] font-black text-[15px]">{selectedPlan.label} 활동 기간</span>
                             </div>
                             <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#F8F5FF]">
                                 <span className="text-[#5B4E7A] text-sm font-medium">신청 구분</span>
-                                <span className="text-[#1F1235] font-black text-2xl">멤버십 등업</span>
+                                <span className="text-[#1F1235] font-black text-2xl">등급 업그레이드</span>
                             </div>
 
                             {/* 등업 신청 버튼 */}
                             {isAlreadyGold ? (
                                 <div className="w-full py-5 rounded-[24px] bg-[#F8F5FF] text-[#9CA3AF] font-black text-base text-center border border-[#E8E0FA]">
-                                    이미 GOLD 회원입니다 👑
+                                    이미 GOLD 등급입니다 👑
                                 </div>
                             ) : (
                                 <div className="flex flex-col gap-3">
@@ -281,7 +279,7 @@ const UpgradePage = () => {
                             </p>
                             <ul className="text-[#9CA3AF] text-[11px] space-y-1 pl-4">
                                 <li>• 신청 확인 후 영업일 1일 이내 GOLD 등급이 적용됩니다.</li>
-                                <li>• 멤버십 관련 문의는 카카오톡 채널로 연락해주세요.</li>
+                                <li>• 등급 업그레이드 관련 문의는 카카오톡 채널로 연락해주세요.</li>
                             </ul>
                         </div>
                     </div>

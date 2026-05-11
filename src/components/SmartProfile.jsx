@@ -711,18 +711,18 @@ const SmartProfile = () => {
                         <span className="text-amber-600 font-black">GOLD 회원</span> 이상부터 사용 가능합니다.
                     </p>
                     <p className="text-[#9CA3AF] text-xs mb-5">
-                        구독 결제 또는 문의를 통해 업그레이드 해주세요.
+                        GOLD 회원 업그레이드는 카카오톡으로 문의해 주세요.
                     </p>
 
                     {/* 버튼 영역 */}
                     <div className="flex flex-col gap-2.5">
-                        {/* 구독결제 페이지 이동 */}
+                        {/* 모델활동 신청 페이지 이동 */}
                         <button
                             onClick={() => { setShowGradePopup(false); navigate('/upgrade'); }}
                             className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] text-black font-black text-sm shadow-lg shadow-[#F59E0B]/25 hover:opacity-90 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
                         >
-                            <span className="material-symbols-outlined text-[20px]">credit_card</span>
-                            구독 결제 페이지로 이동
+                            <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
+                            GOLD 회원 신청 안내 보기
                         </button>
 
                         {/* 카카오톡 문의하기 */}
