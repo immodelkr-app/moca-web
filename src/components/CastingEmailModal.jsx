@@ -90,7 +90,7 @@ const CastingEmailModal = ({ agency, onConfirm, onClose, sending }) => {
                         <span className={`material-symbols-outlined text-[20px] ${sending ? 'animate-spin' : ''}`}>
                             {sending ? 'sync' : 'send'}
                         </span>
-                        {sending ? '발송 중...' : '이력서 발송하기 📩'}
+                        {sending ? '발송 중...' : '프로필 발송하기 📩'}
                     </span>
                 </button>
             </div>

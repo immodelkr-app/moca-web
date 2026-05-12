@@ -212,7 +212,7 @@ const AgencyDirectory = () => {
 
         const monthCount = getMonthlyCount(sendHistory);
         if (!isUnlimited && monthCount >= SILVER_MONTHLY_LIMIT) {
-            showToast(`이번 달 무료 발송(${SILVER_MONTHLY_LIMIT}회)을 모두 사용했습니다. GOLD 등급으로 무제한 발송!`, 'error');
+            showToast(`이번달 프로필 발송(${SILVER_MONTHLY_LIMIT}회)을 모두 사용했습니다. GOLD 등급으로 무제한 발송!`, 'error');
             setTimeout(() => navigate('/upgrade'), 1800);
             return;
         }
@@ -256,7 +256,7 @@ const AgencyDirectory = () => {
                 const monthCount = getMonthlyCount(updated);
                 const remaining = isUnlimited ? '무제한' : `${SILVER_MONTHLY_LIMIT - monthCount}회 남음`;
                 
-                showToast(`✅ ${agency.name}에 프로필을 발송했습니다! (이번 달 ${remaining})`, 'success');
+                showToast(`✅ ${agency.name}에 프로필을 발송했습니다! (이번달 ${remaining})`, 'success');
                 return updated;
             });
 
