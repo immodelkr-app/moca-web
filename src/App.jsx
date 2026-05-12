@@ -9,7 +9,6 @@ import HomeDashboard from './components/HomeDashboard';
 import TourDiary from './components/TourDiary';
 import AgencyLanding from './components/AgencyLanding';
 import AgencyDirectory from './components/AgencyDirectory';
-import AgencyMapScreen from './components/AgencyMapScreen';
 import KimDaepyoTV from './components/KimDaepyoTV';
 import AgencyTourCalendar from './components/AgencyTourCalendar';
 import AdminPage from './components/AdminPage';
@@ -17,7 +16,6 @@ import UpgradePage from './components/UpgradePage';
 import UpgradeApplicationPage from './components/UpgradeApplicationPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import KimDaepyoMessage from './components/KimDaepyoMessage';
-import MocaLounge from './components/MocaLounge';
 import GradeCelebrationModal from './components/GradeCelebrationModal';
 import CertificationFeed from './components/CertificationFeed';
 import SmartProfile from './components/SmartProfile';
@@ -62,11 +60,9 @@ function AppContent() {
                         <Route path="calendar" element={<AgencyTourCalendar />} />
                         <Route path="tv" element={<KimDaepyoTV />} />
                         <Route path="message" element={<KimDaepyoMessage />} />
-                        <Route path="lounge" element={<MocaLounge />} />
                         <Route path="cert" element={<CertificationFeed />} />
                         <Route path="smart-profile" element={<SmartProfile />} />
                         <Route path="qna" element={<QnABoard />} />
-                        <Route path="agency-map" element={<AgencyMapScreen />} />
 
                         <Route path="class" element={<ClassListPage />} />
                         <Route path="class/:id" element={<ClassDetailPage />} />
@@ -80,7 +76,7 @@ function AppContent() {
                 <Route path="/admin" element={<AdminPage />} />
 
                 {/* 업그레이드 (페이월) 페이지 */}
-                <Route path="/upgrade" element={<UpgradePage />} />
+                <Route path="/upgrade" element={<UpgradeApplicationPage />} />
                 <Route path="/upgrade-apply" element={<UpgradeApplicationPage />} />
 
                 {/* 전속계약서 (공개 접근 허용) */}

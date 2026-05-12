@@ -203,11 +203,19 @@ const ClassDetailPage = () => {
                             <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-black uppercase">
                                 {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이 클래스'}
                             </span>
+                            <span className={`px-3 py-1 rounded-full text-[11px] font-black ${
+                                cls.target_grade === 'EXCLUSIVE' ? 'bg-indigo-900 text-yellow-300' :
+                                cls.target_grade === 'GOLD' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-green-100 text-green-700'
+                            }`}>
+                                {cls.target_grade === 'EXCLUSIVE' ? '신청가능 등급: 전속모델' :
+                                 cls.target_grade === 'GOLD' ? '신청가능 등급: 골드멤버' : '신청가능 등급: 전체등급'}
+                            </span>
                             {isApplied && <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-black uppercase flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span> 신청완료</span>}
                         </div>
                         <h1 className="text-3xl lg:text-4xl font-black mb-4 leading-tight text-[var(--moca-text)] tracking-tight">{cls.title}</h1>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-[var(--moca-text-3)] font-bold text-sm">
-                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">calendar_today</span>{cls.class_date}</span>
+                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">calendar_today</span>{cls.class_date?.replace(/:\d{2}$/, '')}</span>
                             <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">location_on</span>{cls.location}</span>
                         </div>
                     </div>
@@ -234,7 +242,7 @@ const ClassDetailPage = () => {
                                 <span className="material-symbols-outlined text-indigo-400 mt-0.5">calendar_month</span>
                                 <div>
                                     <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">일시</p>
-                                    <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.class_date}</p>
+                                    <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.class_date?.replace(/:\d{2}$/, '')}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">
@@ -292,6 +300,20 @@ const ClassDetailPage = () => {
                                 alert('로그인 후 이용 가능합니다.');
                                 navigate('/login');
                                 return;
+                            }
+                            if (cls.target_grade && cls.target_grade !== 'ALL') {
+                                const myGrade = (currentUser.grade || '').toUpperCase();
+                                const isExclusive = ['VIP', 'VVIP', '전속모델', 'EXCLUSIVE'].some(g => myGrade.includes(g));
+                                const isGold = isExclusive || ['GOLD', '골드'].some(g => myGrade.includes(g));
+                                
+                                if (cls.target_grade === 'EXCLUSIVE' && !isExclusive) {
+                                    alert('전속모델 등급만 신청 가능한 클래스입니다. 등급 업그레이드 후 신청해주세요.');
+                                    return;
+                                }
+                                if (cls.target_grade === 'GOLD' && !isGold) {
+                                    alert('골드회원 이상만 신청 가능한 클래스입니다. 등급 업그레이드 후 신청해주세요.');
+                                    return;
+                                }
                             }
                             setShowApplyModal(true);
                         }}

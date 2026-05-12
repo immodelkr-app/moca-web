@@ -14,8 +14,8 @@ import {
 } from '../services/castingService';
 
 import ProfileEditModal from './ProfileEditModal';
-import AgencyMap from './AgencyMap';
 import CastingEmailModal from './CastingEmailModal';
+import VisitMemoModal from './VisitMemoModal';
 
 
 
@@ -168,6 +168,7 @@ const AgencyDirectory = () => {
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [selectedAgency, setSelectedAgency] = useState(null);
+    const [memoModalAgency, setMemoModalAgency] = useState(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [sendHistory, setSendHistory] = useState([]);
     const [toast, setToast] = useState(null); // { message, type: 'success'|'error'|'info' }
@@ -302,7 +303,7 @@ const AgencyDirectory = () => {
 
     const handleActionClick = (e, agency, url) => {
         if (!url) {
-            navigate('/home/diary');
+            setMemoModalAgency(agency);
         }
     };
 
@@ -520,10 +521,7 @@ const AgencyDirectory = () => {
                 })()}
             </div>
 
-            {/* 전체 에이전시 지도 (하단) */}
-            {!loading && agencies.length > 0 && (
-                <AgencyMap agencies={agencies} />
-            )}
+
 
             {/* 에이전시 이메일 직접 입력 모달 */}
             {castingModal && (
@@ -532,6 +530,14 @@ const AgencyDirectory = () => {
                     sending={sending}
                     onConfirm={(email) => executeSend(castingModal.agency, email)}
                     onClose={() => setCastingModal(null)}
+                />
+            )}
+
+            {/* 모델 다이어리 (방문 일지) 모달 */}
+            {memoModalAgency && (
+                <VisitMemoModal
+                    agency={memoModalAgency}
+                    onClose={() => setMemoModalAgency(null)}
                 />
             )}
 

@@ -94,7 +94,8 @@ export const createClass = async (classData, pricingArray) => {
             start_date: classData.start_date || null,
             end_date: classData.end_date || null,
             day_of_week: classData.day_of_week || null, // [1, 3, 5] 등 배열
-            start_time: classData.start_time || null
+            start_time: classData.start_time || null,
+            target_grade: classData.target_grade || 'ALL'
         }])
         .select()
         .single();
@@ -138,7 +139,8 @@ export const updateClass = async (classId, classData, pricingArray) => {
             start_date: classData.start_date || null,
             end_date: classData.end_date || null,
             day_of_week: classData.day_of_week || null,
-            start_time: classData.start_time || null
+            start_time: classData.start_time || null,
+            target_grade: classData.target_grade || 'ALL'
         })
         .eq('id', classId)
         .select()

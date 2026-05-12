@@ -17,7 +17,7 @@ const FEATURES = [
     { name: '에이전시 조회', silver: '하루 8회', gold: '무제한', icon: 'search' },
     { name: '프로필 등록 & 프로필 발송', silver: true, gold: true, icon: 'forward_to_inbox' },
     { name: '현재모습 사진등록', silver: false, gold: true, icon: 'photo_library' },
-    { name: '모카라운지 · 모카TV', silver: true, gold: true, icon: 'live_tv' },
+    { name: '모카TV', silver: true, gold: true, icon: 'live_tv' },
     { name: '투어 다이어리', silver: true, gold: true, icon: 'auto_stories' },
 ];
 

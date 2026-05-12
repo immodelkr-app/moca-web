@@ -105,7 +105,8 @@ const AdminClasses = () => {
         start_date: '',
         end_date: '',
         day_of_week: [],
-        start_time: '14:00'
+        start_time: '14:00',
+        target_grade: 'ALL'
     });
 
 
@@ -123,7 +124,7 @@ const AdminClasses = () => {
     };
 
     const resetForm = () => {
-        setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', start_date: '', end_date: '', day_of_week: [], start_time: '14:00' });
+        setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL' });
         setFormError('');
         setEditingClassId(null);
         setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -424,7 +425,8 @@ const AdminClasses = () => {
                                                     start_date: cls.start_date || '',
                                                     end_date: cls.end_date || '',
                                                     day_of_week: cls.day_of_week || [],
-                                                    start_time: cls.start_time || '14:00'
+                                                    start_time: cls.start_time || '14:00',
+                                                    target_grade: cls.target_grade || 'ALL'
                                                 });
                                                 setPricing(cls.class_pricing && cls.class_pricing.length > 0 ? cls.class_pricing.map(p => ({
                                                     grade_label: p.grade_label,
@@ -499,6 +501,23 @@ const AdminClasses = () => {
                                                 placeholder="예: 당산 연기 스튜디오"
                                                 className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-2xl px-5 py-4 text-sm font-bold transition-all outline-none focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
                                             />
+                                        </div>
+                                    </div>
+
+                                    {/* 대상 등급 선택 */}
+                                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200">
+                                        <label className="block text-xs font-black text-slate-500 mb-4 uppercase tracking-widest">신청 가능 등급 (선택)</label>
+                                        <div className="flex gap-4">
+                                            {[
+                                                { id: 'ALL', label: '전체등급신청' },
+                                                { id: 'GOLD', label: '골드회원등급' },
+                                                { id: 'EXCLUSIVE', label: '전속모델 등급신청' }
+                                            ].map(opt => (
+                                                <label key={opt.id} className={`flex-1 cursor-pointer flex flex-col items-center justify-center p-4 border-2 rounded-2xl transition-all ${newClass.target_grade === opt.id ? 'border-moca-primary bg-moca-primary/5 text-moca-primary' : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'}`}>
+                                                    <input type="radio" name="target_grade" value={opt.id} checked={newClass.target_grade === opt.id} onChange={(e) => setNewClass({ ...newClass, target_grade: e.target.value })} className="hidden" />
+                                                    <span className="font-bold text-sm">{opt.label}</span>
+                                                </label>
+                                            ))}
                                         </div>
                                     </div>
 

@@ -32,7 +32,6 @@ const navGroups = [
         items: [
             { to: '/home/tv', icon: 'smart_display', label: '모카TV' },
             { to: '/home/message', icon: 'local_post_office', label: '공지사항' },
-            { to: '/home/lounge', icon: 'forum', label: '모카 라운지' },
             { to: '/home/qna', icon: 'forum', label: 'Q&A 게시판' },
         ]
     },
@@ -62,7 +61,6 @@ const moreMenuItems = [
     { to: '/home/cert',       icon: 'photo_camera',         label: '투어스타그램' },
     { to: '/home/tv',         icon: 'smart_display',        label: '모카TV' },
     { to: '/home/message',    icon: 'local_post_office',    label: '공지사항' },
-    { to: '/home/lounge',     icon: 'forum',                label: '모카 라운지' },
     { to: '/home/class',      icon: 'school',               label: '모카 클래스' },
     { to: '/home/qna',        icon: 'forum',                label: 'Q&A 게시판' },
 

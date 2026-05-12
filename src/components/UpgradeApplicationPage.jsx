@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SignatureCanvas from 'react-signature-canvas';
 import { getUser } from '../services/userService';
 import { saveUpgradeRequest } from '../services/adminService';
 
@@ -10,79 +9,7 @@ const PLANS = [
     { id: 'gold_12m', months: 12, price: 0, label: '12개월' },
 ];
 
-/* ── 서명 팝업 모달 ── */
-const SignatureModal = ({ isOpen, onClose, onConfirm, existingSignature }) => {
-    const sigRef = useRef(null);
-    const containerRef = useRef(null);
 
-    useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-            if (existingSignature && sigRef.current) {
-                setTimeout(() => {
-                    sigRef.current.fromDataURL(existingSignature);
-                }, 100);
-            }
-        }
-        return () => { document.body.style.overflow = ''; };
-    }, [isOpen, existingSignature]);
-
-    if (!isOpen) return null;
-
-    const handleConfirm = () => {
-        if (sigRef.current?.isEmpty()) {
-            alert('서명을 진행해 주세요.');
-            return;
-        }
-        const dataURL = sigRef.current.getTrimmedCanvas().toDataURL('image/png');
-        onConfirm(dataURL);
-    };
-
-    const handleClear = () => sigRef.current?.clear();
-    const preventScroll = (e) => e.preventDefault();
-
-    return (
-        <div className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={onClose}>
-            <div className="w-full max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl animate-fadeIn" onClick={e => e.stopPropagation()}>
-                <div className="px-6 py-5 border-b border-[#E8E0FA] flex items-center justify-between bg-[#F8F5FF]">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-[#9333EA]/10 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[#9333EA] text-[20px]">draw</span>
-                        </div>
-                        <h3 className="text-[#1F1235] font-black text-lg">전자 서명</h3>
-                    </div>
-                    <button onClick={onClose} className="w-9 h-9 rounded-full bg-[#EDE8FF] flex items-center justify-center hover:bg-[#E0DAFF] transition-colors">
-                        <span className="material-symbols-outlined text-[#5B4E7A] text-[20px]">close</span>
-                    </button>
-                </div>
-                
-                <div className="p-6">
-                    <p className="text-[#5B4E7A] text-sm mb-4 text-center font-medium">아래 영역에 서명을 해주세요</p>
-                    <div ref={containerRef} className="w-full bg-[#F8F5FF] rounded-2xl border-2 border-[#E8E0FA] overflow-hidden relative" style={{ touchAction: 'none' }} onTouchMove={preventScroll}>
-                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                            <div className="w-[90%] border-b-2 border-dashed border-[#E8E0FA]" />
-                        </div>
-                        <div className="absolute top-3 left-4 text-[10px] font-black tracking-widest text-[#9CA3AF] pointer-events-none uppercase">
-                            SIGN HERE (서명해 주세요)
-                        </div>
-                        <SignatureCanvas ref={sigRef} penColor="#1F1235" minWidth={1.5} maxWidth={3} canvasProps={{ className: 'w-full cursor-crosshair', style: { height: '220px', width: '100%', touchAction: 'none' } }} />
-                    </div>
-                    
-                    <div className="flex gap-3 mt-6">
-                        <button onClick={handleClear} className="flex-1 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] text-[#5B4E7A] font-bold text-sm hover:bg-[#EDE8FF] transition-colors flex items-center justify-center gap-1.5">
-                            <span className="material-symbols-outlined text-[18px]">refresh</span>
-                            초기화
-                        </button>
-                        <button onClick={handleConfirm} className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-white font-black text-sm shadow-lg shadow-[#9333EA]/20 hover:opacity-90 transition-all flex items-center justify-center gap-1.5">
-                            <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                            서명 완료
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const UpgradeApplicationPage = () => {
     const navigate = useNavigate();
@@ -98,8 +25,7 @@ const UpgradeApplicationPage = () => {
         selectedPlanId: 'gold_6m', // 기본 6개월
     });
 
-    const [signatureData, setSignatureData] = useState(null);
-    const [showSignModal, setShowSignModal] = useState(false);
+    const [isAgreed, setIsAgreed] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleInput = (e) => {
@@ -111,14 +37,9 @@ const UpgradeApplicationPage = () => {
         setFormData(prev => ({ ...prev, selectedPlanId: planId }));
     };
 
-    const handleSignatureConfirm = (dataURL) => {
-        setSignatureData(dataURL);
-        setShowSignModal(false);
-    };
-
     const handleSave = async () => {
-        if (!signatureData) {
-            alert('하단의 서명 영역을 터치하여 서명을 진행해 주세요.');
+        if (!isAgreed) {
+            alert('등급 신청에 동의해 주세요.');
             return;
         }
         if (!formData.memberName || !formData.memberPhone) {
@@ -136,7 +57,7 @@ const UpgradeApplicationPage = () => {
             memberPhone: formData.memberPhone,
             planMonths: selectedPlan.months,
             price: selectedPlan.price,
-            signature: signatureData
+            signature: 'checkbox_agreed'
         };
 
         try {
@@ -262,38 +183,30 @@ const UpgradeApplicationPage = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-8">
-                                {signatureData ? (
-                                    <div className="border-2 border-emerald-500 bg-emerald-50/30 rounded-2xl relative overflow-hidden shadow-sm">
-                                        <div className="absolute top-2 left-3 flex items-center gap-1">
-                                            <span className="material-symbols-outlined text-emerald-500 text-[14px]">check_circle</span>
-                                            <span className="text-[10px] font-black text-emerald-600">서명 완료</span>
-                                        </div>
-                                        <img src={signatureData} alt="서명" className="w-full h-32 object-contain p-4" />
-                                        <button onClick={() => setShowSignModal(true)} className="absolute bottom-2 right-2 text-[10px] bg-white text-[#5B4E7A] font-black py-1.5 px-3 rounded-xl shadow-sm border border-[#E8E0FA] flex items-center gap-1">
-                                            <span className="material-symbols-outlined text-[14px]">edit</span>
-                                            다시 서명
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <button onClick={() => setShowSignModal(true)} className="w-full border-2 border-dashed border-[#9333EA] bg-white rounded-2xl h-32 flex flex-col items-center justify-center gap-2 hover:bg-[#F8F5FF] transition-all active:scale-[0.98] group">
-                                        <div className="w-12 h-12 rounded-full bg-[#9333EA]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <span className="material-symbols-outlined text-[#9333EA] text-[28px]">draw</span>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-[#9333EA] font-black text-sm">터치하여 내용 확인 및 서명하기</p>
-                                        </div>
-                                    </button>
-                                )}
+                            <div className="mt-8 flex items-center gap-3 bg-[#F8F5FF] p-4 rounded-xl border border-[#E8E0FA]">
+                                <input
+                                    type="checkbox"
+                                    id="applyCheckbox"
+                                    checked={isAgreed}
+                                    onChange={(e) => setIsAgreed(e.target.checked)}
+                                    className="w-5 h-5 accent-[#9333EA] cursor-pointer"
+                                />
+                                <label htmlFor="applyCheckbox" className="text-base font-bold text-[#1F1235] cursor-pointer">
+                                    등급을 신청합니다
+                                </label>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="mt-8 mb-12 space-y-4">
-                    <button onClick={handleSave} disabled={loading} className="w-full bg-[#1F1235] text-white hover:bg-black font-black text-lg py-5 rounded-[24px] shadow-[0_12px_24px_rgba(31,18,53,0.2)] transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+                    <button 
+                        onClick={handleSave} 
+                        disabled={loading || !isAgreed} 
+                        className="w-full bg-[#9333EA] text-white hover:bg-[#7C3AED] disabled:opacity-50 disabled:cursor-not-allowed font-black text-lg py-5 rounded-[24px] shadow-[0_12px_24px_rgba(147,51,234,0.2)] transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                    >
                         {loading ? <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <span className="material-symbols-outlined text-2xl">send</span>}
-                        등업 신청서 최종 제출하기
+                        등업 신청서 제출
                     </button>
                     <p className="text-center text-[12px] text-[#9CA3AF] font-bold">
                         * 제출 버튼 클릭 시 신청이 완료되며, 개별 확인 안내를 드립니다.
@@ -301,7 +214,6 @@ const UpgradeApplicationPage = () => {
                 </div>
             </div>
 
-            <SignatureModal isOpen={showSignModal} onClose={() => setShowSignModal(false)} onConfirm={handleSignatureConfirm} existingSignature={signatureData} />
         </div>
     );
 };
