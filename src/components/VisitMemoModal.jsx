@@ -166,14 +166,14 @@ END:VCALENDAR`;
                                             <div className="flex items-center gap-1.5 transition-all">
                                                 <button
                                                     onClick={() => handleAddToGoogleCalendar(memo)}
-                                                    className="p-1 text-white/80 hover:text-blue-400 transition-all rounded-lg hover:bg-blue-400/20"
+                                                    className="p-1 text-[#9333EA]/70 hover:text-blue-400 transition-all rounded-lg hover:bg-blue-400/20"
                                                     title="캘린더 추가"
                                                 >
                                                     <span className="material-symbols-outlined text-[20px]">calendar_add_on</span>
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(memo.id)}
-                                                    className="p-1 text-white/80 hover:text-red-400 transition-all rounded-lg hover:bg-red-400/20"
+                                                    className="p-1 text-[#9333EA]/70 hover:text-red-400 transition-all rounded-lg hover:bg-red-400/20"
                                                     title="삭제"
                                                 >
                                                     <span className="material-symbols-outlined text-[20px]">delete</span>
