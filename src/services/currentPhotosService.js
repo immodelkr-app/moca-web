@@ -30,7 +30,7 @@ export const uploadCurrentPhoto = async (file, user) => {
     const publicUrl = data.publicUrl;
 
     // DB에 메타데이터 저장
-    const { error: dbError } = await supabase
+    const { data: insertedData, error: dbError } = await supabase
         .from('model_current_photos')
         .insert([{
             user_id: user.id || null,
@@ -39,13 +39,14 @@ export const uploadCurrentPhoto = async (file, user) => {
             photo_url: publicUrl,
             storage_path: path,
             status: 'pending',
-        }]);
+        }])
+        .select();
 
     if (dbError) {
         console.warn('[uploadCurrentPhoto] DB 저장 실패:', dbError.message);
     }
 
-    return { url: publicUrl, error: null };
+    return { url: publicUrl, error: null, data: insertedData ? insertedData[0] : null };
 };
 
 /**

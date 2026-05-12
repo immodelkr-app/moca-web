@@ -240,13 +240,14 @@ const SmartProfile = () => {
                 setCurrentPhotoMsg('사진 파일은 10MB 이하만 가능합니다.');
                 continue;
             }
-            const { url, error } = await uploadCurrentPhoto(file, user);
-            if (url) {
+            const { url, error, data } = await uploadCurrentPhoto(file, user);
+            if (url && data) {
                 setCurrentPhotos(prev => [{
-                    id: Date.now() + Math.random(),
+                    id: data.id,
                     photo_url: url,
+                    storage_path: data.storage_path,
                     status: 'pending',
-                    created_at: new Date().toISOString(),
+                    created_at: data.created_at || new Date().toISOString(),
                 }, ...prev]);
             } else if (error) {
                 setCurrentPhotoMsg(`업로드 실패: ${error}`);
@@ -578,9 +579,9 @@ const SmartProfile = () => {
                                         </span>
                                         <button
                                             onClick={() => handleDeleteCurrentPhoto(photo)}
-                                            className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
+                                            className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-red-500/80 hover:bg-red-600 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
                                         >
-                                            <span className="material-symbols-outlined text-[13px] text-red-100">close</span>
+                                            <span className="material-symbols-outlined text-[16px] text-white">delete</span>
                                         </button>
                                     </div>
                                 );

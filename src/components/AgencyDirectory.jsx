@@ -381,7 +381,7 @@ const AgencyDirectory = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-[#1F1235] font-black text-[15px]">
-                                이번 달 이력서 발송: <span className="text-[#A78BFA]">무제한</span>
+                                이번달 프로필 발송: <span className="text-[#A78BFA]">무제한</span>
                             </p>
                             <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold">✨ {grade === 'VIP' ? '전속모델' : '골드'} 혜택 · 무제한 발송 가능 · 탭하여 내 프로필 설정</p>
                         </div>
@@ -397,7 +397,7 @@ const AgencyDirectory = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-[#1F1235] font-black text-[15px]">
-                                이번 달 이력서 발송: <span className="text-[#10B981]">{getMonthlyCount(sendHistory)}</span>/{SILVER_MONTHLY_LIMIT}회 사용
+                                이번달 프로필 발송: <span className="text-[#10B981]">{getMonthlyCount(sendHistory)}</span>/{SILVER_MONTHLY_LIMIT}회 사용
                             </p>
                             <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold">GOLD 등급 → 무제한 · 탭하여 내 프로필 설정</p>
                         </div>

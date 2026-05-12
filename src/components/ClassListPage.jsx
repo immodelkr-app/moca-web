@@ -40,24 +40,6 @@ const ClassListPage = () => {
         setLoading(false);
     };
 
-    const getPriceForMe = (pricing) => {
-        if (!pricing || pricing.length === 0) return null;
-        if (!currentUser || !currentUser.grade) return pricing[0];
-
-        const myGrade = currentUser.grade.toUpperCase();
-        let searchTerms = [myGrade];
-
-        if (myGrade === 'GUEST' || myGrade === 'MEMBER') searchTerms.push('일반', '비회원', '기본', '베이직');
-        if (myGrade === 'SILVER') searchTerms.push('실버', 'SILVER');
-        if (myGrade === 'GOLD') searchTerms.push('골드', 'GOLD');
-        if (myGrade === 'VIP' || myGrade === 'VVIP') searchTerms.push('VIP', 'VVIP', '브이아이피', '전속모델', '전속');
-
-        const p = pricing.find(item => 
-            searchTerms.some(term => item.grade_label.toUpperCase().includes(term))
-        );
-        
-        return p ? { price: p.price, label: p.grade_label } : { price: pricing[0].price, label: pricing[0].grade_label };
-    };
 
     return (
         <div className="min-h-screen bg-[var(--moca-bg)] pb-24">
@@ -91,7 +73,6 @@ const ClassListPage = () => {
                 ) : (
                     <div className="grid grid-cols-1 gap-6">
                         {classes.map(cls => {
-                            const myPriceInfo = getPriceForMe(cls.class_pricing);
                             const isApplied = myApplications.includes(cls.id);
                             
                             return (
@@ -132,32 +113,10 @@ const ClassListPage = () => {
                                             </p>
                                         </div>
 
-                                        <div className="border-t border-[#E8E0FA] pt-4 mt-2 flex items-center justify-between">
-                                            <div className="space-y-1.5 w-full">
-                                                <p className="text-[11px] text-[#9CA3AF] font-bold flex items-center gap-1.5">
-                                                    <span className="material-symbols-outlined text-[14px]">location_on</span>
-                                                    {cls.location}
-                                                </p>
-                                                <div className="flex items-center justify-between w-full">
-                                                    <div className="flex items-center gap-2">
-                                                        {myPriceInfo ? (
-                                                            <>
-                                                                <span className="text-[10px] bg-[#EDE8FF] text-[#7C3AED] px-2 py-0.5 rounded-md font-black inline-block align-middle mr-1.5">
-                                                                    {myPriceInfo.label}
-                                                                </span>
-                                                                <span className="text-[18px] font-black text-[#7C3AED] tracking-tight align-middle">
-                                                                    ₩{myPriceInfo.price.toLocaleString()}
-                                                                </span>
-                                                            </>
-                                                        ) : (
-                                                            <span className="text-[13px] font-black text-[#7C3AED]">로그인 필요</span>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center gap-1 bg-[#F8F5FF] px-3 py-1.5 rounded-full text-[#7C3AED]">
-                                                        <span className="text-[11px] font-black">수강신청</span>
-                                                        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                                                    </div>
-                                                </div>
+                                        <div className="border-t border-[#E8E0FA] pt-4 mt-2">
+                                            <div className="w-full flex items-center justify-center gap-1.5 py-3.5 rounded-xl bg-[#F8F5FF] text-[#7C3AED] font-black text-[14px]">
+                                                클래스 확인하기
+                                                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                                             </div>
                                         </div>
                                     </div>
