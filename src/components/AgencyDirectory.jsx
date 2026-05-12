@@ -128,7 +128,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors cursor-pointer"
                     >
                         <span className="text-[13px] font-black text-[#03C75A]">N</span>
-                        <span className="text-[#5B4E7A] text-[11px] font-bold">네이버 지도</span>
+                        <span className="text-[#5B4E7A] text-[13px] font-bold">네이버 지도</span>
                     </a>
                     <a
                         href={kakaoMapsUrl}
@@ -138,12 +138,12 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors cursor-pointer"
                     >
                         <span className="material-symbols-outlined text-[16px] text-yellow-400">map</span>
-                        <span className="text-[#5B4E7A] text-[11px] font-bold">카카오 지도</span>
+                        <span className="text-[#5B4E7A] text-[13px] font-bold">카카오 지도</span>
                     </a>
                 </div>
                 <button
                     onClick={(e) => onAction(e, agency, null)}
-                    className="w-full flex items-center justify-center gap-2 py-3 mt-1 rounded-xl bg-[#6C63FF]/15 hover:bg-[#6C63FF]/25 border border-[#9B8AFB]/35 transition-colors cursor-pointer text-[#9B8AFB] font-bold text-[13px]"
+                    className="w-full flex items-center justify-center gap-2 py-3 mt-1 rounded-xl bg-[#6C63FF]/15 hover:bg-[#6C63FF]/25 border border-[#9B8AFB]/35 transition-colors cursor-pointer text-[#6C63FF] font-black text-[13px]"
                 >
                     <span className="material-symbols-outlined text-[18px]">edit_note</span>
                     모델 다이어리
