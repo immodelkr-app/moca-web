@@ -51,9 +51,9 @@ const QuickAddMemoModal = ({ onClose, onSuccess }) => {
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn"
             onClick={handleBackdropClick}
         >
-            <div className="w-full max-w-lg bg-white border border-[#E8E0FA] rounded-[48px] overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
+            <div className="w-full max-w-lg bg-white border border-[#E8E0FA] rounded-[48px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="p-8 pb-6 border-b border-[#E8E0FA] flex items-center justify-between bg-white sticky top-0 z-10">
+                <div className="p-8 pb-6 border-b border-[#E8E0FA] flex items-center justify-between bg-white sticky top-0 z-10 flex-shrink-0">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-[#F3E8FF] flex items-center justify-center">
                             <span className="material-symbols-outlined text-[24px] text-[#9333EA]">edit</span>
@@ -146,7 +146,7 @@ const QuickAddMemoModal = ({ onClose, onSuccess }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 pb-14 border-t border-[#E8E0FA] bg-white">
+                <div className="p-6 border-t border-[#E8E0FA] bg-white flex-shrink-0">
                     <button
                         onClick={handleSave}
                         disabled={!selectedAgencyName || !content.trim()}
