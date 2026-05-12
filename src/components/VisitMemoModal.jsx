@@ -66,27 +66,11 @@ const VisitMemoModal = ({ agency, onClose }) => {
         const nextDd = String(dateObj.getDate()).padStart(2, '0');
         const endStr = `${nextYyyy}${nextMm}${nextDd}`;
 
-        const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-DTSTART;VALUE=DATE:${startStr}
-DTEND;VALUE=DATE:${endStr}
-SUMMARY:${decodeURIComponent(title)}
-DESCRIPTION:${memo.content || ''}
-END:VEVENT
-END:VCALENDAR`;
-
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
+        const details = encodeURIComponent(memo.content || '');
         
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `${agency.name}.ics`);
-        document.body.appendChild(link);
-        link.click();
+        const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${endStr}&details=${details}`;
         
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        window.open(googleCalendarUrl, '_blank');
     };
 
     // Close on click outside
