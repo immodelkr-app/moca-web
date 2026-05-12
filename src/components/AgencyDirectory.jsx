@@ -12,7 +12,7 @@ import {
     getSendInfo,
     SILVER_MONTHLY_LIMIT,
 } from '../services/castingService';
-import VisitMemoModal from './VisitMemoModal';
+
 import ProfileEditModal from './ProfileEditModal';
 import AgencyMap from './AgencyMap';
 import CastingEmailModal from './CastingEmailModal';
@@ -302,7 +302,7 @@ const AgencyDirectory = () => {
 
     const handleActionClick = (e, agency, url) => {
         if (!url) {
-            setSelectedAgency(agency);
+            navigate('/home/diary');
         }
     };
 
@@ -551,15 +551,7 @@ const AgencyDirectory = () => {
                 </div>
             )}
 
-            {/* Visit Memo Modal */}
-            {
-                selectedAgency && (
-                    <VisitMemoModal
-                        agency={selectedAgency}
-                        onClose={() => setSelectedAgency(null)}
-                    />
-                )
-            }
+
 
             {/* Profile Edit Modal */}
             {isProfileModalOpen && (
