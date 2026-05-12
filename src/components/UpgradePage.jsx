@@ -15,11 +15,10 @@ const PLANS = [
 // ── 등급별 혜택 비교 데이터 ──────────────────────────────────────────────────
 const FEATURES = [
     { name: '에이전시 조회', silver: '하루 8회', gold: '무제한', icon: 'search' },
-    { name: '프로필 등록 & 이메일 발송', silver: true, gold: true, icon: 'forward_to_inbox' },
+    { name: '프로필 등록 & 프로필 발송', silver: true, gold: true, icon: 'forward_to_inbox' },
     { name: '현재모습 사진등록', silver: false, gold: true, icon: 'photo_library' },
     { name: '모카라운지 · 모카TV', silver: true, gold: true, icon: 'live_tv' },
     { name: '투어 다이어리', silver: true, gold: true, icon: 'auto_stories' },
-    { name: '우선 캐스팅 노출', silver: false, gold: true, icon: 'star' },
 ];
 
 const UpgradePage = () => {
@@ -98,8 +97,8 @@ const UpgradePage = () => {
                                     <span className="text-2xl">🤍</span>
                                 </div>
                                 <h3 className="text-[#1F1235] font-black text-base mb-1">SILVER</h3>
-                                <p className="text-[#5B4E7A] font-black text-lg">기본 회원</p>
-                                <p className="text-[#9CA3AF] text-[10px] mt-1">기본 회원</p>
+                                <p className="text-[#5B4E7A] font-black text-lg">현재등급</p>
+                                <p className="text-[#9CA3AF] text-[10px] mt-1">광고모델 활동</p>
                             </div>
                             {/* 골드 카드 */}
                             <div className="bg-white border-2 border-[#9333EA] rounded-2xl p-4 text-center relative overflow-hidden shadow-lg shadow-[#9333EA]/10">
