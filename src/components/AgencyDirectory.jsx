@@ -339,28 +339,27 @@ const AgencyDirectory = () => {
                     <div className="absolute -right-8 -top-8 text-white/10 rotate-12 pointer-events-none group-hover:scale-110 transition-transform duration-500">
                         <span className="material-symbols-outlined text-[140px]">campaign</span>
                     </div>
-                    <div className="relative z-10 px-5 py-4 flex items-center justify-between">
+                    <div className="relative z-10 px-6 py-5 flex items-center justify-between">
                         <div className="flex-1 min-w-0 pr-4">
-                            <div className="flex items-center gap-1.5 mb-2">
-                                <span className="material-symbols-outlined text-white text-[16px]">local_police</span>
-                                <span className="text-xs font-black text-white/80 tracking-widest uppercase">아임모카 공지</span>
+                            <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm mb-3">
+                                <span className="text-[10px] font-black text-white uppercase tracking-wider">아임모카 공지</span>
                             </div>
                             {/* 롤링 티커 */}
                             {recentMessages.length > 0 ? (
-                                <div className="overflow-hidden h-[44px]">
+                                <div className="overflow-hidden h-[56px]">
                                     <p
                                         key={tickerIndex}
-                                        className="text-white font-black text-[15px] leading-snug line-clamp-2 transition-all duration-300"
+                                        className="text-white font-black text-xl leading-tight line-clamp-2 transition-all duration-300"
                                         style={{ opacity: tickerVisible ? 1 : 0, transform: tickerVisible ? 'translateY(0)' : 'translateY(-8px)' }}
                                     >
                                         {recentMessages[tickerIndex]?.title}
                                     </p>
                                 </div>
                             ) : (
-                                <p className="text-white font-black text-[15px] leading-tight">생생한 꿀팁 &amp; 시크릿 공지</p>
+                                <p className="text-white font-black text-xl leading-tight">생생한 꿀팁 &amp; 시크릿 공지</p>
                             )}
-                            <p className="text-white/60 text-[10px] mt-1.5 flex items-center gap-1">
-                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/50 animate-pulse"></span>
+                            <p className="text-white/80 text-xs mt-2 flex items-center gap-1">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/70 animate-pulse"></span>
                                 최신 {recentMessages.length}개 공지 · 탭하여 전체 보기
                             </p>
                         </div>
