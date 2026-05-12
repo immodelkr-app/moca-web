@@ -89,6 +89,7 @@ const AdminClasses = () => {
     const [successMsg, setSuccessMsg] = useState('');
     const [error, setError] = useState('');
     const [editingClassId, setEditingClassId] = useState(null);
+    const [pricing, setPricing] = useState([]);
 
     const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -125,6 +126,7 @@ const AdminClasses = () => {
         setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', start_date: '', end_date: '', day_of_week: [], start_time: '14:00' });
         setFormError('');
         setEditingClassId(null);
+        setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
     };
 
     const handleCreateClass = async (e) => {
@@ -140,7 +142,7 @@ const AdminClasses = () => {
         }
 
         if (editingClassId) {
-            const { error } = await updateClass(editingClassId, { ...newClass, class_date: finalClassDate }, []);
+            const { error } = await updateClass(editingClassId, { ...newClass, class_date: finalClassDate }, pricing);
             if (error) {
                 setFormError(error.message);
             } else {
@@ -150,7 +152,7 @@ const AdminClasses = () => {
                 resetForm();
             }
         } else {
-            const { error } = await createClass({ ...newClass, class_date: finalClassDate }, []);
+            const { error } = await createClass({ ...newClass, class_date: finalClassDate }, pricing);
             if (error) {
                 setFormError(error.message);
             } else {
