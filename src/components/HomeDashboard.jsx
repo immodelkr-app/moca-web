@@ -11,8 +11,8 @@ const HIGHLIGHT_ITEMS = [
 
 const TOUR_ITEMS = [
     { icon: 'event_note', label: '모델 다이어리', route: '/home/diary', color: 'from-[#0EA5E9] to-[#38BDF8]', glow: 'shadow-[#0EA5E9]/20' },
-    { icon: 'calendar_month', label: '투어 캘린더', route: '/home/calendar', color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/20' },
     { icon: 'manage_accounts', label: '프로필 관리', route: '/home/smart-profile', color: 'from-[#059669] to-[#34D399]', glow: 'shadow-[#059669]/20' },
+    { icon: 'calendar_month', label: '투어 캘린더', route: '/home/calendar', color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/20' },
     { icon: 'forum', label: 'Q&A 게시판', route: '/home/qna', color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/20' },
 ];
 
