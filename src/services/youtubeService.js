@@ -64,7 +64,15 @@ export const fetchKimDaepyoVideos = async () => {
             const author = entry.querySelector('author > name')?.textContent || '';
 
             const titleLower = title.toLowerCase();
-            const isShorts = titleLower.includes('shorts') || titleLower.includes('쇼츠') || titleLower.includes('#shorts');
+            
+            // 미디어 설명(description)도 추출하여 쇼츠 판별에 활용 (제목에 없더라도 설명에 #shorts 등이 있을 수 있음)
+            const description = entry.getElementsByTagName('media:description')[0]?.textContent
+                || entry.getElementsByTagNameNS('*', 'description')[0]?.textContent
+                || '';
+            const descLower = description.toLowerCase();
+
+            const isShorts = titleLower.includes('shorts') || titleLower.includes('쇼츠') || titleLower.includes('#shorts')
+                || descLower.includes('#shorts') || descLower.includes('쇼츠');
 
             return {
                 id: videoId,

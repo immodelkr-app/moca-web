@@ -107,11 +107,11 @@ const HomeDashboard = () => {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
                         
                         <div className="flex-1 text-left relative z-10">
-                            <p className="text-white/80 text-[11px] font-bold mb-1">{item.desc}</p>
-                            <h3 className="text-white font-black text-[18px] tracking-tight">{item.label}</h3>
+                            <p className="text-white/80 text-[13px] font-bold mb-1">{item.desc}</p>
+                            <h3 className="text-white font-black text-[20px] tracking-tight">{item.label}</h3>
                         </div>
-                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm relative z-10 border border-white/30">
-                            <span className="material-symbols-outlined text-white text-[24px]">{item.icon}</span>
+                        <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm relative z-10 border border-white/30">
+                            <span className="material-symbols-outlined text-white text-[32px]">{item.icon}</span>
                         </div>
                     </button>
                 ))}
@@ -119,22 +119,22 @@ const HomeDashboard = () => {
 
             {/* ── 모델 투어 관리 ── */}
             <div className="px-5 mb-8">
-                <h2 className="text-[#1F1235] font-black text-[16px] mb-4 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#9333EA] text-[20px]">explore</span>
+                <h2 className="text-[#1F1235] font-black text-[18px] mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#9333EA] text-[24px]">explore</span>
                     모델 투어 관리
                 </h2>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                     {TOUR_ITEMS.map((item) => (
                         <button
                             key={item.label}
                             onClick={() => navigate(item.route)}
-                            className="flex items-center gap-3 p-3 bg-white border border-[#E8E0FA] rounded-[20px] shadow-sm hover:border-[#C084FC] hover:shadow-md group active:scale-95 transition-all"
+                            className="flex items-center gap-3 p-4 bg-white border border-[#E8E0FA] rounded-[20px] shadow-sm hover:border-[#C084FC] hover:shadow-md group active:scale-95 transition-all"
                         >
-                            <div className="w-12 h-12 rounded-[16px] flex items-center justify-center relative overflow-hidden flex-shrink-0">
+                            <div className="w-14 h-14 rounded-[16px] flex items-center justify-center relative overflow-hidden flex-shrink-0">
                                 <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-15`}></div>
-                                <span className={`material-symbols-outlined text-[24px] text-[#5B4E7A] group-hover:text-[#9333EA] transition-colors`}>{item.icon}</span>
+                                <span className={`material-symbols-outlined text-[28px] text-[#5B4E7A] group-hover:text-[#9333EA] transition-colors`}>{item.icon}</span>
                             </div>
-                            <span className="text-[#1F1235] font-black text-[13px] text-left leading-tight break-keep">{item.label}</span>
+                            <span className="text-[#1F1235] font-black text-[15px] text-left leading-tight break-keep">{item.label}</span>
                         </button>
                     ))}
                 </div>
@@ -142,22 +142,22 @@ const HomeDashboard = () => {
 
             {/* ── 커뮤니티 & 활동 ── */}
             <div className="px-5 mb-8">
-                <h2 className="text-[#1F1235] font-black text-[16px] mb-4 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#9333EA] text-[20px]">diversity_3</span>
+                <h2 className="text-[#1F1235] font-black text-[18px] mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#9333EA] text-[24px]">diversity_3</span>
                     커뮤니티 & 활동
                 </h2>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                     {COMMUNITY_ITEMS.map((item) => (
                         <button
                             key={item.label}
                             onClick={() => navigate(item.route)}
-                            className="flex items-center gap-3 p-3 bg-white border border-[#E8E0FA] rounded-[20px] shadow-sm hover:border-[#C084FC] hover:shadow-md group active:scale-95 transition-all"
+                            className="flex items-center gap-3 p-4 bg-white border border-[#E8E0FA] rounded-[20px] shadow-sm hover:border-[#C084FC] hover:shadow-md group active:scale-95 transition-all"
                         >
-                            <div className="w-12 h-12 rounded-[16px] flex items-center justify-center relative overflow-hidden flex-shrink-0">
+                            <div className="w-14 h-14 rounded-[16px] flex items-center justify-center relative overflow-hidden flex-shrink-0">
                                 <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-15`}></div>
-                                <span className={`material-symbols-outlined text-[24px] text-[#5B4E7A] group-hover:text-[#9333EA] transition-colors`}>{item.icon}</span>
+                                <span className={`material-symbols-outlined text-[28px] text-[#5B4E7A] group-hover:text-[#9333EA] transition-colors`}>{item.icon}</span>
                             </div>
-                            <span className="text-[#1F1235] font-black text-[13px] text-left leading-tight break-keep">{item.label}</span>
+                            <span className="text-[#1F1235] font-black text-[15px] text-left leading-tight break-keep">{item.label}</span>
                         </button>
                     ))}
                 </div>

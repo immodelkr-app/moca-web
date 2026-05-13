@@ -186,7 +186,7 @@ const TourDiary = () => {
                     <div className="space-y-8">
                         {Object.entries(groupedMemos).map(([date, memos]) => (
                             <div key={date} className="relative">
-                                <div className="sticky top-0 z-10 py-5 mb-5 border-b border-[#E8E0FA] flex items-center gap-3 bg-[#F8F5FF]/90 backdrop-blur-sm">
+                                <div className="sticky top-0 z-10 py-5 mb-5 border-b border-[#E8E0FA] flex items-center gap-3 bg-[#F8F5FF]">
                                     <span className="material-symbols-outlined text-[#9333EA] text-[20px]">calendar_today</span>
                                     <h2 className="text-lg font-black text-[#1F1235] tracking-tight">{date}</h2>
                                     <span className="px-3 py-1.5 rounded-full bg-white border border-[#E8E0FA] text-[11px] text-[#5B4E7A] font-black ml-auto shadow-sm">
