@@ -11,6 +11,7 @@ import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPo
 import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '../services/currentPhotosService';
 import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
 import { fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
+import { sendAlimtalk } from '../services/solapiService';
 import * as XLSX from 'xlsx';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
@@ -81,6 +82,11 @@ const AdminPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('users'); // 'users' or 'stats'
     const [statsMonth, setStatsMonth] = useState(new Date().getMonth() + 1); // Default to current month, 0 means 'All Year'
+
+    // 탭 변경 시 에러 메시지 초기화
+    useEffect(() => {
+        setError('');
+    }, [activeTab]);
 
     // 관리자 로그인
     const handlePasswordSubmit = (e) => {

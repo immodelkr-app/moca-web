@@ -268,6 +268,24 @@ const SmartProfile = () => {
         }
     };
 
+    const handleDownload = async (url, filename) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename || 'current_photo.jpg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert('다운로드에 실패했습니다. (CORS 제한이 있을 수 있습니다.)');
+        }
+    };
+
     const STATUS_LABEL = {
         pending: { text: '검토중', color: 'text-yellow-400', bg: 'bg-yellow-500/15' },
         approved: { text: '승인', color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
@@ -670,16 +688,11 @@ const SmartProfile = () => {
 
                     <div className="px-5 pb-12 pt-4 flex gap-3 flex-shrink-0" onClick={e => e.stopPropagation()}>
                         <button
-                            onClick={() => {
-                                navigator.clipboard.writeText(selectedPhoto.photo_url);
-                                setCurrentPhotoMsg('링크 복사됨!');
-                                setTimeout(() => setCurrentPhotoMsg(''), 2000);
-                                setSelectedPhoto(null);
-                            }}
-                            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-black text-sm active:scale-95 transition-transform"
+                            onClick={() => handleDownload(selectedPhoto.photo_url, `current_photo_${selectedPhoto.id}.jpg`)}
+                            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-blue-500/20 border border-blue-500/40 text-blue-400 font-black text-sm active:scale-95 transition-transform"
                         >
-                            <span className="material-symbols-outlined text-[20px]">link</span>
-                            링크 복사
+                            <span className="material-symbols-outlined text-[20px]">download</span>
+                            다운로드
                         </button>
                         <button
                             onClick={async () => {
