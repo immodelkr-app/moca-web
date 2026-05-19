@@ -62,7 +62,7 @@ const AgencyLanding = () => {
         heroSubtitle1: '중요 이상의 정보를',
         heroSubtitle2: '한눈에 확인하고, 광고모델 전문 프로필을 단 1분만에 완성하여 스마트한 광고모델 활동을 시작해보세요!',
         feature1Icon: 'apartment',
-        feature1Title: '전국 에이전시 리스트',
+        feature1Title: '중요 모델 에이전시 리스트',
         feature1Desc: '실시간으로 업데이트되는 {{count}}개 에이전시의 주소와 연락처, 특징을 한눈에.',
         feature2Icon: 'forward_to_inbox',
         feature2Title: '간편 프로필 발송',
@@ -317,7 +317,7 @@ const AgencyLanding = () => {
                     <span className="inline-block px-4 py-1.5 rounded-full bg-[#F3E8FF] text-[#9333EA] text-xs font-black tracking-widest mb-4 uppercase">
                         {homeSettings.heroBadgeGuest}
                     </span>
-                    <h1 className="text-4xl md:text-6xl font-black text-[#1F1235] leading-tight tracking-tight mb-6">
+                    <h1 className="text-3xl md:text-5xl font-black text-[#1F1235] leading-tight tracking-tight mb-6">
                         {homeSettings.heroTitle1?.split('\n').map((line, i) => (
                             <React.Fragment key={i}>{line}<br /></React.Fragment>
                         ))}
@@ -358,7 +358,7 @@ const AgencyLanding = () => {
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
                             <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">{homeSettings.feature1Icon || 'apartment'}</span>
-                            <h3 className="text-xl font-black text-[#1F1235] mb-3">{homeSettings.feature1Title || '전국 에이전시 리스트'}</h3>
+                            <h3 className="text-xl font-black text-[#1F1235] mb-3">{homeSettings.feature1Title || '중요 모델 에이전시 리스트'}</h3>
                             <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">
                                 {(homeSettings.feature1Desc || '실시간으로 업데이트되는 {{count}}개 에이전시의 주소와 연락처, 특징을 한눈에.')
                                     .replace('{{count}}', agencyCount)}

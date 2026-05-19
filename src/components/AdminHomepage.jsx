@@ -268,7 +268,7 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="p-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA]">
                                             <span className="material-symbols-outlined text-[#9333EA] text-2xl mb-2">{content.feature1Icon || 'apartment'}</span>
-                                            <h3 className="text-sm font-black text-[#1F1235] mb-1">{content.feature1Title || '전국 에이전시 리스트'}</h3>
+                                            <h3 className="text-sm font-black text-[#1F1235] mb-1">{content.feature1Title || '중요 모델 에이전시 리스트'}</h3>
                                             <p className="text-[#5B4E7A] text-[10px] leading-relaxed font-medium">
                                                 {content.feature1Desc}
                                             </p>
