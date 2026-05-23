@@ -413,6 +413,28 @@ const AdminClasses = () => {
                                         </button>
                                         <button
                                             onClick={() => {
+                                                const shareUrl = `${window.location.origin}/home/class/${cls.id}`;
+                                                const shareData = {
+                                                    title: `🎓 모카 클래스 - ${cls.title}`,
+                                                    text: `✨ ${cls.title}\n📅 ${cls.class_date}\n📍 ${cls.location}\n\n지금 아임모카에서 신청하세요!`,
+                                                    url: shareUrl,
+                                                };
+                                                if (navigator.share) {
+                                                    navigator.share(shareData).catch(() => {});
+                                                } else {
+                                                    navigator.clipboard.writeText(shareUrl).then(() => {
+                                                        setSuccessMsg('✅ 공유 링크가 복사되었습니다!');
+                                                        setTimeout(() => setSuccessMsg(''), 2500);
+                                                    });
+                                                }
+                                            }}
+                                            className="w-[50px] flex flex-col items-center justify-center rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all font-bold"
+                                        >
+                                            <span className="material-symbols-outlined text-[18px] mb-0.5">share</span>
+                                            <span className="text-[9px]">공유</span>
+                                        </button>
+                                        <button
+                                            onClick={() => {
                                                 setEditingClassId(cls.id);
                                                 setNewClass({
                                                     title: cls.title || '',
@@ -642,6 +664,28 @@ const AdminClasses = () => {
                                 >
                                     <span className="material-symbols-outlined text-[18px]">download</span>
                                     Excel 다운로드
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const shareUrl = `${window.location.origin}/home/class/${selectedClass.id}`;
+                                        const shareData = {
+                                            title: `🎓 모카 클래스 - ${selectedClass.title}`,
+                                            text: `✨ ${selectedClass.title}\n📅 ${selectedClass.class_date}\n📍 ${selectedClass.location}\n\n지금 아임모카에서 신청하세요!`,
+                                            url: shareUrl,
+                                        };
+                                        if (navigator.share) {
+                                            navigator.share(shareData).catch(() => {});
+                                        } else {
+                                            navigator.clipboard.writeText(shareUrl).then(() => {
+                                                setSuccessMsg('✅ 공유 링크가 복사되었습니다!');
+                                                setTimeout(() => setSuccessMsg(''), 2500);
+                                            });
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 bg-indigo-500 text-white px-5 py-3 rounded-2xl font-black text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">share</span>
+                                    공유하기
                                 </button>
                                 <div className="bg-white/5 border border-white/10 p-4 rounded-3xl text-center min-w-[90px]">
                                     <p className="text-[10px] font-black text-white/40 mb-1 uppercase tracking-tighter">신청</p>
