@@ -106,7 +106,8 @@ const AdminClasses = () => {
         end_date: '',
         day_of_week: [],
         start_time: '14:00',
-        target_grade: 'ALL'
+        target_grade: 'ALL',
+        price_info: ''
     });
 
 
@@ -124,7 +125,7 @@ const AdminClasses = () => {
     };
 
     const resetForm = () => {
-        setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL' });
+        setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '' });
         setFormError('');
         setEditingClassId(null);
         setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -393,16 +394,12 @@ const AdminClasses = () => {
                                                 <span className="material-symbols-outlined text-[16px] text-indigo-300">location_on</span>
                                                 {cls.location}
                                             </div>
+                                            <div className="flex items-center gap-2 text-xs text-[var(--moca-text-3)] font-bold">
+                                                <span className="material-symbols-outlined text-[16px] text-indigo-300">payments</span>
+                                                참가비: {cls.price_info || '무료'}
+                                            </div>
                                         </div>
-                                        {/* Pricing Summary */}
-                                        <div className="grid grid-cols-3 gap-2 py-3 border-y border-dashed border-[var(--moca-border)] mb-6">
-                                            {cls.class_pricing?.slice(0, 3).map((p, idx) => (
-                                                <div key={idx} className="text-center">
-                                                    <p className="text-[9px] font-black text-[var(--moca-text-3)] mb-0.5 truncate uppercase opacity-60">{p.grade_label.replace(/[🥈🌟👑\s]/g, '')}</p>
-                                                    <p className="text-[11px] font-black text-indigo-600">₩{p.price.toLocaleString()}</p>
-                                                </div>
-                                            ))}
-                                        </div>
+
                                     </div>
                                     <div className="flex gap-2">
                                         <button
@@ -448,7 +445,8 @@ const AdminClasses = () => {
                                                     end_date: cls.end_date || '',
                                                     day_of_week: cls.day_of_week || [],
                                                     start_time: cls.start_time || '14:00',
-                                                    target_grade: cls.target_grade || 'ALL'
+                                                    target_grade: cls.target_grade || 'ALL',
+                                                    price_info: cls.price_info || ''
                                                 });
                                                 setPricing(cls.class_pricing && cls.class_pricing.length > 0 ? cls.class_pricing.map(p => ({
                                                     grade_label: p.grade_label,
@@ -616,8 +614,15 @@ const AdminClasses = () => {
                                         onChange={url => setNewClass({ ...newClass, image_url: url })}
                                         onError={setFormError}
                                     />
-
-
+                                    <div>
+                                        <label className="block text-sm font-black text-slate-700 mb-3">참가비 (단순 금액 정보 표시용)</label>
+                                        <input
+                                            type="text"
+                                            value={newClass.price_info} onChange={e => setNewClass({ ...newClass, price_info: e.target.value })}
+                                            placeholder="예: 30,000원, 무료 등 자유롭게 기재"
+                                            className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-2xl px-5 py-4 text-sm font-bold transition-all outline-none focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Detailed Description */}

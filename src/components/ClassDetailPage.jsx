@@ -170,7 +170,7 @@ const ClassDetailPage = () => {
     if (!cls) return <div className="text-center py-24 text-[var(--moca-text)] font-black">클래스를 찾을 수 없습니다.</div>;
 
     return (
-        <div className="min-h-screen bg-white pb-40">
+        <div className="min-h-screen bg-white pb-48">
             {/* Navigation Header */}
             <div className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between pointer-events-none">
                 <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center border border-white/20 pointer-events-auto active:scale-95 transition-all">
@@ -260,6 +260,13 @@ const ClassDetailPage = () => {
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">
+                                <span className="material-symbols-outlined text-indigo-400 mt-0.5">payments</span>
+                                <div>
+                                    <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">참가비</p>
+                                    <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.price_info || '무료'}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4">
                                 <span className="material-symbols-outlined text-indigo-400 mt-0.5">how_to_reg</span>
                                 <div>
                                     <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">참가 신청</p>
@@ -281,7 +288,7 @@ const ClassDetailPage = () => {
             </div>
 
             {/* Sticky Floating CTA */}
-            <div className="fixed bottom-[65px] lg:bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[var(--moca-border)] px-6 py-4 lg:py-6 flex items-center justify-between gap-4 lg:gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] animate-slideUp">
+            <div className="fixed custom-cta-bottom left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[var(--moca-border)] px-6 py-4 lg:py-6 flex items-center justify-between gap-4 lg:gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] animate-slideUp">
                 <div className="hidden sm:block">
                     <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">{myPriceInfo?.grade_label || 'Special Benefit'}</p>
                     <p className="text-2xl font-black text-[var(--moca-text)] tracking-tighter">
