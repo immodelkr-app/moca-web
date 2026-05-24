@@ -55,7 +55,7 @@ const SilverLimitModal = ({ onClose, daysLeft = 3, isAlreadyBlocked = false }) =
                                         : '3일 후 다시 사용하실 수 있습니다'}
                                 </p>
                                 <p className="text-[#9CA3AF] text-[11px] mt-1 font-bold">
-                                    프로필발송 · 에이전시주소 · 모델 다이어리
+                                    프로필발송 · 에이전시주소 · 투어일지
                                 </p>
                             </div>
                         </div>
@@ -81,7 +81,7 @@ const SilverLimitModal = ({ onClose, daysLeft = 3, isAlreadyBlocked = false }) =
                             {[
                                 '프로필 무제한 발송',
                                 '에이전시 이메일 주소 공개',
-                                '모델 다이어리 무제한 작성',
+                                '투어일지 무제한 작성',
                                 '골드 전용 캐스팅 정보 열람',
                             ].map((item) => (
                                 <div key={item} className="flex items-center gap-2">

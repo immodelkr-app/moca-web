@@ -282,7 +282,7 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
                                         </div>
                                         <div className="p-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA]">
                                             <span className="material-symbols-outlined text-[#9333EA] text-2xl mb-2">{content.feature3Icon || 'event_note'}</span>
-                                            <h3 className="text-sm font-black text-[#1F1235] mb-1">{content.feature3Title || '모델 다이어리 & 캘린더'}</h3>
+                                            <h3 className="text-sm font-black text-[#1F1235] mb-1">{content.feature3Title || '투어일지 & 캘린더'}</h3>
                                             <p className="text-[#5B4E7A] text-[10px] leading-relaxed font-medium">
                                                 {content.feature3Desc}
                                             </p>

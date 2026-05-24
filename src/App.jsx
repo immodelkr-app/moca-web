@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ClassListPage from './components/ClassListPage';
 import ClassDetailPage from './components/ClassDetailPage';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
 import Layout from './components/Layout';
 
 import HomeDashboard from './components/HomeDashboard';
@@ -34,7 +36,31 @@ function AppContent() {
     useAuthSync(); // 소셜 로그인 상태 감지 및 동기화
 
     const location = useLocation();
+    const navigate = useNavigate();
     const isAdmin = location.pathname.startsWith('/admin');
+
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) return;
+
+        const handleBackButton = async () => {
+            const rootPaths = ['/', '/home/dashboard', '/admin'];
+            if (rootPaths.includes(location.pathname)) {
+                // 최상위 루트 페이지인 경우 앱 종료
+                CapacitorApp.exitApp();
+            } else {
+                // 상세 페이지나 하위 메뉴에서는 이전 페이지로 이동
+                navigate(-1);
+            }
+        };
+
+        const backButtonListener = CapacitorApp.addListener('backButton', () => {
+            handleBackButton();
+        });
+
+        return () => {
+            backButtonListener.then((listener) => listener.remove());
+        };
+    }, [location.pathname, navigate]);
 
     return (
         <>

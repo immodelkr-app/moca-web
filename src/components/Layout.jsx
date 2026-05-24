@@ -21,8 +21,8 @@ const navGroups = [
             { to: '/home/smart-profile', icon: 'forward_to_inbox', label: '나의 프로필 관리' },
             { to: '/upgrade', icon: 'workspace_premium', label: '모델활동 신청' }, // 광고모델 활동 핵심
             { to: '/home/calendar', icon: 'calendar_month', label: '투어 캘린더' },
-            { to: '/home/diary', icon: 'event_note', label: '모델 다이어리' },
-            { to: '/home/cert', icon: 'photo_camera', label: '투어스타그램' },
+            { to: '/home/diary', icon: 'event_note', label: '투어일지' },
+            { to: '/home/cert', icon: 'photo_camera', label: '투어 인증샷' },
             { to: '/home/class', icon: 'school', label: '모카 클래스' },
         ]
     },
@@ -50,7 +50,7 @@ const navGroups = [
 const bottomTabs = [
     { to: '/home/dashboard', icon: 'home', label: '홈' },
     { to: '/agencies', icon: 'apartment', label: '에이전시' },
-    { to: '/home/diary', icon: 'event_note', label: '모델다이어리' },
+    { to: '/home/diary', icon: 'event_note', label: '투어일지' },
     { to: '/home/calendar', icon: 'calendar_month', label: '캘린더' },
 ];
 
@@ -58,7 +58,7 @@ const bottomTabs = [
 const moreMenuItems = [
     { to: '/upgrade',         icon: 'workspace_premium',    label: '등급 업그레이드' },
     { to: '/home/smart-profile', icon: 'forward_to_inbox',  label: '프로필 관리' },
-    { to: '/home/cert',       icon: 'photo_camera',         label: '투어스타그램' },
+    { to: '/home/cert',       icon: 'photo_camera',         label: '투어 인증샷' },
     { to: '/home/tv',         icon: 'smart_display',        label: '모카TV' },
     { to: '/home/message',    icon: 'local_post_office',    label: '공지사항' },
     { to: '/home/class',      icon: 'school',               label: '모카 클래스' },

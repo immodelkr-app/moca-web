@@ -13,9 +13,9 @@ import CertificationPostCard from './CertificationPostCard';
 const FILTER_TABS = ['전체', '에이전시투어', '광고모델수업'];
 
 const EMPTY_MESSAGES = {
-    '전체': '아직 게시물이 없어요!\n첫 번째 투어스타그램을 올려보세요 📸',
-    '에이전시투어': '에이전시 투어 게시물이 없어요.\n투어 후 투어스타그램을 올려보세요! 🏢',
-    '광고모델수업': '광고모델 수업 게시물이 없어요.\n수업 후 투어스타그램을 남겨보세요! 📚',
+    '전체': '아직 게시물이 없어요!\n첫 번째 투어 인증샷을 올려보세요 📸',
+    '에이전시투어': '에이전시 투어 게시물이 없어요.\n투어 후 인증샷을 올려보세요! 🏢',
+    '광고모델수업': '광고모델 수업 게시물이 없어요.\n수업 후 인증샷을 남겨보세요! 📚',
 };
 
 const CertificationFeed = () => {
@@ -98,7 +98,7 @@ const CertificationFeed = () => {
                     </button>
 
                     <div className="text-center">
-                        <h1 className="text-[#1F1235] font-black text-[17px] tracking-tight">📸 투어스타그램</h1>
+                        <h1 className="text-[#1F1235] font-black text-[17px] tracking-tight">📸 투어 인증샷</h1>
                         <p className="text-[#9CA3AF] text-[11px] mt-0.5">활동 인증 & 커뮤니티</p>
                     </div>
 
@@ -165,7 +165,7 @@ const CertificationFeed = () => {
                             className="mt-2 flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white font-black text-[14px] shadow-lg shadow-[#6C63FF]/30 active:scale-95 transition-transform"
                         >
                             <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
-                            투어스타그램 작성
+                            투어 인증샷 작성
                         </button>
                     </div>
                 ) : (

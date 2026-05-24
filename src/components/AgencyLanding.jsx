@@ -57,7 +57,7 @@ const AgencyLanding = () => {
     const [homeSettings, setHomeSettings] = useState({
         heroBadgeGuest: 'I\'m Model Agency Platform',
         heroTitle1: '스마트한 광고모델\n활동을 위한',
-        heroTitle2: '나의 광고모델다이어리\n아임모카',
+        heroTitle2: '나의 광고모델 매니저\n아임모카',
         heroHighlightWord: '아임모카',
         heroSubtitle1: '중요 이상의 정보를',
         heroSubtitle2: '한눈에 확인하고, 광고모델 전문 프로필을 단 1분만에 완성하여 스마트한 광고모델 활동을 시작해보세요!',
@@ -68,7 +68,7 @@ const AgencyLanding = () => {
         feature2Title: '간편 프로필 발송',
         feature2Desc: '번거로운 이메일 발송은 이제 그만. 클릭 한 번으로 수십 곳의 에이전시에 프로필을 전달하세요.',
         feature3Icon: 'event_note',
-        feature3Title: '모델 다이어리 & 캘린더',
+        feature3Title: '투어일지 & 캘린더',
         feature3Desc: '내가 보낸 프로필과 투어 일정을 체계적으로 관리하고 다른 모델들과 정보를 공유하세요.',
     });
 
@@ -314,10 +314,10 @@ const AgencyLanding = () => {
             {/* ── 히어로 섹션 ── */}
             <section className="pt-32 pb-20 px-5 text-center">
                 <div className={`transition-all duration-1000 transform ${loaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-                    <span className="inline-block px-4 py-1.5 rounded-full bg-[#F3E8FF] text-[#9333EA] text-xs font-black tracking-widest mb-4 uppercase">
+                    <span className="inline-block px-4 py-1.5 rounded-full bg-[#F3E8FF] text-[#9333EA] text-xs font-bold tracking-widest mb-4 uppercase">
                         {homeSettings.heroBadgeGuest}
                     </span>
-                    <h1 className="text-3xl md:text-5xl font-black text-[#1F1235] leading-tight tracking-tight mb-6">
+                    <h1 className="text-3xl md:text-5xl font-extrabold text-[#1F1235] leading-tight tracking-tight mb-6">
                         {homeSettings.heroTitle1?.split('\n').map((line, i) => (
                             <React.Fragment key={i}>{line}<br /></React.Fragment>
                         ))}
@@ -327,7 +327,7 @@ const AgencyLanding = () => {
                             ))}
                         </span>
                     </h1>
-                    <p className="text-[#5B4E7A] text-lg max-w-lg mx-auto mb-10 leading-relaxed font-medium">
+                    <p className="text-[#5B4E7A] text-base max-w-lg mx-auto mb-10 leading-relaxed font-medium">
                         {homeSettings.heroSubtitle1.includes('{{count}}') 
                             ? homeSettings.heroSubtitle1.replace('{{count}}', agencyCount)
                             : homeSettings.heroSubtitle1.replace(' 이상의 정보를', ` ${agencyCount}개 이상의 정보를`)
@@ -338,13 +338,13 @@ const AgencyLanding = () => {
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button
                             onClick={() => handleProtectedNavigation('/agencies')}
-                            className="w-full sm:w-auto px-10 py-5 rounded-3xl bg-[#9333EA] text-white font-black text-lg shadow-moca-lg hover:scale-105 active:scale-95 transition-all"
+                            className="w-full sm:w-auto px-10 py-5 rounded-3xl bg-[#9333EA] text-white font-bold text-lg shadow-moca-lg hover:scale-105 active:scale-95 transition-all"
                         >
                             에이전시 투어 시작하기
                         </button>
                         <button
                             onClick={() => handleProtectedNavigation('/home/smart-profile')}
-                            className="w-full sm:w-auto px-10 py-5 rounded-3xl bg-white border-2 border-[#E8E0FA] text-[#1F1235] font-black text-lg hover:bg-[#F8F5FF] transition-all"
+                            className="w-full sm:w-auto px-10 py-5 rounded-3xl bg-white border-2 border-[#E8E0FA] text-[#1F1235] font-bold text-lg hover:bg-[#F8F5FF] transition-all"
                         >
                             스마트 프로필 만들기
                         </button>
@@ -358,7 +358,7 @@ const AgencyLanding = () => {
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
                             <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">{homeSettings.feature1Icon || 'apartment'}</span>
-                            <h3 className="text-xl font-black text-[#1F1235] mb-3">{homeSettings.feature1Title || '중요 모델 에이전시 리스트'}</h3>
+                            <h3 className="text-xl font-bold text-[#1F1235] mb-3">{homeSettings.feature1Title || '중요 모델 에이전시 리스트'}</h3>
                             <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">
                                 {(homeSettings.feature1Desc || '실시간으로 업데이트되는 {{count}}개 에이전시의 주소와 연락처, 특징을 한눈에.')
                                     .replace('{{count}}', agencyCount)}
@@ -366,7 +366,7 @@ const AgencyLanding = () => {
                         </div>
                         <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
                             <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">{homeSettings.feature2Icon || 'forward_to_inbox'}</span>
-                            <h3 className="text-xl font-black text-[#1F1235] mb-3">{homeSettings.feature2Title || '간편 프로필 발송'}</h3>
+                            <h3 className="text-xl font-bold text-[#1F1235] mb-3">{homeSettings.feature2Title || '간편 프로필 발송'}</h3>
                             <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">
                                 {(homeSettings.feature2Desc || '번거로운 이메일 발송은 이제 그만. 클릭 한 번으로 수십 곳의 에이전시에 프로필을 전달하세요.')
                                     .replace('{{count}}', agencyCount)}
@@ -374,7 +374,7 @@ const AgencyLanding = () => {
                         </div>
                         <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
                             <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">{homeSettings.feature3Icon || 'event_note'}</span>
-                            <h3 className="text-xl font-black text-[#1F1235] mb-3">{homeSettings.feature3Title || '모델 다이어리 & 캘린더'}</h3>
+                            <h3 className="text-xl font-bold text-[#1F1235] mb-3">{homeSettings.feature3Title || '투어일지 & 캘린더'}</h3>
                             <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">
                                 {(homeSettings.feature3Desc || '내가 보낸 프로필과 투어 일정을 체계적으로 관리하고 다른 모델들과 정보를 공유하세요.')
                                     .replace('{{count}}', agencyCount)}

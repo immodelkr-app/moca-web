@@ -51,7 +51,7 @@ const CalendarDayDetailsModal = ({ dateStr, diaries, onClose, onAddClick, onCont
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4 animate-fadeIn"
+            className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4 animate-fadeIn"
             onClick={handleBackdropClick}
         >
             <div className="w-full max-w-lg bg-white border border-[#E8E0FA] rounded-t-[40px] sm:rounded-[40px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] animate-slideUp sm:animate-zoomIn">
@@ -63,7 +63,7 @@ const CalendarDayDetailsModal = ({ dateStr, diaries, onClose, onAddClick, onCont
                         </div>
                         <div>
                             <h2 className="text-2xl font-black text-[#1F1235] leading-none tracking-tight">{dateStr}</h2>
-                            <p className="text-[13px] text-[#9CA3AF] font-bold mt-1.5 uppercase tracking-wider">나의 모델 다이어리</p>
+                            <p className="text-[13px] text-[#9CA3AF] font-bold mt-1.5 uppercase tracking-wider">나의 투어일지</p>
                         </div>
                     </div>
                     <button

@@ -112,7 +112,7 @@ const TourDiary = () => {
                 <div className="flex items-center gap-3 mb-3 justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#6C63FF] to-[#A78BFA]" />
-                        <h1 className="text-xl lg:text-2xl font-bold text-[#1F1235] tracking-tight">모델 다이어리</h1>
+                        <h1 className="text-xl lg:text-2xl font-bold text-[#1F1235] tracking-tight">투어일지</h1>
                     </div>
                     {activeTab === 'diary' && (
                         <button
@@ -328,8 +328,12 @@ const TourDiary = () => {
                 </button>
             )}
 
-            <QuickAddMemoModal isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} onSuccess={loadDiaries} />
-            <EditDiaryModal memo={editingMemo} isOpen={!!editingMemo} onClose={() => setEditingMemo(null)} onSuccess={loadDiaries} />
+            {isQuickAddOpen && (
+                <QuickAddMemoModal isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} onSuccess={loadDiaries} />
+            )}
+            {editingMemo && (
+                <EditDiaryModal memo={editingMemo} isOpen={!!editingMemo} onClose={() => setEditingMemo(null)} onSuccess={loadDiaries} />
+            )}
             <CastingRecordModal isOpen={isCastingModalOpen} onClose={() => setIsCastingModalOpen(false)} onSuccess={loadCastingRecords} />
         </div>
     );

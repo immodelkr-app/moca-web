@@ -1874,7 +1874,7 @@ const AdminPage = () => {
                             {/* ── 인증샷 목록 헤더 + 필터 ── */}
                             <div className="flex items-center justify-between gap-4 flex-wrap">
                                 <div>
-                                    <h3 className="text-lg font-black text-[var(--moca-text)]">📸 전체 투어스타그램 관리</h3>
+                                    <h3 className="text-lg font-black text-[var(--moca-text)]">📸 전체 투어 인증샷 관리</h3>
                                     <p className="text-[var(--moca-text-3)] text-sm mt-0.5">HOT 배지 부여 · 모카베스트 PICK 선정 · 카페 포스팅 · 삭제</p>
                                 </div>
                                 <div className="flex gap-2">
@@ -1977,7 +1977,7 @@ const AdminPage = () => {
                                     {certPosts.filter(p => certFilter === 'pick' ? p.is_marketing_pick : true).length === 0 && (
                                         <div className="col-span-full flex flex-col items-center justify-center py-16 text-[var(--moca-text-3)]">
                                             <span className="material-symbols-outlined text-[40px] mb-3">photo_camera</span>
-                                            <p>{certFilter === 'pick' ? "'모카베스트 PICK'으로 선정된 기록이 없습니다." : '아직 다녀온 투어스타그램 기록이 없습니다.'}</p>
+                                            <p>{certFilter === 'pick' ? "'모카베스트 PICK'으로 선정된 기록이 없습니다." : '아직 다녀온 투어 인증샷 기록이 없습니다.'}</p>
                                         </div>
                                     )}
                                 </div>

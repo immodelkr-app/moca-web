@@ -51,7 +51,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center">
             <div className="fixed inset-0 bg-black/75 backdrop-blur-md" onClick={() => !submitting && onClose()} />
             <div className="relative w-full max-w-lg bg-white rounded-t-[40px] sm:rounded-[40px] shadow-2xl z-10 overflow-hidden animate-slideUp">
 
@@ -76,7 +76,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                     </div>
                 ) : (
                     /* ── 신청서 화면 ── */
-                    <div className="p-8">
+                    <div className="p-8 max-h-[80vh] overflow-y-auto hide-scrollbar pb-12">
                         {/* 헤더 */}
                         <div className="flex items-center justify-between mb-8">
                             <div>
@@ -133,8 +133,8 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                     <span className="text-sm font-black text-[var(--moca-text)]">{cls.location}</span>
                                 </div>
                                 <div className="pt-3 border-t border-indigo-100 flex justify-between items-center">
-                                    <span className="text-xs font-black text-indigo-500 uppercase">참가 구분</span>
-                                    <span className="text-xl font-black text-[var(--moca-text)]">GOLD 등급 회원</span>
+                                    <span className="text-xs font-bold text-indigo-400">참가 구분</span>
+                                    <span className="text-sm font-black text-[var(--moca-text)]">GOLD 등급 회원</span>
                                 </div>
                             </div>
                         </div>

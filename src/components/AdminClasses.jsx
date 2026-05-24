@@ -91,6 +91,31 @@ const AdminClasses = () => {
     const [editingClassId, setEditingClassId] = useState(null);
     const [pricing, setPricing] = useState([]);
 
+    // 승인 문자 발송 모달 상태
+    const [approveModal, setApproveModal] = useState({
+        isOpen: false,
+        app: null,
+        type: 'option1', // 'option1' (개별 실결제금액) | 'option2' (대표 안내문구)
+        messageText: ''
+    });
+
+    const getApproveMessage = (app, type) => {
+        if (!app) return '';
+        const name = app.users?.name || app.users?.nickname || '회원';
+        const classTitle = selectedClass?.title || '클래스';
+        
+        let price = '';
+        if (type === 'option1') {
+            price = app.applied_price !== undefined && app.applied_price !== null
+                ? (app.applied_price === 0 ? '무료' : `${app.applied_price.toLocaleString()}원`)
+                : (selectedClass?.price_info || '무료');
+        } else {
+            price = selectedClass?.price_info || '무료';
+        }
+
+        return `[아임모델 MOCA] 수강 신청 승인 안내\n\n안녕하세요, ${name}님!\n신청하신 [${classTitle}] 수강 신청이 승인되었습니다.\n\n아래 계좌로 참가비를 입금해 주시면 확인 후 참석 확정이 완료됩니다.\n\n■ 참가비: ${price}\n■ 입금 계좌: 카카오뱅크 3333-04-2209478 김대희(아임모델)\n\n※ 참가비 입금이 확인되면 최종적으로 수강이 확정됩니다.\n\n문의: 카카오채널 @아임모델MOCA`;
+    };
+
     const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
     // 생성용 폼 상태
@@ -179,9 +204,20 @@ const AdminClasses = () => {
 
     const BANK_INFO = '카카오뱅크 3333-34-9903852 (아임모델 김대희)';
 
-    // 승인 + 문자 발송
-    const handleApprove = async (app) => {
-        if (!window.confirm(`[${app.users?.name || app.users?.nickname}] 승인 처리하시겠습니까?`)) return;
+    // 승인 + 문자 발송 모달 열기
+    const handleApprove = (app) => {
+        const defaultMsg = getApproveMessage(app, 'option1');
+        setApproveModal({
+            isOpen: true,
+            app,
+            type: 'option1',
+            messageText: defaultMsg
+        });
+    };
+
+    const handleConfirmApprove = async () => {
+        const { app, messageText } = approveModal;
+        if (!app) return;
 
         setIsSubmitting(true);
         try {
@@ -196,21 +232,19 @@ const AdminClasses = () => {
                 .eq('id', app.id);
             if (updateErr) throw updateErr;
 
-            // 문자 메시지 구성
-            const name = app.users?.name || app.users?.nickname || '회원';
+            // 문자 메시지 발송
             const phone = (app.users?.phone || app.user_phone || '').replace(/-/g, '');
-            const classTitle = selectedClass?.title || '클래스';
-
-            const msg = `[아임모델 MOCA] 수강 신청 승인 안내\n\n안녕하세요, ${name}님!\n${classTitle} 수강 신청이 승인되었습니다.\n\n문의: 카카오채널 @아임모델MOCA`;
-
-            if (phone) {
-                await sendBulkMessage([phone], msg, 'sms');
+            if (phone && messageText.trim()) {
+                await sendBulkMessage([phone], messageText.trim(), 'sms');
             }
 
             setApplicants(prev => prev.map(a =>
                 a.id === app.id ? { ...a, approval_status: 'approved' } : a
             ));
+            
+            const name = app.users?.name || app.users?.nickname || '회원';
             setSuccessMsg(`✅ ${name}님 승인 완료 + 문자 발송 성공!`);
+            setApproveModal({ isOpen: false, app: null, type: 'option1', messageText: '' });
         } catch (err) {
             alert('승인 처리 중 오류: ' + (err.message || JSON.stringify(err)));
         } finally {
@@ -808,6 +842,123 @@ const AdminClasses = () => {
                                     </tbody>
                                 </table>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 승인 문자 발송 모달 */}
+            {approveModal.isOpen && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-xl overflow-hidden shadow-2xl p-8 max-h-[90vh] flex flex-col mx-4 animate-scaleUp">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-indigo-500">sms</span>
+                                승인 및 문자 발송 설정
+                            </h3>
+                            <button 
+                                onClick={() => setApproveModal({ isOpen: false, app: null, type: 'option1', messageText: '' })}
+                                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">close</span>
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+                            {/* 대상자 정보 */}
+                            <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+                                <p className="text-xs text-indigo-500 font-black uppercase tracking-wider mb-1">수강 신청자 정보</p>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-black text-slate-800">
+                                        {approveModal.app?.users?.name || approveModal.app?.users?.nickname || '회원'} 
+                                        <span className="text-xs text-slate-500 font-bold ml-1.5">({approveModal.app?.users?.phone || approveModal.app?.user_phone || '-'})</span>
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-black">
+                                        {approveModal.app?.grade_label || approveModal.app?.users?.grade || 'SILVER'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* 시안 선택 라디오 버튼 */}
+                            <div>
+                                <label className="block text-xs font-black text-slate-500 mb-3 uppercase tracking-wider">참가비 표시 방식 선택</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const nextType = 'option1';
+                                            setApproveModal(prev => ({
+                                                ...prev,
+                                                type: nextType,
+                                                messageText: getApproveMessage(prev.app, nextType)
+                                            }));
+                                        }}
+                                        className={`p-4 rounded-2xl border-2 text-left transition-all ${approveModal.type === 'option1' ? 'border-indigo-500 bg-indigo-50/20 text-indigo-950 font-black' : 'border-slate-200 hover:border-slate-300 text-slate-600 font-bold'}`}
+                                    >
+                                        <p className="text-xs font-black text-indigo-500 mb-1">시안 1 (개별 금액)</p>
+                                        <p className="text-sm">실제 결제 금액 표시</p>
+                                        <p className="text-[11px] text-slate-400 mt-1 font-medium">값: {approveModal.app?.applied_price !== undefined && approveModal.app?.applied_price !== null ? (approveModal.app.applied_price === 0 ? '무료' : `${approveModal.app.applied_price.toLocaleString()}원`) : (selectedClass?.price_info || '무료')}</p>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const nextType = 'option2';
+                                            setApproveModal(prev => ({
+                                                ...prev,
+                                                type: nextType,
+                                                messageText: getApproveMessage(prev.app, nextType)
+                                            }));
+                                        }}
+                                        className={`p-4 rounded-2xl border-2 text-left transition-all ${approveModal.type === 'option2' ? 'border-indigo-500 bg-indigo-50/20 text-indigo-950 font-black' : 'border-slate-200 hover:border-slate-300 text-slate-600 font-bold'}`}
+                                    >
+                                        <p className="text-xs font-black text-indigo-500 mb-1">시안 2 (대표 문구)</p>
+                                        <p className="text-sm">클래스 대표 문구 표시</p>
+                                        <p className="text-[11px] text-slate-400 mt-1 font-medium">값: {selectedClass?.price_info || '무료'}</p>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 문자 발송 내용 편집 */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-wider">발송 문자 내용 (수정 가능)</label>
+                                    <span className="text-[10px] text-slate-400 font-bold">수동으로 내용을 직접 수정할 수 있습니다.</span>
+                                </div>
+                                <textarea
+                                    value={approveModal.messageText}
+                                    onChange={(e) => setApproveModal(prev => ({ ...prev, messageText: e.target.value }))}
+                                    rows={8}
+                                    className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-2xl px-4 py-3 text-xs font-bold transition-all outline-none resize-none leading-relaxed focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-6 border-t border-slate-100 flex gap-3 mt-4">
+                            <button
+                                type="button"
+                                onClick={() => setApproveModal({ isOpen: false, app: null, type: 'option1', messageText: '' })}
+                                className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-sm rounded-2xl transition-all"
+                            >
+                                취소
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmApprove}
+                                disabled={isSubmitting}
+                                className="flex-1 py-4 bg-indigo-500 hover:bg-indigo-600 text-white font-black text-sm rounded-2xl transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        처리 중...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-[16px]">send</span>
+                                        승인 및 문자 발송
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

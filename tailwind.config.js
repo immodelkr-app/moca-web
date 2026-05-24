@@ -27,8 +27,8 @@ export default {
         "moca-gold":     "#D97706",
       },
       fontFamily: {
-        "display": ["Manrope", "sans-serif"],
-        "sans": ["Manrope", "sans-serif"]
+        "display": ["'Pretendard Variable'", "Pretendard", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        "sans": ["'Pretendard Variable'", "Pretendard", "-apple-system", "BlinkMacSystemFont", "sans-serif"]
       },
       borderRadius: {
         "lg": "1rem",

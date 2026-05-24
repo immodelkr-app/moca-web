@@ -10,7 +10,7 @@ const HIGHLIGHT_ITEMS = [
 ];
 
 const TOUR_ITEMS = [
-    { icon: 'event_note', label: '모델 다이어리', route: '/home/diary', color: 'from-[#0EA5E9] to-[#38BDF8]', glow: 'shadow-[#0EA5E9]/20' },
+    { icon: 'event_note', label: '투어일지', route: '/home/diary', color: 'from-[#0EA5E9] to-[#38BDF8]', glow: 'shadow-[#0EA5E9]/20' },
     { icon: 'manage_accounts', label: '프로필 관리', route: '/home/smart-profile', color: 'from-[#059669] to-[#34D399]', glow: 'shadow-[#059669]/20' },
     { icon: 'calendar_month', label: '투어 캘린더', route: '/home/calendar', color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/20' },
     { icon: 'forum', label: 'Q&A 게시판', route: '/home/qna', color: 'from-[#14B8A6] to-[#2DD4BF]', glow: 'shadow-[#14B8A6]/20' },
@@ -18,7 +18,7 @@ const TOUR_ITEMS = [
 
 const COMMUNITY_ITEMS = [
     { icon: 'school', label: '모카 클래스', route: '/home/class', color: 'from-[#4F46E5] to-[#818CF8]', glow: 'shadow-[#4F46E5]/20' },
-    { icon: 'photo_camera', label: '투어스타그램', route: '/home/cert', color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/20' },
+    { icon: 'photo_camera', label: '투어 인증샷', route: '/home/cert', color: 'from-[#EC4899] to-[#F9A8D4]', glow: 'shadow-[#EC4899]/20' },
     { icon: 'smart_display', label: '모카TV', route: '/home/tv', color: 'from-[#EF4444] to-[#FCA5A5]', glow: 'shadow-[#EF4444]/20' },
     { icon: 'workspace_premium', label: '등급 신청하기', route: '/upgrade', color: 'from-[#D97706] to-[#FCD34D]', glow: 'shadow-[#D97706]/20' },
 ];
@@ -119,7 +119,7 @@ const HomeDashboard = () => {
 
             {/* ── 모델 투어 관리 ── */}
             <div className="px-5 mb-8">
-                <h2 className="text-[#1F1235] font-black text-[18px] mb-4 flex items-center gap-2">
+                <h2 className="text-[#1F1235] font-black text-[16px] mb-4 flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#9333EA] text-[24px]">explore</span>
                     모델 투어 관리
                 </h2>
@@ -134,7 +134,7 @@ const HomeDashboard = () => {
                                 <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-15`}></div>
                                 <span className={`material-symbols-outlined text-[28px] text-[#5B4E7A] group-hover:text-[#9333EA] transition-colors`}>{item.icon}</span>
                             </div>
-                            <span className="text-[#1F1235] font-black text-[15px] text-left leading-tight break-keep">{item.label}</span>
+                            <span className="text-[#1F1235] font-black text-[14px] text-left leading-tight break-keep">{item.label}</span>
                         </button>
                     ))}
                 </div>
@@ -142,7 +142,7 @@ const HomeDashboard = () => {
 
             {/* ── 커뮤니티 & 활동 ── */}
             <div className="px-5 mb-8">
-                <h2 className="text-[#1F1235] font-black text-[18px] mb-4 flex items-center gap-2">
+                <h2 className="text-[#1F1235] font-black text-[16px] mb-4 flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#9333EA] text-[24px]">diversity_3</span>
                     커뮤니티 & 활동
                 </h2>
@@ -157,7 +157,7 @@ const HomeDashboard = () => {
                                 <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-15`}></div>
                                 <span className={`material-symbols-outlined text-[28px] text-[#5B4E7A] group-hover:text-[#9333EA] transition-colors`}>{item.icon}</span>
                             </div>
-                            <span className="text-[#1F1235] font-black text-[15px] text-left leading-tight break-keep">{item.label}</span>
+                            <span className="text-[#1F1235] font-black text-[14px] text-left leading-tight break-keep">{item.label}</span>
                         </button>
                     ))}
                 </div>

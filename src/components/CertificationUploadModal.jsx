@@ -72,7 +72,7 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
                     >
                         취소
                     </button>
-                    <h2 className="text-[#1F1235] font-black text-[16px]">📸 투어스타그램</h2>
+                    <h2 className="text-[#1F1235] font-black text-[16px]">📸 투어 인증샷</h2>
                     <button
                         onClick={handleSubmit}
                         disabled={isUploading || !imageFile}
@@ -172,7 +172,7 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
                                 <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
                                 업로드 중...
                             </span>
-                        ) : '투어스타그램 등록 🚀'}
+                        ) : '투어 인증샷 등록 🚀'}
                     </button>
                 </div>
             </div>

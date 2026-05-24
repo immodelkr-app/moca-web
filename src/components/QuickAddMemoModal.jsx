@@ -60,7 +60,7 @@ const QuickAddMemoModal = ({ onClose, onSuccess }) => {
                         </div>
                         <div>
                             <h2 className="text-2xl font-black text-[#1F1235] tracking-tight">빠른 기록 쓰기</h2>
-                            <p className="text-[13px] text-[#9CA3AF] font-bold mt-0.5">모델 다이어리를 쉽고 빠르게 기록하세요.</p>
+                            <p className="text-[13px] text-[#9CA3AF] font-bold mt-0.5">투어일지를 쉽고 빠르게 기록하세요.</p>
                         </div>
                     </div>
                     <button

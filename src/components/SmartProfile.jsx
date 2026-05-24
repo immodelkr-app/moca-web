@@ -29,6 +29,7 @@ const SmartProfile = () => {
     const [errorMsg, setErrorMsg] = useState('');
     const [pickerLoading, setPickerLoading] = useState(false);
     const [isMobileApp, setIsMobileApp] = useState(false);
+    const [isWebViewEnv, setIsWebViewEnv] = useState(false);
 
     // 현재모습 사진 관련
     const currentPhotoInputRef = useRef(null);
@@ -59,7 +60,9 @@ const SmartProfile = () => {
         const isCapacitor = window.Capacitor?.platform !== 'web' || 
                             /Capacitor/i.test(navigator.userAgent) || 
                             window.webkit?.messageHandlers?.bridge;
+        const isWebView = isCapacitor || /Android.*wv/.test(navigator.userAgent) || (/iPhone|iPod|iPad/i.test(navigator.userAgent) && !/Safari/i.test(navigator.userAgent));
         setIsMobileApp(isCapacitor);
+        setIsWebViewEnv(isWebView);
     }, []);
 
     const initTokenClient = () => {
@@ -298,7 +301,7 @@ const SmartProfile = () => {
     };
 
     const isDriveUrl = (url) => {
-        return url && url.includes('drive.google.com');
+        return url && (url.includes('drive.google.com') || url.includes('docs.google.com'));
     };
 
     const hasProfile = formData.portfolio_link && isValidUrl(formData.portfolio_link);
@@ -486,50 +489,101 @@ const SmartProfile = () => {
                         )}
                     </button>
 
-                    {isMobileApp && !formData.portfolio_link && (
-                        <div className="mt-1 mb-4 px-1">
-                            <p className="text-[10px] text-[#9333EA] font-bold leading-relaxed flex items-start gap-1">
-                                <span className="material-symbols-outlined text-[12px] mt-0.5">info</span>
-                                팁: 앱 내에서 연동이 안될 경우, 구글드라이브 앱에서 '링크 복사' 후 아래에 직접 붙여넣으셔도 됩니다.
+                    {isWebViewEnv ? (
+                        <div className="bg-[#F3E8FF] border border-[#E8E0FA] rounded-2xl p-4 mb-4">
+                            <p className="text-[11px] text-[#7C3AED] font-black mb-1.5 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px]">info</span>
+                                모바일 앱 환경 안내
+                            </p>
+                            <p className="text-xs text-[#5B4E7A] leading-relaxed">
+                                구글 보안 정책으로 인해 모바일 앱 환경에서는 구글 드라이브 연동(원클릭 파일 선택)이 불가능합니다. 번거로우시겠지만 아래의 공유 링크 직접 입력을 이용해 주세요.
                             </p>
                         </div>
+                    ) : (
+                        <button
+                            onClick={handlePickerClick}
+                            disabled={pickerLoading}
+                            className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-[#4285F4]/40 bg-[#4285F4]/5 hover:bg-[#4285F4]/10 hover:border-[#4285F4]/60 transition-all active:scale-[0.98] mb-4"
+                        >
+                            {pickerLoading ? (
+                                <>
+                                    <div className="w-5 h-5 rounded-full border-2 border-[#4285F4] border-t-transparent animate-spin" />
+                                    <span className="text-[#4285F4] font-black text-sm">연결 중...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg width="22" height="22" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+                                        <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
+                                        <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/>
+                                        <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+                                        <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+                                        <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 27h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+                                    </svg>
+                                    <span className="text-[#4285F4] font-black text-sm">구글드라이브에서 파일 선택</span>
+                                </>
+                            )}
+                        </button>
                     )}
 
-                    {formData.portfolio_link && (
-                        <div className={`flex items-center gap-2 p-3 rounded-xl border ${isDriveUrl(formData.portfolio_link)
-                            ? 'bg-emerald-500/10 border-emerald-500/20'
-                            : 'bg-[#F8F5FF] border-[#E8E0FA]'}`}>
-                            <span className={`material-symbols-outlined text-[16px] flex-shrink-0 ${isDriveUrl(formData.portfolio_link) ? 'text-emerald-500' : 'text-[#9CA3AF]'}`}>
-                                {isDriveUrl(formData.portfolio_link) ? 'check_circle' : 'link'}
-                            </span>
-                            <p className="text-xs font-black truncate flex-1 text-[#5B4E7A]">{formData.portfolio_link}</p>
-                            <button
-                                onClick={() => setFormData(prev => ({ ...prev, portfolio_link: '' }))}
-                                className="text-[#9CA3AF] hover:text-[#5B4E7A] flex-shrink-0"
-                            >
-                                <span className="material-symbols-outlined text-[16px]">close</span>
-                            </button>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className="text-[#5B4E7A] text-[11px] font-black ml-1">구글드라이브 / 프레젠테이션(PPT) 공유 링크 입력</label>
+                            {formData.portfolio_link && (
+                                <button
+                                    onClick={() => setFormData(prev => ({ ...prev, portfolio_link: '' }))}
+                                    className="text-xs text-red-500 hover:text-red-600 font-bold flex items-center gap-0.5"
+                                >
+                                    <span className="material-symbols-outlined text-[14px]">delete_forever</span>
+                                    입력 초기화
+                                </button>
+                            )}
                         </div>
-                    )}
+                        <input
+                            type="url"
+                            name="portfolio_link"
+                            value={formData.portfolio_link}
+                            onChange={handleChange}
+                            placeholder="https://drive.google.com/... 또는 https://docs.google.com/..."
+                            className={`w-full bg-[#F8F5FF] border rounded-xl px-4 py-3.5 text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:ring-2 transition-colors shadow-inner ${
+                                !formData.portfolio_link
+                                    ? 'border-[#E8E0FA] focus:border-[#4285F4] focus:ring-[#4285F4]/10'
+                                    : !isValidUrl(formData.portfolio_link)
+                                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
+                                        : isDriveUrl(formData.portfolio_link)
+                                            ? 'border-emerald-300 focus:border-emerald-500 focus:ring-emerald-500/10'
+                                            : 'border-amber-300 focus:border-amber-500 focus:ring-amber-500/10'
+                            }`}
+                        />
 
-                    {!formData.portfolio_link && (
-                        <div className="mt-2">
-                            <p className="text-[#9CA3AF] text-xs text-center mb-2 font-bold">— 또는 구글드라이브 공유용 링크 직접 입력 —</p>
-                            <input
-                                type="url"
-                                name="portfolio_link"
-                                value={formData.portfolio_link}
-                                onChange={handleChange}
-                                placeholder="https://drive.google.com/..."
-                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3.5 text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#4285F4] focus:ring-2 focus:ring-[#4285F4]/10 transition-colors shadow-inner"
-                            />
-                            <div className="mt-3 bg-blue-50/50 rounded-xl p-3 border border-blue-100">
-                                <p className="text-[10px] text-blue-600/70 leading-relaxed">
-                                    <span className="font-black">※ 도움말:</span> 드라이브의 파일 '공유' → '링크가 있는 모든 사용자'로 설정 후 링크를 복사해서 이곳에 붙여넣으세요.
-                                </p>
+                        {formData.portfolio_link && (
+                            <div className="mt-2.5 px-1">
+                                {!isValidUrl(formData.portfolio_link) ? (
+                                    <div className="flex items-start gap-1.5 text-xs text-red-500 font-bold leading-normal">
+                                        <span className="material-symbols-outlined text-[16px] mt-0.5 flex-shrink-0">error</span>
+                                        <span>올바른 인터넷 주소(URL) 형식을 입력해주세요. (예: https://...)</span>
+                                    </div>
+                                ) : isDriveUrl(formData.portfolio_link) ? (
+                                    <div className="flex items-start gap-1.5 text-xs text-emerald-600 font-black leading-normal">
+                                        <span className="material-symbols-outlined text-[16px] mt-0.5 flex-shrink-0">check_circle</span>
+                                        <span>올바른 구글 드라이브(또는 슬라이드/문서) 링크 형식입니다.</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-start gap-1.5 text-xs text-amber-600 font-bold leading-normal">
+                                        <span className="material-symbols-outlined text-[16px] mt-0.5 flex-shrink-0">warning</span>
+                                        <span>구글 드라이브나 슬라이드 링크가 아닙니다. 구글 드라이브(또는 구글 프레젠테이션) 공유용 링크를 입력하시는 것을 권장합니다.</span>
+                                    </div>
+                                )}
                             </div>
+                        )}
+
+                        <div className="mt-3 bg-blue-50/50 rounded-xl p-3 border border-blue-100">
+                            <p className="text-[10px] text-blue-600/80 leading-relaxed">
+                                <span className="font-black">💡 필수 공유 설정 방법:</span><br/>
+                                구글드라이브/슬라이드 앱에서 파일의 <strong>'공유'</strong> 또는 <strong>'액세스 권한 관리'</strong> → 일반 액세스를 <strong>'링크가 있는 모든 사용자(뷰어)'</strong>로 설정한 후 링크를 복사해서 이곳에 붙여넣으셔야 에이전시에서 정상적으로 PPT를 열어볼 수 있습니다.
+                            </p>
                         </div>
-                    )}
+                    </div>
                 </div>
 
 
