@@ -76,7 +76,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                     </div>
                 ) : (
                     /* ── 신청서 화면 ── */
-                    <div className="p-8 max-h-[80vh] overflow-y-auto hide-scrollbar pb-12">
+                    <div className="p-8 max-h-[80vh] overflow-y-auto hide-scrollbar pb-[15vh] sm:pb-12">
                         {/* 헤더 */}
                         <div className="flex items-center justify-between mb-8">
                             <div>
