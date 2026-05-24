@@ -57,7 +57,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
 
                 {done ? (
                     /* ── 완료 화면 ── */
-                    <div className="p-10 text-center">
+                    <div className="px-10 pt-10 pb-[15vh] sm:pb-10 text-center">
                         <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-indigo-500/30">
                             <span className="material-symbols-outlined text-4xl text-white">task_alt</span>
                         </div>
