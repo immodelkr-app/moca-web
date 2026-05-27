@@ -307,11 +307,7 @@ const SmartProfile = () => {
     const hasProfile = formData.portfolio_link && isValidUrl(formData.portfolio_link);
 
     const handleSave = async () => {
-        if (!formData.portfolio_link) {
-            setErrorMsg('프로필 링크를 입력해주세요. (필수)');
-            return;
-        }
-        if (!isValidUrl(formData.portfolio_link)) {
+        if (formData.portfolio_link && !isValidUrl(formData.portfolio_link)) {
             setErrorMsg('올바른 URL 형식을 입력해주세요.');
             return;
         }
@@ -458,7 +454,7 @@ const SmartProfile = () => {
                             <span className="material-symbols-outlined text-[15px] text-[#4285F4]">add_to_drive</span>
                         </div>
                         <h2 className="font-black text-[#1F1235] text-base">프로필</h2>
-                        <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-500 text-[10px] font-black">필수</span>
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-black">선택</span>
                     </div>
                     <p className="text-[#5B4E7A] text-xs leading-relaxed mb-4">
                         구글드라이브에서 파일 또는 폴더를 선택하면<br/>링크가 자동으로 입력됩니다.
