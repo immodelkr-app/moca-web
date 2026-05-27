@@ -607,59 +607,7 @@ const AdminPage = () => {
         }
     });
 
-    let activeMaleCount = 0;
-    let activeFemaleCount = 0;
-    let activeUnspecifiedGenderCount = 0;
 
-    const activeAgeGroups = {
-        under20: 0,
-        age20s: 0,
-        age30s: 0,
-        age40s: 0,
-        age50s: 0,
-        age60s: 0,
-        age70s: 0,
-        age80sPlus: 0,
-        unspecified: 0
-    };
-
-    thisMonthDiaries.forEach(d => {
-        const uInfo = users.find(u => u.nickname === d.nickname);
-        if (uInfo) {
-            if (uInfo.gender === '남') activeMaleCount++;
-            else if (uInfo.gender === '여') activeFemaleCount++;
-            else activeUnspecifiedGenderCount++;
-
-            const age = getAge(uInfo.age);
-            if (age === null) {
-                activeAgeGroups.unspecified++;
-            } else if (age < 20) {
-                activeAgeGroups.under20++;
-            } else if (age >= 20 && age <= 29) {
-                activeAgeGroups.age20s++;
-            } else if (age >= 30 && age <= 39) {
-                activeAgeGroups.age30s++;
-            } else if (age >= 40 && age <= 49) {
-                activeAgeGroups.age40s++;
-            } else if (age >= 50 && age <= 59) {
-                activeAgeGroups.age50s++;
-            } else if (age >= 60 && age <= 69) {
-                activeAgeGroups.age60s++;
-            } else if (age >= 70 && age <= 79) {
-                activeAgeGroups.age70s++;
-            } else {
-                activeAgeGroups.age80sPlus++;
-            }
-        } else {
-            activeUnspecifiedGenderCount++;
-            activeAgeGroups.unspecified++;
-        }
-    });
-
-    const totalActiveCount = thisMonthDiaries.length;
-    const activeMalePercent = totalActiveCount ? Math.round((activeMaleCount / totalActiveCount) * 100) : 0;
-    const activeFemalePercent = totalActiveCount ? Math.round((activeFemaleCount / totalActiveCount) * 100) : 0;
-    const activeUnspecifiedGenderPercent = totalActiveCount ? (100 - activeMalePercent - activeFemalePercent) : 0;
 
     // 엑셀 다운로드 (xlsx)
     const handleExportExcel = () => {
@@ -922,51 +870,41 @@ const AdminPage = () => {
                                     <span className="material-symbols-outlined text-purple-500">wc</span>
                                     회원 성별 분포
                                 </h3>
-                                <p className="text-[var(--moca-text-3)] text-[11px] mb-4">전체 가입자 및 선택 기간 방문 회원의 성별 비율</p>
+                                <p className="text-[var(--moca-text-3)] text-[11px] mb-4">전체 가입자의 성별 비율</p>
                                 
                                 <div className="space-y-6">
                                     {/* 가입자 성별 비율 */}
                                     <div>
-                                        <div className="flex justify-between items-center mb-1.5">
+                                        <div className="flex justify-between items-center mb-2">
                                             <span className="text-xs font-bold text-[var(--moca-text-2)]">전체 가입자 ({totalUsersCount}명)</span>
-                                            <span className="text-[11px] text-[var(--moca-text-3)] font-bold">
+                                            <span className="text-xs text-[var(--moca-text-3)] font-bold">
                                                 남 {signupMalePercent}% | 여 {signupFemalePercent}%
                                                 {signupUnspecifiedGenderCount > 0 && ` | 미지정 ${signupUnspecifiedGenderPercent}%`}
                                             </span>
                                         </div>
-                                        <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden flex">
+                                        <div className="w-full h-4 bg-gray-100 rounded-full overflow-hidden flex">
                                             <div className="h-full bg-blue-400 transition-all" style={{ width: `${signupMalePercent}%` }} title={`남성: ${signupMaleCount}명`} />
                                             <div className="h-full bg-pink-400 transition-all" style={{ width: `${signupFemalePercent}%` }} title={`여성: ${signupFemaleCount}명`} />
                                             <div className="h-full bg-gray-300 transition-all" style={{ width: `${signupUnspecifiedGenderPercent}%` }} title={`미지정: ${signupUnspecifiedGenderCount}명`} />
                                         </div>
                                     </div>
-
-                                    {/* 활동 회원 성별 비율 */}
-                                    <div>
-                                        <div className="flex justify-between items-center mb-1.5">
-                                            <span className="text-xs font-bold text-[var(--moca-text-2)]">
-                                                활동/방문 회원 ({totalActiveCount}건)
-                                                <span className="text-[10px] text-purple-500 ml-1">
-                                                    ({statsMonth === 0 ? '올해 전체' : `${statsMonth}월`})
-                                                </span>
-                                            </span>
-                                            <span className="text-[11px] text-[var(--moca-text-3)] font-bold">
-                                                남 {activeMalePercent}% | 여 {activeFemalePercent}%
-                                                {activeUnspecifiedGenderCount > 0 && ` | 미지정 ${activeUnspecifiedGenderPercent}%`}
-                                            </span>
-                                        </div>
-                                        <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden flex">
-                                            <div className="h-full bg-blue-500 transition-all" style={{ width: `${activeMalePercent}%` }} title={`남성 활동: ${activeMaleCount}건`} />
-                                            <div className="h-full bg-pink-500 transition-all" style={{ width: `${activeFemalePercent}%` }} title={`여성 활동: ${activeFemaleCount}건`} />
-                                            <div className="h-full bg-gray-400 transition-all" style={{ width: `${activeUnspecifiedGenderPercent}%` }} title={`미지정 활동: ${activeUnspecifiedGenderCount}건`} />
-                                        </div>
-                                    </div>
                                     
                                     {/* 안내 라벨 */}
-                                    <div className="flex items-center justify-center gap-4 pt-2 border-t border-gray-100 text-[10px] font-black">
-                                        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-blue-400 rounded-full"></span><span className="text-gray-500">남성</span></div>
-                                        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-pink-400 rounded-full"></span><span className="text-gray-500">여성</span></div>
-                                        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-gray-300 rounded-full"></span><span className="text-gray-500">미지정</span></div>
+                                    <div className="flex items-center justify-center gap-6 pt-4 border-t border-gray-100 text-xs font-bold">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-2.5 h-2.5 bg-blue-400 rounded-full"></span>
+                                            <span className="text-gray-600">남성 ({signupMaleCount}명)</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-2.5 h-2.5 bg-pink-400 rounded-full"></span>
+                                            <span className="text-gray-600">여성 ({signupFemaleCount}명)</span>
+                                        </div>
+                                        {signupUnspecifiedGenderCount > 0 && (
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="w-2.5 h-2.5 bg-gray-300 rounded-full"></span>
+                                                <span className="text-gray-600">미지정 ({signupUnspecifiedGenderCount}명)</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -977,9 +915,9 @@ const AdminPage = () => {
                                     <span className="material-symbols-outlined text-purple-500">bar_chart</span>
                                     회원 연령대 분포
                                 </h3>
-                                <p className="text-[var(--moca-text-3)] text-[11px] mb-4">10대부터 80대 이상까지의 분포 비율 (가입 / 활동)</p>
+                                <p className="text-[var(--moca-text-3)] text-[11px] mb-4">10대부터 80대 이상까지의 가입 분포 비율</p>
                                 
-                                <div className="space-y-2 max-h-[175px] overflow-y-auto pr-1">
+                                <div className="space-y-3 max-h-[185px] overflow-y-auto pr-1">
                                     {[
                                         { label: '20대 미만', key: 'under20' },
                                         { label: '20대', key: 'age20s' },
@@ -994,23 +932,16 @@ const AdminPage = () => {
                                         const signupCount = signupAgeGroups[key] || 0;
                                         const signupPct = totalUsersCount ? Math.round((signupCount / totalUsersCount) * 100) : 0;
 
-                                        const activeCount = activeAgeGroups[key] || 0;
-                                        const activePct = totalActiveCount ? Math.round((activeCount / totalActiveCount) * 100) : 0;
-
-                                        if (signupCount === 0 && activeCount === 0) return null; // 데이터가 둘 다 없으면 숨김
+                                        if (signupCount === 0) return null; // 가입 인원이 없으면 숨김
 
                                         return (
                                             <div key={key} className="flex flex-col gap-1 py-1 border-b border-gray-50 last:border-0">
                                                 <div className="flex justify-between items-center text-xs">
                                                     <span className="font-bold text-[var(--moca-text-2)]">{label}</span>
-                                                    <div className="flex gap-3 text-[10px] text-gray-500 font-medium">
-                                                        <span>가입: <strong className="text-[var(--moca-text)]">{signupCount}명 ({signupPct}%)</strong></span>
-                                                        <span>활동: <strong className="text-purple-600">{activeCount}건 ({activePct}%)</strong></span>
-                                                    </div>
+                                                    <span className="text-xs font-bold text-[var(--moca-text)]">{signupCount}명 ({signupPct}%)</span>
                                                 </div>
-                                                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden flex gap-[2px]">
-                                                    <div className="h-full bg-purple-300 rounded-full" style={{ width: `${signupPct}%` }} title={`가입: ${signupCount}명`} />
-                                                    <div className="h-full bg-purple-600 rounded-full" style={{ width: `${activePct}%` }} title={`활동: ${activeCount}건`} />
+                                                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-purple-500 rounded-full transition-all" style={{ width: `${signupPct}%` }} title={`가입: ${signupCount}명`} />
                                                 </div>
                                             </div>
                                         );
