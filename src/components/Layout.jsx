@@ -89,7 +89,7 @@ const Layout = () => {
     }, [location.pathname]); // 경로 이동 시마다 혹시 모를 변경 체크 (선택)
 
     const gradeInfo = GRADE_INFO[userGrade] || GRADE_INFO.SILVER;
-    const gradeColor = (userGrade === 'GOLD' || userGrade === 'VIP' || userGrade === 'VVIP')
+    const gradeColor = (userGrade === 'GOLD' || userGrade === 'IMODEL' || userGrade === 'VIP')
         ? 'text-[#D97706]' : 'text-[#7C3AED]';
     const gradeLabel = gradeInfo.label;
     const gradeEmoji = GRADE_EMOJI[userGrade] || '🤍';

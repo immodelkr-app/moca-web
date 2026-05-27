@@ -29,6 +29,7 @@ import { usePageView } from './hooks/usePageView';
 import { useAutoLogout } from './hooks/useAutoLogout';
 import { useAuthSync } from './hooks/useAuthSync';
 import PopupBanner from './components/PopupBanner';
+import { initializePushNotifications } from './services/pushNotificationService';
 
 function AppContent() {
     usePageView(); // 라우트 변경 감지 및 조회수 기록
@@ -57,8 +58,20 @@ function AppContent() {
             handleBackButton();
         });
 
+        // Initialize push notifications
+        initializePushNotifications();
+
+        // Handle routing from push notifications
+        const handlePushRoute = (e) => {
+            if (e.detail) {
+                navigate(e.detail);
+            }
+        };
+        window.addEventListener('pushNotificationRoute', handlePushRoute);
+
         return () => {
             backButtonListener.then((listener) => listener.remove());
+            window.removeEventListener('pushNotificationRoute', handlePushRoute);
         };
     }, [location.pathname, navigate]);
 

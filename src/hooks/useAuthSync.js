@@ -104,7 +104,7 @@ export const useAuthSync = () => {
                 }
 
                 // 3. 가장 높은 등급 찾기
-                const gradePriority = { VVIP: 4, VIP: 3, GOLD: 2, SILVER: 1, BASIC: 0 };
+                const gradePriority = { VIP: 4, IMODEL: 3, GOLD: 2, SILVER: 1, BASIC: 0 };
                 let bestRecord = emailRecords.reduce((prev, curr) => {
                     return (gradePriority[curr.grade] || 0) > (gradePriority[prev?.grade] || 0) ? curr : prev;
                 }, currentRecord);

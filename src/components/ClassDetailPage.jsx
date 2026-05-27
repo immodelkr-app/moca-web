@@ -66,7 +66,7 @@ const ClassDetailPage = () => {
         if (myGrade === 'GUEST' || myGrade === 'MEMBER') searchTerms.push('일반', '비회원', '기본', '베이직');
         if (myGrade === 'SILVER') searchTerms.push('실버', 'SILVER');
         if (myGrade === 'GOLD') searchTerms.push('골드', 'GOLD');
-        if (myGrade === 'VIP' || myGrade === 'VVIP') searchTerms.push('VIP', 'VVIP', '브이아이피', '전속모델', '전속');
+        if (myGrade === 'IMODEL' || myGrade === 'VIP') searchTerms.push('VIP', 'IMODEL', '아임모델', '전속모델', '전속');
 
         const p = cls.class_pricing.find(item => 
             searchTerms.some(term => item.grade_label.toUpperCase().includes(term))
@@ -310,7 +310,7 @@ const ClassDetailPage = () => {
                             }
                             if (cls.target_grade && cls.target_grade !== 'ALL') {
                                 const myGrade = (currentUser.grade || '').toUpperCase();
-                                const isExclusive = ['VIP', 'VVIP', '전속모델', 'EXCLUSIVE'].some(g => myGrade.includes(g));
+                                const isExclusive = ['VIP', 'IMODEL', '전속모델', '아임모델', 'EXCLUSIVE'].some(g => myGrade.includes(g));
                                 const isGold = isExclusive || ['GOLD', '골드'].some(g => myGrade.includes(g));
                                 
                                 if (cls.target_grade === 'EXCLUSIVE' && !isExclusive) {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser } from '../services/userService';
+import { getUser, GRADE_INFO } from '../services/userService';
 
 // 카카오 플러스채널 링크
 const KAKAO_CHANNEL_URL = 'http://pf.kakao.com/_zlMUxj/chat';
@@ -25,7 +25,7 @@ const UpgradePage = () => {
     const navigate = useNavigate();
     const user = getUser();
     const userGrade = user?.grade || 'SILVER';
-    const isAlreadyGold = ['GOLD', 'VIP', 'VVIP'].includes(userGrade);
+    const isAlreadyGold = ['GOLD', 'IMODEL', 'VIP'].includes(userGrade);
 
     const [selectedPlan, setSelectedPlan] = useState(PLANS[2]); // 6개월 기본 선택
     const [activeTab, setActiveTab] = useState('compare'); // compare | plans
@@ -61,7 +61,7 @@ const UpgradePage = () => {
                     </div>
                     <div>
                         <p className={`text-sm font-black ${isAlreadyGold ? 'text-amber-600' : 'text-[#5B4E7A]'}`}>
-                            현재 등급: {userGrade === 'VIP' ? '전속모델' : userGrade}
+                            현재 등급: {GRADE_INFO[userGrade]?.label || userGrade}
                         </p>
                         <p className="text-[#9CA3AF] text-xs">
                             {isAlreadyGold ? 'GOLD 등급 이용 중입니다 👍' : '지금 신청하면 무제한 에이전시 조회!'}

@@ -37,6 +37,27 @@ async function getSolapiAuth() {
     return `HMAC-SHA256 apiKey=${SOLAPI_API_KEY}, date=${date}, salt=${salt}, signature=${signatureHex}`;
 }
 
+// 🌐 네트워크 오류 발생 시 재시도 로직
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            return response;
+        } catch (error: any) {
+            lastError = error;
+            console.warn(`[aligo-send] Fetch attempt ${attempt} failed:`, error.message || error);
+            
+            if (attempt === maxRetries) {
+                break;
+            }
+            // 500ms, 1000ms 간격으로 지수 백오프 대기
+            await new Promise(resolve => setTimeout(resolve, attempt * 500));
+        }
+    }
+    throw lastError || new Error(`Fetch failed after ${maxRetries} attempts`);
+}
+
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -115,7 +136,7 @@ serve(async (req) => {
             })
 
             console.log(`[aligo-send] 카카오 알림톡 ${validReceivers.length}건 발송 시작`);
-            const response = await fetch('https://api.solapi.com/messages/v4/send-many', {
+            const response = await fetchWithRetry('https://api.solapi.com/messages/v4/send-many', {
                 method: 'POST',
                 headers: {
                     'Authorization': authHeader,
@@ -167,7 +188,7 @@ serve(async (req) => {
                 }
             })
 
-            const response = await fetch('https://api.solapi.com/messages/v4/send-many', {
+            const response = await fetchWithRetry('https://api.solapi.com/messages/v4/send-many', {
                 method: 'POST',
                 headers: {
                     'Authorization': authHeader,
@@ -203,7 +224,7 @@ serve(async (req) => {
                 text: message
             }))
 
-            const response = await fetch('https://api.solapi.com/messages/v4/send-many', {
+            const response = await fetchWithRetry('https://api.solapi.com/messages/v4/send-many', {
                 method: 'POST',
                 headers: {
                     'Authorization': authHeader,

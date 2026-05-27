@@ -197,7 +197,7 @@ const AgencyDirectory = () => {
         setTimeout(() => setToast(null), 3500);
     };
 
-    const isUnlimited = grade === 'GOLD' || grade === 'VIP';
+    const isUnlimited = grade === 'GOLD' || grade === 'IMODEL' || grade === 'VIP';
 
     const handleSend = async (agency) => {
         if (sending) return;
@@ -383,7 +383,7 @@ const AgencyDirectory = () => {
                             <p className="text-[#1F1235] font-black text-[15px]">
                                 이번달 프로필 발송: <span className="text-[#A78BFA]">무제한</span>
                             </p>
-                            <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold">✨ {grade === 'VIP' ? '전속모델' : '골드'} 혜택 · 무제한 발송 가능 · 탭하여 내 프로필 설정</p>
+                            <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold">✨ {GRADE_INFO[grade]?.label || 'GOLD'} 혜택 · 무제한 발송 가능 · 탭하여 내 프로필 설정</p>
                         </div>
                         <span className="material-symbols-outlined text-[20px] text-[#E8E0FA] group-hover:text-[#9333EA] transition-colors">chevron_right</span>
                     </div>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1037379302472",
+    "project_id": "immoca-fcc18",
+    "storage_bucket": "immoca-fcc18.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1037379302472:android:e2d9fc0e9d4b4fb43d147d",
+        "android_client_info": {
+          "package_name": "com.immodel.mocapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_gxQtdj1OG-NOtAYnh1u0tkDX_nAjVVM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

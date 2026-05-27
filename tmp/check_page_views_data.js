@@ -11,7 +11,7 @@ async function checkData() {
     const { data, error } = await supabase
         .from('page_views')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('accessed_at', { ascending: false })
         .limit(10);
 
     if (error) {
@@ -20,7 +20,7 @@ async function checkData() {
     } else {
         console.log('Success. Found', data.length, 'rows.');
         data.forEach(row => {
-            console.log(`Path: ${row.path}, CreatedAt: ${row.created_at}`);
+            console.log(`Path: ${row.path}, AccessedAt: ${row.accessed_at}`);
         });
     }
 }

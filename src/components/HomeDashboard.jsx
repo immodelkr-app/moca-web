@@ -46,8 +46,8 @@ const HomeDashboard = () => {
     }, []);
 
     const gradeInfo = GRADE_INFO[grade] || GRADE_INFO.SILVER;
-    const gradeColor = (grade === 'GOLD' || grade === 'VIP' || grade === 'VVIP') ? 'text-[#D97706]' : 'text-[#7C3AED]';
-    const gradeBg = (grade === 'GOLD' || grade === 'VIP' || grade === 'VVIP') ? 'bg-amber-50 border-amber-200' : 'bg-[#F3E8FF] border-[#E8E0FA]';
+    const gradeColor = (grade === 'GOLD' || grade === 'IMODEL' || grade === 'VIP') ? 'text-[#D97706]' : 'text-[#7C3AED]';
+    const gradeBg = (grade === 'GOLD' || grade === 'IMODEL' || grade === 'VIP') ? 'bg-amber-50 border-amber-200' : 'bg-[#F3E8FF] border-[#E8E0FA]';
 
     return (
         <div className="min-h-screen flex flex-col pb-24" style={{ backgroundColor: 'var(--moca-bg)' }}>

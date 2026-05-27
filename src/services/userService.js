@@ -45,6 +45,7 @@ export const saveUserToSupabase = async (userData) => {
             address_detail: userData.address_detail || userData.detailAddress || null,
             referral_source: userData.referralSource || [],
             grade: userData.grade || 'SILVER',
+            gender: userData.gender || null,
         }])
         .select()
         .single();
@@ -339,7 +340,7 @@ export const syncUserGrade = async () => {
 
         // ── [핵심] 가장 '좋은' 계정 선택 (어드민 설정 우선) ──
         let data = null;
-        const gradePriority = { VVIP: 4, VIP: 3, GOLD: 2, SILVER: 1, BASIC: 1 };
+        const gradePriority = { VIP: 4, IMODEL: 3, GOLD: 2, SILVER: 1, BASIC: 1 };
 
         if (dbRows && dbRows.length > 0) {
             dbRows.forEach(u => {
@@ -384,7 +385,8 @@ export const syncUserGrade = async () => {
                 user.height !== data.height ||
                 user.weight !== data.weight ||
                 user.terms_consent !== data.terms_consent ||
-                user.marketing_consent !== data.marketing_consent;
+                user.marketing_consent !== data.marketing_consent ||
+                user.gender !== data.gender;
 
             if (shouldSync) {
                 console.log(`[syncUserGrade] Syncing: ${user.grade} -> ${currentGrade}, ID: ${user.id} -> ${data.id}`);
@@ -407,7 +409,8 @@ export const syncUserGrade = async () => {
                     weight: data.weight || user.weight,
                     terms_consent: data.terms_consent ?? user.terms_consent,
                     marketing_consent: data.marketing_consent ?? user.marketing_consent,
-                    email: data.email || user.email
+                    email: data.email || user.email,
+                    gender: data.gender || user.gender || null
                 });
             } else {
                 console.log('[syncUserGrade] Already in sync, no update needed.');
@@ -426,19 +429,19 @@ export const syncUserGrade = async () => {
 export const GRADE_INFO = {
     SILVER: { label: 'SILVER', color: '#C0C0C0', bg: 'bg-slate-400/20', text: 'text-slate-300' },
     GOLD: { label: 'GOLD', color: '#F59E0B', bg: 'bg-yellow-500/20', text: 'text-yellow-300' },
-    VIP: { label: '전속모델', color: '#A78BFA', bg: 'bg-purple-500/20', text: 'text-purple-300' },
-    VVIP: { label: 'VVIP모카', color: '#8B5CF6', bg: 'bg-indigo-500/20', text: 'text-indigo-300' },
+    IMODEL: { label: '아임모델', color: '#EC4899', bg: 'bg-pink-500/20', text: 'text-pink-300' },
+    VIP: { label: '전속모델', color: '#8B5CF6', bg: 'bg-purple-500/20', text: 'text-purple-300' },
 };
 
 /**
  * 등급별 이모티콘 (이름 앞에 표시)
- * SILVER: ⭐ / GOLD: 🌟
+ * SILVER: 🤍 / GOLD: 👑 / IMODEL: 🌸 / VIP: 💎
  */
 export const GRADE_EMOJI = {
     SILVER: '🤍',
     GOLD: '👑',
-    VIP: '💜',
-    VVIP: '💎',
+    IMODEL: '🌸',
+    VIP: '💎',
 };
 
 /**

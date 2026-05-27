@@ -214,7 +214,7 @@ const SmartProfile = () => {
     };
 
     // 등급 체크: GOLD 이상만 현재모습 사진 사용 가능
-    const ALLOWED_GRADES = ['GOLD', 'VIP', 'VVIP'];
+    const ALLOWED_GRADES = ['GOLD', 'IMODEL', 'VIP'];
     const isPhotoAllowed = ALLOWED_GRADES.includes(user?.grade);
 
     const handleCurrentPhotoClick = () => {

@@ -36,6 +36,7 @@ const AdminPage = () => {
     const [contracts, setContracts] = useState([]);
     const [selectedContract, setSelectedContract] = useState(null);
     const [isContractViewerOpen, setIsContractViewerOpen] = useState(false);
+    const [selectedUserForDetail, setSelectedUserForDetail] = useState(null);
 
     // Lounge Announcement State
     const [announcementTitle, setAnnouncementTitle] = useState('');
@@ -118,18 +119,45 @@ const AdminPage = () => {
             if (fetchUsersError) throw fetchUsersError;
             setUsers(usersData || []);
 
-            // 2. 조회수 데이터
-            const { data: viewsData, error: fetchViewsError } = await supabase
-                .from('page_views')
-                .select('*')
-                .order('accessed_at', { ascending: false });
+            // 2. 조회수 데이터 (최근 30일 데이터만 조회하며 1000개 제한 우회를 위해 페이지네이션 처리)
+            let allViews = [];
+            let viewPage = 0;
+            const viewPageSize = 1000;
+            let hasMoreViews = true;
+            let fetchViewsError = null;
+            const thirtyDaysAgoIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+            while (hasMoreViews) {
+                const { data: viewsChunk, error: chunkError } = await supabase
+                    .from('page_views')
+                    .select('*')
+                    .gte('accessed_at', thirtyDaysAgoIso)
+                    .order('accessed_at', { ascending: false })
+                    .range(viewPage * viewPageSize, (viewPage + 1) * viewPageSize - 1);
+
+                if (chunkError) {
+                    fetchViewsError = chunkError;
+                    hasMoreViews = false;
+                    break;
+                }
+
+                if (viewsChunk && viewsChunk.length > 0) {
+                    allViews = [...allViews, ...viewsChunk];
+                    if (viewsChunk.length < viewPageSize) {
+                        hasMoreViews = false;
+                    } else {
+                        viewPage++;
+                    }
+                } else {
+                    hasMoreViews = false;
+                }
+            }
 
             if (fetchViewsError) {
-                // page_views 테이블이 없을 가능성이 높으므로 치명적 에러로 처리하지 않음
                 console.warn('page_views 테이블을 찾을 수 없습니다.');
                 setPageViews([]);
             } else {
-                setPageViews(viewsData || []);
+                setPageViews(allViews);
             }
 
             // 5. 전속계약서 목록
@@ -195,8 +223,8 @@ const AdminPage = () => {
                 } else {
                     updates.grade_expires_at = null; // 기간 미지정인 경우 만료일 초기화 (조기 강등 방지)
                 }
-            } else if (newGrade === 'SILVER') {
-                updates.grade_expires_at = null; // 실버로 강등 시 만료일 초기화
+            } else if (newGrade === 'SILVER' || newGrade === 'IMODEL' || newGrade === 'VIP') {
+                updates.grade_expires_at = null; // 만료일 없이 수동 부여
             }
 
             const { error: updateError } = await supabase
@@ -216,13 +244,13 @@ const AdminPage = () => {
                 const userName = userInfo.name || userInfo.nickname || '회원';
 
                 // 알리고에 승인된 내용과 토씨 하나 틀리지 않게 작성 (변수 치환)
-                let displayGrade = newGrade;
+                let displayGrade = GRADE_INFO[newGrade]?.label || newGrade;
                 if (newGrade === 'GOLD' && months) {
                     displayGrade = `GOLD (${months}개월)`;
-                } else if (newGrade === 'VIP') {
-                    displayGrade = '전속모델';
                 }
-                const templateText = `안녕하세요 ${userName}님,\n모두의 캐스팅 매니저, 아임모카(IM MOCA)입니다.\n\n${userName}님의 모카(MOCA) 등급이 아래와 같이 변경되어 안내해 드립니다.\n\n■ 변경 등급: ${displayGrade}\n■ 적용 일자: ${todayStr}\n■ ${newGrade === 'VIP' ? '전속모델' : 'GOLD 등급'} 만료일: ${expiresStr}\n\n새로운 등급으로 상향되심을 축하드립니다!\n업그레이드된 등급으로 새롭게 제공되는 스페셜 혜택들은 아임모카(IM MOCA)에서 상세히 확인하실 수 있습니다.`;
+                const expiresLabel = (newGrade === 'VIP' || newGrade === 'IMODEL') ? displayGrade : 'GOLD 등급';
+                const templateText = `안녕하세요 ${userName}님,\n모두의 캐스팅 매니저, 아임모카(IM MOCA)입니다.\n\n${userName}님의 모카(MOCA) 등급이 아래와 같이 변경되어 안내해 드립니다.\n\n■ 변경 등급: ${displayGrade}\n■ 적용 일자: ${todayStr}\n■ ${expiresLabel} 만료일: ${expiresStr}\n\n새로운 등급으로 상향되심을 축하드립니다!\n업그레이드된 등급으로 새롭게 제공되는 스페셜 혜택들은 아임모카(IM MOCA)에서 상세히 확인하실 수 있습니다.`;
+
 
                 sendAlimtalk('KA01TP26030909163775811k3Q5BZRBk', [{
                     phone: userInfo.phone,
@@ -421,7 +449,7 @@ const AdminPage = () => {
         }
     };
 
-    const grades = ['SILVER', 'GOLD', 'VIP', 'VVIP'];
+    const grades = ['SILVER', 'GOLD', 'IMODEL', 'VIP'];
 
     // 모든 유저의 등급을 일관되게 매핑 (BASIC -> SILVER 등)
     const processedUsers = useMemo(() => users.map(u => {
@@ -523,6 +551,115 @@ const AdminPage = () => {
     const top5Places = Object.entries(placeCount)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5);
+
+    // ==========================================
+    // 3. 가입자 및 방문/활동 통계 (성별 및 연령대 비율)
+    // ==========================================
+    const totalUsersCount = users.length;
+    const signupMaleCount = users.filter(u => u.gender === '남').length;
+    const signupFemaleCount = users.filter(u => u.gender === '여').length;
+    const signupUnspecifiedGenderCount = totalUsersCount - signupMaleCount - signupFemaleCount;
+
+    const signupMalePercent = totalUsersCount ? Math.round((signupMaleCount / totalUsersCount) * 100) : 0;
+    const signupFemalePercent = totalUsersCount ? Math.round((signupFemaleCount / totalUsersCount) * 100) : 0;
+    const signupUnspecifiedGenderPercent = totalUsersCount ? (100 - signupMalePercent - signupFemalePercent) : 0;
+
+    const getAge = (ageStr) => {
+        if (!ageStr) return null;
+        const val = parseInt(ageStr, 10);
+        if (isNaN(val)) return null;
+        if (val > 1900) return currentYear - val; // birth year
+        return val; // direct age
+    };
+
+    const signupAgeGroups = {
+        under20: 0,
+        age20s: 0,
+        age30s: 0,
+        age40s: 0,
+        age50s: 0,
+        age60s: 0,
+        age70s: 0,
+        age80sPlus: 0,
+        unspecified: 0
+    };
+
+    users.forEach(u => {
+        const age = getAge(u.age);
+        if (age === null) {
+            signupAgeGroups.unspecified++;
+        } else if (age < 20) {
+            signupAgeGroups.under20++;
+        } else if (age >= 20 && age <= 29) {
+            signupAgeGroups.age20s++;
+        } else if (age >= 30 && age <= 39) {
+            signupAgeGroups.age30s++;
+        } else if (age >= 40 && age <= 49) {
+            signupAgeGroups.age40s++;
+        } else if (age >= 50 && age <= 59) {
+            signupAgeGroups.age50s++;
+        } else if (age >= 60 && age <= 69) {
+            signupAgeGroups.age60s++;
+        } else if (age >= 70 && age <= 79) {
+            signupAgeGroups.age70s++;
+        } else {
+            signupAgeGroups.age80sPlus++;
+        }
+    });
+
+    let activeMaleCount = 0;
+    let activeFemaleCount = 0;
+    let activeUnspecifiedGenderCount = 0;
+
+    const activeAgeGroups = {
+        under20: 0,
+        age20s: 0,
+        age30s: 0,
+        age40s: 0,
+        age50s: 0,
+        age60s: 0,
+        age70s: 0,
+        age80sPlus: 0,
+        unspecified: 0
+    };
+
+    thisMonthDiaries.forEach(d => {
+        const uInfo = users.find(u => u.nickname === d.nickname);
+        if (uInfo) {
+            if (uInfo.gender === '남') activeMaleCount++;
+            else if (uInfo.gender === '여') activeFemaleCount++;
+            else activeUnspecifiedGenderCount++;
+
+            const age = getAge(uInfo.age);
+            if (age === null) {
+                activeAgeGroups.unspecified++;
+            } else if (age < 20) {
+                activeAgeGroups.under20++;
+            } else if (age >= 20 && age <= 29) {
+                activeAgeGroups.age20s++;
+            } else if (age >= 30 && age <= 39) {
+                activeAgeGroups.age30s++;
+            } else if (age >= 40 && age <= 49) {
+                activeAgeGroups.age40s++;
+            } else if (age >= 50 && age <= 59) {
+                activeAgeGroups.age50s++;
+            } else if (age >= 60 && age <= 69) {
+                activeAgeGroups.age60s++;
+            } else if (age >= 70 && age <= 79) {
+                activeAgeGroups.age70s++;
+            } else {
+                activeAgeGroups.age80sPlus++;
+            }
+        } else {
+            activeUnspecifiedGenderCount++;
+            activeAgeGroups.unspecified++;
+        }
+    });
+
+    const totalActiveCount = thisMonthDiaries.length;
+    const activeMalePercent = totalActiveCount ? Math.round((activeMaleCount / totalActiveCount) * 100) : 0;
+    const activeFemalePercent = totalActiveCount ? Math.round((activeFemaleCount / totalActiveCount) * 100) : 0;
+    const activeUnspecifiedGenderPercent = totalActiveCount ? (100 - activeMalePercent - activeFemalePercent) : 0;
 
     // 엑셀 다운로드 (xlsx)
     const handleExportExcel = () => {
@@ -775,6 +912,111 @@ const AdminPage = () => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* 가입 및 활동 분석 (성별 / 연령대 비율) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 animate-fadeIn">
+                            {/* 성별 비율 카드 */}
+                            <div className="rounded-2xl border border-[var(--moca-border)] bg-white p-6">
+                                <h3 className="text-[var(--moca-text)] font-bold flex items-center gap-2 mb-1">
+                                    <span className="material-symbols-outlined text-purple-500">wc</span>
+                                    회원 성별 분포
+                                </h3>
+                                <p className="text-[var(--moca-text-3)] text-[11px] mb-4">전체 가입자 및 선택 기간 방문 회원의 성별 비율</p>
+                                
+                                <div className="space-y-6">
+                                    {/* 가입자 성별 비율 */}
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <span className="text-xs font-bold text-[var(--moca-text-2)]">전체 가입자 ({totalUsersCount}명)</span>
+                                            <span className="text-[11px] text-[var(--moca-text-3)] font-bold">
+                                                남 {signupMalePercent}% | 여 {signupFemalePercent}%
+                                                {signupUnspecifiedGenderCount > 0 && ` | 미지정 ${signupUnspecifiedGenderPercent}%`}
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden flex">
+                                            <div className="h-full bg-blue-400 transition-all" style={{ width: `${signupMalePercent}%` }} title={`남성: ${signupMaleCount}명`} />
+                                            <div className="h-full bg-pink-400 transition-all" style={{ width: `${signupFemalePercent}%` }} title={`여성: ${signupFemaleCount}명`} />
+                                            <div className="h-full bg-gray-300 transition-all" style={{ width: `${signupUnspecifiedGenderPercent}%` }} title={`미지정: ${signupUnspecifiedGenderCount}명`} />
+                                        </div>
+                                    </div>
+
+                                    {/* 활동 회원 성별 비율 */}
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <span className="text-xs font-bold text-[var(--moca-text-2)]">
+                                                활동/방문 회원 ({totalActiveCount}건)
+                                                <span className="text-[10px] text-purple-500 ml-1">
+                                                    ({statsMonth === 0 ? '올해 전체' : `${statsMonth}월`})
+                                                </span>
+                                            </span>
+                                            <span className="text-[11px] text-[var(--moca-text-3)] font-bold">
+                                                남 {activeMalePercent}% | 여 {activeFemalePercent}%
+                                                {activeUnspecifiedGenderCount > 0 && ` | 미지정 ${activeUnspecifiedGenderPercent}%`}
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden flex">
+                                            <div className="h-full bg-blue-500 transition-all" style={{ width: `${activeMalePercent}%` }} title={`남성 활동: ${activeMaleCount}건`} />
+                                            <div className="h-full bg-pink-500 transition-all" style={{ width: `${activeFemalePercent}%` }} title={`여성 활동: ${activeFemaleCount}건`} />
+                                            <div className="h-full bg-gray-400 transition-all" style={{ width: `${activeUnspecifiedGenderPercent}%` }} title={`미지정 활동: ${activeUnspecifiedGenderCount}건`} />
+                                        </div>
+                                    </div>
+                                    
+                                    {/* 안내 라벨 */}
+                                    <div className="flex items-center justify-center gap-4 pt-2 border-t border-gray-100 text-[10px] font-black">
+                                        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-blue-400 rounded-full"></span><span className="text-gray-500">남성</span></div>
+                                        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-pink-400 rounded-full"></span><span className="text-gray-500">여성</span></div>
+                                        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-gray-300 rounded-full"></span><span className="text-gray-500">미지정</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 연령대 비율 카드 */}
+                            <div className="rounded-2xl border border-[var(--moca-border)] bg-white p-6">
+                                <h3 className="text-[var(--moca-text)] font-bold flex items-center gap-2 mb-1">
+                                    <span className="material-symbols-outlined text-purple-500">bar_chart</span>
+                                    회원 연령대 분포
+                                </h3>
+                                <p className="text-[var(--moca-text-3)] text-[11px] mb-4">10대부터 80대 이상까지의 분포 비율 (가입 / 활동)</p>
+                                
+                                <div className="space-y-2 max-h-[175px] overflow-y-auto pr-1">
+                                    {[
+                                        { label: '20대 미만', key: 'under20' },
+                                        { label: '20대', key: 'age20s' },
+                                        { label: '30대', key: 'age30s' },
+                                        { label: '40대', key: 'age40s' },
+                                        { label: '50대', key: 'age50s' },
+                                        { label: '60대', key: 'age60s' },
+                                        { label: '70대', key: 'age70s' },
+                                        { label: '80대 이상', key: 'age80sPlus' },
+                                        { label: '미지정', key: 'unspecified' }
+                                    ].map(({ label, key }) => {
+                                        const signupCount = signupAgeGroups[key] || 0;
+                                        const signupPct = totalUsersCount ? Math.round((signupCount / totalUsersCount) * 100) : 0;
+
+                                        const activeCount = activeAgeGroups[key] || 0;
+                                        const activePct = totalActiveCount ? Math.round((activeCount / totalActiveCount) * 100) : 0;
+
+                                        if (signupCount === 0 && activeCount === 0) return null; // 데이터가 둘 다 없으면 숨김
+
+                                        return (
+                                            <div key={key} className="flex flex-col gap-1 py-1 border-b border-gray-50 last:border-0">
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="font-bold text-[var(--moca-text-2)]">{label}</span>
+                                                    <div className="flex gap-3 text-[10px] text-gray-500 font-medium">
+                                                        <span>가입: <strong className="text-[var(--moca-text)]">{signupCount}명 ({signupPct}%)</strong></span>
+                                                        <span>활동: <strong className="text-purple-600">{activeCount}건 ({activePct}%)</strong></span>
+                                                    </div>
+                                                </div>
+                                                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden flex gap-[2px]">
+                                                    <div className="h-full bg-purple-300 rounded-full" style={{ width: `${signupPct}%` }} title={`가입: ${signupCount}명`} />
+                                                    <div className="h-full bg-purple-600 rounded-full" style={{ width: `${activePct}%` }} title={`활동: ${activeCount}건`} />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
 
                         {/* 프로필 발송 통계 */}
@@ -1034,7 +1276,7 @@ const AdminPage = () => {
                                             : 'bg-[var(--moca-surface-2)] border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-[var(--moca-text)]'
                                             }`}
                                     >
-                                        {g === 'ALL' ? '전체' : `${GRADE_EMOJI[g]} ${g === 'VIP' ? '전속모델' : g}`}
+                                        {g === 'ALL' ? '전체' : `${GRADE_EMOJI[g]} ${GRADE_INFO[g]?.label || g}`}
                                     </button>
                                 ))}
                             </div>
@@ -1073,13 +1315,12 @@ const AdminPage = () => {
                                     <div className="min-w-[900px]">
                                         {/* Table Header */}
                                         <div className="grid grid-cols-12 gap-3 px-5 py-3 border-b border-[var(--moca-border)] text-[var(--moca-text-3)] text-xs font-black uppercase tracking-widest bg-[var(--moca-surface-2)]">
-                                            <div className="col-span-2">닉네임</div>
-                                            <div className="col-span-1">이름</div>
-                                            <div className="col-span-2">연락처</div>
-                                            <div className="col-span-2">주소</div>
-                                            <div className="col-span-1">경로</div>
+                                            <div className="col-span-3">닉네임</div>
+                                            <div className="col-span-1">성별</div>
+                                            <div className="col-span-2">이름</div>
+                                            <div className="col-span-1">생년</div>
                                             <div className="col-span-2">등급</div>
-                                            <div className="col-span-1">가입일</div>
+                                            <div className="col-span-2">가입일</div>
                                             <div className="col-span-1 text-center">관리</div>
                                         </div>
 
@@ -1102,57 +1343,27 @@ const AdminPage = () => {
                                                             }`}
                                                     >
                                                         {/* 닉네임 */}
-                                                        <div className="col-span-2 flex items-center gap-2 min-w-0">
+                                                        <div
+                                                            className="col-span-3 flex items-center gap-2 min-w-0 cursor-pointer hover:text-[var(--moca-primary)] group"
+                                                            onClick={() => setSelectedUserForDetail(user)}
+                                                        >
                                                             <span className="text-lg flex-shrink-0">{emoji}</span>
                                                             <div className="min-w-0">
-                                                                <p className="text-[var(--moca-text)] font-bold text-sm truncate" title={user.nickname}>{user.nickname}</p>
+                                                                <p className="text-[var(--moca-text)] font-bold text-sm truncate group-hover:underline" title={user.nickname}>{user.nickname}</p>
                                                             </div>
+                                                        </div>
+
+                                                        {/* 성별 */}
+                                                        <div className="col-span-1 text-[var(--moca-text-2)] text-sm font-medium">
+                                                            {user.gender || '-'}
                                                         </div>
 
                                                         {/* 이름 */}
-                                                        <div className="col-span-1 text-[var(--moca-text-2)] text-sm truncate" title={user.name}>{user.name}</div>
+                                                        <div className="col-span-2 text-[var(--moca-text-2)] text-sm truncate font-medium" title={user.name}>{user.name}</div>
 
-                                                        {/* 연락처 및 복사/문자 버튼 */}
-                                                        <div className="col-span-2 flex flex-col items-start gap-1 w-full overflow-hidden">
-                                                            <div className="text-[var(--moca-text-2)] text-xs truncate w-full" title={user.phone}>
-                                                                {user.phone}
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5 mt-0.5">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        navigator.clipboard.writeText(user.phone);
-                                                                        setSuccessMsg('연락처 복사 완료!');
-                                                                        setTimeout(() => setSuccessMsg(''), 2000);
-                                                                    }}
-                                                                    className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--moca-surface-2)] hover:bg-[var(--moca-primary-lt)] border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-[var(--moca-text)] transition-colors text-[10px]"
-                                                                    title="번호 복사"
-                                                                >
-                                                                    <span className="material-symbols-outlined text-[10px]">content_copy</span>
-                                                                    복사
-                                                                </button>
-                                                                <a
-                                                                    href={`sms:${user.phone.replace(/-/g, '')}`}
-                                                                    className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--moca-primary-lt)] hover:bg-[var(--moca-primary)]/30 border border-[var(--moca-primary)]/30 text-[var(--moca-primary)] hover:text-[var(--moca-text)] transition-colors text-[10px]"
-                                                                    title="문자 보내기"
-                                                                >
-                                                                    <span className="material-symbols-outlined text-[10px]">sms</span>
-                                                                    문자
-                                                                </a>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* 주소 */}
-                                                        <div className="col-span-2 text-[var(--moca-text-2)] text-[11px] leading-tight line-clamp-2" title={user.address}>
-                                                            {user.address || '-'}
-                                                        </div>
-
-                                                        {/* 가입경로 */}
-                                                        <div className="col-span-1 flex flex-wrap gap-1">
-                                                            {(user.referral_source || []).map(s => (
-                                                                <span key={s} className="px-1.5 py-0.5 rounded-full text-[10px] bg-[var(--moca-surface-2)] text-[var(--moca-text-3)] font-bold whitespace-nowrap">
-                                                                    {referralLabels[s] || s}
-                                                                </span>
-                                                            ))}
+                                                        {/* 생년 */}
+                                                        <div className="col-span-1 text-[var(--moca-text-2)] text-sm font-medium">
+                                                            {user.age ? `${user.age}년` : '-'}
                                                         </div>
 
                                                         {/* 등급 변경 */}
@@ -1202,7 +1413,7 @@ const AdminPage = () => {
                                                         </div>
 
                                                         {/* 가입일 */}
-                                                        <div className="col-span-1 text-[var(--moca-text-3)] text-[10px]">
+                                                        <div className="col-span-2 text-[var(--moca-text-3)] text-xs">
                                                             {new Date(user.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
                                                         </div>
 
@@ -1504,7 +1715,7 @@ const AdminPage = () => {
                                     >
                                         <option value="ALL">전체 회원</option>
                                         {grades.map(g => (
-                                            <option key={g} value={g}>{GRADE_EMOJI[g]} {g === 'VIP' ? '전속모델' : g} 등급 회원</option>
+                                            <option key={g} value={g}>{GRADE_EMOJI[g]} {GRADE_INFO[g]?.label || g} 등급 회원</option>
                                         ))}
                                     </select>
                                     <p className="text-xs text-[var(--moca-text-3)] mt-2">
@@ -2420,6 +2631,212 @@ const AdminPage = () => {
                     );
                 })()}
 
+                {selectedUserForDetail && (
+                    <AdminUserDetailModal
+                        user={selectedUserForDetail}
+                        onClose={() => setSelectedUserForDetail(null)}
+                    />
+                )}
+            </div>
+        </div>
+    );
+};
+
+// 회원 상세 모달 컴포넌트
+const AdminUserDetailModal = ({ user, onClose }) => {
+    if (!user) return null;
+
+    const referralLabels = {
+        sns: 'SNS (인스타그램/페이스북 등)',
+        friend: '지인 소개',
+        youtube: '유튜브',
+        blog: '블로그/카페',
+        other: '기타 경로'
+    };
+
+    const gradeInfo = GRADE_INFO[user.grade] || GRADE_INFO.SILVER;
+    const emoji = GRADE_EMOJI[user.grade] || GRADE_EMOJI.SILVER;
+
+    return (
+        <div className="fixed inset-0 bg-[#0c0714]/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fadeIn">
+            <div className="bg-white border border-[var(--moca-border)] w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl animate-scaleUp max-h-[90vh] flex flex-col animate-fadeIn">
+                {/* Header */}
+                <div className="px-6 py-5 border-b border-[var(--moca-border)] flex items-center justify-between bg-[var(--moca-surface-2)]">
+                    <div className="flex items-center gap-3 bg-transparent">
+                        <span className="text-3xl">{emoji}</span>
+                        <div>
+                            <h3 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2">
+                                {user.nickname}
+                                <span className={`text-[11px] font-black px-2 py-0.5 rounded-full ${gradeInfo.bg} ${gradeInfo.text}`}>
+                                    {gradeInfo.label}
+                                </span>
+                            </h3>
+                            <p className="text-xs text-[var(--moca-text-3)] mt-0.5">회원 상세 정보</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="w-9 h-9 rounded-full bg-white hover:bg-[var(--moca-primary-lt)] border border-[var(--moca-border)] flex items-center justify-center text-[var(--moca-text-3)] hover:text-[var(--moca-text)] transition"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+                </div>
+
+                {/* Body (Scrollable) */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {/* 기본 신상 */}
+                    <div>
+                        <h4 className="text-xs font-black text-[var(--moca-primary)] uppercase tracking-wider mb-3">기본 정보</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)]">
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">이름</span>
+                                <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.name || '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">성별</span>
+                                <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.gender || '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">생년</span>
+                                <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.age ? `${user.age}년생` : '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">가입일</span>
+                                <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">
+                                    {user.created_at ? new Date(user.created_at).toLocaleString('ko-KR') : '-'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 연락처 및 계정 */}
+                    <div>
+                        <h4 className="text-xs font-black text-[var(--moca-primary)] uppercase tracking-wider mb-3">연락처 및 계정</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)]">
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">연락처</span>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <p className="text-sm font-bold text-[var(--moca-text)]">{user.phone || '-'}</p>
+                                    {user.phone && (
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(user.phone);
+                                                alert('연락처가 복사되었습니다!');
+                                            }}
+                                            className="px-1.5 py-0.5 rounded bg-white border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-[var(--moca-text)] transition text-[10px] font-bold"
+                                        >
+                                            복사
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">이메일</span>
+                                <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.email || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 주소 정보 */}
+                    <div>
+                        <h4 className="text-xs font-black text-[var(--moca-primary)] uppercase tracking-wider mb-3">주소지 정보</h4>
+                        <div className="bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)] space-y-3">
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">기본 주소</span>
+                                <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.address || '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">상세 주소</span>
+                                <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.address_detail || user.detailAddress || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 스펙 및 포트폴리오 */}
+                    <div>
+                        <h4 className="text-xs font-black text-[var(--moca-primary)] uppercase tracking-wider mb-3">스펙 및 포트폴리오</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)] mb-4">
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">키 (Height)</span>
+                                <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.height ? `${user.height} cm` : '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">몸무게 (Weight)</span>
+                                <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.weight ? `${user.weight} kg` : '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">신발 사이즈 (Shoe Size)</span>
+                                <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.shoe_size ? `${user.shoe_size} mm` : '-'}</p>
+                            </div>
+                        </div>
+                        <div className="bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)]">
+                            <span className="text-xs text-[var(--moca-text-3)]">포트폴리오 링크</span>
+                            {user.portfolio_link ? (
+                                <a
+                                    href={user.portfolio_link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-sm font-bold text-purple-600 hover:underline mt-0.5 break-all flex items-center gap-1"
+                                >
+                                    {user.portfolio_link}
+                                    <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                                </a>
+                            ) : (
+                                <p className="text-sm font-bold text-[var(--moca-text-3)] mt-0.5">등록된 링크 없음</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 가입 경로 */}
+                    <div>
+                        <h4 className="text-xs font-black text-[var(--moca-primary)] uppercase tracking-wider mb-3">가입 경로</h4>
+                        <div className="bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)]">
+                            <div className="flex flex-wrap gap-2">
+                                {Array.isArray(user.referral_source) && user.referral_source.length > 0 ? (
+                                    user.referral_source.map(source => (
+                                        <span
+                                            key={source}
+                                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-[var(--moca-border)] text-[var(--moca-text-2)]"
+                                        >
+                                            {referralLabels[source] || source}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="text-sm font-bold text-[var(--moca-text-3)]">기록 없음</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 경력 사항 */}
+                    <div>
+                        <h4 className="text-xs font-black text-[var(--moca-primary)] uppercase tracking-wider mb-3">경력 사항</h4>
+                        <div className="bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)] space-y-4">
+                            <div>
+                                <span className="text-xs text-[var(--moca-text-3)]">상업 광고 경력</span>
+                                <p className="text-sm text-[var(--moca-text-2)] mt-1 leading-relaxed whitespace-pre-wrap">
+                                    {user.career_ad || '경력 없음'}
+                                </p>
+                            </div>
+                            <div className="border-t border-[var(--moca-border)] pt-3">
+                                <span className="text-xs text-[var(--moca-text-3)]">기타 방송/촬영 경력</span>
+                                <p className="text-sm text-[var(--moca-text-2)] mt-1 leading-relaxed whitespace-pre-wrap">
+                                    {user.career_other || '경력 없음'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-[var(--moca-border)] bg-[var(--moca-surface-2)] flex justify-end">
+                    <button
+                        onClick={onClose}
+                        className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold transition shadow-md"
+                    >
+                        닫기
+                    </button>
+                </div>
             </div>
         </div>
     );

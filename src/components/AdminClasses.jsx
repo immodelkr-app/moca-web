@@ -659,6 +659,53 @@ const AdminClasses = () => {
                                     </div>
                                 </div>
 
+                                {/* 등급별 참가비 설정 */}
+                                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest">등급별 참가비 설정</label>
+                                        <span className="text-[10px] text-slate-400 font-bold">회원 등급에 따라 자동으로 금액이 적용됩니다</span>
+                                    </div>
+                                    {pricing.map((p, idx) => {
+                                        const gradeColors = {
+                                            'SILVER': { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-600', focus: 'focus:border-blue-400' },
+                                            'GOLD':   { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-600', focus: 'focus:border-amber-400' },
+                                        };
+                                        const key = p.grade_label.toUpperCase().includes('SILVER') ? 'SILVER'
+                                            : p.grade_label.toUpperCase().includes('GOLD') ? 'GOLD'
+                                            : 'DEFAULT';
+                                        const c = gradeColors[key] || { bg: 'bg-indigo-50', border: 'border-indigo-200', badge: 'bg-indigo-100 text-indigo-600', focus: 'focus:border-indigo-400' };
+                                        return (
+                                            <div key={idx} className={`flex items-center gap-4 p-4 rounded-2xl border ${c.bg} ${c.border}`}>
+                                                <span className={`px-3 py-1 rounded-full text-xs font-black whitespace-nowrap ${c.badge}`}>
+                                                    {p.grade_label}
+                                                </span>
+                                                <div className="flex-1 flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="1000"
+                                                        value={p.price}
+                                                        onChange={e => {
+                                                            const updated = [...pricing];
+                                                            updated[idx] = { ...updated[idx], price: parseInt(e.target.value) || 0 };
+                                                            setPricing(updated);
+                                                        }}
+                                                        placeholder="0"
+                                                        className={`flex-1 bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-right outline-none transition-all ${c.focus} focus:ring-1 focus:ring-offset-0`}
+                                                    />
+                                                    <span className="text-sm font-black text-slate-500 flex-shrink-0">원</span>
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-400 whitespace-nowrap">
+                                                    {p.price === 0 ? '무료' : `${Number(p.price).toLocaleString()}원`}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                    <p className="text-[11px] text-slate-400 font-bold pt-1 pl-1">
+                                        💡 0원으로 설정하면 해당 등급 회원에게 무료로 표시됩니다.
+                                    </p>
+                                </div>
+
                                 {/* Detailed Description */}
                                 <div>
                                     <label className="block text-sm font-black text-slate-700 mb-3">상세 내용 및 소개</label>

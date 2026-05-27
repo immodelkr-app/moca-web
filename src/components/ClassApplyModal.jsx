@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 
 const GRADE_EMOJI = {
-    GUEST: '👤', MEMBER: '👤', SILVER: '🥈', GOLD: '🌟', VIP: '💎', VVIP: '💎', 전속모델: '👑'
+    GUEST: '👤', MEMBER: '👤', SILVER: '🤍', GOLD: '👑', IMODEL: '🌸', VIP: '💎', 전속모델: '💎'
 };
 
 const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSuccess }) => {
