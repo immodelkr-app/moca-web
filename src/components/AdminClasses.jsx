@@ -6,6 +6,18 @@ import { sendBulkMessage } from '../services/solapiService';
 const CLASS_BUCKET = 'class-images';
 const MAX_FILE_MB = 10;
 
+// Helper to get applicant's latest grade
+const getApplicantGrade = (app) => {
+    const currentGrade = app?.users?.grade;
+    if (currentGrade) {
+        if (currentGrade === 'SILVER') return '🥈 SILVER';
+        if (currentGrade === 'GOLD') return '🌟 GOLD';
+        if (currentGrade === 'IMODEL') return '🌸 아임모델';
+        if (currentGrade === 'VIP') return '👑 전속모델';
+    }
+    return app?.grade_label || '🥈 SILVER';
+};
+
 // ── 클래스 포스터 업로더 ──────────────────────────────────────────────────────
 const ClassPosterUploader = ({ value, onChange, onError }) => {
     const [preview, setPreview] = useState(value || '');
@@ -333,7 +345,7 @@ const AdminClasses = () => {
             applicants.length - idx,
             app.users?.name || app.users?.nickname || '-',
             app.users?.phone || '-',
-            app.grade_label || app.users?.grade || 'SILVER',
+            getApplicantGrade(app),
             app.approval_status === 'approved' ? '승인' : '대기'
         ]);
 
@@ -839,7 +851,7 @@ const AdminClasses = () => {
                                                     </td>
                                                     <td className="px-4 py-5">
                                                         <span className="px-2.5 py-1 rounded-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[10px] font-black text-[var(--moca-text-2)] uppercase">
-                                                            {app.grade_label || app.users?.grade || 'SILVER'}
+                                                            {getApplicantGrade(app)}
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-5 text-center">
@@ -921,7 +933,7 @@ const AdminClasses = () => {
                                         <span className="text-xs text-slate-500 font-bold ml-1.5">({approveModal.app?.users?.phone || approveModal.app?.user_phone || '-'})</span>
                                     </span>
                                     <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-black">
-                                        {approveModal.app?.grade_label || approveModal.app?.users?.grade || 'SILVER'}
+                                        {getApplicantGrade(approveModal.app)}
                                     </span>
                                 </div>
                             </div>
