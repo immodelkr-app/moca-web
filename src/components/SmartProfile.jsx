@@ -16,6 +16,7 @@ const SmartProfile = () => {
 
     const [formData, setFormData] = useState({
         name: '',            // 이름(본명)
+        gender: '',          // 성별 '남' | '여'
         height: '',
         weight: '',
         age: '',
@@ -43,6 +44,7 @@ const SmartProfile = () => {
         if (!user) return;
         setFormData({
             name: user.name || '',
+            gender: user.gender || '',
             height: user.height || '',
             weight: user.weight || '',
             age: user.age || '',
@@ -374,17 +376,52 @@ const SmartProfile = () => {
                         <h2 className="font-black text-[#1F1235] text-base">모델 프로필</h2>
                     </div>
 
-                    {/* 이름 필드 추가 */}
-                    <div className="space-y-1.5 mb-5">
-                        <label className="text-[#5B4E7A] text-[11px] font-bold ml-1">이름 (본명) <span className="text-[#9333EA] font-black">*</span></label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            placeholder="예) 홍길동"
-                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-colors"
-                        />
+                    {/* 이름 및 성별 필드 */}
+                    <div className="grid grid-cols-2 gap-3 mb-5">
+                        <div className="space-y-1.5">
+                            <label className="text-[#5B4E7A] text-[11px] font-bold ml-1">이름 (본명) <span className="text-[#9333EA] font-black">*</span></label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                placeholder="예) 홍길동"
+                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-colors"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[#5B4E7A] text-[11px] font-bold ml-1">성별 <span className="text-[#9333EA] font-black">*</span></label>
+                            <div className="flex gap-2 h-[46px]">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData(prev => ({ ...prev, gender: '남' }));
+                                        setErrorMsg('');
+                                    }}
+                                    className={`flex-1 rounded-xl border-2 font-bold text-sm transition-all ${
+                                        formData.gender === '남'
+                                            ? 'bg-[#9333EA] border-[#9333EA] text-white shadow-moca'
+                                            : 'bg-[#F8F5FF] border-[#E8E0FA] text-[#5B4E7A] hover:bg-[#F3E8FF]'
+                                    }`}
+                                >
+                                    남자
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData(prev => ({ ...prev, gender: '여' }));
+                                        setErrorMsg('');
+                                    }}
+                                    className={`flex-1 rounded-xl border-2 font-bold text-sm transition-all ${
+                                        formData.gender === '여'
+                                            ? 'bg-[#9333EA] border-[#9333EA] text-white shadow-moca'
+                                            : 'bg-[#F8F5FF] border-[#E8E0FA] text-[#5B4E7A] hover:bg-[#F3E8FF]'
+                                    }`}
+                                >
+                                    여자
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     {/* 신체 스펙 */}

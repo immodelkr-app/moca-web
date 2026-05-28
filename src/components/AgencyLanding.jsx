@@ -104,7 +104,7 @@ const AgencyLanding = () => {
         address: '',
         detailAddress: '',
         referralSource: [],
-        gender: '', // '남' | '여'
+        gender: null,
         agreed: { service: false, privacy: false, marketing: false },
     });
 
@@ -247,10 +247,7 @@ const AgencyLanding = () => {
             return;
         }
 
-        if (!signupForm.gender) {
-            setSignupError('성별을 선택해 주세요.');
-            return;
-        }
+
 
         setSignupLoading(true);
         setSignupError('');
@@ -588,35 +585,6 @@ const AgencyLanding = () => {
                                 onChange={(e) => setSignupForm({ ...signupForm, detailAddress: e.target.value })}
                                 className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
                             />
-
-                            {/* 성별 선택 */}
-                            <div className="flex items-center gap-3 px-2 py-1">
-                                <span className="text-sm font-black text-[#5B4E7A] mr-2">성별</span>
-                                <div className="flex gap-3 flex-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSignupForm(prev => ({ ...prev, gender: '남' }))}
-                                        className={`flex-1 py-3.5 rounded-2xl border-2 font-bold text-sm transition-all ${
-                                            signupForm.gender === '남'
-                                                ? 'bg-[#9333EA] border-[#9333EA] text-white shadow-moca'
-                                                : 'bg-[#F8F5FF] border-[#E8E0FA] text-[#5B4E7A] hover:bg-[#F3E8FF]'
-                                        }`}
-                                    >
-                                        남자
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSignupForm(prev => ({ ...prev, gender: '여' }))}
-                                        className={`flex-1 py-3.5 rounded-2xl border-2 font-bold text-sm transition-all ${
-                                            signupForm.gender === '여'
-                                                ? 'bg-[#9333EA] border-[#9333EA] text-white shadow-moca'
-                                                : 'bg-[#F8F5FF] border-[#E8E0FA] text-[#5B4E7A] hover:bg-[#F3E8FF]'
-                                        }`}
-                                    >
-                                        여자
-                                    </button>
-                                </div>
-                            </div>
 
                             {/* [신규] 이메일 입력 (선택) */}
                             <div className="flex flex-col gap-1">
