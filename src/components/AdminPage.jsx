@@ -91,6 +91,11 @@ const AdminPage = () => {
     const [aiSummaryResult, setAiSummaryResult] = useState({}); // { [agencyName]: { auditioning, tips, atmosphere, overall } }
     const [aiSummaryLoading, setAiSummaryLoading] = useState({}); // { [agencyName]: boolean }
 
+    // 회원별 모카클래스 수강 신청 건수 맵 { [user_id]: count }
+    const [userClassAppCounts, setUserClassAppCounts] = useState({});
+    // 수강생만 보기 필터
+    const [onlyHasClass, setOnlyHasClass] = useState(false);
+
     const handleLogout = () => {
         logoutUser();
         setAuthenticated(false);
@@ -214,6 +219,18 @@ const AdminPage = () => {
                     .sort((a, b) => b[1] - a[1])
                     .slice(0, 10);
                 setSenderStats(sortedSenders);
+            }
+
+            // 8. 회원별 모카클래스 신청 건수 집계
+            const { data: classAppsCountData, error: classAppsCountError } = await supabase
+                .from('class_applications')
+                .select('user_id');
+            if (!classAppsCountError && classAppsCountData) {
+                const counts = {};
+                classAppsCountData.forEach(app => {
+                    if (app.user_id) counts[app.user_id] = (counts[app.user_id] || 0) + 1;
+                });
+                setUserClassAppCounts(counts);
             }
 
         } catch (err) {
@@ -550,8 +567,9 @@ const AdminPage = () => {
             u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             u.name?.includes(searchQuery) ||
             u.phone?.includes(searchQuery);
-        return matchGrade && matchSearch;
-    }), [processedUsers, filterGrade, searchQuery]);
+        const matchClass = !onlyHasClass || (userClassAppCounts[u.id] ?? 0) > 0;
+        return matchGrade && matchSearch && matchClass;
+    }), [processedUsers, filterGrade, searchQuery, onlyHasClass, userClassAppCounts]);
 
     // 등급별 통계 (전체 회원 대상, 검색어가 있다면 검색 결과 대상)
     // 상단 카드는 선택된 '등급 필터'에 영향을 받지 않고 전체 분포를 보여줍니다.
@@ -1679,6 +1697,17 @@ const AdminPage = () => {
                                         {g === 'ALL' ? '전체' : `${GRADE_EMOJI[g]} ${GRADE_INFO[g]?.label || g}`}
                                     </button>
                                 ))}
+                                {/* 수강생만 보기 필터 */}
+                                <button
+                                    onClick={() => setOnlyHasClass(v => !v)}
+                                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap ${
+                                        onlyHasClass
+                                        ? 'bg-indigo-500 border-indigo-500 text-white'
+                                        : 'bg-[var(--moca-surface-2)] border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-[var(--moca-text)] hover:border-indigo-300'
+                                    }`}
+                                >
+                                    🎓 수강생만
+                                </button>
                             </div>
                             <button
                                 onClick={handleExportExcel}
@@ -1714,14 +1743,15 @@ const AdminPage = () => {
                                 <div className="bg-white border border-[var(--moca-border)] rounded-2xl overflow-hidden w-full overflow-x-auto">
                                     <div className="min-w-[900px]">
                                         {/* Table Header */}
-                                        <div className="grid grid-cols-12 gap-3 px-5 py-3 border-b border-[var(--moca-border)] text-[var(--moca-text-3)] text-xs font-black uppercase tracking-widest bg-[var(--moca-surface-2)]">
-                                            <div className="col-span-3">닉네임</div>
-                                            <div className="col-span-1">성별</div>
-                                            <div className="col-span-2">이름</div>
-                                            <div className="col-span-1">생년</div>
-                                            <div className="col-span-2">등급</div>
-                                            <div className="col-span-2">가입일</div>
-                                            <div className="col-span-1 text-center">관리</div>
+                                        <div className="grid gap-3 px-5 py-3 border-b border-[var(--moca-border)] text-[var(--moca-text-3)] text-xs font-black uppercase tracking-widest bg-[var(--moca-surface-2)]" style={{gridTemplateColumns:'2fr 1.5fr 0.6fr 1.5fr 0.7fr 1fr 1.5fr 0.8fr'}}>
+                                            <div>닉네임</div>
+                                            <div>이름</div>
+                                            <div>성별</div>
+                                            <div>등급</div>
+                                            <div>생년</div>
+                                            <div>🎓 수강</div>
+                                            <div>가입일</div>
+                                            <div className="text-center">관리</div>
                                         </div>
 
                                         {filteredUsers.length === 0 ? (
@@ -1739,12 +1769,12 @@ const AdminPage = () => {
                                                 return (
                                                     <div
                                                         key={user.id}
-                                                        className={`grid grid-cols-12 gap-3 px-5 py-4 items-center transition-colors hover:bg-[var(--moca-primary-lt)] ${idx !== filteredUsers.length - 1 ? 'border-b border-[var(--moca-border)]' : ''
-                                                            }`}
+                                                        className={`grid gap-3 px-5 py-4 items-center transition-colors hover:bg-[var(--moca-primary-lt)] ${idx !== filteredUsers.length - 1 ? 'border-b border-[var(--moca-border)]' : ''}`}
+                                                        style={{gridTemplateColumns:'2fr 1.5fr 0.6fr 1.5fr 0.7fr 1fr 1.5fr 0.8fr'}}
                                                     >
                                                         {/* 닉네임 */}
                                                         <div
-                                                            className="col-span-3 flex items-center gap-2 min-w-0 cursor-pointer hover:text-[var(--moca-primary)] group"
+                                                            className="flex items-center gap-2 min-w-0 cursor-pointer hover:text-[var(--moca-primary)] group"
                                                             onClick={() => setSelectedUserForDetail(user)}
                                                         >
                                                             <span className="text-lg flex-shrink-0">{emoji}</span>
@@ -1753,21 +1783,16 @@ const AdminPage = () => {
                                                             </div>
                                                         </div>
 
+                                                        {/* 이름 */}
+                                                        <div className="text-[var(--moca-text-2)] text-sm truncate font-medium" title={user.name}>{user.name || '-'}</div>
+
                                                         {/* 성별 */}
-                                                        <div className="col-span-1 text-[var(--moca-text-2)] text-sm font-medium">
+                                                        <div className="text-[var(--moca-text-2)] text-sm font-medium">
                                                             {user.gender || '-'}
                                                         </div>
 
-                                                        {/* 이름 */}
-                                                        <div className="col-span-2 text-[var(--moca-text-2)] text-sm truncate font-medium" title={user.name}>{user.name}</div>
-
-                                                        {/* 생년 */}
-                                                        <div className="col-span-1 text-[var(--moca-text-2)] text-sm font-medium">
-                                                            {user.age ? `${user.age}년` : '-'}
-                                                        </div>
-
                                                         {/* 등급 변경 */}
-                                                        <div className="col-span-2 flex flex-col gap-1">
+                                                        <div className="flex flex-col gap-1">
                                                             <select
                                                                 value={user.grade || 'SILVER'}
                                                                 onChange={e => {
@@ -1812,13 +1837,33 @@ const AdminPage = () => {
                                                             )}
                                                         </div>
 
+                                                        {/* 생년 */}
+                                                        <div className="text-[var(--moca-text-2)] text-sm font-medium">
+                                                            {user.age ? `${user.age}년` : '-'}
+                                                        </div>
+
+                                                        {/* 수강 신청 건수 */}
+                                                        <div className="flex items-center">
+                                                            {(userClassAppCounts[user.id] ?? 0) > 0 ? (
+                                                                <span
+                                                                    className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 text-indigo-600 rounded-lg text-[11px] font-black cursor-pointer hover:bg-indigo-100 transition-colors"
+                                                                    onClick={() => setSelectedUserForDetail(user)}
+                                                                    title="클릭하면 상세 수강 이력을 볼 수 있습니다"
+                                                                >
+                                                                    🎓 {userClassAppCounts[user.id]}건
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-gray-300 text-xs">-</span>
+                                                            )}
+                                                        </div>
+
                                                         {/* 가입일 */}
-                                                        <div className="col-span-2 text-[var(--moca-text-3)] text-xs">
+                                                        <div className="text-[var(--moca-text-3)] text-xs">
                                                             {new Date(user.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
                                                         </div>
 
                                                         {/* 관리 (계약초대 + 강퇴 버튼) */}
-                                                        <div className="col-span-1 flex flex-col items-center gap-1">
+                                                        <div className="flex flex-col items-center gap-1">
                                                             <button
                                                                 onClick={() => {
                                                                     const name = user.name || user.nickname || '회원';
@@ -3046,6 +3091,38 @@ const AdminPage = () => {
 const AdminUserDetailModal = ({ user, onClose }) => {
     if (!user) return null;
 
+    const [classApplications, setClassApplications] = useState([]);
+    const [classAppsLoading, setClassAppsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user?.id) return;
+        const loadClassApps = async () => {
+            setClassAppsLoading(true);
+            try {
+                const { data, error } = await supabase
+                    .from('class_applications')
+                    .select(`
+                        id,
+                        created_at,
+                        applied_price,
+                        payment_type,
+                        payment_status,
+                        grade_label,
+                        classes (
+                            title,
+                            class_date,
+                            location
+                        )
+                    `)
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false });
+                if (!error && data) setClassApplications(data);
+            } catch (_) {}
+            setClassAppsLoading(false);
+        };
+        loadClassApps();
+    }, [user.id]);
+
     const referralLabels = {
         sns: 'SNS (인스타그램/페이스북 등)',
         friend: '지인 소개',
@@ -3054,8 +3131,17 @@ const AdminUserDetailModal = ({ user, onClose }) => {
         other: '기타 경로'
     };
 
+    const statusInfo = {
+        pending:      { label: '입금 대기', color: 'bg-yellow-50 text-yellow-600 border-yellow-200' },
+        pending_card: { label: '카드 미완료', color: 'bg-orange-50 text-orange-600 border-orange-200' },
+        approved:     { label: '승인 완료', color: 'bg-green-50 text-green-600 border-green-200' },
+        cancelled:    { label: '취소', color: 'bg-red-50 text-red-500 border-red-200' },
+        refunded:     { label: '환불', color: 'bg-gray-50 text-gray-500 border-gray-200' },
+    };
+
     const gradeInfo = GRADE_INFO[user.grade] || GRADE_INFO.SILVER;
     const emoji = GRADE_EMOJI[user.grade] || GRADE_EMOJI.SILVER;
+
 
     return (
         <div className="fixed inset-0 bg-[#0c0714]/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fadeIn">
@@ -3225,6 +3311,60 @@ const AdminUserDetailModal = ({ user, onClose }) => {
                                 </p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* 🎓 모카클래스 수강 신청 이력 */}
+                    <div>
+                        <h4 className="text-xs font-black text-indigo-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                            <span>🎓</span> 모카클래스 수강 신청 이력
+                            {classApplications.length > 0 && (
+                                <span className="ml-1 text-[10px] bg-indigo-100 text-indigo-600 font-black px-2 py-0.5 rounded-full">
+                                    총 {classApplications.length}건
+                                </span>
+                            )}
+                        </h4>
+                        {classAppsLoading ? (
+                            <div className="flex items-center justify-center py-6">
+                                <div className="w-5 h-5 border-2 border-indigo-300 border-t-indigo-500 rounded-full animate-spin" />
+                            </div>
+                        ) : classApplications.length === 0 ? (
+                            <div className="bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)] flex items-center gap-2 text-[var(--moca-text-3)]">
+                                <span className="text-xl">📭</span>
+                                <p className="text-sm font-bold">수강 신청 이력이 없습니다.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {classApplications.map((app) => {
+                                    const status = statusInfo[app.payment_status] || { label: app.payment_status, color: 'bg-gray-50 text-gray-500 border-gray-200' };
+                                    const appliedAt = app.created_at
+                                        ? new Date(app.created_at).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' })
+                                        : '-';
+                                    const payLabel = app.payment_type === 'card' ? '카드결제' : '무통장입금';
+                                    return (
+                                        <div key={app.id} className="flex items-start gap-3 bg-white border border-indigo-100 rounded-2xl px-4 py-3 hover:border-indigo-300 transition-colors">
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center mt-0.5">
+                                                <span className="text-base">🎓</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-black text-[var(--moca-text)] truncate">{app.classes?.title || '(삭제된 클래스)'}</p>
+                                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                                    {app.classes?.class_date || '-'}
+                                                    {app.classes?.location && <span className="ml-1">· {app.classes.location}</span>}
+                                                </p>
+                                                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${status.color}`}>{status.label}</span>
+                                                    <span className="text-[10px] text-gray-400">{payLabel}</span>
+                                                    {app.applied_price != null && (
+                                                        <span className="text-[10px] font-bold text-indigo-500">{Number(app.applied_price).toLocaleString()}원</span>
+                                                    )}
+                                                    <span className="text-[10px] text-gray-400 ml-auto">{appliedAt} 신청</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
 
