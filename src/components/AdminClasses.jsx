@@ -341,13 +341,24 @@ const AdminClasses = () => {
         }
 
         const headers = ['번호', '이름', '연락처', '멤버등급', '승인상태'];
-        const rows = applicants.map((app, idx) => [
-            applicants.length - idx,
-            app.users?.name || app.users?.nickname || '-',
-            app.users?.phone || '-',
-            getApplicantGrade(app),
-            app.approval_status === 'approved' ? '승인' : '대기'
-        ]);
+        const rows = applicants.map((app, idx) => {
+            const status = app.approval_status || (app.payment_status === 'paid' ? 'paid' : 'pending');
+            const statusLabel = status === 'paid'
+                ? '수강확정'
+                : status === 'approved'
+                ? '승인완료'
+                : status === 'cancelled'
+                ? '취소'
+                : '신청대기';
+
+            return [
+                applicants.length - idx,
+                app.users?.name || app.users?.nickname || '-',
+                app.users?.phone || '-',
+                getApplicantGrade(app),
+                statusLabel
+            ];
+        });
 
         const csvContent = [
             headers.join(','),

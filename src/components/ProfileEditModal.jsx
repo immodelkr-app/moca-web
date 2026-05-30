@@ -251,7 +251,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                     onClick={handleAddressSearch}
                                     required
                                     placeholder="주소 검색을 이용해주세요"
-                                    className="flex-1 bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] cursor-pointer shadow-inner"
+                                    className="flex-1 min-w-0 bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] cursor-pointer shadow-inner"
                                 />
                                 <button
                                     type="button"

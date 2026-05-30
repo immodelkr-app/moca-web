@@ -74,6 +74,23 @@ const AdminPage = () => {
     const [qnaReplyInputs, setQnaReplyInputs] = useState({}); // { [postId]: replyText }
     const [qnaExpanded, setQnaExpanded] = useState({}); // { [postId]: boolean }
 
+    // 투어일지 관리 State
+    const [diaryFilterAgency, setDiaryFilterAgency] = useState('ALL');
+    const [diarySearch, setDiarySearch] = useState('');
+    const [diaryDateFilter, setDiaryDateFilter] = useState('all'); // 'all' | '7d' | '30d'
+    const [diaryExpandedId, setDiaryExpandedId] = useState(null); // 펼쳐본 일지 ID
+
+    // Phase 2: 주간 리포트 발송 State
+    const [reportWebhookUrl, setReportWebhookUrl] = useState('immodelkr@gmail.com');
+    const [reportWebhookType, setReportWebhookType] = useState('email'); // 'email' | 'slack' | 'discord'
+    const [reportSending, setReportSending] = useState(false);
+    const [reportResult, setReportResult] = useState(null); // { success, message, summary }
+
+    // Phase 3: AI 동향 분석 State
+    const [aiSummaryAgency, setAiSummaryAgency] = useState(null); // 분석 중인 에이전시명
+    const [aiSummaryResult, setAiSummaryResult] = useState({}); // { [agencyName]: { auditioning, tips, atmosphere, overall } }
+    const [aiSummaryLoading, setAiSummaryLoading] = useState({}); // { [agencyName]: boolean }
+
     const handleLogout = () => {
         logoutUser();
         setAuthenticated(false);
@@ -421,6 +438,74 @@ const AdminPage = () => {
             setError('등록 실패: ' + (err.message || '알 수 없는 오류'));
         } finally {
             setIsPosting(false);
+        }
+    };
+
+    // Phase 2: 주간 리포트 발송
+    const handleSendReport = async () => {
+        const trimmedUrl = reportWebhookUrl.trim();
+        if (!trimmedUrl) {
+            setError(reportWebhookType === 'email' ? '이메일 주소를 입력해주세요.' : 'Slack 또는 Discord Webhook URL을 입력해주세요.');
+            return;
+        }
+        if (reportWebhookType !== 'email' && !trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+            setError('올바른 Webhook URL을 입력해주세요. (http:// 또는 https:// 로 시작)');
+            return;
+        }
+        if (reportWebhookType === 'email' && !trimmedUrl.includes('@')) {
+            setError('올바른 이메일 주소를 입력해주세요.');
+            return;
+        }
+        setReportSending(true);
+        setReportResult(null);
+        setError('');
+        try {
+            const { data, error: fnErr } = await supabase.functions.invoke('tour-report', {
+                body: { webhookUrl: reportWebhookUrl.trim(), webhookType: reportWebhookType }
+            });
+            if (fnErr) throw fnErr;
+            setReportResult(data);
+        } catch (err) {
+            setError('리포트 발송 실패: ' + err.message);
+        } finally {
+            setReportSending(false);
+        }
+    };
+
+    // Phase 3: AI 에이전시 동향 분석
+    const handleAiSummary = async (agencyName) => {
+        setAiSummaryLoading(prev => ({ ...prev, [agencyName]: true }));
+        setAiSummaryResult(prev => ({ ...prev, [agencyName]: null }));
+        setError('');
+        try {
+            const { data, error: fnErr } = await supabase.functions.invoke('ai-diary-summary', {
+                body: { agencyName }
+            });
+            if (fnErr) throw fnErr;
+            if (!data?.success) throw new Error(data?.error || 'AI 분석 실패');
+            setAiSummaryResult(prev => ({ ...prev, [agencyName]: data.summary }));
+            setAiSummaryAgency(agencyName);
+        } catch (err) {
+            setError('AI 분석 실패: ' + err.message);
+        } finally {
+            setAiSummaryLoading(prev => ({ ...prev, [agencyName]: false }));
+        }
+    };
+
+    // 투어일지 삭제 (어드민)
+    const handleDeleteDiary = async (diaryId) => {
+        if (!window.confirm('이 투어일지를 삭제하시겠습니까?')) return;
+        try {
+            const { error } = await supabase
+                .from('tour_diaries')
+                .delete()
+                .eq('id', diaryId);
+            if (error) throw error;
+            setTourDiaries(prev => prev.filter(d => d.id !== diaryId));
+            setSuccessMsg('투어일지가 삭제되었습니다.');
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err) {
+            setError('삭제 실패: ' + err.message);
         }
     };
 
@@ -835,8 +920,392 @@ const AdminPage = () => {
                     >
                         🏠 홈화면 관리
                     </button>
+                    <button
+                        onClick={() => setActiveTab('diaries')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'diaries' ? 'border-purple-500 text-purple-700 bg-purple-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                    >
+                        📒 투어일지 관리
+                    </button>
 
                 </div>
+
+                {/* ============================================================ */}
+                {/* 📒 투어일지 관리 탭 */}
+                {/* ============================================================ */}
+                {activeTab === 'diaries' && (() => {
+                    // 에이전시 목록 추출
+                    const agencyList = ['ALL', ...Array.from(new Set(tourDiaries.map(d => d.agency_name).filter(Boolean))).sort()];
+
+                    // 기간 필터 적용
+                    const now = new Date();
+                    const filteredByDate = tourDiaries.filter(d => {
+                        if (diaryDateFilter === 'all') return true;
+                        const dDate = new Date(d.date || d.timestamp || d.created_at);
+                        if (diaryDateFilter === '7d') return (now - dDate) <= 7 * 24 * 60 * 60 * 1000;
+                        if (diaryDateFilter === '30d') return (now - dDate) <= 30 * 24 * 60 * 60 * 1000;
+                        return true;
+                    });
+
+                    // 에이전시 + 검색 필터
+                    const filteredDiaries = filteredByDate.filter(d => {
+                        const matchAgency = diaryFilterAgency === 'ALL' || d.agency_name === diaryFilterAgency;
+                        const query = diarySearch.toLowerCase();
+                        const matchSearch = !diarySearch ||
+                            (d.agency_name || '').toLowerCase().includes(query) ||
+                            (d.nickname || '').toLowerCase().includes(query) ||
+                            (d.content || '').toLowerCase().includes(query);
+                        return matchAgency && matchSearch;
+                    });
+
+                    // 에이전시별 그룹핑
+                    const groupedByAgency = filteredDiaries.reduce((acc, d) => {
+                        const agency = d.agency_name || '에이전시 미기재';
+                        if (!acc[agency]) acc[agency] = [];
+                        acc[agency].push(d);
+                        return acc;
+                    }, {});
+
+                    // 통계 계산
+                    const totalDiaries = filteredDiaries.length;
+                    const totalAgencies = Object.keys(groupedByAgency).length;
+                    const totalWriters = new Set(filteredDiaries.map(d => d.nickname).filter(Boolean)).size;
+                    const recentDiaries = filteredDiaries.filter(d => {
+                        const dDate = new Date(d.date || d.timestamp);
+                        return (now - dDate) <= 7 * 24 * 60 * 60 * 1000;
+                    }).length;
+
+                    return (
+                        <div className="animate-fadeIn">
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-red-400 text-[18px]">error</span>
+                                    <p className="text-red-400 text-sm">{error}</p>
+                                </div>
+                            )}
+
+                            {/* ── Phase 2: 주간 리포트 발송 패널 ── */}
+                            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-5 mb-6">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <span className="material-symbols-outlined text-indigo-500">send</span>
+                                    <h3 className="font-black text-[var(--moca-text)] text-[15px]">📨 주간 투어일지 리포트 발송</h3>
+                                    <span className="text-[11px] text-indigo-400 bg-indigo-100 px-2 py-0.5 rounded-full font-bold">Phase 2</span>
+                                </div>
+                                <p className="text-[12px] text-gray-500 mb-4">최근 7일간 투어일지를 이메일, Slack 또는 Discord로 리포트를 보냅니다. 대상 주소는 저장되지 않으니 매번 입력해주세요.</p>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    {/* 플랫폼 선택 */}
+                                    <div className="flex gap-1.5 shrink-0">
+                                        {[{v:'email',l:'이메일',icon:'📧'},{v:'slack',l:'Slack',icon:'💬'},{v:'discord',l:'Discord',icon:'🎮'}].map(opt => (
+                                            <button
+                                                key={opt.v}
+                                                onClick={() => {
+                                                    setReportWebhookType(opt.v);
+                                                    if (opt.v === 'email') {
+                                                        setReportWebhookUrl('immodelkr@gmail.com');
+                                                    } else {
+                                                        if (reportWebhookUrl.includes('@')) {
+                                                            setReportWebhookUrl('');
+                                                        }
+                                                    }
+                                                }}
+                                                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                                                    reportWebhookType === opt.v
+                                                    ? 'bg-indigo-500 text-white border-indigo-500'
+                                                    : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-300'
+                                                }`}
+                                            >{opt.icon} {opt.l}</button>
+                                        ))}
+                                    </div>
+                                    {/* Webhook URL 입력 */}
+                                    <input
+                                        type="text"
+                                        value={reportWebhookUrl}
+                                        onChange={e => setReportWebhookUrl(e.target.value)}
+                                        placeholder={reportWebhookType === 'email' ? '받으실 이메일 주소 (예: admin@immodel.kr)' : reportWebhookType === 'slack' ? 'https://hooks.slack.com/services/...' : 'https://discord.com/api/webhooks/...'}
+                                        className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-[var(--moca-text)] placeholder-gray-300 focus:outline-none focus:border-indigo-400 transition-colors"
+                                    />
+                                    {/* 발송 버튼 */}
+                                    <button
+                                        onClick={handleSendReport}
+                                        disabled={reportSending}
+                                        className="shrink-0 px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-black transition-all disabled:opacity-50 flex items-center gap-1.5"
+                                    >
+                                        {reportSending ? (
+                                            <><span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> 발송 중...</>
+                                        ) : (
+                                            <><span className="material-symbols-outlined text-[16px]">send</span> 리포트 발송</>
+                                        )}
+                                    </button>
+                                </div>
+                                {/* 발송 결과 */}
+                                {reportResult && (
+                                    <div className={`mt-3 p-3 rounded-xl text-sm font-bold ${
+                                        reportResult.success ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-red-50 text-red-500 border border-red-200'
+                                    }`}>
+                                        {reportResult.success ? '✅ ' : '❌ '}{reportResult.message || reportResult.error}
+                                        {reportResult.success && reportResult.summary && (
+                                            <span className="ml-2 text-xs font-normal text-gray-500">
+                                                (총 {reportResult.summary.total}건 · {reportResult.summary.writers}명 · 에이전시 {reportResult.summary.agencies}곳)
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                                <div className="mt-3 p-3 bg-white/70 rounded-xl">
+                                    <p className="text-[11px] text-gray-500 font-bold mb-1">⚙️ Supabase Edge Function 배포 필요</p>
+                                    <p className="text-[11px] text-gray-400">Supabase 대시보드 → Edge Functions → <code className="bg-gray-100 px-1 rounded">tour-report</code> 를 배포하고,
+                                    Secrets에 <code className="bg-gray-100 px-1 rounded">SUPABASE_URL</code>, <code className="bg-gray-100 px-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code> 를 등록해주세요.</p>
+                                </div>
+                            </div>
+
+                            {/* ── AI 분석 모달 ── */}
+                            {aiSummaryAgency && aiSummaryResult[aiSummaryAgency] && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setAiSummaryAgency(null)}>
+                                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-2xl">🤖</span>
+                                                <div>
+                                                    <h3 className="font-black text-[var(--moca-text)] text-[15px]">AI 동향 분석</h3>
+                                                    <p className="text-[12px] text-purple-500 font-bold">{aiSummaryAgency}</p>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => setAiSummaryAgency(null)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                                                <span className="material-symbols-outlined text-[18px] text-gray-500">close</span>
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {[
+                                                { icon: '🎬', label: '진행 오디션/미팅', key: 'auditioning', color: 'bg-purple-50 border-purple-200 text-purple-700' },
+                                                { icon: '📋', label: '필수 준비물 & 꿀팁', key: 'tips', color: 'bg-blue-50 border-blue-200 text-blue-700' },
+                                                { icon: '🏢', label: '현장 분위기 & 대기', key: 'atmosphere', color: 'bg-green-50 border-green-200 text-green-700' },
+                                                { icon: '⚡', label: '한줄 요약', key: 'overall', color: 'bg-orange-50 border-orange-200 text-orange-700' },
+                                            ].map(item => (
+                                                <div key={item.key} className={`p-3 rounded-xl border ${item.color}`}>
+                                                    <p className="text-[11px] font-black mb-1">{item.icon} {item.label}</p>
+                                                    <p className="text-[13px] leading-relaxed">{aiSummaryResult[aiSummaryAgency][item.key] || '정보 없음'}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <p className="text-[11px] text-gray-400 mt-3 text-center">최근 60일 투어일지 기반 · Gemini AI 분석</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 요약 통계 카드 */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                                {[
+                                    { label: '총 투어일지', value: totalDiaries, unit: '건', icon: 'edit_note', color: 'text-purple-500', bg: 'bg-purple-50', border: 'border-purple-200' },
+                                    { label: '방문 에이전시', value: totalAgencies, unit: '곳', icon: 'apartment', color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-200' },
+                                    { label: '참여 회원', value: totalWriters, unit: '명', icon: 'group', color: 'text-green-500', bg: 'bg-green-50', border: 'border-green-200' },
+                                    { label: '최근 7일', value: recentDiaries, unit: '건', icon: 'today', color: 'text-orange-500', bg: 'bg-orange-50', border: 'border-orange-200' },
+                                ].map((stat, i) => (
+                                    <div key={i} className={`rounded-2xl border ${stat.border} ${stat.bg} p-5`}>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className={`material-symbols-outlined ${stat.color} text-[20px]`}>{stat.icon}</span>
+                                            <p className="text-xs font-bold text-gray-500">{stat.label}</p>
+                                        </div>
+                                        <p className="text-3xl font-black text-[var(--moca-text)]">{stat.value.toLocaleString()}<span className="text-sm font-normal text-gray-400 ml-1">{stat.unit}</span></p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* 필터 영역 */}
+                            <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-4 mb-6">
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    {/* 검색 */}
+                                    <div className="relative flex-1">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-[18px]">search</span>
+                                        <input
+                                            type="text"
+                                            value={diarySearch}
+                                            onChange={e => setDiarySearch(e.target.value)}
+                                            placeholder="에이전시명, 닉네임, 일지 내용 검색..."
+                                            className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl pl-10 pr-4 py-2.5 text-[var(--moca-text)] placeholder-gray-400 focus:outline-none focus:border-purple-400 transition-colors text-sm"
+                                        />
+                                    </div>
+                                    {/* 에이전시 필터 */}
+                                    <select
+                                        value={diaryFilterAgency}
+                                        onChange={e => setDiaryFilterAgency(e.target.value)}
+                                        className="bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text)] text-sm rounded-xl px-3 py-2.5 outline-none focus:border-purple-400 min-w-[140px] shrink-0"
+                                    >
+                                        {agencyList.map(a => (
+                                            <option key={a} value={a}>{a === 'ALL' ? '전체 에이전시' : a}</option>
+                                        ))}
+                                    </select>
+                                    {/* 기간 필터 */}
+                                    <div className="flex gap-1.5 shrink-0">
+                                        {[{v:'all',l:'전체'},{v:'30d',l:'최근 30일'},{v:'7d',l:'최근 7일'}].map(opt => (
+                                            <button
+                                                key={opt.v}
+                                                onClick={() => setDiaryDateFilter(opt.v)}
+                                                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                                                    diaryDateFilter === opt.v
+                                                    ? 'bg-purple-500 text-white border-purple-500'
+                                                    : 'bg-[var(--moca-surface-2)] text-gray-500 border-[var(--moca-border)] hover:border-purple-300'
+                                                }`}
+                                            >{opt.l}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 결과 요약 */}
+                            <p className="text-sm text-gray-500 font-bold mb-4">
+                                🔍 총 <span className="text-purple-600">{totalDiaries.toLocaleString()}</span>건의 투어일지 · <span className="text-blue-600">{totalAgencies}</span>개 에이전시
+                            </p>
+
+                            {filteredDiaries.length === 0 ? (
+                                <div className="text-center py-20 text-gray-400">
+                                    <span className="material-symbols-outlined text-[48px] text-gray-300 block mb-3">inbox</span>
+                                    <p className="font-bold">조건에 맞는 투어일지가 없습니다.</p>
+                                    <p className="text-sm mt-1">필터나 검색어를 변경해보세요.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {Object.entries(groupedByAgency)
+                                        .sort((a, b) => b[1].length - a[1].length)
+                                        .map(([agencyName, diaries]) => {
+                                            // 해당 에이전시 일지 작성자 수
+                                            const writers = new Set(diaries.map(d => d.nickname).filter(Boolean)).size;
+                                            // 최근 방문일
+                                            const latestDate = diaries.reduce((max, d) => {
+                                                const cur = new Date(d.date || d.timestamp);
+                                                return cur > max ? cur : max;
+                                            }, new Date(0));
+                                            const latestDateStr = latestDate.getFullYear() > 2000 ? latestDate.toLocaleDateString('ko-KR') : '-';
+
+                                            return (
+                                                <div key={agencyName} className="bg-white border border-[var(--moca-border)] rounded-2xl overflow-hidden shadow-sm">
+                                                    {/* 에이전시 헤더 */}
+                                                    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100 px-5 py-4">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+                                                                    <span className="material-symbols-outlined text-purple-500 text-[20px]">apartment</span>
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="font-black text-[var(--moca-text)] text-[15px]">{agencyName}</h3>
+                                                                    <p className="text-[11px] text-gray-400 mt-0.5">
+                                                                        일지 <span className="font-bold text-purple-500">{diaries.length}건</span>
+                                                                        &nbsp;·&nbsp;작성 회원 <span className="font-bold text-blue-500">{writers}명</span>
+                                                                        &nbsp;·&nbsp;최근 방문 <span className="font-bold text-gray-600">{latestDateStr}</span>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                {/* AI 동향 분석 버튼 (Phase 3) */}
+                                                                <button
+                                                                    onClick={() => handleAiSummary(agencyName)}
+                                                                    disabled={aiSummaryLoading[agencyName]}
+                                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white text-[11px] font-black transition-all hover:opacity-90 disabled:opacity-50 shadow-sm"
+                                                                    title="AI로 이 에이전시의 최근 동향을 분석합니다"
+                                                                >
+                                                                    {aiSummaryLoading[agencyName] ? (
+                                                                        <><span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> 분석 중...</>
+                                                                    ) : aiSummaryResult[agencyName] ? (
+                                                                        <><span className="text-[12px]">🤖</span> AI 재분석</>
+                                                                    ) : (
+                                                                        <><span className="text-[12px]">🤖</span> AI 동향 분석</>
+                                                                    )}
+                                                                </button>
+                                                                {/* AI 결과 보기 버튼 */}
+                                                                {aiSummaryResult[agencyName] && (
+                                                                    <button
+                                                                        onClick={() => setAiSummaryAgency(agencyName)}
+                                                                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-100 text-violet-600 text-[11px] font-black hover:bg-violet-200 transition-colors"
+                                                                    >
+                                                                        <span className="material-symbols-outlined text-[14px]">visibility</span> 결과 보기
+                                                                    </button>
+                                                                )}
+                                                                <span className="text-[11px] font-black text-purple-400 bg-purple-100 px-2 py-1 rounded-full">{diaries.length}건</span>
+                                                            </div>
+                                                        </div>
+                                                        {/* AI 한줄 요약 인라인 미리보기 */}
+                                                        {aiSummaryResult[agencyName] && (
+                                                            <div className="mt-3 p-3 bg-white/80 rounded-xl border border-violet-200 text-[12px] text-gray-700">
+                                                                <span className="font-black text-violet-600">⚡ {aiSummaryResult[agencyName].overall}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+
+                                                    {/* 일지 리스트 */}
+                                                    <div className="divide-y divide-gray-50">
+                                                        {diaries.map(d => {
+                                                            const authorUser = users.find(u => u.nickname === d.nickname) || {};
+                                                            const diaryDate = d.date ? new Date(d.date).toLocaleDateString('ko-KR') : '-';
+                                                            const writtenAt = d.timestamp ? new Date(d.timestamp).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+                                                            const isExpanded = diaryExpandedId === d.id;
+                                                            const isLong = (d.content || '').length > 100;
+
+                                                            return (
+                                                                <div key={d.id} className="px-5 py-4 hover:bg-gray-50 transition-colors">
+                                                                    <div className="flex items-start justify-between gap-3">
+                                                                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                                                                            {/* 회원 아이콘 */}
+                                                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white text-xs font-black shrink-0 mt-0.5">
+                                                                                {(d.nickname || 'G')[0].toUpperCase()}
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                {/* 작성자 + 날짜 */}
+                                                                                <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mb-1.5">
+                                                                                    <button
+                                                                                        onClick={() => setSelectedUserForDetail(authorUser.id ? authorUser : null)}
+                                                                                        className={`text-[13px] font-black hover:text-purple-600 transition-colors ${authorUser.id ? 'text-[var(--moca-text)] cursor-pointer' : 'text-gray-500 cursor-default'}`}
+                                                                                        disabled={!authorUser.id}
+                                                                                    >
+                                                                                        {d.nickname || '(미로그인)'}
+                                                                                    </button>
+                                                                                    {authorUser.name && (
+                                                                                        <span className="text-[11px] text-gray-400">{authorUser.name}</span>
+                                                                                    )}
+                                                                                    {authorUser.grade && (
+                                                                                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                                                                                            authorUser.grade === 'VIP' ? 'bg-red-100 text-red-500' :
+                                                                                            authorUser.grade === 'IMODEL' ? 'bg-purple-100 text-purple-500' :
+                                                                                            authorUser.grade === 'GOLD' ? 'bg-yellow-100 text-yellow-600' :
+                                                                                            'bg-gray-100 text-gray-500'
+                                                                                        }`}>{authorUser.grade}</span>
+                                                                                    )}
+                                                                                    <span className="text-[11px] text-gray-400">방문 {diaryDate}</span>
+                                                                                    <span className="text-[11px] text-gray-300">작성 {writtenAt}</span>
+                                                                                </div>
+                                                                                {/* 일지 내용 */}
+                                                                                <p className={`text-[13px] text-[var(--moca-text-2)] leading-relaxed whitespace-pre-wrap break-words ${!isExpanded && isLong ? 'line-clamp-3' : ''}`}>
+                                                                                    {d.content || '(내용 없음)'}
+                                                                                </p>
+                                                                                {isLong && (
+                                                                                    <button
+                                                                                        onClick={() => setDiaryExpandedId(isExpanded ? null : d.id)}
+                                                                                        className="text-[11px] text-purple-500 font-bold mt-1 hover:underline"
+                                                                                    >
+                                                                                        {isExpanded ? '▲ 접기' : '▼ 더 보기'}
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        {/* 삭제 버튼 */}
+                                                                        <button
+                                                                            onClick={() => handleDeleteDiary(d.id)}
+                                                                            className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 transition-all"
+                                                                            title="일지 삭제"
+                                                                        >
+                                                                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    }
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {activeTab === 'stats' && (
                     <div className="animate-fadeIn">

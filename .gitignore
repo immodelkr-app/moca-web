@@ -13,3 +13,7 @@ node_modules
 
 # Local Netlify folder
 .netlify
+
+# Test keys and scripts
+list-models.js
+test-new-key-*.js

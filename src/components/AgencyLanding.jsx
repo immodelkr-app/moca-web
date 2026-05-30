@@ -413,7 +413,7 @@ const AgencyLanding = () => {
             {/* ── 로그인 모달 ── */}
             {showLogin && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-moca-lg relative border border-[#E8E0FA]">
+                    <div className="bg-white rounded-3xl p-5 sm:p-8 w-full max-w-sm shadow-moca-lg relative border border-[#E8E0FA]">
                         <button onClick={() => setShowLogin(false)} className="absolute top-6 right-6 text-[#9CA3AF] hover:text-[#1F1235]">
                             <span className="material-symbols-outlined">close</span>
                         </button>
@@ -424,7 +424,7 @@ const AgencyLanding = () => {
                                 placeholder="아이디(닉네임)"
                                 value={loginForm.nickname}
                                 onChange={(e) => setLoginForm({ ...loginForm, nickname: e.target.value })}
-                                className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] focus:border-[#9333EA] outline-none font-bold text-[#1F1235]"
+                                className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] focus:border-[#9333EA] outline-none font-bold text-[#1F1235] text-sm"
                                 required
                             />
                             <input
@@ -432,14 +432,14 @@ const AgencyLanding = () => {
                                 placeholder="비밀번호"
                                 value={loginForm.password}
                                 onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                                className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] focus:border-[#9333EA] outline-none font-bold text-[#1F1235]"
+                                className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] focus:border-[#9333EA] outline-none font-bold text-[#1F1235] text-sm"
                                 required
                             />
                             {loginError && <p className="text-red-500 text-xs font-bold text-center">{loginError}</p>}
                             <button
                                 type="submit"
                                 disabled={loginLoading}
-                                className="w-full py-4 rounded-2xl bg-[#9333EA] text-white font-black text-lg shadow-moca hover:opacity-90 disabled:opacity-50 transition-all"
+                                className="w-full py-3.5 rounded-2xl bg-[#9333EA] text-white font-black text-base shadow-moca hover:opacity-90 disabled:opacity-50 transition-all"
                             >
                                 {loginLoading ? '로그인 중...' : '로그인'}
                             </button>
@@ -450,7 +450,7 @@ const AgencyLanding = () => {
                                     type="button"
                                     onClick={handlePasskeyLogin}
                                     disabled={loginLoading}
-                                    className="w-full py-4 rounded-2xl bg-[#F3E8FF] text-[#7C3AED] font-black text-lg border-2 border-[#E8D5FF] flex items-center justify-center gap-2 hover:bg-[#EDE0FF] transition-all"
+                                    className="w-full py-3.5 rounded-2xl bg-[#F3E8FF] text-[#7C3AED] font-black text-base border-2 border-[#E8D5FF] flex items-center justify-center gap-2 hover:bg-[#EDE0FF] transition-all"
                                 >
                                     <span className="material-symbols-outlined text-[24px]">fingerprint</span>
                                     <span>지문 / 생체인식 로그인</span>
@@ -494,108 +494,143 @@ const AgencyLanding = () => {
             {/* ── 회원가입 모달 ── */}
             {showSignup && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-moca-lg relative border border-[#E8E0FA] max-h-[90vh] overflow-y-auto hide-scrollbar">
+                    <div className="bg-white rounded-3xl p-5 sm:p-8 w-full max-w-md shadow-moca-lg relative border border-[#E8E0FA] max-h-[90vh] overflow-y-auto hide-scrollbar">
                         <button onClick={() => setShowSignup(false)} className="absolute top-6 right-6 text-[#9CA3AF] hover:text-[#1F1235]">
                             <span className="material-symbols-outlined">close</span>
                         </button>
                         <h2 className="text-2xl font-black text-[#1F1235] mb-8 text-center">회원가입</h2>
-                        <form onSubmit={handleSignupSubmit} className="space-y-4">
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <div className="flex flex-col gap-1">
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            placeholder="아이디"
-                                            value={signupForm.nickname}
-                                            onChange={(e) => {
-                                                setSignupForm({ ...signupForm, nickname: e.target.value });
-                                                if (e.target.value !== nicknameCheckedValue) {
-                                                    setIsNicknameChecked(false);
-                                                    setNicknameCheckMessage('');
-                                                }
-                                            }}
-                                            className="flex-1 px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleCheckNickname}
-                                            disabled={nicknameCheckLoading}
-                                            className="px-4 py-4 rounded-2xl bg-[#F3E8FF] text-[#9333EA] font-bold text-sm border border-[#E8E0FA] whitespace-nowrap hover:bg-[#E8D5FF] transition-colors"
-                                        >
-                                            {nicknameCheckLoading ? '...' : '중복확인'}
-                                        </button>
-                                    </div>
-                                    {nicknameCheckMessage && (
-                                        <p className={`text-[10px] font-bold ml-2 ${isNicknameChecked ? 'text-emerald-500' : 'text-red-500'}`}>
-                                            {nicknameCheckMessage}
-                                        </p>
-                                    )}
+                        <form onSubmit={handleSignupSubmit} className="space-y-5">
+                            {/* 아이디 (닉네임) */}
+                            <div className="space-y-1.5">
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">아이디 (닉네임)</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="사용하실 아이디를 입력해 주세요"
+                                        value={signupForm.nickname}
+                                        onChange={(e) => {
+                                            setSignupForm({ ...signupForm, nickname: e.target.value });
+                                            if (e.target.value !== nicknameCheckedValue) {
+                                                setIsNicknameChecked(false);
+                                                setNicknameCheckMessage('');
+                                            }
+                                        }}
+                                        className="flex-1 min-w-0 px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleCheckNickname}
+                                        disabled={nicknameCheckLoading}
+                                        className="px-4 py-3 rounded-2xl bg-[#F3E8FF] text-[#9333EA] font-bold text-sm border border-[#E8E0FA] whitespace-nowrap hover:bg-[#E8D5FF] transition-colors"
+                                    >
+                                        {nicknameCheckLoading ? '...' : '중복확인'}
+                                    </button>
                                 </div>
+                                {nicknameCheckMessage && (
+                                    <p className={`text-[10px] font-bold ml-2 ${isNicknameChecked ? 'text-emerald-500' : 'text-red-500'}`}>
+                                        {nicknameCheckMessage}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* 성함 (실명) */}
+                            <div className="space-y-1.5">
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">성함 (실명)</label>
                                 <input
                                     type="text"
-                                    placeholder="성함(실명)"
+                                    placeholder="실명을 입력해 주세요"
                                     value={signupForm.name}
                                     onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
-                                    className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
+                                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                                     required
                                 />
                             </div>
-                            <div className="grid md:grid-cols-2 gap-4">
+
+                            {/* 비밀번호 */}
+                            <div className="space-y-1.5">
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">비밀번호</label>
                                 <input
                                     type="password"
-                                    placeholder="비밀번호"
+                                    placeholder="비밀번호를 입력해 주세요"
                                     value={signupForm.password}
                                     onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
-                                    className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
+                                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                                     required
                                 />
+                            </div>
+
+                            {/* 비밀번호 확인 */}
+                            <div className="space-y-1.5">
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">비밀번호 확인</label>
                                 <input
                                     type="password"
-                                    placeholder="비밀번호 확인"
+                                    placeholder="비밀번호를 한 번 더 입력해 주세요"
                                     value={signupForm.confirmPassword}
                                     onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
-                                    className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
+                                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                                     required
                                 />
                             </div>
-                            <input
-                                type="tel"
-                                placeholder="휴대폰 번호 (- 제외)"
-                                value={signupForm.phone}
-                                onChange={(e) => setSignupForm({ ...signupForm, phone: e.target.value })}
-                                className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
-                                required
-                            />
-                            <div className="flex gap-2">
+
+                            {/* 휴대폰 번호 */}
+                            <div className="space-y-1.5">
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">휴대폰 번호</label>
+                                <input
+                                    type="tel"
+                                    placeholder="휴대폰 번호 입력 (- 제외)"
+                                    value={signupForm.phone}
+                                    onChange={(e) => setSignupForm({ ...signupForm, phone: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
+                                    required
+                                />
+                            </div>
+
+                            {/* 집 주소 */}
+                            <div className="space-y-1.5">
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">집 주소</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="집 주소 검색"
+                                        value={signupForm.address}
+                                        readOnly
+                                        className="flex-1 min-w-0 px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm cursor-pointer focus:outline-none focus:border-[#9333EA] shadow-inner"
+                                        onClick={() => setShowPostcode(true)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPostcode(true)}
+                                        className="px-4 py-3 rounded-2xl bg-[#F3E8FF] text-[#9333EA] font-bold text-sm border border-[#E8E0FA] whitespace-nowrap hover:bg-[#E8D5FF] transition-colors"
+                                    >
+                                        검색
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 상세 주소 */}
+                            <div className="space-y-1.5">
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">상세 주소</label>
                                 <input
                                     type="text"
-                                    placeholder="집 주소 (검색)"
-                                    value={signupForm.address}
-                                    readOnly
-                                    className="flex-1 px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold cursor-pointer"
-                                    onClick={() => setShowPostcode(true)}
+                                    placeholder="상세주소 (동/호수 등)"
+                                    value={signupForm.detailAddress}
+                                    onChange={(e) => setSignupForm({ ...signupForm, detailAddress: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                                 />
-                                <button type="button" onClick={() => setShowPostcode(true)} className="px-5 py-4 rounded-2xl bg-[#F3E8FF] text-[#9333EA] font-bold text-sm border border-[#E8E0FA] whitespace-nowrap">검색</button>
                             </div>
-                            <input
-                                type="text"
-                                placeholder="상세주소 (동/호수 등)"
-                                value={signupForm.detailAddress}
-                                onChange={(e) => setSignupForm({ ...signupForm, detailAddress: e.target.value })}
-                                className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
-                            />
 
-                            {/* [신규] 이메일 입력 (선택) */}
-                            <div className="flex flex-col gap-1">
+                            {/* 이메일 주소 */}
+                            <div className="space-y-1.5">
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">이메일 주소 (선택)</label>
                                 <input
                                     type="email"
-                                    placeholder="이메일 주소 (선택)"
+                                    placeholder="이메일 주소 입력"
                                     value={signupForm.email}
                                     onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
-                                    className="w-full px-5 py-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold"
+                                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                                 />
-                                <p className="text-[10px] text-[#9CA3AF] font-bold ml-2">프로필 발송 시 확인용 메일이 전송됩니다.</p>
+                                <p className="text-[10px] text-[#9CA3AF] font-bold ml-2">※ 프로필 발송 시 확인용 메일이 전송됩니다.</p>
                             </div>
                             {/* ── 약관 동의 ── */}
                             <div className="rounded-2xl border border-[#E8E0FA] bg-[#F8F5FF] overflow-hidden">
@@ -661,7 +696,7 @@ const AgencyLanding = () => {
                             <button
                                 type="submit"
                                 disabled={signupLoading}
-                                className="w-full py-4 rounded-2xl bg-[#9333EA] text-white font-black text-lg shadow-moca hover:opacity-90 disabled:opacity-50 transition-all"
+                                className="w-full py-3.5 rounded-2xl bg-[#9333EA] text-white font-black text-base shadow-moca hover:opacity-90 disabled:opacity-50 transition-all"
                             >
                                 {signupLoading ? '가입 중...' : '회원가입하기'}
                             </button>
