@@ -204,7 +204,7 @@ const AgencyTourCalendar = () => {
                 {/* Big Season Legend */}
                 <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20 flex items-center gap-1.5 sm:gap-2 bg-white/95 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-yellow-300/60 shadow-lg shadow-yellow-400/20">
                     <div className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,1)] animate-pulse" />
-                    <span className="text-[9px] sm:text-[10px] font-bold text-yellow-300 tracking-wider">Big Season</span>
+                    <span className="text-[9px] sm:text-[10px] font-bold text-amber-600 tracking-wider">Big Season</span>
                 </div>
 
                 {/* Calendar Control */}

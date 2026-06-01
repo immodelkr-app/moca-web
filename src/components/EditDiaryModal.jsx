@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { updateDiaryEntry } from '../services/diaryService';
 
 const EditDiaryModal = ({ memo, onClose, onSuccess }) => {
@@ -23,9 +24,9 @@ const EditDiaryModal = ({ memo, onClose, onSuccess }) => {
         if (e.target === e.currentTarget) onClose();
     };
 
-    return (
+    return createPortal(
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn"
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn"
             onClick={handleBackdropClick}
         >
             <div className="w-full max-w-lg bg-white border border-[#E8E0FA] rounded-[48px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -94,7 +95,8 @@ const EditDiaryModal = ({ memo, onClose, onSuccess }) => {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

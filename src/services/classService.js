@@ -291,3 +291,209 @@ export const deleteClassCalendarEvent = async (userId, classId) => {
 };
 
 
+
+
+// ──────────────────────────────────────────────
+// ✅ 클래스 완료 관리
+// ──────────────────────────────────────────────
+
+export const completeClass = async (classId) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+    const { data, error } = await supabase
+        .from('classes')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .eq('id', classId)
+        .select()
+        .single();
+    return { data, error };
+};
+
+export const reopenClass = async (classId) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+    const { data, error } = await supabase
+        .from('classes')
+        .update({ status: 'active', completed_at: null })
+        .eq('id', classId)
+        .select()
+        .single();
+    return { data, error };
+};
+
+export const fetchPaidApplicants = async (classId) => {
+    if (!isSupabaseEnabled()) return { data: [], error: null };
+    const { data, error } = await supabase
+        .from('class_applications')
+        .select('*, users(id, name, nickname, phone, grade)')
+        .eq('class_id', classId)
+        .eq('approval_status', 'paid')
+        .order('paid_at', { ascending: false });
+    return { data: data || [], error };
+};
+
+export const recordThankYouSent = async (classId) => {
+    if (!isSupabaseEnabled()) return { error: null };
+    const { error } = await supabase
+        .from('classes')
+        .update({ thank_you_sent_at: new Date().toISOString() })
+        .eq('id', classId);
+    return { error };
+};
+
+
+// ──────────────────────────────────────────────
+// 💬 클래스 피드백
+// ──────────────────────────────────────────────
+
+export const fetchClassFeedback = async (classId) => {
+    if (!isSupabaseEnabled()) return { data: [], error: null };
+    const { data, error } = await supabase
+        .from('class_feedback')
+        .select('*, users(name, nickname, grade)')
+        .eq('class_id', classId)
+        .order('created_at', { ascending: false });
+    return { data: data || [], error };
+};
+
+export const fetchPublicFeedback = async (classId) => {
+    if (!isSupabaseEnabled()) return { data: [], error: null };
+    const { data, error } = await supabase
+        .from('class_feedback')
+        .select('*, users(name, nickname, grade)')
+        .eq('class_id', classId)
+        .eq('is_visible', true)
+        .order('created_at', { ascending: false });
+    return { data: data || [], error };
+};
+
+export const fetchUserFeedback = async (classId, userId) => {
+    if (!isSupabaseEnabled()) return { data: null, error: null };
+    const { data, error } = await supabase
+        .from('class_feedback')
+        .select('*')
+        .eq('class_id', classId)
+        .eq('user_id', userId)
+        .maybeSingle();
+    return { data, error };
+};
+
+export const submitFeedback = async ({ classId, userId, rating, comment, imageUrl }) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+    const { data, error } = await supabase
+        .from('class_feedback')
+        .upsert([{
+            class_id: classId,
+            user_id: userId,
+            rating,
+            comment: comment || null,
+            image_url: imageUrl || null,
+            updated_at: new Date().toISOString(),
+        }], { onConflict: 'class_id,user_id' })
+        .select()
+        .single();
+    return { data, error };
+};
+
+export const uploadFeedbackImage = async (file) => {
+    if (!isSupabaseEnabled()) return { url: null, error: 'Supabase not connected' };
+    const ext = file.name.split('.').pop();
+    const fileName = `feedback_${Date.now()}.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+        .from('class-images')
+        .upload(fileName, file, { upsert: true, contentType: file.type });
+    if (uploadErr) return { url: null, error: uploadErr };
+    const { data } = supabase.storage.from('class-images').getPublicUrl(fileName);
+    return { url: data.publicUrl, error: null };
+};
+
+export const updateFeedbackVisibility = async (feedbackId, isVisible) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+    const { error } = await supabase
+        .from('class_feedback')
+        .update({ is_visible: isVisible, updated_at: new Date().toISOString() })
+        .eq('id', feedbackId);
+    return { error };
+};
+
+export const replyToFeedback = async (feedbackId, reply) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+    const { error } = await supabase
+        .from('class_feedback')
+        .update({
+            admin_reply: reply,
+            admin_replied_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', feedbackId);
+    return { error };
+};
+
+export const deleteFeedback = async (feedbackId) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+    const { error } = await supabase
+        .from('class_feedback')
+        .delete()
+        .eq('id', feedbackId);
+    return { error };
+};
+
+
+// ──────────────────────────────────────────────
+// 📊 클래스 통계
+// ──────────────────────────────────────────────
+
+export const fetchClassStats = async (classId) => {
+    if (!isSupabaseEnabled()) return { data: null, error: null };
+
+    const [appsResult, feedbackResult] = await Promise.all([
+        supabase
+            .from('class_applications')
+            .select('approval_status, applied_price, grade_label')
+            .eq('class_id', classId),
+        supabase
+            .from('class_feedback')
+            .select('rating')
+            .eq('class_id', classId),
+    ]);
+
+    const apps = appsResult.data || [];
+    const feedbacks = feedbackResult.data || [];
+
+    const totalApplicants = apps.length;
+    const confirmedCount = apps.filter(a => a.approval_status === 'paid').length;
+    const cancelledCount = apps.filter(a => a.approval_status === 'cancelled').length;
+    const pendingCount = apps.filter(a => a.approval_status === 'pending').length;
+    const approvedCount = apps.filter(a => a.approval_status === 'approved').length;
+    const totalRevenue = apps
+        .filter(a => a.approval_status === 'paid')
+        .reduce((sum, a) => sum + (a.applied_price || 0), 0);
+
+    const feedbackCount = feedbacks.length;
+    const avgRating = feedbackCount > 0
+        ? (feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbackCount).toFixed(1)
+        : null;
+
+    const gradeBreakdown = {};
+    apps.forEach(a => {
+        const g = a.grade_label || 'SILVER';
+        gradeBreakdown[g] = (gradeBreakdown[g] || 0) + 1;
+    });
+
+    const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    feedbacks.forEach(f => { ratingDistribution[f.rating] = (ratingDistribution[f.rating] || 0) + 1; });
+
+    return {
+        data: {
+            totalApplicants,
+            confirmedCount,
+            cancelledCount,
+            pendingCount,
+            approvedCount,
+            totalRevenue,
+            feedbackCount,
+            avgRating,
+            gradeBreakdown,
+            ratingDistribution,
+        },
+        error: appsResult.error || feedbackResult.error,
+    };
+};

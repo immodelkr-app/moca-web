@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { saveClassCalendarEvent } from '../services/classService';
+import { saveClassCalendarEvent, fetchPublicFeedback, fetchUserFeedback } from '../services/classService';
 import { getUser, syncUserGrade } from '../services/userService';
 import ClassApplyModal from './ClassApplyModal';
+import ClassFeedbackModal from './ClassFeedbackModal';
 
 
 const ClassDetailPage = () => {
@@ -13,9 +14,15 @@ const ClassDetailPage = () => {
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showApplyModal, setShowApplyModal] = useState(false);
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [isApplied, setIsApplied] = useState(false);
     const [shareSuccess, setShareSuccess] = useState(false);
     const [calendarSaved, setCalendarSaved] = useState(false);
+
+    // 피드백 관련
+    const [feedbacks, setFeedbacks] = useState([]);
+    const [myFeedback, setMyFeedback] = useState(null);
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
 
 
     useEffect(() => {
@@ -49,13 +56,26 @@ const ClassDetailPage = () => {
             .single();
         if (classData) setCls(classData);
         setLoading(false);
+
+        // 피드백 로드
+        if (classData?.status === 'completed') {
+            setFeedbackLoading(true);
+            const { data: fbData } = await fetchPublicFeedback(id);
+            setFeedbacks(fbData || []);
+
+            const localU = getUser();
+            if (localU?.id) {
+                const { data: myFb } = await fetchUserFeedback(id, localU.id);
+                setMyFeedback(myFb || null);
+            }
+            setFeedbackLoading(false);
+        }
     };
 
     // My Price Helper
     const getMyPriceInfo = () => {
         if (!cls?.class_pricing || cls.class_pricing.length === 0) return null;
         
-        // If not logged in, fallback to first pricing (usually normal price)
         if (!currentUser || !currentUser.grade) {
             return cls.class_pricing[0];
         }
@@ -72,15 +92,11 @@ const ClassDetailPage = () => {
             searchTerms.some(term => item.grade_label.toUpperCase().includes(term))
         );
         
-        return p || cls.class_pricing[0]; // Fallback to first pricing if no match
+        return p || cls.class_pricing[0];
     };
 
     const myPriceInfo = getMyPriceInfo();
     const myPrice = myPriceInfo?.price || 0;
-
-    // ──────────────────────────────────────────────
-    // 📅 캘린더 헬퍼 함수들
-    // ──────────────────────────────────────────────
 
     const handleSaveMocaCalendar = async () => {
         if (!currentUser || !cls) return;
@@ -159,6 +175,21 @@ const ClassDetailPage = () => {
         }
     };
 
+    // 피드백 작성 완료 후 처리
+    const handleFeedbackSuccess = async () => {
+        const { data: fbData } = await fetchPublicFeedback(id);
+        setFeedbacks(fbData || []);
+        if (currentUser?.id) {
+            const { data: myFb } = await fetchUserFeedback(id, currentUser.id);
+            setMyFeedback(myFb || null);
+        }
+    };
+
+    const isCompleted = cls?.status === 'completed';
+    const avgRating = feedbacks.length > 0
+        ? (feedbacks.reduce((s, f) => s + f.rating, 0) / feedbacks.length).toFixed(1)
+        : null;
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[var(--moca-bg)]">
@@ -182,7 +213,7 @@ const ClassDetailPage = () => {
             </div>
 
             {/* Hero / Poster Image */}
-            <div className="w-full bg-gray-50 flex justify-center items-center">
+            <div className="w-full bg-gray-50 flex justify-center items-center relative">
                 {cls.image_url ? (
                     <img src={cls.image_url} alt={cls.title} className="w-full max-h-[70vh] object-contain shadow-sm" />
                 ) : (
@@ -191,13 +222,22 @@ const ClassDetailPage = () => {
                         <p className="text-indigo-300 font-black tracking-widest text-lg uppercase">MOCA CLASS</p>
                     </div>
                 )}
+                {/* 완료 배지 */}
+                {isCompleted && (
+                    <div className="absolute bottom-4 left-4">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-green-500/90 text-white rounded-full text-sm font-black backdrop-blur-md border border-white/20 shadow-lg">
+                            <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                            종료된 클래스
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Main Content */}
             <div className="px-5 py-8 relative z-10 max-w-4xl mx-auto">
                 <div className="bg-white rounded-[32px] sm:shadow-sm sm:p-8 mb-10">
                     
-                    {/* 1. Header Info (Title, Tags, Date, Location) */}
+                    {/* 1. Header Info */}
                     <div className="mb-10">
                         <div className="flex flex-wrap items-center gap-2 mb-4">
                             <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-black uppercase">
@@ -212,15 +252,21 @@ const ClassDetailPage = () => {
                                  cls.target_grade === 'GOLD' ? '신청가능 등급: 골드멤버' : '신청가능 등급: 전체등급'}
                             </span>
                             {isApplied && <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-black uppercase flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span> 신청완료</span>}
+                            {isCompleted && <span className="px-3 py-1 rounded-full bg-green-500 text-white text-[11px] font-black flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">task_alt</span> 완료</span>}
                         </div>
                         <h1 className="text-3xl lg:text-4xl font-black mb-4 leading-tight text-[var(--moca-text)] tracking-tight">{cls.title}</h1>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-[var(--moca-text-3)] font-bold text-sm">
                             <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">calendar_today</span>{cls.class_date?.replace(/:\d{2}$/, '')}</span>
                             <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">location_on</span>{cls.location}</span>
+                            {avgRating && (
+                                <span className="flex items-center gap-1.5 text-amber-500 font-black">
+                                    <span className="text-[18px]">★</span>{avgRating} ({feedbacks.length}개 후기)
+                                </span>
+                            )}
                         </div>
                     </div>
 
-                    {/* 2. Description (프로그램 상세 안내) */}
+                    {/* 2. Description */}
                     <div className="mb-12">
                         <h2 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2 mb-6 border-b border-[var(--moca-border)] pb-4">
                             <span className="material-symbols-outlined text-indigo-500">menu_book</span>
@@ -231,7 +277,7 @@ const ClassDetailPage = () => {
                         </div>
                     </div>
 
-                    {/* 3. Schedule & Capacity (클래스 스케줄 및 정원) */}
+                    {/* 3. Schedule & Capacity */}
                     <div className="mb-12">
                         <h2 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2 mb-6 border-b border-[var(--moca-border)] pb-4">
                             <span className="material-symbols-outlined text-indigo-500">event_available</span>
@@ -283,7 +329,60 @@ const ClassDetailPage = () => {
                         </div>
                     </div>
 
+                    {/* 4. 수강 후기 섹션 (완료된 클래스만) */}
+                    {isCompleted && (
+                        <div className="mb-6">
+                            <h2 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2 mb-6 border-b border-[var(--moca-border)] pb-4">
+                                <span className="material-symbols-outlined text-amber-400">star</span>
+                                수강 후기
+                                {avgRating && (
+                                    <span className="ml-2 text-base font-black text-amber-500">{avgRating} ★</span>
+                                )}
+                                <span className="ml-1 text-sm font-bold text-slate-400">({feedbacks.length}개)</span>
+                            </h2>
 
+                            {feedbackLoading ? (
+                                <div className="py-8 text-center text-slate-400 font-bold">후기를 불러오는 중...</div>
+                            ) : feedbacks.length === 0 ? (
+                                <div className="py-10 text-center bg-slate-50 rounded-2xl border border-slate-100">
+                                    <span className="material-symbols-outlined text-4xl text-slate-200 block mb-2">rate_review</span>
+                                    <p className="text-slate-400 font-bold text-sm">아직 후기가 없습니다</p>
+                                    <p className="text-slate-300 text-xs mt-1">수강 후기를 첫 번째로 남겨보세요!</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {feedbacks.map(fb => {
+                                        const name = fb.users?.name || fb.users?.nickname || '회원';
+                                        const maskedName = name.length > 1 ? name[0] + '*'.repeat(name.length - 1) : name;
+                                        return (
+                                            <div key={fb.id} className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-sm">{name[0]}</div>
+                                                        <span className="text-sm font-black text-slate-700">{maskedName}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        {[1,2,3,4,5].map(s => (
+                                                            <span key={s} className={`text-[16px] ${s <= fb.rating ? 'text-amber-400' : 'text-slate-200'}`}>★</span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                {fb.comment && <p className="text-sm text-slate-600 font-medium leading-relaxed mb-3">{fb.comment}</p>}
+                                                {fb.image_url && <img src={fb.image_url} alt="" className="w-full max-h-48 object-cover rounded-xl mb-3" />}
+                                                {fb.admin_reply && (
+                                                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mt-3">
+                                                        <p className="text-[10px] font-black text-indigo-400 uppercase mb-1">아임모카 답변</p>
+                                                        <p className="text-sm text-indigo-700 font-medium">{fb.admin_reply}</p>
+                                                    </div>
+                                                )}
+                                                <p className="text-[10px] text-slate-400 font-bold mt-3">{new Date(fb.created_at).toLocaleDateString('ko-KR')}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -292,43 +391,57 @@ const ClassDetailPage = () => {
                 <div className="hidden sm:block">
                     <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">{myPriceInfo?.grade_label || 'Special Benefit'}</p>
                     <p className="text-2xl font-black text-[var(--moca-text)] tracking-tighter">
-                        참여 신청하기
+                        {isCompleted ? '수강 후기' : '참여 신청하기'}
                     </p>
                 </div>
-                {isApplied ? (
-                    <button disabled className="flex-1 bg-indigo-100 text-indigo-500 border border-indigo-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
-                        <span className="material-symbols-outlined font-black">task_alt</span>
-                        신청 완료
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => {
-                            if (!currentUser) {
-                                alert('로그인 후 이용 가능합니다.');
-                                navigate('/login');
-                                return;
-                            }
-                            if (cls.target_grade && cls.target_grade !== 'ALL') {
-                                const myGrade = (currentUser.grade || '').toUpperCase();
-                                const isExclusive = ['VIP', 'IMODEL', '전속모델', '아임모델', 'EXCLUSIVE'].some(g => myGrade.includes(g));
-                                const isGold = isExclusive || ['GOLD', '골드'].some(g => myGrade.includes(g));
-                                
-                                if (cls.target_grade === 'EXCLUSIVE' && !isExclusive) {
-                                    alert('전속모델 등급만 신청 가능한 클래스입니다. 등급 업그레이드 후 신청해주세요.');
-                                    return;
+
+                {/* 진행 중 클래스 CTA */}
+                {!isCompleted && (
+                    isApplied ? (
+                        <button disabled className="flex-1 bg-indigo-100 text-indigo-500 border border-indigo-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
+                            <span className="material-symbols-outlined font-black">task_alt</span>
+                            신청 완료
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => {
+                                if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
+                                if (cls.target_grade && cls.target_grade !== 'ALL') {
+                                    const myGrade = (currentUser.grade || '').toUpperCase();
+                                    const isExclusive = ['VIP', 'IMODEL', '전속모델', '아임모델', 'EXCLUSIVE'].some(g => myGrade.includes(g));
+                                    const isGold = isExclusive || ['GOLD', '골드'].some(g => myGrade.includes(g));
+                                    if (cls.target_grade === 'EXCLUSIVE' && !isExclusive) { alert('전속모델 등급만 신청 가능한 클래스입니다.'); return; }
+                                    if (cls.target_grade === 'GOLD' && !isGold) { alert('골드회원 이상만 신청 가능한 클래스입니다.'); return; }
                                 }
-                                if (cls.target_grade === 'GOLD' && !isGold) {
-                                    alert('골드회원 이상만 신청 가능한 클래스입니다. 등급 업그레이드 후 신청해주세요.');
-                                    return;
-                                }
-                            }
-                            setShowApplyModal(true);
-                        }}
-                        className="flex-1 bg-indigo-600 text-white py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                    >
-                        <span className="material-symbols-outlined font-black">edit_note</span>
-                        수강 참여 신청하기
-                    </button>
+                                setShowApplyModal(true);
+                            }}
+                            className="flex-1 bg-indigo-600 text-white py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                        >
+                            <span className="material-symbols-outlined font-black">edit_note</span>
+                            수강 참여 신청하기
+                        </button>
+                    )
+                )}
+
+                {/* 완료 클래스 CTA — 피드백 버튼 */}
+                {isCompleted && (
+                    isApplied ? (
+                        <button
+                            onClick={() => {
+                                if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
+                                setShowFeedbackModal(true);
+                            }}
+                            className={`flex-1 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${myFeedback ? 'bg-amber-100 text-amber-600 border border-amber-200 shadow-amber-100' : 'bg-amber-400 text-white shadow-amber-400/20'}`}
+                        >
+                            <span className="material-symbols-outlined font-black">rate_review</span>
+                            {myFeedback ? '내 후기 수정하기' : '수강 후기 남기기'}
+                        </button>
+                    ) : (
+                        <div className="flex-1 py-4 rounded-[24px] bg-slate-100 text-slate-400 font-black text-base text-center flex items-center justify-center gap-2">
+                            <span className="material-symbols-outlined font-black">lock</span>
+                            수강생만 후기 작성 가능
+                        </div>
+                    )
                 )}
             </div>
 
@@ -341,6 +454,17 @@ const ClassDetailPage = () => {
                     myPrice={myPrice}
                     onClose={() => setShowApplyModal(false)}
                     onSuccess={() => setIsApplied(true)}
+                />
+            )}
+
+            {/* Feedback Modal */}
+            {showFeedbackModal && (
+                <ClassFeedbackModal
+                    cls={cls}
+                    currentUser={currentUser}
+                    existingFeedback={myFeedback}
+                    onClose={() => setShowFeedbackModal(false)}
+                    onSuccess={handleFeedbackSuccess}
                 />
             )}
         </div>

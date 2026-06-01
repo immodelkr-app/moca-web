@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { deleteDiaryEntry } from '../services/diaryService';
 import QuickAddMemoModal from './QuickAddMemoModal';
 import EditDiaryModal from './EditDiaryModal';
@@ -16,7 +17,7 @@ const CalendarDayDetailsModal = ({ dateStr, diaries, onClose, onAddClick, onCont
         const dd = String(dateObj.getDate()).padStart(2, '0');
         const startStr = `${yyyy}${mm}${dd}`;
 
-        // 종료일은 다음날 (All-day event 기준)
+        // 템플릿 코드...
         const nextDateObj = new Date(dateObj);
         nextDateObj.setDate(nextDateObj.getDate() + 1);
         const nextYyyy = nextDateObj.getFullYear();
@@ -49,7 +50,7 @@ const CalendarDayDetailsModal = ({ dateStr, diaries, onClose, onAddClick, onCont
         if (onContentChange) onContentChange();
     };
 
-    return (
+    return createPortal(
         <div
             className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4 animate-fadeIn"
             onClick={handleBackdropClick}
@@ -154,7 +155,8 @@ const CalendarDayDetailsModal = ({ dateStr, diaries, onClose, onAddClick, onCont
                     onSuccess={handleEditSuccess}
                 />
             )}
-        </div>
+        </div>,
+        document.body
     );
 };
 

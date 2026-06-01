@@ -70,79 +70,113 @@ const ClassListPage = () => {
                         <span className="material-symbols-outlined text-5xl mb-3 opacity-20">school</span>
                         <p className="text-sm font-bold">진행 중인 클래스가 없습니다.</p>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-6">
-                        {classes.map(cls => {
-                            const isApplied = myApplications.includes(cls.id);
-                            
-                            return (
-                                <div 
-                                    key={cls.id} 
-                                    onClick={() => navigate(`/home/class/${cls.id}`)}
-                                    className="bg-white rounded-3xl overflow-hidden shadow-moca-sm active:scale-[0.98] transition-all relative border border-[#E8E0FA]"
-                                >
-                                    {isApplied && (
-                                        <div className="absolute top-4 right-4 z-10 bg-[#7C3AED] text-white px-3 py-1.5 rounded-full text-[10px] font-black shadow-lg flex items-center gap-1">
-                                            <span className="material-symbols-outlined text-[12px]">check_circle</span>
-                                            신청완료
+                ) : (() => {
+                    const activeClasses = classes.filter(c => (c.status || 'active') === 'active');
+                    const completedClasses = classes.filter(c => c.status === 'completed');
+
+                    const ClassCard = ({ cls }) => {
+                        const isApplied = myApplications.includes(cls.id);
+                        const isCompleted = cls.status === 'completed';
+                        return (
+                            <div
+                                key={cls.id}
+                                onClick={() => navigate(`/home/class/${cls.id}`)}
+                                className={`bg-white rounded-3xl overflow-hidden shadow-moca-sm active:scale-[0.98] transition-all relative border ${isCompleted ? 'border-green-100 opacity-80' : 'border-[#E8E0FA]'}`}
+                            >
+                                {/* 신청완료 배지 */}
+                                {isApplied && !isCompleted && (
+                                    <div className="absolute top-4 right-4 z-10 bg-[#7C3AED] text-white px-3 py-1.5 rounded-full text-[10px] font-black shadow-lg flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                                        신청완료
+                                    </div>
+                                )}
+                                {/* 완료 배지 */}
+                                {isCompleted && (
+                                    <div className="absolute top-4 right-4 z-10 bg-green-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black shadow-lg flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[12px]">task_alt</span>
+                                        종료됨
+                                    </div>
+                                )}
+                                <div className="aspect-[2/1] w-full bg-[#F8F5FF] relative overflow-hidden">
+                                    {cls.image_url ? (
+                                        <img src={cls.image_url} alt={cls.title} className={`w-full h-full object-cover object-top ${isCompleted ? 'grayscale-[30%]' : 'opacity-90'}`} />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-[#E8E0FA] text-6xl">school</span>
                                         </div>
                                     )}
-                                    {/* 이미지 영역 축소 */}
-                                    <div className="aspect-[2/1] w-full bg-[#F8F5FF] relative overflow-hidden">
-                                        {cls.image_url ? (
-                                            <img src={cls.image_url} alt={cls.title} className="w-full h-full object-cover object-top opacity-90" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-[#E8E0FA] text-6xl">school</span>
-                                            </div>
-                                        )}
-                                        {/* 오버레이 제거됨 */}
-                                    </div>
-                                    
-                                    {/* 정보 영역 (흰색 배경) */}
-                                    <div className="p-6">
-                                        <div className="mb-4">
-                                            <div className="flex flex-wrap gap-1.5 mb-3">
-                                                <span className="inline-block px-3 py-1 rounded-full bg-[#F3E8FF] text-[#7C3AED] text-[10px] font-black">
-                                                    {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이'}
-                                                </span>
-                                                <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black ${
-                                                    cls.target_grade === 'EXCLUSIVE' ? 'bg-indigo-900 text-yellow-300' :
-                                                    cls.target_grade === 'GOLD' ? 'bg-yellow-100 text-yellow-700' :
-                                                    'bg-green-100 text-green-700'
-                                                }`}>
-                                                    {cls.target_grade === 'EXCLUSIVE' ? '신청가능 등급: 전속모델' :
-                                                     cls.target_grade === 'GOLD' ? '신청가능 등급: 골드멤버' : '신청가능 등급: 전체등급'}
-                                                </span>
-                                            </div>
-                                            {/* 보라색 계열 텍스트 적용 */}
-                                            <h3 className="text-[#5B4E7A] font-black text-[18px] sm:text-xl leading-snug mb-2 break-keep">{cls.title}</h3>
-                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                                <p className="text-[#7C3AED] text-[13px] font-bold flex items-center gap-1.5">
-                                                    <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-                                                    {cls.class_date?.replace(/:\d{2}$/, '')}
-                                                </p>
-                                                {cls.location && (
-                                                    <p className="text-[#7C3AED] text-[13px] font-bold flex items-center gap-1.5">
-                                                        <span className="material-symbols-outlined text-[16px]">location_on</span>
-                                                        {cls.location}
-                                                    </p>
-                                                )}
-                                            </div>
+                                </div>
+                                <div className="p-6">
+                                    <div className="mb-4">
+                                        <div className="flex flex-wrap gap-1.5 mb-3">
+                                            <span className="inline-block px-3 py-1 rounded-full bg-[#F3E8FF] text-[#7C3AED] text-[10px] font-black">
+                                                {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이'}
+                                            </span>
+                                            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black ${
+                                                cls.target_grade === 'EXCLUSIVE' ? 'bg-indigo-900 text-yellow-300' :
+                                                cls.target_grade === 'GOLD' ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-green-100 text-green-700'
+                                            }`}>
+                                                {cls.target_grade === 'EXCLUSIVE' ? '신청가능 등급: 전속모델' :
+                                                 cls.target_grade === 'GOLD' ? '신청가능 등급: 골드멤버' : '신청가능 등급: 전체등급'}
+                                            </span>
                                         </div>
-
-                                        <div className="border-t border-[#E8E0FA] pt-4 mt-2">
-                                            <div className="w-full flex items-center justify-center gap-1.5 py-3.5 rounded-xl bg-[#F8F5FF] text-[#7C3AED] font-black text-[14px]">
-                                                클래스 확인하기
-                                                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                                            </div>
+                                        <h3 className="text-[#5B4E7A] font-black text-[18px] sm:text-xl leading-snug mb-2 break-keep">{cls.title}</h3>
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                            <p className="text-[#7C3AED] text-[13px] font-bold flex items-center gap-1.5">
+                                                <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+                                                {cls.class_date?.replace(/:\d{2}$/, '')}
+                                            </p>
+                                            {cls.location && (
+                                                <p className="text-[#7C3AED] text-[13px] font-bold flex items-center gap-1.5">
+                                                    <span className="material-symbols-outlined text-[16px]">location_on</span>
+                                                    {cls.location}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="border-t border-[#E8E0FA] pt-4 mt-2">
+                                        <div className={`w-full flex items-center justify-center gap-1.5 py-3.5 rounded-xl font-black text-[14px] ${isCompleted ? 'bg-green-50 text-green-600' : 'bg-[#F8F5FF] text-[#7C3AED]'}`}>
+                                            {isCompleted ? '후기 보기' : '클래스 확인하기'}
+                                            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                                         </div>
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                )}
+                            </div>
+                        );
+                    };
+
+                    return (
+                        <div className="space-y-10">
+                            {/* 진행 중 클래스 */}
+                            {activeClasses.length > 0 && (
+                                <div>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></span>
+                                        <h3 className="text-base font-black text-[#5B4E7A]">진행 중인 클래스</h3>
+                                        <span className="text-xs font-bold text-slate-400">{activeClasses.length}개</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {activeClasses.map(cls => <ClassCard key={cls.id} cls={cls} />)}
+                                    </div>
+                                </div>
+                            )}
+                            {/* 완료된 클래스 */}
+                            {completedClasses.length > 0 && (
+                                <div>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="material-symbols-outlined text-[16px] text-green-500">check_circle</span>
+                                        <h3 className="text-base font-black text-[#5B4E7A]">완료된 클래스</h3>
+                                        <span className="text-xs font-bold text-slate-400">{completedClasses.length}개</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {completedClasses.map(cls => <ClassCard key={cls.id} cls={cls} />)}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
             </div>
         </div>
     );

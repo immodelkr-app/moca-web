@@ -736,7 +736,7 @@ const SmartProfile = () => {
                     >
                         <span className="flex items-center justify-center gap-3">
                             <span className="material-symbols-outlined text-[24px]">forward_to_inbox</span>
-                            에이전시 리스트에서 프로필발송 →
+                            에이전시 프로필발송 →
                         </span>
                     </button>
                 )}
@@ -750,7 +750,7 @@ const SmartProfile = () => {
             return (
                 <div
                     key="photo-modal"
-                    className="fixed inset-0 z-50 bg-black/92 flex flex-col"
+                    className="fixed inset-0 z-[1000] bg-black/92 flex flex-col"
                     onClick={() => setSelectedPhoto(null)}
                 >
                     <div className="flex items-center justify-between px-5 pt-10 pb-4 flex-shrink-0" onClick={e => e.stopPropagation()}>

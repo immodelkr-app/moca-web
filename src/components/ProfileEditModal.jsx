@@ -187,7 +187,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
     if (!user) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1F1235]/60 backdrop-blur-sm animate-fadeIn">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-[#1F1235]/60 backdrop-blur-sm animate-fadeIn">
             <div className="bg-white border border-[#E8E0FA] rounded-3xl w-full max-w-sm max-h-[85vh] flex flex-col shadow-2xl relative overflow-hidden">
                 
                 {/* Modal Header */}

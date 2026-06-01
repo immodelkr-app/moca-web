@@ -17,7 +17,7 @@ const CastingEmailModal = ({ agency, onConfirm, onClose, sending }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget && !sending) onClose(); }}>
+        <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget && !sending) onClose(); }}>
             <div className="bg-[#1a1a24] border border-white/10 rounded-t-3xl w-full max-w-lg p-6 pb-10 shadow-2xl">
 
                 {/* 핸들 */}

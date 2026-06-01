@@ -82,7 +82,7 @@ const VisitMemoModal = ({ agency, onClose }) => {
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
             onClick={handleBackdropClick}
         >
             <div className="w-full max-w-md bg-white border border-[#E8E0FA] rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
