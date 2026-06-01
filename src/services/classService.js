@@ -447,7 +447,7 @@ export const fetchClassStats = async (classId) => {
     const [appsResult, feedbackResult] = await Promise.all([
         supabase
             .from('class_applications')
-            .select('approval_status, applied_price, grade_label')
+            .select('approval_status, applied_price, grade_label, users(grade)')
             .eq('class_id', classId),
         supabase
             .from('class_feedback')
@@ -474,7 +474,16 @@ export const fetchClassStats = async (classId) => {
 
     const gradeBreakdown = {};
     apps.forEach(a => {
-        const g = a.grade_label || 'SILVER';
+        let g = '🥈 SILVER';
+        const currentGrade = a.users?.grade;
+        if (currentGrade) {
+            if (currentGrade === 'SILVER') g = '🥈 SILVER';
+            else if (currentGrade === 'GOLD') g = '🌟 GOLD';
+            else if (currentGrade === 'IMODEL') g = '🌸 아임모델';
+            else if (currentGrade === 'VIP') g = '👑 전속모델';
+        } else {
+            g = a.grade_label || '🥈 SILVER';
+        }
         gradeBreakdown[g] = (gradeBreakdown[g] || 0) + 1;
     });
 
