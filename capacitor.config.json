@@ -2,6 +2,11 @@
   "appId": "com.immodel.mocapp",
   "appName": "모두의 캐스팅 모카",
   "webDir": "dist",
+  "server": {
+    "url": "https://immoca.kr",
+    "allowNavigation": ["immoca.kr"],
+    "cleartext": true
+  },
   "android": {
     "allowMixedContent": true,
     "backgroundColor": "#ffffff"
