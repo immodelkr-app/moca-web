@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import ClassListPage from './components/ClassListPage';
 import ClassDetailPage from './components/ClassDetailPage';
+import OpenAppRedirect from './components/OpenAppRedirect';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
@@ -69,8 +70,22 @@ function AppContent() {
         };
         window.addEventListener('pushNotificationRoute', handlePushRoute);
 
+        // Handle deep links (custom scheme: immodel://)
+        const deepLinkListener = CapacitorApp.addListener('appUrlOpen', (event) => {
+            const url = event.url;
+            const scheme = 'immodel://';
+            if (url.startsWith(scheme)) {
+                let path = url.substring(scheme.length);
+                path = path.replace(/^\/+/, '');
+                if (path) {
+                    navigate('/' + path);
+                }
+            }
+        });
+
         return () => {
             backButtonListener.then((listener) => listener.remove());
+            deepLinkListener.then((listener) => listener.remove());
             window.removeEventListener('pushNotificationRoute', handlePushRoute);
         };
     }, [location.pathname, navigate]);
@@ -85,6 +100,7 @@ function AppContent() {
                 {/* 공개 페이지 (로그인 불필요) */}
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/open-app" element={<OpenAppRedirect />} />
                 {/* 보호된 라우트 (로그인 필요) */}
                 <Route element={<ProtectedRoute />}>
                     <Route path="/agencies" element={<Layout />}>

@@ -313,7 +313,7 @@ const AdminClasses = () => {
         setPaidApplicants(data || []);
         setSelectedRecipients((data || []).map(a => a.user_id));
         setThankYouMessage(
-            `[아임모델 MOCA] 클래스 수강 감사 안내\n\n안녕하세요!\n[${cls.title}] 클래스에 참여해 주셔서 진심으로 감사드립니다. 🎉\n\n수강하신 경험에 대한 소중한 피드백을 남겨주시면,\n더 좋은 클래스를 준비하는 데 큰 도움이 됩니다 😊\n\n▶ 후기 남기기: https://immoca.kr/home/class/${cls.id}\n\n문의: 카카오채널 @아임모델`
+            `[아임모델 MOCA] 클래스 수강 감사 안내\n\n안녕하세요!\n[${cls.title}] 클래스에 참여해 주셔서 진심으로 감사드립니다. 🎉\n\n수강하신 경험에 대한 소중한 피드백을 남겨주시면,\n더 좋은 클래스를 준비하는 데 큰 도움이 됩니다 😊\n\n▶ 후기 남기기: https://immoca.kr/open-app?path=home/class/${cls.id}\n\n문의: 카카오채널 @아임모델`
         );
         setLoading(false);
     };
