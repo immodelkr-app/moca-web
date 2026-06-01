@@ -159,6 +159,7 @@ const AgencyLanding = () => {
 
 
     const handleLoginSuccess = (userObj) => {
+        sessionStorage.setItem('interactive_login', 'true');
         const user = userObj || getUser();
         if (user) {
             setIsLoggedIn(true);

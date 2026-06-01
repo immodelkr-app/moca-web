@@ -158,8 +158,13 @@ export const useAuthSync = () => {
                     grade: 'SILVER',
                 });
             } finally {
-                // 동기화 성공/실패 관계없이 shouldRedirect면 이동
-                if (shouldRedirect) {
+                const isInteractive = sessionStorage.getItem('interactive_login') === 'true';
+                if (isInteractive) {
+                    sessionStorage.removeItem('interactive_login');
+                }
+
+                // 동기화 성공/실패 관계없이 shouldRedirect면 이동 (단, 인터랙티브 로그인이 아닐 때만)
+                if (shouldRedirect && !isInteractive) {
                     redirectToDashboard();
                 }
             }
@@ -169,8 +174,15 @@ export const useAuthSync = () => {
             const currentPath = window.location.pathname;
             // 메인 페이지나 로그인 페이지에 있을 때만 대시보드로 리다이렉트
             if (currentPath === '/' || currentPath === '/index.html' || currentPath.includes('login')) {
-                console.log('[useAuthSync] Redirecting to dashboard...');
-                window.location.replace('/home/dashboard');
+                const redirectTo = sessionStorage.getItem('redirect_to');
+                if (redirectTo) {
+                    console.log('[useAuthSync] Redirecting to saved path:', redirectTo);
+                    sessionStorage.removeItem('redirect_to');
+                    window.location.replace(redirectTo);
+                } else {
+                    console.log('[useAuthSync] Redirecting to dashboard...');
+                    window.location.replace('/home/dashboard');
+                }
             }
         }
 

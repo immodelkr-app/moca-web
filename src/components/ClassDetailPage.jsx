@@ -34,6 +34,7 @@ const ClassDetailPage = () => {
         await syncUserGrade();
         const localUser = getUser();
         
+        let hasApplied = false;
         if (localUser) {
             let currentGrade = localUser.grade || 'SILVER';
 
@@ -44,7 +45,10 @@ const ClassDetailPage = () => {
                     .eq('class_id', id)
                     .eq('user_id', localUser.id)
                     .maybeSingle();
-                if (app) setIsApplied(true);
+                if (app) {
+                    setIsApplied(true);
+                    hasApplied = true;
+                }
             }
             setCurrentUser({ ...localUser, grade: currentGrade });
         }
@@ -69,6 +73,20 @@ const ClassDetailPage = () => {
                 setMyFeedback(myFb || null);
             }
             setFeedbackLoading(false);
+        }
+
+        // [신규] 후기 남기기 자동 팝업 처리 (?write_review=true)
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('write_review') === 'true') {
+            if (localUser) {
+                if (classData?.status === 'completed') {
+                    if (hasApplied) {
+                        setShowFeedbackModal(true);
+                    } else {
+                        alert('수강 완료된 회원만 후기를 작성할 수 있습니다.');
+                    }
+                }
+            }
         }
     };
 
