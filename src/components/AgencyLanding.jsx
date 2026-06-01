@@ -158,6 +158,25 @@ const AgencyLanding = () => {
 
 
 
+    const handleLoginSuccess = (userObj) => {
+        const user = userObj || getUser();
+        if (user) {
+            setIsLoggedIn(true);
+            setUserId(user.name || user.nickname || '');
+            setUserGrade(user.grade || 'BASIC');
+        }
+        setShowLogin(false);
+        setShowSignup(false);
+
+        const redirectTo = sessionStorage.getItem('redirect_to');
+        if (redirectTo) {
+            sessionStorage.removeItem('redirect_to');
+            navigate(redirectTo, { replace: true });
+        } else {
+            navigate('/home/dashboard');
+        }
+    };
+
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
         setLoginLoading(true);
@@ -167,11 +186,7 @@ const AgencyLanding = () => {
             if (loginErr) throw loginErr;
             
             saveUser(user);
-            setIsLoggedIn(true);
-            setUserId(user.name || user.nickname || '');
-            setUserGrade(user.grade || 'BASIC');
-            setShowLogin(false);
-            navigate('/home/dashboard');
+            handleLoginSuccess(user);
         } catch (err) {
             setLoginError(err.message || '로그인에 실패했습니다.');
         } finally {
@@ -186,11 +201,7 @@ const AgencyLanding = () => {
         try {
             const { success, user } = await loginWithPasskey();
             if (success && user) {
-                setIsLoggedIn(true);
-                setUserId(user.name || user.nickname || '');
-                setUserGrade(user.grade || 'BASIC');
-                setShowLogin(false);
-                navigate('/home/dashboard', { replace: true });
+                handleLoginSuccess(user);
             }
         } catch (err) {
             console.error('[Passkey] Login handler failed:', err);
@@ -264,10 +275,7 @@ const AgencyLanding = () => {
 
             const finalUser = data || newUser;
             saveUser(finalUser);
-            setIsLoggedIn(true);
-            setUserId(finalUser.name || finalUser.nickname || '');
-            setShowSignup(false);
-            navigate('/home/dashboard');
+            handleLoginSuccess(finalUser);
         } catch (err) {
             setSignupError(err.message || '회원가입에 실패했습니다.');
         } finally {
