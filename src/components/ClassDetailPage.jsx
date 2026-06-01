@@ -96,7 +96,7 @@ const ClassDetailPage = () => {
     };
 
     const myPriceInfo = getMyPriceInfo();
-    const myPrice = myPriceInfo?.price || 0;
+    const myPrice = myPriceInfo ? myPriceInfo.price : (Number(cls.price_info) || 0);
 
     const handleSaveMocaCalendar = async () => {
         if (!currentUser || !cls) return;

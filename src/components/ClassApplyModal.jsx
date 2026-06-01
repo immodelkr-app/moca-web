@@ -134,7 +134,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                 </div>
                                 <div className="pt-3 border-t border-indigo-100 flex justify-between items-center">
                                     <span className="text-xs font-bold text-indigo-400">참가 구분</span>
-                                    <span className="text-sm font-black text-[var(--moca-text)]">GOLD 등급 회원</span>
+                                    <span className="text-sm font-black text-[var(--moca-text)]">{gradeDisplay} 회원</span>
                                 </div>
                             </div>
                         </div>

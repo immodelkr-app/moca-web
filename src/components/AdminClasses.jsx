@@ -142,6 +142,7 @@ const AdminClasses = () => {
     const [error, setError] = useState('');
     const [editingClassId, setEditingClassId] = useState(null);
     const [pricing, setPricing] = useState([]);
+    const [priceType, setPriceType] = useState('flat'); // 'flat' | 'grade'
 
     // 클래스 목록 탭: 'active' | 'completed'
     const [classTab, setClassTab] = useState('active');
@@ -220,6 +221,30 @@ const AdminClasses = () => {
         setFormError('');
         setEditingClassId(null);
         setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
+        setPriceType('flat');
+    };
+
+    const handleEditClass = (cls) => {
+        setEditingClassId(cls.id);
+        setNewClass({
+            title: cls.title || '',
+            description: cls.description || '',
+            location: cls.location || '',
+            capacity: cls.capacity || 20,
+            image_url: cls.image_url || '',
+            schedule_type: cls.schedule_type || 'one_time',
+            class_date: cls.class_date || '',
+            start_date: cls.start_date || '',
+            end_date: cls.end_date || '',
+            day_of_week: cls.day_of_week || [],
+            start_time: cls.start_time || '14:00',
+            target_grade: cls.target_grade || 'ALL',
+            price_info: cls.price_info || ''
+        });
+        const hasPricing = cls.class_pricing && cls.class_pricing.length > 0;
+        setPricing(hasPricing ? cls.class_pricing.map(p => ({ grade_label: p.grade_label, price: p.price })) : [{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
+        setPriceType(hasPricing ? 'grade' : 'flat');
+        setView('create');
     };
 
     const handleCreateClass = async (e) => {
@@ -233,8 +258,16 @@ const AdminClasses = () => {
             finalClassDate = `매주 ${daysStr} ${newClass.start_time}`;
         }
 
+        let finalPriceInfo = newClass.price_info;
+        if (priceType === 'grade') {
+            finalPriceInfo = '등급별 차등';
+        }
+        const finalPricing = priceType === 'grade' ? pricing : [];
+
+        const classPayload = { ...newClass, class_date: finalClassDate, price_info: finalPriceInfo };
+
         if (editingClassId) {
-            const { error } = await updateClass(editingClassId, { ...newClass, class_date: finalClassDate }, pricing);
+            const { error } = await updateClass(editingClassId, classPayload, finalPricing);
             if (error) {
                 setFormError(error.message);
             } else {
@@ -244,7 +277,7 @@ const AdminClasses = () => {
                 resetForm();
             }
         } else {
-            const { error } = await createClass({ ...newClass, class_date: finalClassDate }, pricing);
+            const { error } = await createClass(classPayload, finalPricing);
             if (error) {
                 setFormError(error.message);
             } else {
@@ -652,7 +685,7 @@ const AdminClasses = () => {
                                                         <span className="material-symbols-outlined text-[18px] mb-0.5">share</span>
                                                         <span className="text-[9px]">공유</span>
                                                     </button>
-                                                    <button onClick={() => { setEditingClassId(cls.id); setNewClass({ title: cls.title || '', description: cls.description || '', location: cls.location || '', capacity: cls.capacity || 20, image_url: cls.image_url || '', schedule_type: cls.schedule_type || 'one_time', class_date: cls.class_date || '', start_date: cls.start_date || '', end_date: cls.end_date || '', day_of_week: cls.day_of_week || [], start_time: cls.start_time || '14:00', target_grade: cls.target_grade || 'ALL', price_info: cls.price_info || '' }); setPricing(cls.class_pricing && cls.class_pricing.length > 0 ? cls.class_pricing.map(p => ({ grade_label: p.grade_label, price: p.price })) : [{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]); setView('create'); }} className="flex-1 flex flex-col items-center justify-center py-2 rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all font-bold">
+                                                    <button onClick={() => handleEditClass(cls)} className="flex-1 flex flex-col items-center justify-center py-2 rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all font-bold">
                                                         <span className="material-symbols-outlined text-[18px] mb-0.5">edit</span>
                                                         <span className="text-[9px]">수정</span>
                                                     </button>
@@ -782,35 +815,71 @@ const AdminClasses = () => {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                     <ClassPosterUploader value={newClass.image_url} onChange={url => setNewClass({ ...newClass, image_url: url })} onError={setFormError} />
-                                    <div>
-                                        <label className="block text-sm font-black text-slate-700 mb-3">참가비 (단순 금액 정보 표시용)</label>
-                                        <input type="text" value={newClass.price_info} onChange={e => setNewClass({ ...newClass, price_info: e.target.value })} placeholder="예: 30,000원, 무료 등 자유롭게 기재" className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-2xl px-5 py-4 text-sm font-bold transition-all outline-none focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20" />
-                                    </div>
-                                </div>
-
-                                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest">등급별 참가비 설정</label>
-                                        <span className="text-[10px] text-slate-400 font-bold">회원 등급에 따라 자동으로 금액이 적용됩니다</span>
-                                    </div>
-                                    {pricing.map((p, idx) => {
-                                        const gradeColors = { 'SILVER': { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-600', focus: 'focus:border-blue-400' }, 'GOLD': { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-600', focus: 'focus:border-amber-400' } };
-                                        const key = p.grade_label.toUpperCase().includes('SILVER') ? 'SILVER' : p.grade_label.toUpperCase().includes('GOLD') ? 'GOLD' : 'DEFAULT';
-                                        const c = gradeColors[key] || { bg: 'bg-indigo-50', border: 'border-indigo-200', badge: 'bg-indigo-100 text-indigo-600', focus: 'focus:border-indigo-400' };
-                                        return (
-                                            <div key={idx} className={`flex items-center gap-4 p-4 rounded-2xl border ${c.bg} ${c.border}`}>
-                                                <span className={`px-3 py-1 rounded-full text-xs font-black whitespace-nowrap ${c.badge}`}>{p.grade_label}</span>
-                                                <input
-                                                    type="number" min="0" step="1000"
-                                                    value={p.price}
-                                                    onChange={e => setPricing(prev => prev.map((item, i) => i === idx ? { ...item, price: e.target.value } : item))}
-                                                    placeholder="0"
-                                                    className={`flex-1 bg-white border rounded-xl px-4 py-2.5 text-sm font-black outline-none transition-all ${c.border} ${c.focus}`}
-                                                />
-                                                <span className="text-xs font-bold text-slate-500 whitespace-nowrap">원</span>
+                                    
+                                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-6">
+                                        <div>
+                                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3">참가비 설정 방식</label>
+                                            <div className="flex gap-2 p-1 bg-slate-200/50 rounded-2xl w-fit">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPriceType('flat')}
+                                                    className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all ${priceType === 'flat' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}
+                                                >
+                                                    단일 참가비 (모두 동일)
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPriceType('grade')}
+                                                    className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all ${priceType === 'grade' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}
+                                                >
+                                                    등급별 차등 적용
+                                                </button>
                                             </div>
-                                        );
-                                    })}
+                                        </div>
+
+                                        {priceType === 'flat' ? (
+                                            <div className="animate-fadeIn">
+                                                <label className="block text-sm font-black text-slate-700 mb-2.5">참가비 금액 (원)</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="1000"
+                                                    required
+                                                    value={newClass.price_info && !isNaN(newClass.price_info) ? newClass.price_info : ''}
+                                                    onChange={e => setNewClass({ ...newClass, price_info: e.target.value })}
+                                                    placeholder="예: 10000 (무료인 경우 0 입력)"
+                                                    className="w-full bg-white border-2 border-slate-200 focus:bg-white rounded-2xl px-5 py-4 text-sm font-black outline-none focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
+                                                />
+                                                <p className="text-[10px] text-slate-400 font-bold mt-2">* 모든 등급에 동일한 금액이 원 단위로 청구됩니다. (0원인 경우 무료로 표기됨)</p>
+                                            </div>
+                                        ) : (
+                                            <div className="animate-fadeIn space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest">등급별 참가비 설정</label>
+                                                    <span className="text-[10px] text-slate-400 font-bold">회원 등급에 따라 자동으로 금액이 차등 청구됩니다.</span>
+                                                </div>
+                                                {pricing.map((p, idx) => {
+                                                    const gradeColors = { 'SILVER': { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-600', focus: 'focus:border-blue-400' }, 'GOLD': { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-600', focus: 'focus:border-amber-400' } };
+                                                    const key = p.grade_label.toUpperCase().includes('SILVER') ? 'SILVER' : p.grade_label.toUpperCase().includes('GOLD') ? 'GOLD' : 'DEFAULT';
+                                                    const c = gradeColors[key] || { bg: 'bg-indigo-50', border: 'border-indigo-200', badge: 'bg-indigo-100 text-indigo-600', focus: 'focus:border-indigo-400' };
+                                                    return (
+                                                        <div key={idx} className={`flex items-center gap-4 p-4 rounded-2xl border ${c.bg} ${c.border}`}>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-black whitespace-nowrap ${c.badge}`}>{p.grade_label}</span>
+                                                            <input
+                                                                type="number" min="0" step="1000"
+                                                                required
+                                                                value={p.price}
+                                                                onChange={e => setPricing(prev => prev.map((item, i) => i === idx ? { ...item, price: e.target.value } : item))}
+                                                                placeholder="0"
+                                                                className={`flex-1 bg-white border rounded-xl px-4 py-2.5 text-sm font-black outline-none transition-all ${c.border} ${c.focus}`}
+                                                            />
+                                                            <span className="text-xs font-bold text-slate-500 whitespace-nowrap">원</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div>
