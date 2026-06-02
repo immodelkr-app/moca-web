@@ -72,6 +72,7 @@ const ClassDetailPage = () => {
             if (classData) setCls(classData);
 
             // 피드백 로드
+            let userFeedback = null;
             if (classData?.status === 'completed') {
                 setFeedbackLoading(true);
                 const { data: fbData } = await fetchPublicFeedback(cleanId);
@@ -81,6 +82,7 @@ const ClassDetailPage = () => {
                 if (localU?.id) {
                     const { data: myFb } = await fetchUserFeedback(cleanId, localU.id);
                     setMyFeedback(myFb || null);
+                    userFeedback = myFb;
                 }
                 setFeedbackLoading(false);
             }
@@ -90,7 +92,16 @@ const ClassDetailPage = () => {
                 if (localUser) {
                     if (classData?.status === 'completed') {
                         if (hasApplied) {
-                            setShowFeedbackModal(true);
+                            if (userFeedback) {
+                                // 이미 후기를 작성한 경우: 후기 보기 영역으로 스크롤 이동
+                                setTimeout(() => {
+                                    const el = document.getElementById('review-section');
+                                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                }, 300);
+                            } else {
+                                // 후기를 작성하지 않은 경우: 후기 작성 모달 팝업
+                                setShowFeedbackModal(true);
+                            }
                         } else {
                             alert('수강 완료된 회원만 후기를 작성할 수 있습니다.');
                         }
@@ -363,7 +374,7 @@ const ClassDetailPage = () => {
 
                     {/* 4. 수강 후기 섹션 (완료된 클래스만) */}
                     {isCompleted && (
-                        <div className="mb-6">
+                        <div id="review-section" className="mb-6">
                             <h2 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2 mb-6 border-b border-[var(--moca-border)] pb-4">
                                 <span className="material-symbols-outlined text-amber-400">star</span>
                                 수강 후기
