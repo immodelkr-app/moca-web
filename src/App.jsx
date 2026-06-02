@@ -51,7 +51,12 @@ function AppContent() {
                 CapacitorApp.exitApp();
             } else {
                 // 상세 페이지나 하위 메뉴에서는 이전 페이지로 이동
-                navigate(-1);
+                // 첫 진입 페이지(히스토리 스택이 비어있는 경우)라면 홈 대시보드로 이동
+                if ((window.history.state && window.history.state.idx === 0) || window.history.length <= 1) {
+                    navigate('/home/dashboard');
+                } else {
+                    navigate(-1);
+                }
             }
         };
 
@@ -78,7 +83,12 @@ function AppContent() {
                 let path = url.substring(scheme.length);
                 path = path.replace(/^\/+/, '');
                 if (path) {
-                    navigate('/' + path);
+                    try {
+                        const decodedPath = decodeURIComponent(path);
+                        navigate('/' + decodedPath);
+                    } catch (e) {
+                        navigate('/' + path);
+                    }
                 }
             }
         });

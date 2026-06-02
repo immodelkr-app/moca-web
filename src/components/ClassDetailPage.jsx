@@ -9,6 +9,7 @@ import ClassFeedbackModal from './ClassFeedbackModal';
 
 const ClassDetailPage = () => {
     const { id } = useParams();
+    const cleanId = id ? id.split(/[?%]/)[0] : '';
     const navigate = useNavigate();
     const [cls, setCls] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
@@ -24,69 +25,82 @@ const ClassDetailPage = () => {
     const [myFeedback, setMyFeedback] = useState(null);
     const [feedbackLoading, setFeedbackLoading] = useState(false);
 
+    const hasWriteReviewParam = () => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('write_review') === 'true') return true;
+        // Fallback: check if the raw id contains write_review=true
+        if (id && (id.includes('write_review=true') || id.includes('write_review%3Dtrue'))) {
+            return true;
+        }
+        return false;
+    };
 
     useEffect(() => {
         loadData();
-    }, [id]);
+    }, [cleanId]);
 
     const loadData = async () => {
-        setLoading(true);
-        await syncUserGrade();
-        const localUser = getUser();
-        
-        let hasApplied = false;
-        if (localUser) {
-            let currentGrade = localUser.grade || 'SILVER';
-
-            if (localUser.id) {
-                const { data: app } = await supabase
-                    .from('class_applications')
-                    .select('id, approval_status')
-                    .eq('class_id', id)
-                    .eq('user_id', localUser.id)
-                    .maybeSingle();
-                if (app) {
-                    setIsApplied(true);
-                    hasApplied = true;
-                }
-            }
-            setCurrentUser({ ...localUser, grade: currentGrade });
-        }
-
-        const { data: classData } = await supabase
-            .from('classes')
-            .select('*, class_pricing (*)')
-            .eq('id', id)
-            .single();
-        if (classData) setCls(classData);
-        setLoading(false);
-
-        // 피드백 로드
-        if (classData?.status === 'completed') {
-            setFeedbackLoading(true);
-            const { data: fbData } = await fetchPublicFeedback(id);
-            setFeedbacks(fbData || []);
-
-            const localU = getUser();
-            if (localU?.id) {
-                const { data: myFb } = await fetchUserFeedback(id, localU.id);
-                setMyFeedback(myFb || null);
-            }
-            setFeedbackLoading(false);
-        }
-
-        // [신규] 후기 남기기 자동 팝업 처리 (?write_review=true)
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('write_review') === 'true') {
+        try {
+            setLoading(true);
+            await syncUserGrade();
+            const localUser = getUser();
+            
+            let hasApplied = false;
             if (localUser) {
-                if (classData?.status === 'completed') {
-                    if (hasApplied) {
-                        setShowFeedbackModal(true);
-                    } else {
-                        alert('수강 완료된 회원만 후기를 작성할 수 있습니다.');
+                let currentGrade = localUser.grade || 'SILVER';
+
+                if (localUser.id) {
+                    const { data: app } = await supabase
+                        .from('class_applications')
+                        .select('id, approval_status')
+                        .eq('class_id', cleanId)
+                        .eq('user_id', localUser.id)
+                        .maybeSingle();
+                    if (app) {
+                        setIsApplied(true);
+                        hasApplied = true;
+                    }
+                }
+                setCurrentUser({ ...localUser, grade: currentGrade });
+            }
+
+            const { data: classData } = await supabase
+                .from('classes')
+                .select('*, class_pricing (*)')
+                .eq('id', cleanId)
+                .single();
+            if (classData) setCls(classData);
+
+            // 피드백 로드
+            if (classData?.status === 'completed') {
+                setFeedbackLoading(true);
+                const { data: fbData } = await fetchPublicFeedback(cleanId);
+                setFeedbacks(fbData || []);
+
+                const localU = getUser();
+                if (localU?.id) {
+                    const { data: myFb } = await fetchUserFeedback(cleanId, localU.id);
+                    setMyFeedback(myFb || null);
+                }
+                setFeedbackLoading(false);
+            }
+
+            // [신규] 후기 남기기 자동 팝업 처리 (?write_review=true)
+            if (hasWriteReviewParam()) {
+                if (localUser) {
+                    if (classData?.status === 'completed') {
+                        if (hasApplied) {
+                            setShowFeedbackModal(true);
+                        } else {
+                            alert('수강 완료된 회원만 후기를 작성할 수 있습니다.');
+                        }
                     }
                 }
             }
+        } catch (error) {
+            console.error("Error loading class details:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
