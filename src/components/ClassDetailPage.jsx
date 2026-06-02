@@ -128,7 +128,7 @@ const ClassDetailPage = () => {
     };
 
     const myPriceInfo = getMyPriceInfo();
-    const myPrice = myPriceInfo ? myPriceInfo.price : (Number(cls.price_info) || 0);
+    const myPrice = myPriceInfo ? myPriceInfo.price : (Number(cls?.price_info) || 0);
 
     const handleSaveMocaCalendar = async () => {
         if (!currentUser || !cls) return;
@@ -209,10 +209,10 @@ const ClassDetailPage = () => {
 
     // 피드백 작성 완료 후 처리
     const handleFeedbackSuccess = async () => {
-        const { data: fbData } = await fetchPublicFeedback(id);
+        const { data: fbData } = await fetchPublicFeedback(cleanId);
         setFeedbacks(fbData || []);
         if (currentUser?.id) {
-            const { data: myFb } = await fetchUserFeedback(id, currentUser.id);
+            const { data: myFb } = await fetchUserFeedback(cleanId, currentUser.id);
             setMyFeedback(myFb || null);
         }
     };
