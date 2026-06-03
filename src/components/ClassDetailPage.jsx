@@ -469,16 +469,29 @@ const ClassDetailPage = () => {
                 {/* 완료 클래스 CTA — 피드백 버튼 */}
                 {isCompleted && (
                     isApplied ? (
-                        <button
-                            onClick={() => {
-                                if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
-                                setShowFeedbackModal(true);
-                            }}
-                            className={`flex-1 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${myFeedback ? 'bg-amber-100 text-amber-600 border border-amber-200 shadow-amber-100' : 'bg-amber-400 text-white shadow-amber-400/20'}`}
-                        >
-                            <span className="material-symbols-outlined font-black">rate_review</span>
-                            {myFeedback ? '내 후기 수정하기' : '수강 후기 남기기'}
-                        </button>
+                        myFeedback ? (
+                            <button
+                                onClick={() => {
+                                    if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
+                                    setShowFeedbackModal(true);
+                                }}
+                                className="flex-1 sm:flex-none py-2.5 px-5 max-w-[220px] sm:max-w-none mx-auto sm:mx-0 rounded-[18px] lg:rounded-[22px] font-bold text-xs lg:text-sm bg-amber-100 text-amber-600 border border-amber-200 shadow-md shadow-amber-100/50 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                            >
+                                <span className="material-symbols-outlined text-[16px] font-bold">rate_review</span>
+                                내 후기 수정하기
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
+                                    setShowFeedbackModal(true);
+                                }}
+                                className="flex-1 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-amber-400/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 bg-amber-400 text-white"
+                            >
+                                <span className="material-symbols-outlined font-black">rate_review</span>
+                                수강 후기 남기기
+                            </button>
+                        )
                     ) : (
                         <div className="flex-1 py-4 rounded-[24px] bg-slate-100 text-slate-400 font-black text-base text-center flex items-center justify-center gap-2">
                             <span className="material-symbols-outlined font-black">lock</span>
