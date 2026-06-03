@@ -430,45 +430,45 @@ const ClassDetailPage = () => {
             </div>
 
             {/* Sticky Floating CTA */}
-            <div className="fixed custom-cta-bottom left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[var(--moca-border)] px-6 py-4 lg:py-6 flex items-center justify-between gap-4 lg:gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] animate-slideUp">
-                <div className="hidden sm:block">
-                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">{myPriceInfo?.grade_label || 'Special Benefit'}</p>
-                    <p className="text-2xl font-black text-[var(--moca-text)] tracking-tighter">
-                        {isCompleted ? '수강 후기' : '참여 신청하기'}
-                    </p>
-                </div>
+            {(!isCompleted || (isApplied && !myFeedback)) && (
+                <div className="fixed custom-cta-bottom left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[var(--moca-border)] px-6 py-4 lg:py-6 flex items-center justify-between gap-4 lg:gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] animate-slideUp">
+                    <div className="hidden sm:block">
+                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">{myPriceInfo?.grade_label || 'Special Benefit'}</p>
+                        <p className="text-2xl font-black text-[var(--moca-text)] tracking-tighter">
+                            {isCompleted ? '수강 후기' : '참여 신청하기'}
+                        </p>
+                    </div>
 
-                {/* 진행 중 클래스 CTA */}
-                {!isCompleted && (
-                    isApplied ? (
-                        <button disabled className="flex-1 bg-indigo-100 text-indigo-500 border border-indigo-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
-                            <span className="material-symbols-outlined font-black">task_alt</span>
-                            신청 완료
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => {
-                                if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
-                                if (cls.target_grade && cls.target_grade !== 'ALL') {
-                                    const myGrade = (currentUser.grade || '').toUpperCase();
-                                    const isExclusive = ['VIP', 'IMODEL', '전속모델', '아임모델', 'EXCLUSIVE'].some(g => myGrade.includes(g));
-                                    const isGold = isExclusive || ['GOLD', '골드'].some(g => myGrade.includes(g));
-                                    if (cls.target_grade === 'EXCLUSIVE' && !isExclusive) { alert('전속모델 등급만 신청 가능한 클래스입니다.'); return; }
-                                    if (cls.target_grade === 'GOLD' && !isGold) { alert('골드회원 이상만 신청 가능한 클래스입니다.'); return; }
-                                }
-                                setShowApplyModal(true);
-                            }}
-                            className="flex-1 bg-indigo-600 text-white py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                        >
-                            <span className="material-symbols-outlined font-black">edit_note</span>
-                            수강 참여 신청하기
-                        </button>
-                    )
-                )}
+                    {/* 진행 중 클래스 CTA */}
+                    {!isCompleted && (
+                        isApplied ? (
+                            <button disabled className="flex-1 bg-indigo-100 text-indigo-500 border border-indigo-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
+                                <span className="material-symbols-outlined font-black">task_alt</span>
+                                신청 완료
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
+                                    if (cls.target_grade && cls.target_grade !== 'ALL') {
+                                        const myGrade = (currentUser.grade || '').toUpperCase();
+                                        const isExclusive = ['VIP', 'IMODEL', '전속모델', '아임모델', 'EXCLUSIVE'].some(g => myGrade.includes(g));
+                                        const isGold = isExclusive || ['GOLD', '골드'].some(g => myGrade.includes(g));
+                                        if (cls.target_grade === 'EXCLUSIVE' && !isExclusive) { alert('전속모델 등급만 신청 가능한 클래스입니다.'); return; }
+                                        if (cls.target_grade === 'GOLD' && !isGold) { alert('골드회원 이상만 신청 가능한 클래스입니다.'); return; }
+                                    }
+                                    setShowApplyModal(true);
+                                }}
+                                className="flex-1 bg-indigo-600 text-white py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined font-black">edit_note</span>
+                                수강 참여 신청하기
+                            </button>
+                        )
+                    )}
 
-                {/* 완료 클래스 CTA — 피드백 버튼 */}
-                {isCompleted && (
-                    (isApplied && !myFeedback) ? (
+                    {/* 완료 클래스 CTA — 피드백 버튼 */}
+                    {isCompleted && isApplied && !myFeedback && (
                         <button
                             onClick={() => {
                                 if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
@@ -479,22 +479,9 @@ const ClassDetailPage = () => {
                             <span className="material-symbols-outlined font-black">rate_review</span>
                             수강 후기 남기기
                         </button>
-                    ) : (
-                        <button
-                            onClick={() => {
-                                const el = document.getElementById('review-section');
-                                if (el) {
-                                    el.scrollIntoView({ behavior: 'smooth' });
-                                }
-                            }}
-                            className="flex-1 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-amber-400/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 bg-amber-400 text-white"
-                        >
-                            <span className="material-symbols-outlined font-black">rate_review</span>
-                            수강 후기 보러가기
-                        </button>
-                    )
-                )}
-            </div>
+                    )}
+                </div>
+            )}
 
             {/* Apply Modal */}
             {showApplyModal && (
