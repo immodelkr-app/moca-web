@@ -149,7 +149,7 @@ const ClassFeedbackModal = ({ cls, currentUser, existingFeedback, onClose, onSuc
                     </div>
 
                     {/* 제출 버튼 */}
-                    <div className="px-6 pb-6">
+                    <div className="px-6 pb-12 sm:pb-8" style={{ paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))' }}>
                         <button
                             type="submit"
                             disabled={isSubmitting || rating === 0}
