@@ -1,6 +1,28 @@
 import { PushNotifications } from '@capacitor/push-notifications';
 import { supabase } from './supabaseClient';
 import { Capacitor } from '@capacitor/core';
+import { getUser } from './userService';
+
+export const syncPushTokenWithSupabase = async (userId) => {
+  if (!supabase) return;
+  const token = localStorage.getItem('push_token');
+  if (userId && token) {
+    try {
+      const { error } = await supabase
+        .from('user_push_tokens')
+        .upsert({
+          user_id: userId,
+          token: token,
+          device_os: Capacitor.getPlatform()
+        }, { onConflict: 'token' });
+        
+      if (error) console.error('Error saving push token:', error);
+      else console.log('Push token synced to Supabase successfully');
+    } catch (err) {
+      console.error('Exception saving push token:', err);
+    }
+  }
+};
 
 export const initializePushNotifications = async () => {
   if (Capacitor.getPlatform() !== 'android' && Capacitor.getPlatform() !== 'ios') {
@@ -22,25 +44,14 @@ export const initializePushNotifications = async () => {
   // On success, we should be able to receive notifications
   PushNotifications.addListener('registration', async (token) => {
     console.log('Push registration success, token: ' + token.value);
+    localStorage.setItem('push_token', token.value);
     
-    const { data: { session } } = await supabase.auth.getSession();
-    const userId = session?.user?.id;
+    const currentUser = getUser();
+    const userId = currentUser?.id;
     
     // Save token to Supabase if user is logged in
     if (userId) {
-      try {
-        const { error } = await supabase
-          .from('user_push_tokens')
-          .upsert({
-            user_id: userId,
-            token: token.value,
-            device_os: Capacitor.getPlatform()
-          }, { onConflict: 'token' });
-          
-        if (error) console.error('Error saving push token:', error);
-      } catch (err) {
-        console.error('Exception saving push token:', err);
-      }
+      await syncPushTokenWithSupabase(userId);
     }
   });
 

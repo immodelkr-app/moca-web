@@ -92,6 +92,15 @@ export const saveUser = (userData) => {
     }
     localStorage.setItem(USERS_LIST_KEY, JSON.stringify(usersList));
 
+    // Sync push token to Supabase if available
+    if (safeData.id) {
+        import('./pushNotificationService').then(({ syncPushTokenWithSupabase }) => {
+            syncPushTokenWithSupabase(safeData.id);
+        }).catch(err => {
+            console.error('[saveUser] failed to import pushNotificationService:', err);
+        });
+    }
+
     return safeData;
 };
 
