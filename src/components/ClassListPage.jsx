@@ -5,6 +5,42 @@ import { supabase } from '../services/supabaseClient';
 
 import { getUser, syncUserGrade } from '../services/userService';
 
+// D-day 계산 유틸리티
+function getDday(cls) {
+    if (cls.status === 'completed') return { label: '종료', type: 'ended' };
+    const now = new Date();
+    let targetDate = null;
+
+    if (cls.schedule_type === 'one_time' && cls.event_datetime) {
+        targetDate = new Date(cls.event_datetime);
+    } else if (cls.schedule_type === 'weekly' && cls.day_of_week?.length > 0) {
+        // 가장 가까운 다음 수업일 계산
+        const today = now.getDay(); // 0=일, 1=월, ...
+        const sortedDays = [...cls.day_of_week].sort((a, b) => a - b);
+        let nextDay = sortedDays.find(d => d > today);
+        if (nextDay === undefined) nextDay = sortedDays[0]; // 다음주 첫 수업일
+        let daysUntil = nextDay - today;
+        if (daysUntil <= 0) daysUntil += 7;
+        targetDate = new Date(now);
+        targetDate.setDate(now.getDate() + daysUntil);
+        // end_date 체크
+        if (cls.end_date && targetDate > new Date(cls.end_date)) {
+            return { label: '종료', type: 'ended' };
+        }
+    }
+
+    if (!targetDate) return null;
+
+    const diffMs = targetDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return { label: '종료', type: 'ended' };
+    if (diffDays === 0) return { label: 'D-DAY', type: 'today' };
+    if (diffDays <= 3) return { label: `D-${diffDays}`, type: 'urgent' };
+    if (diffDays <= 6) return { label: `D-${diffDays}`, type: 'warning' };
+    return { label: `D-${diffDays}`, type: 'normal' };
+}
+
 const ClassListPage = () => {
     const navigate = useNavigate();
     const [classes, setClasses] = useState([]);
@@ -105,6 +141,23 @@ const ClassListPage = () => {
                                             <span className="material-symbols-outlined text-[#E8E0FA] text-6xl">school</span>
                                         </div>
                                     )}
+                                    {/* D-day 뱃지 */}
+                                    {(() => {
+                                        const dday = getDday(cls);
+                                        if (!dday || isCompleted) return null;
+                                        const ddayColors = {
+                                            normal: 'bg-blue-500',
+                                            warning: 'bg-amber-500',
+                                            urgent: 'bg-red-500',
+                                            today: 'bg-red-500 animate-pulse',
+                                            ended: 'bg-gray-400'
+                                        };
+                                        return (
+                                            <div className={`absolute top-3 left-3 z-10 ${ddayColors[dday.type]} text-white px-3 py-1.5 rounded-full text-[11px] font-black shadow-lg backdrop-blur-sm`}>
+                                                {dday.label}
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                                 <div className="p-6">
                                     <div className="mb-4">

@@ -87,4 +87,29 @@
       bottom: 0px;
     }
   }
+
+  /* D-day 뱃지 기본 스타일 */
+  .dday-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 900;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    letter-spacing: -0.02em;
+    backdrop-filter: blur(4px);
+  }
+  .dday-badge.normal { background: #3B82F6; }
+  .dday-badge.warning { background: #F59E0B; }
+  .dday-badge.urgent { background: #EF4444; }
+  .dday-badge.today { background: #EF4444; animation: dday-pulse 1.5s ease-in-out infinite; }
+  .dday-badge.ended { background: #9CA3AF; }
+
+  @keyframes dday-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); }
+    50% { transform: scale(1.08); box-shadow: 0 4px 16px rgba(239, 68, 68, 0.5); }
+  }
 }

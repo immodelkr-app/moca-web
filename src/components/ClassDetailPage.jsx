@@ -6,7 +6,40 @@ import { getUser, syncUserGrade } from '../services/userService';
 import ClassApplyModal from './ClassApplyModal';
 import ClassFeedbackModal from './ClassFeedbackModal';
 
+// D-day 계산 유틸리티 (상세 페이지용)
+function getDdayForDetail(cls) {
+    if (!cls) return null;
+    if (cls.status === 'completed') return { label: '종료', type: 'ended', daysLeft: 0 };
+    const now = new Date();
+    let targetDate = null;
 
+    if (cls.schedule_type === 'one_time' && cls.event_datetime) {
+        targetDate = new Date(cls.event_datetime);
+    } else if (cls.schedule_type === 'weekly' && cls.day_of_week?.length > 0) {
+        const today = now.getDay();
+        const sortedDays = [...cls.day_of_week].sort((a, b) => a - b);
+        let nextDay = sortedDays.find(d => d > today);
+        if (nextDay === undefined) nextDay = sortedDays[0];
+        let daysUntil = nextDay - today;
+        if (daysUntil <= 0) daysUntil += 7;
+        targetDate = new Date(now);
+        targetDate.setDate(now.getDate() + daysUntil);
+        if (cls.end_date && targetDate > new Date(cls.end_date)) {
+            return { label: '종료', type: 'ended', daysLeft: 0 };
+        }
+    }
+
+    if (!targetDate) return null;
+
+    const diffMs = targetDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return { label: '종료', type: 'ended', daysLeft: 0 };
+    if (diffDays === 0) return { label: 'D-DAY', type: 'today', daysLeft: 0 };
+    if (diffDays <= 3) return { label: `D-${diffDays}`, type: 'urgent', daysLeft: diffDays };
+    if (diffDays <= 6) return { label: `D-${diffDays}`, type: 'warning', daysLeft: diffDays };
+    return { label: `D-${diffDays}`, type: 'normal', daysLeft: diffDays };
+}
 const ClassDetailPage = () => {
     const { id } = useParams();
     const cleanId = id ? id.split(/[?%]/)[0] : '';
@@ -274,6 +307,26 @@ const ClassDetailPage = () => {
                         </div>
                     </div>
                 )}
+                {/* D-day 카운트다운 뱃지 */}
+                {!isCompleted && (() => {
+                    const dday = getDdayForDetail(cls);
+                    if (!dday) return null;
+                    const ddayColors = {
+                        normal: 'bg-blue-500/90',
+                        warning: 'bg-amber-500/90',
+                        urgent: 'bg-red-500/90',
+                        today: 'bg-red-500/90 animate-pulse',
+                        ended: 'bg-gray-400/90'
+                    };
+                    return (
+                        <div className="absolute bottom-4 left-4">
+                            <div className={`flex items-center gap-2 px-4 py-2 ${ddayColors[dday.type]} text-white rounded-full text-sm font-black backdrop-blur-md border border-white/20 shadow-lg`}>
+                                <span className="material-symbols-outlined text-[16px]">schedule</span>
+                                {dday.label}
+                            </div>
+                        </div>
+                    );
+                })()}
             </div>
 
             {/* Main Content */}
@@ -332,6 +385,25 @@ const ClassDetailPage = () => {
                                 <div>
                                     <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">일시</p>
                                     <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.class_date?.replace(/:\d{2}$/, '')}</p>
+                                    {/* D-day 카운트다운 텍스트 */}
+                                    {!isCompleted && (() => {
+                                        const dday = getDdayForDetail(cls);
+                                        if (!dday || dday.type === 'ended') return null;
+                                        const ddayTextColors = {
+                                            normal: 'text-blue-500',
+                                            warning: 'text-amber-500',
+                                            urgent: 'text-red-500',
+                                            today: 'text-red-500 font-black',
+                                        };
+                                        const label = dday.type === 'today'
+                                            ? '🔥 오늘 강의가 진행됩니다!'
+                                            : `📅 강의까지 ${Number(dday.label.replace('D-', ''))}일 남았습니다`;
+                                        return (
+                                            <p className={`text-[12px] font-bold mt-1 ${ddayTextColors[dday.type]}`}>
+                                                {label}
+                                            </p>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">

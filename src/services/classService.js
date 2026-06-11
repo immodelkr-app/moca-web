@@ -91,12 +91,14 @@ export const createClass = async (classData, pricingArray) => {
             image_url: classData.image_url || null,
             schedule_type: classData.schedule_type || 'one_time',
             class_date: classData.class_date, // 텍스트 형태 (4월 2일 1:30 등)
+            event_datetime: classData.event_datetime || null, // 구조화된 날짜/시간 (TIMESTAMPTZ)
             start_date: classData.start_date || null,
             end_date: classData.end_date || null,
             day_of_week: classData.day_of_week || null, // [1, 3, 5] 등 배열
             start_time: classData.start_time || null,
             target_grade: classData.target_grade || 'ALL',
-            price_info: classData.price_info || null
+            price_info: classData.price_info || null,
+            review_message: classData.review_message || null
         }])
         .select()
         .single();
@@ -137,12 +139,14 @@ export const updateClass = async (classId, classData, pricingArray) => {
             image_url: classData.image_url || null,
             schedule_type: classData.schedule_type || 'one_time',
             class_date: classData.class_date,
+            event_datetime: classData.event_datetime || null,
             start_date: classData.start_date || null,
             end_date: classData.end_date || null,
             day_of_week: classData.day_of_week || null,
             start_time: classData.start_time || null,
             target_grade: classData.target_grade || 'ALL',
-            price_info: classData.price_info || null
+            price_info: classData.price_info || null,
+            review_message: classData.review_message || null
         })
         .eq('id', classId)
         .select()
@@ -434,6 +438,41 @@ export const deleteFeedback = async (feedbackId) => {
         .delete()
         .eq('id', feedbackId);
     return { error };
+};
+
+
+// ──────────────────────────────────────────────
+// 📩 후기 미작성자 조회 및 재알림 발송
+// ──────────────────────────────────────────────
+
+/**
+ * 수강확정(paid) 참석자 중 후기 미작성자 조회
+ * @param {string} classId
+ * @returns {{ data: Array, error: any }}
+ */
+export const getClassNonReviewers = async (classId) => {
+    if (!isSupabaseEnabled()) return { data: [], error: null };
+
+    // 1. 수강확정(paid) 참석자
+    const { data: attendees, error: attErr } = await supabase
+        .from('class_applications')
+        .select('user_id, user_phone, users(id, name, nickname, phone, grade)')
+        .eq('class_id', classId)
+        .eq('approval_status', 'paid');
+    if (attErr) return { data: [], error: attErr };
+
+    // 2. 이미 후기 작성한 사용자
+    const { data: reviewers, error: revErr } = await supabase
+        .from('class_feedback')
+        .select('user_id')
+        .eq('class_id', classId);
+    if (revErr) return { data: [], error: revErr };
+
+    const reviewerIds = new Set((reviewers || []).map(r => r.user_id));
+
+    // 3. 미작성자 필터링
+    const nonReviewers = (attendees || []).filter(a => !reviewerIds.has(a.user_id));
+    return { data: nonReviewers, error: null };
 };
 
 

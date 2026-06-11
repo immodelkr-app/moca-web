@@ -6,6 +6,7 @@ import {
     fetchPaidApplicants, recordThankYouSent,
     fetchClassFeedback, updateFeedbackVisibility, replyToFeedback, deleteFeedback,
     fetchClassStats,
+    getClassNonReviewers,
 } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
 import { sendBulkMessage } from '../services/solapiService';
@@ -196,12 +197,16 @@ const AdminClasses = () => {
         image_url: '',
         schedule_type: 'one_time',
         class_date: '',
+        event_date: '',
+        event_time: '',
+        use_datetime_picker: true,
         start_date: '',
         end_date: '',
         day_of_week: [],
         start_time: '14:00',
         target_grade: 'ALL',
-        price_info: ''
+        price_info: '',
+        review_message: ''
     });
 
     const [formError, setFormError] = useState('');
@@ -217,7 +222,7 @@ const AdminClasses = () => {
     };
 
     const resetForm = () => {
-        setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '' });
+        setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '' });
         setFormError('');
         setEditingClassId(null);
         setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -226,6 +231,16 @@ const AdminClasses = () => {
 
     const handleEditClass = (cls) => {
         setEditingClassId(cls.id);
+        // event_datetime에서 날짜/시간 분리
+        let eventDate = '';
+        let eventTime = '';
+        let usePicker = false;
+        if (cls.event_datetime) {
+            const dt = new Date(cls.event_datetime);
+            eventDate = dt.toISOString().slice(0, 10);
+            eventTime = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+            usePicker = true;
+        }
         setNewClass({
             title: cls.title || '',
             description: cls.description || '',
@@ -234,12 +249,16 @@ const AdminClasses = () => {
             image_url: cls.image_url || '',
             schedule_type: cls.schedule_type || 'one_time',
             class_date: cls.class_date || '',
+            event_date: eventDate,
+            event_time: eventTime,
+            use_datetime_picker: usePicker || cls.schedule_type !== 'one_time',
             start_date: cls.start_date || '',
             end_date: cls.end_date || '',
             day_of_week: cls.day_of_week || [],
             start_time: cls.start_time || '14:00',
             target_grade: cls.target_grade || 'ALL',
-            price_info: cls.price_info || ''
+            price_info: cls.price_info || '',
+            review_message: cls.review_message || ''
         });
         const hasPricing = cls.class_pricing && cls.class_pricing.length > 0;
         setPricing(hasPricing ? cls.class_pricing.map(p => ({ grade_label: p.grade_label, price: p.price })) : [{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -253,7 +272,20 @@ const AdminClasses = () => {
         setIsSubmitting(true);
 
         let finalClassDate = newClass.class_date;
-        if (newClass.schedule_type === 'weekly' && newClass.day_of_week.length > 0) {
+        let eventDatetime = null;
+
+        if (newClass.schedule_type === 'one_time' && newClass.use_datetime_picker && newClass.event_date && newClass.event_time) {
+            // 구조화된 날짜/시간 picker 사용
+            eventDatetime = new Date(`${newClass.event_date}T${newClass.event_time}:00`).toISOString();
+            // 한국어 형식 class_date 자동 생성
+            const dt = new Date(`${newClass.event_date}T${newClass.event_time}:00`);
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            const y = dt.getFullYear();
+            const m = dt.getMonth() + 1;
+            const d = dt.getDate();
+            const dayName = dayNames[dt.getDay()];
+            finalClassDate = `${y}년 ${m}월 ${d}일(${dayName}) ${newClass.event_time}`;
+        } else if (newClass.schedule_type === 'weekly' && newClass.day_of_week.length > 0) {
             const daysStr = newClass.day_of_week.map(d => DAYS[d]).join(',');
             finalClassDate = `매주 ${daysStr} ${newClass.start_time}`;
         }
@@ -264,7 +296,7 @@ const AdminClasses = () => {
         }
         const finalPricing = priceType === 'grade' ? pricing : [];
 
-        const classPayload = { ...newClass, class_date: finalClassDate, price_info: finalPriceInfo };
+        const classPayload = { ...newClass, class_date: finalClassDate, price_info: finalPriceInfo, event_datetime: eventDatetime, review_message: newClass.review_message || null };
 
         if (editingClassId) {
             const { error } = await updateClass(editingClassId, classPayload, finalPricing);
@@ -337,14 +369,25 @@ const AdminClasses = () => {
         }
     };
 
-    // ── 감사 메시지 화면 ────────────────────────────────────────────────────────
+    // ── 감사 + 후기 재알림 화면 ────────────────────────────────────────────────────────
+    const [nonReviewerCount, setNonReviewerCount] = useState(0);
+    const [nonReviewerIds, setNonReviewerIds] = useState([]);
+
     const handleOpenThankYou = async (cls) => {
         setSelectedClass(cls);
         setView('thank_you');
         setLoading(true);
         const { data } = await fetchPaidApplicants(cls.id);
         setPaidApplicants(data || []);
-        setSelectedRecipients((data || []).map(a => a.user_id));
+
+        // 후기 미작성자 조회
+        const { data: nonReviewers } = await getClassNonReviewers(cls.id);
+        const nrIds = (nonReviewers || []).map(nr => nr.user_id);
+        setNonReviewerIds(nrIds);
+        setNonReviewerCount(nrIds.length);
+        // 기본: 후기 미작성자만 선택
+        setSelectedRecipients(nrIds);
+
         setThankYouMessage(
             `[아임모델 MOCA] 클래스 수강 감사 안내\n\n안녕하세요!\n[${cls.title}] 클래스에 참여해 주셔서 진심으로 감사드립니다. 🎉\n\n수강하신 경험에 대한 소중한 피드백을 남겨주시면,\n더 좋은 클래스를 준비하는 데 큰 도움이 됩니다 😊\n\n▶ 후기 남기기: https://immoca.kr/open-app?path=home/class/${cls.id}%3Fwrite_review%3Dtrue\n\n문의: 카카오채널 @아임모델`
         );
@@ -354,7 +397,7 @@ const AdminClasses = () => {
     const handleSendThankYou = async () => {
         if (selectedRecipients.length === 0) { alert('수신자를 선택해주세요.'); return; }
         if (!thankYouMessage.trim()) { alert('발송할 메시지를 입력해주세요.'); return; }
-        if (!window.confirm(`${selectedRecipients.length}명에게 감사 메시지를 발송하시겠습니까?`)) return;
+        if (!window.confirm(`${selectedRecipients.length}명에게 감사+후기 요청 메시지를 발송하시겠습니까?`)) return;
 
         setIsSubmitting(true);
         try {
@@ -368,7 +411,7 @@ const AdminClasses = () => {
             await sendBulkMessage(phones, thankYouMessage.trim(), 'sms');
             await recordThankYouSent(selectedClass.id);
             setClasses(prev => prev.map(c => c.id === selectedClass.id ? { ...c, thank_you_sent_at: new Date().toISOString() } : c));
-            setSuccessMsg(`✅ ${phones.length}명에게 감사 메시지 발송 완료!`);
+            setSuccessMsg(`✅ ${phones.length}명에게 감사+후기 요청 메시지 발송 완료!`);
             setTimeout(() => setSuccessMsg(''), 4000);
         } catch (err) {
             alert('발송 실패: ' + err.message);
@@ -640,7 +683,7 @@ const AdminClasses = () => {
                                             <div className="absolute top-4 right-4">
                                                 <span className="px-2 py-1 rounded-full text-[9px] font-black bg-amber-400/90 text-white border border-white/20 backdrop-blur-md flex items-center gap-1">
                                                     <span className="material-symbols-outlined text-[10px]">mail</span>
-                                                    감사문자 발송됨
+                                                    후기알림 발송됨
                                                 </span>
                                             </div>
                                         )}
@@ -702,8 +745,8 @@ const AdminClasses = () => {
                                             <div className="space-y-2">
                                                 <div className="grid grid-cols-3 gap-2">
                                                     <button onClick={() => handleOpenThankYou(cls)} className="flex flex-col items-center justify-center py-3 rounded-2xl bg-amber-50 text-amber-600 font-black text-[11px] hover:bg-amber-500 hover:text-white transition-all border border-amber-100 gap-1">
-                                                        <span className="material-symbols-outlined text-[18px]">mail</span>
-                                                        감사메시지
+                                                        <span className="material-symbols-outlined text-[18px]">notification_important</span>
+                                                        후기 재알림
                                                     </button>
                                                     <button onClick={() => handleOpenFeedback(cls)} className="flex flex-col items-center justify-center py-3 rounded-2xl bg-purple-50 text-purple-600 font-black text-[11px] hover:bg-purple-500 hover:text-white transition-all border border-purple-100 gap-1">
                                                         <span className="material-symbols-outlined text-[18px]">star</span>
@@ -773,10 +816,113 @@ const AdminClasses = () => {
 
                                     <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-6">
                                         {newClass.schedule_type === 'one_time' ? (
-                                            <div>
-                                                <label className="block text-xs font-black text-slate-500 mb-3 uppercase tracking-widest">날짜/시간 입력</label>
-                                                <input type="text" required value={newClass.class_date} onChange={e => setNewClass({ ...newClass, class_date: e.target.value })} placeholder="예: 4월 25일(토) 14:00" className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20" />
-                                            </div>
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest">📅 일시 설정</label>
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={newClass.use_datetime_picker}
+                                                            onChange={e => setNewClass({ ...newClass, use_datetime_picker: e.target.checked })}
+                                                            className="w-4 h-4 rounded accent-[var(--moca-primary)]"
+                                                        />
+                                                        <span className="text-xs font-bold text-slate-600">날짜/시간 지정</span>
+                                                    </label>
+                                                </div>
+
+                                                {newClass.use_datetime_picker ? (
+                                                    <div className="space-y-4">
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-slate-600 mb-2">날짜</label>
+                                                                <input
+                                                                    type="date"
+                                                                    required
+                                                                    value={newClass.event_date}
+                                                                    onChange={e => setNewClass({ ...newClass, event_date: e.target.value })}
+                                                                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-[var(--moca-primary)] focus:ring-1 focus:ring-[var(--moca-primary)]/20"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-slate-600 mb-2">시작 시간</label>
+                                                                <input
+                                                                    type="time"
+                                                                    required
+                                                                    value={newClass.event_time}
+                                                                    onChange={e => setNewClass({ ...newClass, event_time: e.target.value })}
+                                                                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-[var(--moca-primary)] focus:ring-1 focus:ring-[var(--moca-primary)]/20"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        {/* 미리보기 */}
+                                                        {newClass.event_date && newClass.event_time && (() => {
+                                                            const dt = new Date(`${newClass.event_date}T${newClass.event_time}:00`);
+                                                            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+                                                            const y = dt.getFullYear();
+                                                            const m = dt.getMonth() + 1;
+                                                            const d = dt.getDate();
+                                                            const dayName = dayNames[dt.getDay()];
+                                                            const previewText = `${y}년 ${m}월 ${d}일(${dayName}) ${newClass.event_time}`;
+                                                            
+                                                            const now = new Date();
+                                                            const diffMs = dt.getTime() - now.getTime();
+                                                            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                                                            let ddayLabel = '';
+                                                            let ddayColor = 'text-blue-500';
+                                                            if (diffDays < 0) { ddayLabel = '종료'; ddayColor = 'text-gray-400'; }
+                                                            else if (diffDays === 0) { ddayLabel = 'D-DAY'; ddayColor = 'text-red-500'; }
+                                                            else if (diffDays <= 3) { ddayLabel = `D-${diffDays}`; ddayColor = 'text-red-500'; }
+                                                            else if (diffDays <= 6) { ddayLabel = `D-${diffDays}`; ddayColor = 'text-amber-500'; }
+                                                            else { ddayLabel = `D-${diffDays}`; ddayColor = 'text-blue-500'; }
+
+                                                            // 후기 알림 예정 시각 (시작+4시간)
+                                                            const reminderDt = new Date(dt.getTime() + 4 * 60 * 60 * 1000);
+                                                            const reminderTime = `${String(reminderDt.getHours()).padStart(2, '0')}:${String(reminderDt.getMinutes()).padStart(2, '0')}`;
+
+                                                            return (
+                                                                <div className="bg-white rounded-xl p-4 border border-indigo-100 space-y-2">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="material-symbols-outlined text-[16px] text-indigo-400">visibility</span>
+                                                                        <span className="text-xs font-black text-slate-500">미리보기</span>
+                                                                    </div>
+                                                                    <p className="text-sm font-black text-[var(--moca-text)]">{previewText}</p>
+                                                                    <div className="flex items-center gap-3 flex-wrap">
+                                                                        <span className={`text-xs font-black ${ddayColor}`}>📌 {ddayLabel}</span>
+                                                                        <span className="text-xs font-bold text-slate-400">⏰ 후기 알림 예정: {reminderTime} (시작+4시간)</span>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-slate-600 mb-2">날짜/시간 (자유 입력)</label>
+                                                        <input type="text" required value={newClass.class_date} onChange={e => setNewClass({ ...newClass, class_date: e.target.value })} placeholder="예: 4월 25일(토) 14:00" className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-[var(--moca-primary)] focus:ring-1 focus:ring-[var(--moca-primary)]/20" />
+                                                        <p className="text-[10px] text-amber-500 font-bold mt-2">⚠️ 자유 입력 시 D-day 표시 및 후기 자동 알림이 작동하지 않습니다.</p>
+                                                    </div>
+                                                )}
+
+                                            {/* 후기 자동 알림 메시지 편집 */}
+                                            {newClass.use_datetime_picker && (
+                                                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="material-symbols-outlined text-[16px] text-amber-500">notification_important</span>
+                                                            <span className="text-xs font-black text-amber-700">자동 후기 알림 메시지</span>
+                                                        </div>
+                                                        <span className="text-[10px] font-bold text-amber-400">강의 시작 +4시간 후 자동 발송</span>
+                                                    </div>
+                                                    <textarea
+                                                        rows={5}
+                                                        value={newClass.review_message || `[아임모델 MOCA] ${newClass.title || '클래스'} 수강 감사 안내\n\n안녕하세요!\n[${newClass.title || '클래스'}] 클래스에 참여해 주셔서 진심으로 감사드립니다. 🎉\n\n수강하신 경험에 대한 소중한 피드백을 남겨주시면,\n더 좋은 클래스를 준비하는 데 큰 도움이 됩니다 😊\n\n▶ 후기 남기기: (앱에서 자동 연결)\n\n문의: 카카오채널 @아임모델`}
+                                                        onChange={e => setNewClass({ ...newClass, review_message: e.target.value })}
+                                                        placeholder="후기 알림 메시지를 입력하세요"
+                                                        className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-xs font-bold transition-all outline-none resize-none leading-relaxed focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20"
+                                                    />
+                                                    <p className="text-[10px] text-amber-500 font-bold">💡 비워두면 기본 메시지가 사용됩니다. 후기 링크는 자동으로 추가됩니다.</p>
+                                                </div>
+                                            )}
+                                        </div>
                                         ) : (
                                             <div className="space-y-6">
                                                 <div>
@@ -1014,18 +1160,42 @@ const AdminClasses = () => {
                 <div className="max-w-3xl mx-auto space-y-6">
                     <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-[32px] p-8 text-white shadow-2xl shadow-amber-500/20">
                         <div className="flex items-center gap-3 mb-3">
-                            <span className="material-symbols-outlined text-3xl">mail</span>
+                            <span className="material-symbols-outlined text-3xl">notification_important</span>
                             <div>
-                                <p className="text-amber-100 text-xs font-black uppercase tracking-widest">Thank You Message</p>
-                                <h3 className="text-xl font-black">감사 메시지 발송</h3>
+                                <p className="text-amber-100 text-xs font-black uppercase tracking-widest">Review Reminder</p>
+                                <h3 className="text-xl font-black">감사 + 후기 재알림 발송</h3>
                             </div>
                         </div>
                         <p className="text-amber-100 text-sm font-bold">{selectedClass.title}</p>
-                        {selectedClass.thank_you_sent_at && (
-                            <div className="mt-3 px-3 py-2 bg-white/20 rounded-xl text-xs font-bold backdrop-blur-md border border-white/20">
-                                이전 발송: {new Date(selectedClass.thank_you_sent_at).toLocaleString('ko-KR')}
+                        <div className="flex gap-3 mt-3 flex-wrap">
+                            {selectedClass.review_notification_sent && (
+                                <div className="px-3 py-2 bg-white/20 rounded-xl text-xs font-bold backdrop-blur-md border border-white/20 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                                    자동 알림 발송됨: {selectedClass.review_notification_sent_at ? new Date(selectedClass.review_notification_sent_at).toLocaleString('ko-KR') : ''}
+                                </div>
+                            )}
+                            {selectedClass.thank_you_sent_at && (
+                                <div className="px-3 py-2 bg-white/20 rounded-xl text-xs font-bold backdrop-blur-md border border-white/20">
+                                    이전 수동 발송: {new Date(selectedClass.thank_you_sent_at).toLocaleString('ko-KR')}
+                                </div>
+                            )}
+                        </div>
+                        <div className="mt-4 px-4 py-3 bg-white/15 rounded-2xl border border-white/20 backdrop-blur-md">
+                            <div className="flex items-center gap-6">
+                                <div>
+                                    <p className="text-[10px] font-bold text-white/60">수강확정</p>
+                                    <p className="text-lg font-black">{paidApplicants.length}명</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-white/60">후기 미작성</p>
+                                    <p className="text-lg font-black text-yellow-200">{nonReviewerCount}명</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-white/60">후기 완료</p>
+                                    <p className="text-lg font-black text-green-200">{paidApplicants.length - nonReviewerCount}명</p>
+                                </div>
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* 수신자 선택 */}
@@ -1033,6 +1203,8 @@ const AdminClasses = () => {
                         <div className="flex items-center justify-between mb-4">
                             <h4 className="font-black text-[var(--moca-text)]">수신자 선택</h4>
                             <div className="flex gap-2">
+                                <button onClick={() => setSelectedRecipients(nonReviewerIds)} className="text-xs font-black text-red-500 hover:underline">미작성자만</button>
+                                <span className="text-slate-300">|</span>
                                 <button onClick={() => setSelectedRecipients(paidApplicants.map(a => a.user_id))} className="text-xs font-black text-indigo-500 hover:underline">전체 선택</button>
                                 <span className="text-slate-300">|</span>
                                 <button onClick={() => setSelectedRecipients([])} className="text-xs font-black text-slate-400 hover:underline">전체 해제</button>
@@ -1064,6 +1236,11 @@ const AdminClasses = () => {
                                                 <p className="text-sm font-black text-[var(--moca-text)]">{name}</p>
                                                 <p className="text-[11px] font-bold text-[var(--moca-text-3)]">{phone}</p>
                                             </div>
+                                            {nonReviewerIds.includes(app.user_id) ? (
+                                                <span className="text-[9px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full">후기안씀</span>
+                                            ) : (
+                                                <span className="text-[9px] font-black text-green-500 bg-green-50 px-2 py-0.5 rounded-full">후기완료</span>
+                                            )}
                                             {isSelected && <span className="material-symbols-outlined text-amber-500 text-[18px]">check_circle</span>}
                                         </label>
                                     );
@@ -1099,7 +1276,7 @@ const AdminClasses = () => {
                         {isSubmitting ? (
                             <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />발송 중...</>
                         ) : (
-                            <><span className="material-symbols-outlined">send</span>{selectedRecipients.length}명에게 감사 메시지 발송</>
+                            <>{selectedRecipients.length}명에게 감사+후기 요청 SMS 발송</>
                         )}
                     </button>
                 </div>

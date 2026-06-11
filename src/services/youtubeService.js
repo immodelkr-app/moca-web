@@ -1,6 +1,23 @@
+import { supabase } from './supabaseClient';
+
 export const fetchKimDaepyoVideos = async () => {
     const CHANNEL_ID = 'UCkH1XHCioWJKNv0TBu9V8Jg';
     const RSS_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
+
+    // 0순위: Supabase Edge Function (우회 및 파싱 완료된 JSON)
+    if (supabase) {
+        try {
+            console.log('[MocaTV] Supabase Edge Function (youtube-rss) 시도...');
+            const { data, error } = await supabase.functions.invoke('youtube-rss');
+            if (error) throw error;
+            if (Array.isArray(data) && data.length > 0) {
+                console.log(`[MocaTV] ✅ Supabase Edge Function 성공, ${data.length}개 로드`);
+                return data;
+            }
+        } catch (e) {
+            console.warn('[MocaTV] ❌ Supabase Edge Function 실패:', e.message || e);
+        }
+    }
 
     // 1순위: 자체 Vercel API (CORS 없음, 가장 안정적)
     // 2순위: CORS 프록시 폴백
