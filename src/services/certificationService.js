@@ -5,6 +5,68 @@ const LOCAL_LIKES_KEY = 'cert_likes';
 const LOCAL_COMMENTS_KEY = 'cert_comments';
 
 // ─────────────────────────────────────────────
+//  이미지 압축 (Canvas 기반, 실패 시 원본 반환)
+// ─────────────────────────────────────────────
+export const compressImage = (file, { maxWidth = 1280, maxHeight = 1280, quality = 0.8 } = {}) => {
+    return new Promise((resolve) => {
+        if (!(file instanceof Blob)) {
+            resolve(file);
+            return;
+        }
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    resolve(file);
+                    return;
+                }
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) {
+                            resolve(file);
+                            return;
+                        }
+                        const compressedFile = new File([blob], file.name || 'image.jpg', {
+                            type: file.type || 'image/jpeg',
+                            lastModified: Date.now(),
+                        });
+                        resolve(compressedFile);
+                    },
+                    file.type || 'image/jpeg',
+                    quality
+                );
+            };
+            img.onerror = () => resolve(file);
+        };
+        reader.onerror = () => resolve(file);
+    });
+};
+
+// ─────────────────────────────────────────────
 //  이미지 업로드
 // ─────────────────────────────────────────────
 export const uploadCertImage = async (file) => {
@@ -80,10 +142,19 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
     const uploadedUrls = [];
 
     for (const file of files) {
-        const { url, error: uploadError } = await uploadCertImage(file);
+        let processedFile = file;
+        try {
+            if (file && file.type && file.type.startsWith('image/')) {
+                processedFile = await compressImage(file);
+            }
+        } catch (compressErr) {
+            console.warn('이미지 압축 실패, 원본 업로드 진행:', compressErr);
+        }
+
+        const { url, error: uploadError } = await uploadCertImage(processedFile);
         if (uploadError) {
             // 업로드 실패 시 base64로 fallback (localStorage용)
-            const base64 = await fileToBase64(file);
+            const base64 = await fileToBase64(processedFile);
             uploadedUrls.push(base64);
         } else {
             uploadedUrls.push(url);

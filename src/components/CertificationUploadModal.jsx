@@ -68,7 +68,7 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
             await onSuccess({ activityType, tagLabel, caption, imageFiles, isMarketingAgreed: true });
             onClose();
         } catch (err) {
-            setError('업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            setError(`업로드 중 오류가 발생했습니다: ${err.message || err}`);
         } finally {
             setIsUploading(false);
         }

@@ -62,7 +62,10 @@ const CertificationFeed = () => {
             imageFiles,
             isMarketingAgreed,
         });
-        if (!error && post) {
+        if (error) {
+            throw error;
+        }
+        if (post) {
             setPosts(prev => [post, ...prev]);
         }
     };
