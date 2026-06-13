@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { toggleLike, fetchComments, addComment, deleteComment } from '../services/certificationService';
+import React, { useState, useCallback, useRef } from 'react';
+import { toggleLike, fetchComments, addComment, deleteComment, parseImageUrls } from '../services/certificationService';
 
 const ACTIVITY_CONFIG = {
     '에이전시투어': { color: 'from-[#6C63FF] to-[#A78BFA]', bg: 'bg-[#6C63FF]/15', text: 'text-[#A78BFA]', border: 'border-[#6C63FF]/30', icon: 'apartment' },
@@ -19,6 +19,116 @@ const formatTime = (iso) => {
     return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
 };
 
+/* ── 이미지 캐러셀 컴포넌트 ── */
+const ImageCarousel = ({ images, alt }) => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const touchStartX = useRef(0);
+    const touchDeltaX = useRef(0);
+    const isSwiping = useRef(false);
+
+    if (!images || images.length === 0) return null;
+
+    // 단일 이미지
+    if (images.length === 1) {
+        return (
+            <div className="w-full aspect-square bg-black/20 overflow-hidden">
+                <img src={images[0]} alt={alt} className="w-full h-full object-cover" loading="lazy" />
+            </div>
+        );
+    }
+
+    // 다중 이미지
+    const goTo = (idx) => {
+        if (idx < 0) idx = 0;
+        if (idx >= images.length) idx = images.length - 1;
+        setCurrentIndex(idx);
+    };
+
+    const handleTouchStart = (e) => {
+        touchStartX.current = e.touches[0].clientX;
+        isSwiping.current = true;
+    };
+
+    const handleTouchMove = (e) => {
+        if (!isSwiping.current) return;
+        touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+    };
+
+    const handleTouchEnd = () => {
+        if (!isSwiping.current) return;
+        isSwiping.current = false;
+        if (touchDeltaX.current < -40) goTo(currentIndex + 1);
+        else if (touchDeltaX.current > 40) goTo(currentIndex - 1);
+        touchDeltaX.current = 0;
+    };
+
+    return (
+        <div
+            className="relative w-full aspect-square bg-black/20 overflow-hidden select-none"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+        >
+            {/* 이미지 트랙 */}
+            <div
+                className="flex h-full transition-transform duration-300 ease-out"
+                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            >
+                {images.map((url, idx) => (
+                    <img
+                        key={idx}
+                        src={url}
+                        alt={`${alt} ${idx + 1}`}
+                        className="w-full h-full object-cover flex-shrink-0"
+                        loading="lazy"
+                        style={{ minWidth: '100%' }}
+                    />
+                ))}
+            </div>
+
+            {/* 좌측 화살표 */}
+            {currentIndex > 0 && (
+                <button
+                    onClick={() => goTo(currentIndex - 1)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+                >
+                    <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                </button>
+            )}
+
+            {/* 우측 화살표 */}
+            {currentIndex < images.length - 1 && (
+                <button
+                    onClick={() => goTo(currentIndex + 1)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+                >
+                    <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                </button>
+            )}
+
+            {/* 이미지 카운터 배지 */}
+            <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
+                {currentIndex + 1} / {images.length}
+            </div>
+
+            {/* 인디케이터 dots */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {images.map((_, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => goTo(idx)}
+                        className={`rounded-full transition-all duration-300 ${
+                            idx === currentIndex
+                                ? 'w-5 h-2 bg-white'
+                                : 'w-2 h-2 bg-white/50 hover:bg-white/70'
+                        }`}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, onDelete }) => {
     const [liked, setLiked] = useState(likedPostIds.includes(post.id));
     const [likesCount, setLikesCount] = useState(post.likes_count || 0);
@@ -29,6 +139,7 @@ const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, o
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
     const cfg = ACTIVITY_CONFIG[post.activity_type] || ACTIVITY_CONFIG['에이전시투어'];
+    const imageUrls = parseImageUrls(post.image_url);
 
     const handleLike = useCallback(async () => {
         const newLiked = !liked;
@@ -95,15 +206,8 @@ const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, o
                 </div>
             </div>
 
-            {/* Image */}
-            <div className="w-full aspect-square bg-black/20 overflow-hidden">
-                <img
-                    src={post.image_url}
-                    alt={post.caption || '인증샷'}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                />
-            </div>
+            {/* Image Carousel */}
+            <ImageCarousel images={imageUrls} alt={post.caption || '인증샷'} />
 
             {/* Action Row */}
             <div className="px-4 pt-3 pb-1 flex items-center gap-4 flex-wrap">

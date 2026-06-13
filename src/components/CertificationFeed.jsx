@@ -53,13 +53,13 @@ const CertificationFeed = () => {
         setActiveFilter(tab);
     };
 
-    const handleUploadSuccess = async ({ activityType, tagLabel, caption, imageFile, isMarketingAgreed }) => {
+    const handleUploadSuccess = async ({ activityType, tagLabel, caption, imageFiles, isMarketingAgreed }) => {
         const { post, error } = await createCertPost({
             userNickname: myNickname,
             activityType,
             tagLabel,
             caption,
-            imageFile,
+            imageFiles,
             isMarketingAgreed,
         });
         if (!error && post) {

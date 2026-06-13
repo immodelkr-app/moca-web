@@ -7,7 +7,7 @@ import AdminPopups from './AdminPopups';
 import AdminClasses from './AdminClasses';
 import AdminHomepage from './AdminHomepage';
 import AdminContractViewerModal from './AdminContractViewerModal';
-import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost } from '../services/certificationService';
+import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost, parseImageUrls } from '../services/certificationService';
 import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '../services/currentPhotosService';
 import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
 import { fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
@@ -2560,7 +2560,20 @@ const AdminPage = () => {
                                         .map(post => (
                                             <div key={post.id} className="bg-white border border-[var(--moca-border)] rounded-2xl overflow-hidden">
                                                 <div className="relative w-full aspect-square bg-black/30">
-                                                    <img src={post.image_url} alt={post.caption || '인증샷'} className="w-full h-full object-cover" loading="lazy" />
+                                                    {(() => {
+                                                        const imgs = parseImageUrls(post.image_url);
+                                                        return (
+                                                            <>
+                                                                <img src={imgs[0]} alt={post.caption || '인증샷'} className="w-full h-full object-cover" loading="lazy" />
+                                                                {imgs.length > 1 && (
+                                                                    <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                                        <span className="material-symbols-outlined text-[12px]">photo_library</span>
+                                                                        {imgs.length}
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
                                                     <div className="absolute top-2 left-2 flex gap-1.5 flex-wrap">
                                                         {(post.likes_count >= 10 || post.is_hot) && (
                                                             <span className="flex items-center gap-0.5 bg-orange-500/80 backdrop-blur-sm text-[var(--moca-text)] text-[10px] font-black px-2 py-0.5 rounded-full">🔥 HOT</span>

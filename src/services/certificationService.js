@@ -31,6 +31,22 @@ export const uploadCertImage = async (file) => {
 };
 
 // ─────────────────────────────────────────────
+//  이미지 URL 파싱 헬퍼 (하위 호환)
+// ─────────────────────────────────────────────
+export const parseImageUrls = (imageUrlField) => {
+    if (!imageUrlField) return [];
+    // JSON 배열 문자열이면 파싱
+    if (typeof imageUrlField === 'string' && imageUrlField.startsWith('[')) {
+        try {
+            const parsed = JSON.parse(imageUrlField);
+            if (Array.isArray(parsed)) return parsed.filter(Boolean);
+        } catch { /* fall through */ }
+    }
+    // 일반 URL 문자열이면 배열로 감싸기
+    return [imageUrlField];
+};
+
+// ─────────────────────────────────────────────
 //  게시물 (Posts)
 // ─────────────────────────────────────────────
 export const fetchCertPosts = async (activityType = null) => {
@@ -58,18 +74,26 @@ export const fetchCertPosts = async (activityType = null) => {
     return posts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 };
 
-export const createCertPost = async ({ userNickname, activityType, tagLabel, caption, imageFile, isMarketingAgreed }) => {
-    let imageUrl = null;
+export const createCertPost = async ({ userNickname, activityType, tagLabel, caption, imageFiles, isMarketingAgreed }) => {
+    // imageFiles: 배열 (다중 이미지) 또는 단일 File (하위 호환)
+    const files = Array.isArray(imageFiles) ? imageFiles : (imageFiles ? [imageFiles] : []);
+    const uploadedUrls = [];
 
-    if (imageFile) {
-        const { url, error: uploadError } = await uploadCertImage(imageFile);
+    for (const file of files) {
+        const { url, error: uploadError } = await uploadCertImage(file);
         if (uploadError) {
             // 업로드 실패 시 base64로 fallback (localStorage용)
-            imageUrl = await fileToBase64(imageFile);
+            const base64 = await fileToBase64(file);
+            uploadedUrls.push(base64);
         } else {
-            imageUrl = url;
+            uploadedUrls.push(url);
         }
     }
+
+    // 다중이면 JSON 배열 문자열, 단일이면 일반 URL 문자열
+    const imageUrlValue = uploadedUrls.length > 1
+        ? JSON.stringify(uploadedUrls)
+        : (uploadedUrls[0] || null);
 
     const newPost = {
         id: crypto.randomUUID ? crypto.randomUUID() : `local_${Date.now()}`,
@@ -77,7 +101,7 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
         activity_type: activityType,
         tag_label: tagLabel || '',
         caption: caption || '',
-        image_url: imageUrl,
+        image_url: imageUrlValue,
         is_marketing_agreed: isMarketingAgreed || false,
         likes_count: 0,
         created_at: new Date().toISOString(),
@@ -91,7 +115,7 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
                 activity_type: newPost.activity_type,
                 tag_label: newPost.tag_label,
                 caption: newPost.caption,
-                image_url: imageUrl,
+                image_url: imageUrlValue,
                 is_marketing_agreed: newPost.is_marketing_agreed,
                 likes_count: 0,
             }])
