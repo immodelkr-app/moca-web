@@ -22,7 +22,6 @@ import VisitMemoModal from './VisitMemoModal';
 
 const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
     const naverMapsUrl = `https://map.naver.com/v5/search/${encodeURIComponent(agency.address || agency.name)}`;
-    const kakaoMapsUrl = `https://map.kakao.com/link/map/${agency.name},${agency.lat},${agency.lng}`;
 
     const colors = [
         { bg: 'from-[#6C63FF]/10 to-[#A78BFA]/5', border: 'border-[#6C63FF]/20', accent: 'text-[#818CF8]', dot: 'bg-[#6C63FF]' },
@@ -119,28 +118,16 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
 
             {/* Action buttons */}
             <div className="flex flex-col gap-2 mt-1">
-                <div className="flex gap-2">
-                    <a
-                        href={naverMapsUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={(e) => onAction(e, agency, naverMapsUrl)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors cursor-pointer"
-                    >
-                        <span className="text-[13px] font-black text-[#03C75A]">N</span>
-                        <span className="text-[#5B4E7A] text-[13px] font-bold">네이버 지도</span>
-                    </a>
-                    <a
-                        href={kakaoMapsUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={(e) => onAction(e, agency, kakaoMapsUrl)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors cursor-pointer"
-                    >
-                        <span className="material-symbols-outlined text-[16px] text-yellow-400">map</span>
-                        <span className="text-[#5B4E7A] text-[13px] font-bold">카카오 지도</span>
-                    </a>
-                </div>
+                <a
+                    href={naverMapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => onAction(e, agency, naverMapsUrl)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors cursor-pointer"
+                >
+                    <span className="text-[13px] font-black text-[#03C75A]">N</span>
+                    <span className="text-[#5B4E7A] text-[13px] font-bold">네이버 지도</span>
+                </a>
                 <button
                     onClick={(e) => onAction(e, agency, null)}
                     className="w-full flex items-center justify-center gap-2 py-3 mt-1 rounded-xl bg-[#6C63FF]/15 hover:bg-[#6C63FF]/25 border border-[#9B8AFB]/35 transition-colors cursor-pointer text-[#6C63FF] font-black text-[13px]"
