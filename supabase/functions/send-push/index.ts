@@ -101,9 +101,15 @@ serve(async (req) => {
       title = "🎬 모카TV 새로운 영상 업데이트!";
       body = "광고모델 활동을 위한 영상이 업로드되었습니다. 모카TV에서 확인해보세요.";
       actionRoute = "/mocatv";
+    } else if (table === "custom") {
+      // 관리자가 직접 지정한 커스텀 푸시 메시지
+      title = record?.title || "📢 새로운 소식";
+      body = record?.body || "앱에서 확인해보세요.";
+      actionRoute = record?.route || "/agency";
     } else {
       return new Response(JSON.stringify({ message: "Unsupported table" }), { status: 200 });
     }
+
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
