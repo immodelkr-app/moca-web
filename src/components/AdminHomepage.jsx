@@ -104,6 +104,11 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
                 body: '중요한 공지사항이 있습니다. 앱에서 확인해주세요.',
                 route: '/',
             },
+            mocatv: {
+                title: '🎬 모카TV 김대표님 영상 업로드!',
+                body: '모카TV에 김대표님의 새로운 영상이 업로드 되었습니다. 지금 바로 확인해 보세요!',
+                route: '/mocatv',
+            },
         };
         if (presets[preset]) setPushForm(presets[preset]);
     };
@@ -390,6 +395,7 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
                                     { key: 'agency', label: '📍 에이전시 업데이트', color: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' },
                                     { key: 'class', label: '🆕 클래스 오픈', color: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' },
                                     { key: 'notice', label: '📢 공지사항', color: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
+                                    { key: 'mocatv', label: '🎬 모카TV 김대표님 영상', color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' },
                                 ].map(p => (
                                     <button
                                         key={p.key}
