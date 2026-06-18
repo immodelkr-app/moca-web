@@ -98,8 +98,8 @@ serve(async (req) => {
       body = "중요 광고에이전시 리스트가 추가되었습니다. 지금 확인해보세요.";
       actionRoute = "/agency";
     } else if (table === "moca_featured_videos") {
-      title = "🎬 모카TV 새로운 영상 업데이트!";
-      body = "광고모델 활동을 위한 영상이 업로드되었습니다. 모카TV에서 확인해보세요.";
+      title = "🎬 모카TV 김대표님 영상 업로드!";
+      body = "모카TV에 김대표님의 새로운 영상이 업로드 되었습니다. 지금 바로 확인해 보세요!";
       actionRoute = "/mocatv";
     } else if (table === "custom") {
       // 관리자가 직접 지정한 커스텀 푸시 메시지
