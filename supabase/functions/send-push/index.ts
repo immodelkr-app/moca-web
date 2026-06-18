@@ -1,6 +1,12 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+
 // Define TypeScript interfaces for Push payload
 interface PushNotificationPayload {
   title: string;
@@ -79,6 +85,11 @@ async function getFirebaseAccessToken(serviceAccount: any): Promise<string> {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
     const payload = await req.json();
     const record = payload.record;
@@ -107,7 +118,10 @@ serve(async (req) => {
       body = record?.body || "앱에서 확인해보세요.";
       actionRoute = record?.route || "/agency";
     } else {
-      return new Response(JSON.stringify({ message: "Unsupported table" }), { status: 200 });
+      return new Response(JSON.stringify({ message: "Unsupported table" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     
@@ -124,7 +138,10 @@ serve(async (req) => {
     if (tokensError) throw tokensError;
     
     if (!tokens || tokens.length === 0) {
-      return new Response(JSON.stringify({ message: "No push tokens found" }), { status: 200 });
+      return new Response(JSON.stringify({ message: "No push tokens found" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     
     // Get Firebase Service Account from environment
@@ -190,13 +207,13 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ message: "Push notifications processed", results, successCount, failCount }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error(error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
