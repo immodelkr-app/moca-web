@@ -12,6 +12,7 @@ import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '..
 import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
 import { fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
 import { sendAlimtalk } from '../services/solapiService';
+import { fetchPushHistory } from '../services/pushNotificationService';
 import * as XLSX from 'xlsx';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
@@ -95,6 +96,10 @@ const AdminPage = () => {
     const [userClassAppCounts, setUserClassAppCounts] = useState({});
     // 수강생만 보기 필터
     const [onlyHasClass, setOnlyHasClass] = useState(false);
+
+    // 푸시 발송 내역
+    const [pushHistory, setPushHistory] = useState([]);
+    const [pushHistoryLoading, setPushHistoryLoading] = useState(false);
 
     const handleLogout = () => {
         logoutUser();
@@ -943,6 +948,18 @@ const AdminPage = () => {
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'diaries' ? 'border-purple-500 text-purple-700 bg-purple-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
                         📒 투어일지 관리
+                    </button>
+                    <button
+                        onClick={async () => {
+                            setActiveTab('pushhistory');
+                            setPushHistoryLoading(true);
+                            const { data } = await fetchPushHistory(10);
+                            setPushHistory(data || []);
+                            setPushHistoryLoading(false);
+                        }}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'pushhistory' ? 'border-red-500 text-red-700 bg-red-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                    >
+                        🔔 푸시 발송 내역
                     </button>
 
                 </div>
@@ -2124,6 +2141,92 @@ const AdminPage = () => {
                         setSuccessMsg={setSuccessMsg}
                         setError={setError}
                     />
+                )}
+
+                {/* ============================================================ */}
+                {/* 🔔 푸시 발송 내역 탭 */}
+                {/* ============================================================ */}
+                {activeTab === 'pushhistory' && (
+                    <div className="animate-fadeIn">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl">🔔</span>
+                                <div>
+                                    <h2 className="text-xl font-black text-[var(--moca-text)]">푸시 알림 발송 내역</h2>
+                                    <p className="text-sm text-[var(--moca-text-3)] mt-0.5">최근 발송된 푸시 알림 이력입니다. (최대 10건)</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    setPushHistoryLoading(true);
+                                    const { data } = await fetchPushHistory(10);
+                                    setPushHistory(data || []);
+                                    setPushHistoryLoading(false);
+                                }}
+                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--moca-surface-2)] hover:bg-red-50 border border-[var(--moca-border)] text-sm font-bold transition-all"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">refresh</span> 새로고침
+                            </button>
+                        </div>
+
+                        {pushHistoryLoading ? (
+                            <div className="flex items-center justify-center py-20">
+                                <div className="w-8 h-8 border-2 border-red-300 border-t-red-500 rounded-full animate-spin" />
+                            </div>
+                        ) : pushHistory.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                                <span className="material-symbols-outlined text-[48px] mb-3">notifications_off</span>
+                                <p className="font-bold">아직 발송된 푸시 알림이 없습니다.</p>
+                                <p className="text-sm mt-1">홈화면 관리 탭에서 알림을 발송해 보세요.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {pushHistory.map((item, idx) => {
+                                    const senderLabel = {
+                                        admin_custom: '👤 관리자 수동',
+                                        system_classes: '🎓 시스템 (클래스)',
+                                        system_partners: '🏢 시스템 (제휴)',
+                                        system_moca_featured_videos: '🎬 시스템 (모카TV)',
+                                    }[item.sender] || `⚙️ ${item.sender}`;
+
+                                    const sentAt = new Date(item.created_at).toLocaleString('ko-KR', {
+                                        year: 'numeric', month: '2-digit', day: '2-digit',
+                                        hour: '2-digit', minute: '2-digit'
+                                    });
+
+                                    return (
+                                        <div key={item.id} className="bg-white border border-[var(--moca-border)] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                                            {/* 번호 + 타입 배지 */}
+                                            <div className="flex items-center gap-3 shrink-0">
+                                                <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-sm">
+                                                    {idx + 1}
+                                                </div>
+                                                <span className="text-[11px] font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-full whitespace-nowrap">
+                                                    {senderLabel}
+                                                </span>
+                                            </div>
+                                            {/* 제목 + 내용 */}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-black text-[var(--moca-text)] text-[14px] truncate">{item.title}</p>
+                                                <p className="text-[var(--moca-text-2)] text-[13px] mt-0.5 line-clamp-1">{item.body}</p>
+                                                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                                                    <span className="text-[11px] text-gray-400">🕒 {sentAt}</span>
+                                                    <span className="text-[11px] text-gray-400">📍 {item.route}</span>
+                                                </div>
+                                            </div>
+                                            {/* 성공/실패 카운트 */}
+                                            <div className="flex gap-2 shrink-0">
+                                                <span className="text-[12px] font-black bg-green-50 text-green-600 border border-green-200 px-2.5 py-1 rounded-lg">✅ {item.success_count}건</span>
+                                                {item.fail_count > 0 && (
+                                                    <span className="text-[12px] font-black bg-red-50 text-red-500 border border-red-200 px-2.5 py-1 rounded-lg">❌ {item.fail_count}건</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {activeTab === 'message' && (

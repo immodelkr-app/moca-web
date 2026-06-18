@@ -128,3 +128,17 @@ export const sendBroadcastPush = async ({ title, body, route = '/agency' }) => {
   }
 };
 
+/**
+ * 관리자 전용: 푸시 발송 내역 조회
+ * @param {number} limit - 조회할 최대 건수 (기본값: 10)
+ * @returns {Promise<{data?: Array, error?: any}>}
+ */
+export const fetchPushHistory = async (limit = 10) => {
+  if (!supabase) return { data: [], error: 'Supabase not initialized' };
+  const { data, error } = await supabase
+    .from('push_history')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  return { data: data || [], error };
+};

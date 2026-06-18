@@ -174,8 +174,22 @@ serve(async (req) => {
       }
     }
     
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+
+    // 발송 내역 DB 저장
+    const senderType = table === "custom" ? "admin_custom" : `system_${table}`;
+    await supabase.from("push_history").insert({
+      title,
+      body,
+      route: actionRoute,
+      sender: senderType,
+      success_count: successCount,
+      fail_count: failCount,
+    });
+
     return new Response(
-      JSON.stringify({ message: "Push notifications processed", results }),
+      JSON.stringify({ message: "Push notifications processed", results, successCount, failCount }),
       { headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
