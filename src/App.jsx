@@ -31,6 +31,7 @@ import { useAutoLogout } from './hooks/useAutoLogout';
 import { useAuthSync } from './hooks/useAuthSync';
 import PopupBanner from './components/PopupBanner';
 import { initializePushNotifications } from './services/pushNotificationService';
+import { isLoggedIn } from './services/userService';
 
 function AppContent() {
     usePageView(); // 라우트 변경 감지 및 조회수 기록
@@ -70,10 +71,20 @@ function AppContent() {
         // Handle routing from push notifications
         const handlePushRoute = (e) => {
             if (e.detail) {
+                localStorage.removeItem('pending_push_route');
                 navigate(e.detail);
             }
         };
         window.addEventListener('pushNotificationRoute', handlePushRoute);
+
+        // Check if there is a pending push route on mount (Cold Start)
+        const pendingRoute = localStorage.getItem('pending_push_route');
+        if (pendingRoute) {
+            localStorage.removeItem('pending_push_route');
+            setTimeout(() => {
+                navigate(pendingRoute);
+            }, 150);
+        }
 
         // Handle deep links (custom scheme: immodel://)
         const deepLinkListener = CapacitorApp.addListener('appUrlOpen', (event) => {
@@ -148,6 +159,9 @@ function AppContent() {
                 <Route path="/contract" element={<ExclusiveContractPage />} />
                 <Route path="/contract/:name" element={<ExclusiveContractPage />} />
                 <Route path="/home/contract" element={<Navigate to="/contract" replace />} />
+                
+                {/* 정의되지 않은 경로 처리 (빈 화면 방지) */}
+                <Route path="*" element={<Navigate to={isLoggedIn() ? "/home/dashboard" : "/"} replace />} />
 
             </Routes>
         </>

@@ -72,6 +72,7 @@ export const initializePushNotifications = async () => {
     
     // Route user to the appropriate page based on data payload
     if (data && data.route) {
+      localStorage.setItem('pending_push_route', data.route);
       window.dispatchEvent(new CustomEvent('pushNotificationRoute', { detail: data.route }));
     }
   });
@@ -89,7 +90,7 @@ export const clearPushToken = async () => {
  * @param {string} param.route - 탭 후 이동할 라우트 (예: '/agency')
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
-export const sendBroadcastPush = async ({ title, body, route = '/agency' }) => {
+export const sendBroadcastPush = async ({ title, body, route = '/agencies' }) => {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;

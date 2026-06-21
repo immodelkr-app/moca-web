@@ -140,6 +140,14 @@ const AgencyLanding = () => {
             setIsLoggedIn(true);
             setUserId(storedUser.name || storedUser.nickname || '');
             setUserGrade(storedUser.grade || 'BASIC');
+        } else {
+            // 비로그인 상태이고, 보호된 라우트 진입 시도로 인해 리다이렉트되어 들어온 경우 로그인 모달 자동 활성화
+            const redirectTo = sessionStorage.getItem('redirect_to');
+            if (redirectTo) {
+                setTimeout(() => {
+                    setShowLogin(true);
+                }, 300); // 렌더링이 완료된 후 매끄러운 트랜지션을 위해 딜레이 부여
+            }
         }
     }, []);
 

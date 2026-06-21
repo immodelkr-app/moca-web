@@ -103,7 +103,7 @@ const AdminPage = () => {
 
     // ── 알림·메시지 센터 state ──
     // 앱 푸시 알림 발송
-    const [pushForm, setPushForm] = useState({ title: '', body: '', route: '/agency' });
+    const [pushForm, setPushForm] = useState({ title: '', body: '', route: '/agencies' });
     const [isSendingPush, setIsSendingPush] = useState(false);
     const [pushConfirmOpen, setPushConfirmOpen] = useState(false);
     const [pushResult, setPushResult] = useState(null);
@@ -113,7 +113,7 @@ const AdminPage = () => {
     const [allPhoneUsers, setAllPhoneUsers] = useState([]);
     const [noPushLoading, setNoPushLoading] = useState(false);
     const [msgForm, setMsgForm] = useState({ type: 'sms', content: DEFAULT_INSTALL_MSG, target: 'nopush' });
-    const [isSendingMsg, setIsSendingMsg] = useState(false);
+    const [isSendingEncourage, setIsSendingEncourage] = useState(false);
     const [msgConfirmOpen, setMsgConfirmOpen] = useState(false);
     const [msgResult, setMsgResult] = useState(null);
     // 알림 센터 서브탭
@@ -2174,10 +2174,10 @@ const AdminPage = () => {
                     // 푸시 프리셋 적용
                     const applyPushPreset = (preset) => {
                         const presets = {
-                            agency: { title: '📍 에이전시 주소 업데이트!', body: '에이전시 주소가 업데이트되었습니다. 지금 확인해보세요!', route: '/agency' },
-                            class: { title: '🆕 새로운 모카 클래스 오픈!', body: '새 클래스가 오픈되었습니다. 지금 바로 확인해보세요!', route: '/class' },
-                            notice: { title: '📢 모카 공지사항', body: '중요한 공지사항이 있습니다. 앱에서 확인해주세요.', route: '/' },
-                            mocatv: { title: '🎬 모카TV 김대표님 영상 업로드!', body: '모카TV에 김대표님의 새로운 영상이 업로드 되었습니다. 지금 바로 확인해 보세요!', route: '/mocatv' },
+                            agency: { title: '📍 에이전시 주소 업데이트!', body: '에이전시 주소가 업데이트되었습니다. 지금 확인해보세요!', route: '/agencies' },
+                            class: { title: '🆕 새로운 모카 클래스 오픈!', body: '새 클래스가 오픈되었습니다. 지금 바로 확인해보세요!', route: '/home/class' },
+                            notice: { title: '📢 모카 공지사항', body: '중요한 공지사항이 있습니다. 앱에서 확인해주세요.', route: '/home/dashboard' },
+                            mocatv: { title: '🎬 모카TV 김대표님 영상 업로드!', body: '모카TV에 김대표님의 새로운 영상이 업로드 되었습니다. 지금 바로 확인해 보세요!', route: '/home/tv' },
                         };
                         if (presets[preset]) setPushForm(presets[preset]);
                     };
@@ -2197,7 +2197,7 @@ const AdminPage = () => {
                         const targets = msgForm.target === 'nopush' ? noPushUsers : allPhoneUsers;
                         const phones = targets.map(u => u.phone).filter(Boolean);
                         if (!phones.length) return;
-                        setIsSendingMsg(true);
+                        setIsSendingEncourage(true);
                         setMsgResult(null);
                         setMsgConfirmOpen(false);
                         try {
@@ -2210,7 +2210,7 @@ const AdminPage = () => {
                         } catch (err) {
                             setMsgResult({ success: false, error: err.message || '발송에 실패했습니다.' });
                         }
-                        setIsSendingMsg(false);
+                        setIsSendingEncourage(false);
                     };
                     const refreshNoPushUsers = async () => {
                         setNoPushLoading(true);
@@ -2328,7 +2328,7 @@ const AdminPage = () => {
                                         <div>
                                             <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">탭 시 이동 경로</label>
                                             <div className="flex gap-2">
-                                                {['/agency', '/class', '/mocatv', '/'].map(r => (
+                                                {['/agencies', '/home/class', '/home/tv', '/home/dashboard'].map(r => (
                                                     <button key={r} onClick={() => setPushForm(p => ({ ...p, route: r }))}
                                                         className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
                                                             pushForm.route === r ? 'bg-[var(--moca-primary)] text-white border-[var(--moca-primary)]' : 'bg-[var(--moca-bg)] text-[var(--moca-text-2)] border-[var(--moca-border)] hover:border-[var(--moca-primary)]'
@@ -2457,9 +2457,9 @@ const AdminPage = () => {
                                             <p className="text-right text-[10px] text-[var(--moca-text-3)] mt-1">{msgForm.content.length}자</p>
                                         </div>
                                         <button onClick={() => { if (msgForm.content.trim()) setMsgConfirmOpen(true); }}
-                                            disabled={isSendingMsg || !msgForm.content.trim() || (msgForm.target === 'nopush' ? noPushUsers.length === 0 : allPhoneUsers.length === 0)}
+                                            disabled={isSendingEncourage || !msgForm.content.trim() || (msgForm.target === 'nopush' ? noPushUsers.length === 0 : allPhoneUsers.length === 0)}
                                             className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                                            {isSendingMsg ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</> : <><span className="material-symbols-outlined text-[18px]">send</span>{msgForm.target === 'nopush' ? `앱 미등록 ${noPushUsers.length}명에게 발송` : `전체 ${allPhoneUsers.length}명에게 발송`}</>}
+                                            {isSendingEncourage ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</> : <><span className="material-symbols-outlined text-[18px]">send</span>{msgForm.target === 'nopush' ? `앱 미등록 ${noPushUsers.length}명에게 발송` : `전체 ${allPhoneUsers.length}명에게 발송`}</>}
                                         </button>
                                         {msgResult && (
                                             <div className={`rounded-xl p-4 text-sm font-bold flex items-start gap-3 ${msgResult.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
