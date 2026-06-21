@@ -14,6 +14,22 @@ interface PushNotificationPayload {
   data?: Record<string, string>;
 }
 
+// Helper function to encode ArrayBuffer as base64url
+function base64url(buf: ArrayBuffer): string {
+  const binString = String.fromCharCode(...new Uint8Array(buf));
+  return btoa(binString)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+}
+
+// Helper function to encode string as base64url
+function stringToBase64url(str: string): string {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(str);
+  return base64url(bytes.buffer);
+}
+
 // Function to generate JWT for Firebase V1 HTTP API
 async function getFirebaseAccessToken(serviceAccount: any): Promise<string> {
   const { client_email, private_key } = serviceAccount;
@@ -32,15 +48,16 @@ async function getFirebaseAccessToken(serviceAccount: any): Promise<string> {
     iat: now,
   };
   
-  const headerStr = btoa(JSON.stringify(header));
-  const claimStr = btoa(JSON.stringify(claim));
+  const headerStr = stringToBase64url(JSON.stringify(header));
+  const claimStr = stringToBase64url(JSON.stringify(claim));
   
   const signatureInput = `${headerStr}.${claimStr}`;
   
-  // Import private key
-  const pemHeader = "-----BEGIN PRIVATE KEY-----";
-  const pemFooter = "-----END PRIVATE KEY-----";
-  const pemContents = private_key.substring(pemHeader.length, private_key.length - pemFooter.length - 1);
+  // Clean up private key robustly
+  const pemContents = private_key
+    .replace("-----BEGIN PRIVATE KEY-----", "")
+    .replace("-----END PRIVATE KEY-----", "")
+    .replace(/\s+/g, "");
   
   const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
   
@@ -61,12 +78,8 @@ async function getFirebaseAccessToken(serviceAccount: any): Promise<string> {
     new TextEncoder().encode(signatureInput)
   );
   
-  const signatureStr = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
-    
-  const jwt = `${headerStr.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "")}.${claimStr.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "")}.${signatureStr}`;
+  const signatureStr = base64url(signatureBuffer);
+  const jwt = `${signatureInput}.${signatureStr}`;
   
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
