@@ -11,8 +11,8 @@ import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPo
 import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '../services/currentPhotosService';
 import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
 import { fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
-import { sendAlimtalk } from '../services/solapiService';
-import { fetchPushHistory } from '../services/pushNotificationService';
+import { sendAlimtalk, sendBulkMessage, sendFriendtalk } from '../services/solapiService';
+import { fetchPushHistory, sendBroadcastPush, fetchUsersWithoutPushToken, fetchAllUsersWithPhone } from '../services/pushNotificationService';
 import * as XLSX from 'xlsx';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
@@ -100,6 +100,24 @@ const AdminPage = () => {
     // 푸시 발송 내역
     const [pushHistory, setPushHistory] = useState([]);
     const [pushHistoryLoading, setPushHistoryLoading] = useState(false);
+
+    // ── 알림·메시지 센터 state ──
+    // 앱 푸시 알림 발송
+    const [pushForm, setPushForm] = useState({ title: '', body: '', route: '/agency' });
+    const [isSendingPush, setIsSendingPush] = useState(false);
+    const [pushConfirmOpen, setPushConfirmOpen] = useState(false);
+    const [pushResult, setPushResult] = useState(null);
+    // 앱 설치 독려 메시지
+    const DEFAULT_INSTALL_MSG = `[아임모델 모카] 안녕하세요!\n앱을 설치하시면 새 공지·클래스·에이전시 소식을 푸시 알림으로 가장 먼저 받아보실 수 있습니다!\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp\n(구글플레이에서 '모두의 캐스팅' 검색)`;
+    const [noPushUsers, setNoPushUsers] = useState([]);
+    const [allPhoneUsers, setAllPhoneUsers] = useState([]);
+    const [noPushLoading, setNoPushLoading] = useState(false);
+    const [msgForm, setMsgForm] = useState({ type: 'sms', content: DEFAULT_INSTALL_MSG, target: 'nopush' });
+    const [isSendingMsg, setIsSendingMsg] = useState(false);
+    const [msgConfirmOpen, setMsgConfirmOpen] = useState(false);
+    const [msgResult, setMsgResult] = useState(null);
+    // 알림 센터 서브탭
+    const [notifSubTab, setNotifSubTab] = useState('push'); // 'push' | 'encourage' | 'history'
 
     const handleLogout = () => {
         logoutUser();
@@ -952,14 +970,20 @@ const AdminPage = () => {
                     <button
                         onClick={async () => {
                             setActiveTab('pushhistory');
-                            setPushHistoryLoading(true);
-                            const { data } = await fetchPushHistory(10);
-                            setPushHistory(data || []);
-                            setPushHistoryLoading(false);
+                            setNoPushLoading(true);
+                            const [histResult, noPushResult, allPhoneResult] = await Promise.all([
+                                fetchPushHistory(10),
+                                fetchUsersWithoutPushToken(),
+                                fetchAllUsersWithPhone(),
+                            ]);
+                            setPushHistory(histResult.data || []);
+                            setNoPushUsers(noPushResult.data || []);
+                            setAllPhoneUsers(allPhoneResult.data || []);
+                            setNoPushLoading(false);
                         }}
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'pushhistory' ? 'border-red-500 text-red-700 bg-red-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
-                        🔔 푸시 발송 내역
+                        🔔 알림·메시지 센터
                     </button>
 
                 </div>
@@ -2146,88 +2170,402 @@ const AdminPage = () => {
                 {/* ============================================================ */}
                 {/* 🔔 푸시 발송 내역 탭 */}
                 {/* ============================================================ */}
-                {activeTab === 'pushhistory' && (
-                    <div className="animate-fadeIn">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <span className="text-3xl">🔔</span>
-                                <div>
-                                    <h2 className="text-xl font-black text-[var(--moca-text)]">푸시 알림 발송 내역</h2>
-                                    <p className="text-sm text-[var(--moca-text-3)] mt-0.5">최근 발송된 푸시 알림 이력입니다. (최대 10건)</p>
+                {activeTab === 'pushhistory' && (() => {
+                    // 푸시 프리셋 적용
+                    const applyPushPreset = (preset) => {
+                        const presets = {
+                            agency: { title: '📍 에이전시 주소 업데이트!', body: '에이전시 주소가 업데이트되었습니다. 지금 확인해보세요!', route: '/agency' },
+                            class: { title: '🆕 새로운 모카 클래스 오픈!', body: '새 클래스가 오픈되었습니다. 지금 바로 확인해보세요!', route: '/class' },
+                            notice: { title: '📢 모카 공지사항', body: '중요한 공지사항이 있습니다. 앱에서 확인해주세요.', route: '/' },
+                            mocatv: { title: '🎬 모카TV 김대표님 영상 업로드!', body: '모카TV에 김대표님의 새로운 영상이 업로드 되었습니다. 지금 바로 확인해 보세요!', route: '/mocatv' },
+                        };
+                        if (presets[preset]) setPushForm(presets[preset]);
+                    };
+                    const handleSendPush = async () => {
+                        if (!pushForm.title.trim() || !pushForm.body.trim()) return;
+                        setIsSendingPush(true);
+                        setPushResult(null);
+                        setPushConfirmOpen(false);
+                        const result = await sendBroadcastPush(pushForm);
+                        setPushResult(result);
+                        setIsSendingPush(false);
+                        // 발송 후 내역 새로고침
+                        const { data } = await fetchPushHistory(10);
+                        setPushHistory(data || []);
+                    };
+                    const handleSendMsg = async () => {
+                        const targets = msgForm.target === 'nopush' ? noPushUsers : allPhoneUsers;
+                        const phones = targets.map(u => u.phone).filter(Boolean);
+                        if (!phones.length) return;
+                        setIsSendingMsg(true);
+                        setMsgResult(null);
+                        setMsgConfirmOpen(false);
+                        try {
+                            if (msgForm.type === 'sms') {
+                                await sendBulkMessage(phones, msgForm.content);
+                            } else {
+                                await sendFriendtalk(phones.map(phone => ({ phone, content: msgForm.content })));
+                            }
+                            setMsgResult({ success: true, count: phones.length });
+                        } catch (err) {
+                            setMsgResult({ success: false, error: err.message || '발송에 실패했습니다.' });
+                        }
+                        setIsSendingMsg(false);
+                    };
+                    const refreshNoPushUsers = async () => {
+                        setNoPushLoading(true);
+                        const [noPushResult, allPhoneResult] = await Promise.all([
+                            fetchUsersWithoutPushToken(),
+                            fetchAllUsersWithPhone(),
+                        ]);
+                        setNoPushUsers(noPushResult.data || []);
+                        setAllPhoneUsers(allPhoneResult.data || []);
+                        setNoPushLoading(false);
+                    };
+
+                    return (
+                    <div className="animate-fadeIn space-y-6">
+
+                        {/* ── 푸시 알림 확인 모달 ── */}
+                        {pushConfirmOpen && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="text-3xl">🔔</span>
+                                        <div>
+                                            <h3 className="font-black text-[var(--moca-text)] text-lg">푸시 알림 발송 확인</h3>
+                                            <p className="text-xs text-[var(--moca-text-3)]">전체 사용자에게 즉시 발송됩니다</p>
+                                        </div>
+                                    </div>
+                                    <div className="bg-[var(--moca-bg)] rounded-xl p-4 mb-5 space-y-2">
+                                        <p className="text-sm font-bold text-[var(--moca-text)]">제목: {pushForm.title}</p>
+                                        <p className="text-sm text-[var(--moca-text-2)]">내용: {pushForm.body}</p>
+                                        <p className="text-xs text-[var(--moca-text-3)]">이동 경로: {pushForm.route}</p>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button onClick={() => setPushConfirmOpen(false)} className="flex-1 py-2.5 rounded-xl border border-[var(--moca-border)] text-[var(--moca-text-2)] font-bold text-sm hover:bg-[var(--moca-bg)] transition-colors">취소</button>
+                                        <button onClick={handleSendPush} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[var(--moca-primary)] to-purple-600 text-white font-black text-sm hover:opacity-90 transition-all">발송하기</button>
+                                    </div>
                                 </div>
                             </div>
-                            <button
-                                onClick={async () => {
-                                    setPushHistoryLoading(true);
-                                    const { data } = await fetchPushHistory(10);
-                                    setPushHistory(data || []);
-                                    setPushHistoryLoading(false);
-                                }}
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--moca-surface-2)] hover:bg-red-50 border border-[var(--moca-border)] text-sm font-bold transition-all"
-                            >
-                                <span className="material-symbols-outlined text-[16px]">refresh</span> 새로고침
-                            </button>
+                        )}
+
+                        {/* ── 독려 메시지 확인 모달 ── */}
+                        {msgConfirmOpen && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="text-3xl">📲</span>
+                                        <div>
+                                            <h3 className="font-black text-[var(--moca-text)] text-lg">메시지 발송 확인</h3>
+                                            <p className="text-xs text-[var(--moca-text-3)]">
+                                                {msgForm.target === 'nopush' ? `앱 미등록 회원 ${noPushUsers.length}명` : `전체 회원 ${allPhoneUsers.length}명`}에게 즉시 발송됩니다
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="bg-[var(--moca-bg)] rounded-xl p-3 mb-5 text-xs text-[var(--moca-text-2)] whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">{msgForm.content}</div>
+                                    <div className="flex gap-3">
+                                        <button onClick={() => setMsgConfirmOpen(false)} className="flex-1 py-2.5 rounded-xl border border-[var(--moca-border)] text-[var(--moca-text-2)] font-bold text-sm hover:bg-[var(--moca-bg)] transition-colors">취소</button>
+                                        <button onClick={handleSendMsg} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm hover:opacity-90 transition-all">발송하기</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ── 서브탭 ── */}
+                        <div className="flex gap-2 border-b border-[var(--moca-border)] pb-0">
+                            {[
+                                { key: 'push', label: '🔔 앱 푸시 알림', color: 'border-purple-500 text-purple-700 bg-purple-50' },
+                                { key: 'encourage', label: '📲 앱 설치 독려 문자', color: 'border-orange-500 text-orange-700 bg-orange-50' },
+                                { key: 'history', label: '📋 발송 내역', color: 'border-red-500 text-red-700 bg-red-50' },
+                            ].map(tab => (
+                                <button key={tab.key} onClick={() => setNotifSubTab(tab.key)}
+                                    className={`pb-3 px-4 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${
+                                        notifSubTab === tab.key ? tab.color : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
+                                    }`}>
+                                    {tab.label}
+                                </button>
+                            ))}
                         </div>
 
-                        {pushHistoryLoading ? (
-                            <div className="flex items-center justify-center py-20">
-                                <div className="w-8 h-8 border-2 border-red-300 border-t-red-500 rounded-full animate-spin" />
-                            </div>
-                        ) : pushHistory.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                                <span className="material-symbols-outlined text-[48px] mb-3">notifications_off</span>
-                                <p className="font-bold">아직 발송된 푸시 알림이 없습니다.</p>
-                                <p className="text-sm mt-1">홈화면 관리 탭에서 알림을 발송해 보세요.</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {pushHistory.map((item, idx) => {
-                                    const senderLabel = {
-                                        admin_custom: '👤 관리자 수동',
-                                        system_classes: '🎓 시스템 (클래스)',
-                                        system_partners: '🏢 시스템 (제휴)',
-                                        system_moca_featured_videos: '🎬 시스템 (모카TV)',
-                                    }[item.sender] || `⚙️ ${item.sender}`;
-
-                                    const sentAt = new Date(item.created_at).toLocaleString('ko-KR', {
-                                        year: 'numeric', month: '2-digit', day: '2-digit',
-                                        hour: '2-digit', minute: '2-digit'
-                                    });
-
-                                    return (
-                                        <div key={item.id} className="bg-white border border-[var(--moca-border)] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                                            {/* 번호 + 타입 배지 */}
-                                            <div className="flex items-center gap-3 shrink-0">
-                                                <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-sm">
-                                                    {idx + 1}
-                                                </div>
-                                                <span className="text-[11px] font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-full whitespace-nowrap">
-                                                    {senderLabel}
-                                                </span>
-                                            </div>
-                                            {/* 제목 + 내용 */}
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-black text-[var(--moca-text)] text-[14px] truncate">{item.title}</p>
-                                                <p className="text-[var(--moca-text-2)] text-[13px] mt-0.5 line-clamp-1">{item.body}</p>
-                                                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                                                    <span className="text-[11px] text-gray-400">🕒 {sentAt}</span>
-                                                    <span className="text-[11px] text-gray-400">📍 {item.route}</span>
-                                                </div>
-                                            </div>
-                                            {/* 성공/실패 카운트 */}
-                                            <div className="flex gap-2 shrink-0">
-                                                <span className="text-[12px] font-black bg-green-50 text-green-600 border border-green-200 px-2.5 py-1 rounded-lg">✅ {item.success_count}건</span>
-                                                {item.fail_count > 0 && (
-                                                    <span className="text-[12px] font-black bg-red-50 text-red-500 border border-red-200 px-2.5 py-1 rounded-lg">❌ {item.fail_count}건</span>
-                                                )}
+                        {/* ────── 서브탭: 앱 푸시 알림 ────── */}
+                        {notifSubTab === 'push' && (
+                            <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-6 shadow-sm">
+                                <div className="flex items-center gap-3 mb-6 border-b border-[var(--moca-border)] pb-4">
+                                    <span className="text-3xl">🔔</span>
+                                    <div>
+                                        <h2 className="text-xl font-black text-[var(--moca-text)]">앱 푸시 알림 발송</h2>
+                                        <p className="text-sm text-[var(--moca-text-3)] mt-0.5">앱을 설치한 전체 사용자에게 즉시 푸시 알림을 보냅니다.</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="space-y-5">
+                                        <div>
+                                            <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">⚡ 빠른 프리셋</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {[
+                                                    { key: 'agency', label: '📍 에이전시 업데이트', color: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' },
+                                                    { key: 'class', label: '🆕 클래스 오픈', color: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' },
+                                                    { key: 'notice', label: '📢 공지사항', color: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
+                                                    { key: 'mocatv', label: '🎬 모카TV 김대표님 영상', color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' },
+                                                ].map(p => (
+                                                    <button key={p.key} onClick={() => applyPushPreset(p.key)} className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${p.color}`}>{p.label}</button>
+                                                ))}
                                             </div>
                                         </div>
-                                    );
-                                })}
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">알림 제목 <span className="text-red-400">*</span></label>
+                                            <input type="text" value={pushForm.title} onChange={e => setPushForm(p => ({ ...p, title: e.target.value }))} placeholder="📍 에이전시 주소 업데이트!" maxLength={50}
+                                                className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors" />
+                                            <p className="text-right text-[10px] text-[var(--moca-text-3)] mt-1">{pushForm.title.length}/50</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">알림 내용 <span className="text-red-400">*</span></label>
+                                            <textarea value={pushForm.body} onChange={e => setPushForm(p => ({ ...p, body: e.target.value }))} placeholder="에이전시 주소가 업데이트되었습니다. 지금 확인해보세요!" maxLength={100} rows={3}
+                                                className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors resize-none" />
+                                            <p className="text-right text-[10px] text-[var(--moca-text-3)] mt-1">{pushForm.body.length}/100</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">탭 시 이동 경로</label>
+                                            <div className="flex gap-2">
+                                                {['/agency', '/class', '/mocatv', '/'].map(r => (
+                                                    <button key={r} onClick={() => setPushForm(p => ({ ...p, route: r }))}
+                                                        className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
+                                                            pushForm.route === r ? 'bg-[var(--moca-primary)] text-white border-[var(--moca-primary)]' : 'bg-[var(--moca-bg)] text-[var(--moca-text-2)] border-[var(--moca-border)] hover:border-[var(--moca-primary)]'
+                                                        }`}>{r}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <button onClick={() => { if (!pushForm.title.trim() || !pushForm.body.trim()) return; setPushConfirmOpen(true); setPushResult(null); }}
+                                            disabled={isSendingPush || !pushForm.title.trim() || !pushForm.body.trim()}
+                                            className="w-full py-3 rounded-xl bg-gradient-to-r from-[var(--moca-primary)] to-purple-600 text-white font-black text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                            {isSendingPush ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</> : <><span className="material-symbols-outlined text-[18px]">send</span> 전체 사용자에게 발송</>}
+                                        </button>
+                                        {pushResult && (
+                                            <div className={`rounded-xl p-4 text-sm font-bold flex items-start gap-3 ${pushResult.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                                <span className="text-xl">{pushResult.success ? '✅' : '❌'}</span>
+                                                <div>
+                                                    {pushResult.success ? <><p>푸시 알림 발송 완료!</p><p className="text-xs font-normal mt-1 opacity-80">성공 {pushResult.successCount}건 / 실패 {pushResult.failCount}건</p></> : <><p>발송 실패</p><p className="text-xs font-normal mt-1 opacity-80">{pushResult.error}</p></>}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-[var(--moca-text-2)] mb-3">👁️ 알림 미리보기</p>
+                                        <div className="bg-gray-900 rounded-2xl p-4 shadow-xl">
+                                            <div className="flex justify-between items-center mb-4 px-1">
+                                                <span className="text-white text-xs font-bold">9:41</span>
+                                                <div className="flex gap-1 items-center">
+                                                    <div className="w-3 h-1.5 bg-white/60 rounded-sm" />
+                                                    <div className="w-3 h-1.5 bg-white/60 rounded-sm" />
+                                                    <div className="w-3 h-1.5 bg-white rounded-sm" />
+                                                </div>
+                                            </div>
+                                            <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/20">
+                                                <div className="flex items-start gap-2.5">
+                                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-base flex-shrink-0">🔔</div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center justify-between mb-0.5">
+                                                            <span className="text-white text-xs font-black truncate">모두의 캐스팅 모카</span>
+                                                            <span className="text-white/50 text-[10px] ml-2 flex-shrink-0">지금</span>
+                                                        </div>
+                                                        <p className="text-white text-xs font-bold leading-snug truncate">{pushForm.title || '알림 제목을 입력하세요'}</p>
+                                                        <p className="text-white/70 text-[11px] leading-snug mt-0.5 line-clamp-2">{pushForm.body || '알림 내용을 입력하세요'}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p className="text-center text-white/30 text-[10px] mt-3">Android 알림 미리보기</p>
+                                        </div>
+                                        <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                                            <p className="text-xs font-bold text-amber-700 mb-1">⚠️ 발송 전 확인</p>
+                                            <ul className="text-[11px] text-amber-600 space-y-1 list-disc list-inside">
+                                                <li>전체 앱 사용자에게 즉시 발송됩니다</li>
+                                                <li>발송 후 취소가 불가능합니다</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ────── 서브탭: 앱 설치 독려 메시지 ────── */}
+                        {notifSubTab === 'encourage' && (
+                            <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-6 border-b border-[var(--moca-border)] pb-4">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-3xl">📲</span>
+                                        <div>
+                                            <h2 className="text-xl font-black text-[var(--moca-text)]">앱 설치 독려 메시지</h2>
+                                            <p className="text-sm text-[var(--moca-text-3)] mt-0.5">앱 미설치 회원에게 문자(SMS) 또는 카카오 친구톡으로 안내합니다.</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={refreshNoPushUsers} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-xs font-bold text-[var(--moca-text-2)] hover:bg-gray-100 transition-all">
+                                        <span className="material-symbols-outlined text-[14px]">refresh</span> 새로고침
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-3 gap-3 mb-6">
+                                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center">
+                                        <p className="text-2xl font-black text-blue-700">{noPushLoading ? '…' : allPhoneUsers.length}</p>
+                                        <p className="text-xs text-blue-500 font-bold mt-1">전체 회원</p>
+                                        <p className="text-[10px] text-blue-400 mt-0.5">(전화번호 보유)</p>
+                                    </div>
+                                    <div className="bg-green-50 border border-green-100 rounded-2xl p-4 text-center">
+                                        <p className="text-2xl font-black text-green-700">{noPushLoading ? '…' : allPhoneUsers.length - noPushUsers.length}</p>
+                                        <p className="text-xs text-green-500 font-bold mt-1">앱 등록</p>
+                                        <p className="text-[10px] text-green-400 mt-0.5">(푸시 수신 중)</p>
+                                    </div>
+                                    <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
+                                        <p className="text-2xl font-black text-red-700">{noPushLoading ? '…' : noPushUsers.length}</p>
+                                        <p className="text-xs text-red-500 font-bold mt-1">앱 미등록</p>
+                                        <p className="text-[10px] text-red-400 mt-0.5">(독려 대상)</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">📡 발송 방법</p>
+                                            <div className="flex gap-2">
+                                                {[{ key: 'sms', label: '📱 SMS 문자' }, { key: 'friendtalk', label: '💬 카카오 친구톡' }].map(t => (
+                                                    <button key={t.key} onClick={() => setMsgForm(f => ({ ...f, type: t.key }))}
+                                                        className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
+                                                            msgForm.type === t.key ? 'bg-orange-500 text-white border-orange-500 shadow-sm' : 'bg-[var(--moca-bg)] text-[var(--moca-text-2)] border-[var(--moca-border)] hover:border-orange-300'
+                                                        }`}>{t.label}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">👥 발송 대상</p>
+                                            <div className="flex gap-2">
+                                                {[
+                                                    { key: 'nopush', label: `앱 미등록 (${noPushUsers.length}명)`, color: 'bg-red-500' },
+                                                    { key: 'all', label: `전체 회원 (${allPhoneUsers.length}명)`, color: 'bg-blue-500' },
+                                                ].map(t => (
+                                                    <button key={t.key} onClick={() => setMsgForm(f => ({ ...f, target: t.key }))}
+                                                        className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
+                                                            msgForm.target === t.key ? `${t.color} text-white border-transparent shadow-sm` : 'bg-[var(--moca-bg)] text-[var(--moca-text-2)] border-[var(--moca-border)] hover:border-gray-400'
+                                                        }`}>{t.label}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <p className="text-xs font-bold text-[var(--moca-text-2)]">✍️ 메시지 내용</p>
+                                                <button onClick={() => setMsgForm(f => ({ ...f, content: DEFAULT_INSTALL_MSG }))} className="text-[10px] text-orange-500 font-bold hover:underline">기본 문구 복원</button>
+                                            </div>
+                                            <textarea value={msgForm.content} onChange={e => setMsgForm(f => ({ ...f, content: e.target.value }))} rows={6}
+                                                className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm text-[var(--moca-text)] focus:outline-none focus:border-orange-400 transition-colors resize-none" />
+                                            <p className="text-right text-[10px] text-[var(--moca-text-3)] mt-1">{msgForm.content.length}자</p>
+                                        </div>
+                                        <button onClick={() => { if (msgForm.content.trim()) setMsgConfirmOpen(true); }}
+                                            disabled={isSendingMsg || !msgForm.content.trim() || (msgForm.target === 'nopush' ? noPushUsers.length === 0 : allPhoneUsers.length === 0)}
+                                            className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                            {isSendingMsg ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</> : <><span className="material-symbols-outlined text-[18px]">send</span>{msgForm.target === 'nopush' ? `앱 미등록 ${noPushUsers.length}명에게 발송` : `전체 ${allPhoneUsers.length}명에게 발송`}</>}
+                                        </button>
+                                        {msgResult && (
+                                            <div className={`rounded-xl p-4 text-sm font-bold flex items-start gap-3 ${msgResult.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                                <span className="text-xl">{msgResult.success ? '✅' : '❌'}</span>
+                                                <div>
+                                                    {msgResult.success ? <><p>메시지 발송 완료!</p><p className="text-xs font-normal mt-1 opacity-80">{msgResult.count}명에게 발송되었습니다.</p></> : <><p>발송 실패</p><p className="text-xs font-normal mt-1 opacity-80">{msgResult.error}</p></>}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <p className="text-xs font-bold text-[var(--moca-text-2)] mb-3">👁️ 메시지 미리보기</p>
+                                            <div className="bg-gray-100 rounded-2xl p-4">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-black text-xs flex-shrink-0">모카</div>
+                                                    <div className="flex-1 bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+                                                        <p className="text-[11px] font-black text-gray-700 mb-1">{msgForm.type === 'sms' ? '📱 문자 메시지' : '💬 카카오 친구톡'}</p>
+                                                        <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">{msgForm.content || '메시지를 입력하세요'}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                            <p className="text-xs font-black text-amber-700 mb-2">⚠️ 발송 전 확인사항</p>
+                                            <ul className="text-[11px] text-amber-600 space-y-1.5 list-disc list-inside">
+                                                <li>솔라피 서비스를 통해 발송되므로 <strong>발송 비용</strong>이 발생합니다</li>
+                                                <li>SMS: 건당 약 8~20원 / 카카오 친구톡: 건당 약 15원</li>
+                                                <li>마케팅 정보 수신 동의 여부를 확인 후 발송하세요</li>
+                                                <li>발송 후 취소가 불가능합니다</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                            <p className="text-xs font-black text-blue-700 mb-2">📥 앱 다운로드 링크</p>
+                                            <a href="https://play.google.com/store/apps/details?id=com.immodel.mocapp" target="_blank" rel="noopener noreferrer" className="text-[11px] text-blue-600 underline break-all leading-relaxed">
+                                                https://play.google.com/store/apps/details?id=com.immodel.mocapp
+                                            </a>
+                                            <p className="text-[10px] text-blue-500 mt-1">구글플레이 검색어: <strong>'모두의 캐스팅'</strong></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ────── 서브탭: 발송 내역 ────── */}
+                        {notifSubTab === 'history' && (
+                            <div>
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-3xl">📋</span>
+                                        <div>
+                                            <h2 className="text-xl font-black text-[var(--moca-text)]">푸시 알림 발송 내역</h2>
+                                            <p className="text-sm text-[var(--moca-text-3)] mt-0.5">최근 발송된 푸시 알림 이력입니다. (최대 10건)</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={async () => { setPushHistoryLoading(true); const { data } = await fetchPushHistory(10); setPushHistory(data || []); setPushHistoryLoading(false); }}
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--moca-surface-2)] hover:bg-red-50 border border-[var(--moca-border)] text-sm font-bold transition-all">
+                                        <span className="material-symbols-outlined text-[16px]">refresh</span> 새로고침
+                                    </button>
+                                </div>
+                                {pushHistoryLoading ? (
+                                    <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-red-300 border-t-red-500 rounded-full animate-spin" /></div>
+                                ) : pushHistory.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                                        <span className="material-symbols-outlined text-[48px] mb-3">notifications_off</span>
+                                        <p className="font-bold">아직 발송된 푸시 알림이 없습니다.</p>
+                                        <p className="text-sm mt-1">앱 푸시 알림 탭에서 알림을 발송해 보세요.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {pushHistory.map((item, idx) => {
+                                            const senderLabel = {
+                                                admin_custom: '👤 관리자 수동',
+                                                system_classes: '🎓 시스템 (클래스)',
+                                                system_partners: '🏢 시스템 (제휴)',
+                                                system_moca_featured_videos: '🎬 시스템 (모카TV)',
+                                            }[item.sender] || `⚙️ ${item.sender}`;
+                                            const sentAt = new Date(item.created_at).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                                            return (
+                                                <div key={item.id} className="bg-white border border-[var(--moca-border)] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className="flex items-center gap-3 shrink-0">
+                                                        <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-sm">{idx + 1}</div>
+                                                        <span className="text-[11px] font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-full whitespace-nowrap">{senderLabel}</span>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-black text-[var(--moca-text)] text-[14px] truncate">{item.title}</p>
+                                                        <p className="text-[var(--moca-text-2)] text-[13px] mt-0.5 line-clamp-1">{item.body}</p>
+                                                        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                                                            <span className="text-[11px] text-gray-400">🕒 {sentAt}</span>
+                                                            <span className="text-[11px] text-gray-400">📍 {item.route}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2 shrink-0">
+                                                        <span className="text-[12px] font-black bg-green-50 text-green-600 border border-green-200 px-2.5 py-1 rounded-lg">✅ {item.success_count}건</span>
+                                                        {item.fail_count > 0 && <span className="text-[12px] font-black bg-red-50 text-red-500 border border-red-200 px-2.5 py-1 rounded-lg">❌ {item.fail_count}건</span>}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
-                )}
+                    );
+                })()}
 
                 {activeTab === 'message' && (
                     <div className="animate-fadeIn max-w-2xl mx-auto mt-8">
