@@ -109,10 +109,13 @@ const AdminPage = () => {
     const [pushResult, setPushResult] = useState(null);
     // 앱 설치 독려 메시지
     const DEFAULT_INSTALL_MSG = `[아임모델 모카] 안녕하세요!\n앱을 설치하시면 새 공지·클래스·에이전시 소식을 푸시 알림으로 가장 먼저 받아보실 수 있습니다!\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp\n(구글플레이에서 '모두의 캐스팅' 검색)`;
+    const DEFAULT_PERMISSION_MSG = `[아임모델 모카] 안녕하세요!\n앱은 설치하셨으나 푸시 알림 수신이 차단되어 소식을 받지 못하고 계십니다.\n\n👉 알림 켜는 방법:\n1. 모카 앱 열기 > 마이페이지 > 알림 수신 동의 켜기\n2. 스마트폰 설정 > 애플리케이션 > '모두의 캐스팅' > 알림 허용`;
     const [noPushUsers, setNoPushUsers] = useState([]);
+    const [noAppUsers, setNoAppUsers] = useState([]);
+    const [noPermissionUsers, setNoPermissionUsers] = useState([]);
     const [allPhoneUsers, setAllPhoneUsers] = useState([]);
     const [noPushLoading, setNoPushLoading] = useState(false);
-    const [msgForm, setMsgForm] = useState({ type: 'sms', content: DEFAULT_INSTALL_MSG, target: 'nopush' });
+    const [msgForm, setMsgForm] = useState({ type: 'sms', content: DEFAULT_INSTALL_MSG, target: 'noapp' });
     const [isSendingEncourage, setIsSendingEncourage] = useState(false);
     const [msgConfirmOpen, setMsgConfirmOpen] = useState(false);
     const [msgResult, setMsgResult] = useState(null);
@@ -978,6 +981,8 @@ const AdminPage = () => {
                             ]);
                             setPushHistory(histResult.data || []);
                             setNoPushUsers(noPushResult.data || []);
+                            setNoAppUsers(noPushResult.noAppUsers || []);
+                            setNoPermissionUsers(noPushResult.noPermissionUsers || []);
                             setAllPhoneUsers(allPhoneResult.data || []);
                             setNoPushLoading(false);
                         }}
@@ -2194,7 +2199,16 @@ const AdminPage = () => {
                         setPushHistory(data || []);
                     };
                     const handleSendMsg = async () => {
-                        const targets = msgForm.target === 'nopush' ? noPushUsers : allPhoneUsers;
+                        let targets = [];
+                        if (msgForm.target === 'noapp') {
+                            targets = noAppUsers;
+                        } else if (msgForm.target === 'nopermission') {
+                            targets = noPermissionUsers;
+                        } else if (msgForm.target === 'nopush') {
+                            targets = noPushUsers;
+                        } else {
+                            targets = allPhoneUsers;
+                        }
                         const phones = targets.map(u => u.phone).filter(Boolean);
                         if (!phones.length) return;
                         setIsSendingEncourage(true);
@@ -2219,6 +2233,8 @@ const AdminPage = () => {
                             fetchAllUsersWithPhone(),
                         ]);
                         setNoPushUsers(noPushResult.data || []);
+                        setNoAppUsers(noPushResult.noAppUsers || []);
+                        setNoPermissionUsers(noPushResult.noPermissionUsers || []);
                         setAllPhoneUsers(allPhoneResult.data || []);
                         setNoPushLoading(false);
                     };
@@ -2259,7 +2275,10 @@ const AdminPage = () => {
                                         <div>
                                             <h3 className="font-black text-[var(--moca-text)] text-lg">메시지 발송 확인</h3>
                                             <p className="text-xs text-[var(--moca-text-3)]">
-                                                {msgForm.target === 'nopush' ? `앱 미등록 회원 ${noPushUsers.length}명` : `전체 회원 ${allPhoneUsers.length}명`}에게 즉시 발송됩니다
+                                                {msgForm.target === 'noapp' ? `앱 미설치 회원 ${noAppUsers.length}명` :
+                                                 msgForm.target === 'nopermission' ? `알림 미승인 회원 ${noPermissionUsers.length}명` :
+                                                 msgForm.target === 'nopush' ? `푸시 미수신 전체 ${noPushUsers.length}명` :
+                                                 `전체 회원 ${allPhoneUsers.length}명`}에게 즉시 발송됩니다
                                             </p>
                                         </div>
                                     </div>
@@ -2403,21 +2422,22 @@ const AdminPage = () => {
                                         <span className="material-symbols-outlined text-[14px]">refresh</span> 새로고침
                                     </button>
                                 </div>
-                                <div className="grid grid-cols-3 gap-3 mb-6">
-                                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center">
-                                        <p className="text-2xl font-black text-blue-700">{noPushLoading ? '…' : allPhoneUsers.length}</p>
-                                        <p className="text-xs text-blue-500 font-bold mt-1">전체 회원</p>
-                                        <p className="text-[10px] text-blue-400 mt-0.5">(전화번호 보유)</p>
+                                <div className="grid grid-cols-4 gap-3 mb-6">
+                                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3 text-center">
+                                        <p className="text-xl font-black text-blue-700">{noPushLoading ? '…' : allPhoneUsers.length}</p>
+                                        <p className="text-[10px] text-blue-500 font-bold mt-1">전체 회원</p>
                                     </div>
-                                    <div className="bg-green-50 border border-green-100 rounded-2xl p-4 text-center">
-                                        <p className="text-2xl font-black text-green-700">{noPushLoading ? '…' : allPhoneUsers.length - noPushUsers.length}</p>
-                                        <p className="text-xs text-green-500 font-bold mt-1">앱 등록</p>
-                                        <p className="text-[10px] text-green-400 mt-0.5">(푸시 수신 중)</p>
+                                    <div className="bg-green-50 border border-green-100 rounded-2xl p-3 text-center">
+                                        <p className="text-xl font-black text-green-700">{noPushLoading ? '…' : allPhoneUsers.length - noPushUsers.length}</p>
+                                        <p className="text-[10px] text-green-500 font-bold mt-1">푸시 정상</p>
                                     </div>
-                                    <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
-                                        <p className="text-2xl font-black text-red-700">{noPushLoading ? '…' : noPushUsers.length}</p>
-                                        <p className="text-xs text-red-500 font-bold mt-1">앱 미등록</p>
-                                        <p className="text-[10px] text-red-400 mt-0.5">(독려 대상)</p>
+                                    <div className="bg-orange-50 border border-orange-100 rounded-2xl p-3 text-center">
+                                        <p className="text-xl font-black text-orange-700">{noPushLoading ? '…' : noAppUsers.length}</p>
+                                        <p className="text-[10px] text-orange-500 font-bold mt-1">앱 미설치</p>
+                                    </div>
+                                    <div className="bg-red-50 border border-red-100 rounded-2xl p-3 text-center">
+                                        <p className="text-xl font-black text-red-700">{noPushLoading ? '…' : noPermissionUsers.length}</p>
+                                        <p className="text-[10px] text-red-500 font-bold mt-1">알림 미승인</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -2435,13 +2455,21 @@ const AdminPage = () => {
                                         </div>
                                         <div>
                                             <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">👥 발송 대상</p>
-                                            <div className="flex gap-2">
+                                            <div className="grid grid-cols-2 gap-2">
                                                 {[
-                                                    { key: 'nopush', label: `앱 미등록 (${noPushUsers.length}명)`, color: 'bg-red-500' },
+                                                    { key: 'noapp', label: `앱 미설치 (${noAppUsers.length}명)`, color: 'bg-orange-500' },
+                                                    { key: 'nopermission', label: `알림 미승인 (${noPermissionUsers.length}명)`, color: 'bg-red-500' },
+                                                    { key: 'nopush', label: `전체 미등록 (${noPushUsers.length}명)`, color: 'bg-gray-700' },
                                                     { key: 'all', label: `전체 회원 (${allPhoneUsers.length}명)`, color: 'bg-blue-500' },
                                                 ].map(t => (
-                                                    <button key={t.key} onClick={() => setMsgForm(f => ({ ...f, target: t.key }))}
-                                                        className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
+                                                    <button key={t.key} onClick={() => {
+                                                        let defaultContent = DEFAULT_INSTALL_MSG;
+                                                        if (t.key === 'nopermission') {
+                                                            defaultContent = DEFAULT_PERMISSION_MSG;
+                                                        }
+                                                        setMsgForm(f => ({ ...f, target: t.key, content: defaultContent }));
+                                                    }}
+                                                        className={`py-2 rounded-xl text-xs font-bold border transition-all ${
                                                             msgForm.target === t.key ? `${t.color} text-white border-transparent shadow-sm` : 'bg-[var(--moca-bg)] text-[var(--moca-text-2)] border-[var(--moca-border)] hover:border-gray-400'
                                                         }`}>{t.label}</button>
                                                 ))}
@@ -2450,16 +2478,26 @@ const AdminPage = () => {
                                         <div>
                                             <div className="flex items-center justify-between mb-1">
                                                 <p className="text-xs font-bold text-[var(--moca-text-2)]">✍️ 메시지 내용</p>
-                                                <button onClick={() => setMsgForm(f => ({ ...f, content: DEFAULT_INSTALL_MSG }))} className="text-[10px] text-orange-500 font-bold hover:underline">기본 문구 복원</button>
+                                                <button onClick={() => setMsgForm(f => ({ ...f, content: msgForm.target === 'nopermission' ? DEFAULT_PERMISSION_MSG : DEFAULT_INSTALL_MSG }))} className="text-[10px] text-orange-500 font-bold hover:underline">기본 문구 복원</button>
                                             </div>
                                             <textarea value={msgForm.content} onChange={e => setMsgForm(f => ({ ...f, content: e.target.value }))} rows={6}
                                                 className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm text-[var(--moca-text)] focus:outline-none focus:border-orange-400 transition-colors resize-none" />
                                             <p className="text-right text-[10px] text-[var(--moca-text-3)] mt-1">{msgForm.content.length}자</p>
                                         </div>
                                         <button onClick={() => { if (msgForm.content.trim()) setMsgConfirmOpen(true); }}
-                                            disabled={isSendingEncourage || !msgForm.content.trim() || (msgForm.target === 'nopush' ? noPushUsers.length === 0 : allPhoneUsers.length === 0)}
+                                            disabled={isSendingEncourage || !msgForm.content.trim() || (
+                                                msgForm.target === 'noapp' ? noAppUsers.length === 0 :
+                                                msgForm.target === 'nopermission' ? noPermissionUsers.length === 0 :
+                                                msgForm.target === 'nopush' ? noPushUsers.length === 0 :
+                                                allPhoneUsers.length === 0
+                                            )}
                                             className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                                            {isSendingEncourage ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</> : <><span className="material-symbols-outlined text-[18px]">send</span>{msgForm.target === 'nopush' ? `앱 미등록 ${noPushUsers.length}명에게 발송` : `전체 ${allPhoneUsers.length}명에게 발송`}</>}
+                                            {isSendingEncourage ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</> : <><span className="material-symbols-outlined text-[18px]">send</span>{
+                                                msgForm.target === 'noapp' ? `앱 미설치 ${noAppUsers.length}명에게 발송` :
+                                                msgForm.target === 'nopermission' ? `알림 미승인 ${noPermissionUsers.length}명에게 발송` :
+                                                msgForm.target === 'nopush' ? `푸시 미수신 ${noPushUsers.length}명에게 발송` :
+                                                `전체 ${allPhoneUsers.length}명에게 발송`
+                                            }</>}
                                         </button>
                                         {msgResult && (
                                             <div className={`rounded-xl p-4 text-sm font-bold flex items-start gap-3 ${msgResult.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>

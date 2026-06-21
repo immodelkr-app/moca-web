@@ -150,7 +150,7 @@ export const fetchPushHistory = async (limit = 10) => {
  * @returns {Promise<{data?: Array, error?: any}>}
  */
 export const fetchUsersWithoutPushToken = async () => {
-  if (!supabase) return { data: [], error: 'Supabase not initialized' };
+  if (!supabase) return { data: [], error: 'Supabase not initialized', noAppUsers: [], noPermissionUsers: [] };
 
   // 1. 푸시 토큰이 등록된 user_id 목록
   const { data: tokenData, error: tokenError } = await supabase
@@ -160,17 +160,22 @@ export const fetchUsersWithoutPushToken = async () => {
 
   const registeredIds = [...new Set((tokenData || []).map(t => t.user_id))];
 
-  // 2. 전화번호가 있는 전체 회원 조회
+  // 2. 전화번호가 있는 전체 회원 조회 (last_platform 조회 추가)
   const { data: allUsers, error: usersError } = await supabase
     .from('users')
-    .select('id, name, phone')
+    .select('id, name, phone, last_platform')
     .not('phone', 'is', null)
     .neq('phone', '');
   if (usersError) return { data: [], error: usersError };
 
   // 3. 클라이언트 측에서 미등록 필터링
   const noPushUsers = (allUsers || []).filter(u => !registeredIds.includes(u.id));
-  return { data: noPushUsers, error: null };
+  
+  // 플랫폼 별로 세분화 분류
+  const noAppUsers = noPushUsers.filter(u => u.last_platform !== 'app');
+  const noPermissionUsers = noPushUsers.filter(u => u.last_platform === 'app');
+
+  return { data: noPushUsers, error: null, noAppUsers, noPermissionUsers };
 };
 
 /**

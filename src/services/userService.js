@@ -5,6 +5,7 @@
  * Supabase가 설정되지 않으면 localStorage만 사용합니다.
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { Capacitor } from '@capacitor/core';
 
 const USER_KEY = 'i_model_user';
 const USERS_LIST_KEY = 'i_model_users_list';
@@ -21,6 +22,28 @@ const simpleHash = (str) => {
         hash = hash & hash;
     }
     return hash.toString(36);
+};
+
+/**
+ * 사용자의 현재 플랫폼 정보를 Supabase users 테이블에 동기화
+ * @param {string} userId 
+ */
+export const syncPlatformWithSupabase = async (userId) => {
+    if (!supabase || !userId) return;
+    const platform = Capacitor.getPlatform(); // 'android' | 'ios' | 'web'
+    const isApp = platform === 'android' || platform === 'ios';
+    const platformStr = isApp ? 'app' : 'web';
+
+    try {
+        const { error } = await supabase
+            .from('users')
+            .update({ last_platform: platformStr })
+            .eq('id', userId);
+        if (error) console.error('[syncPlatform] Error updating platform:', error);
+        else console.log('[syncPlatform] Platform synced:', platformStr);
+    } catch (err) {
+        console.error('[syncPlatform] Exception:', err);
+    }
 };
 
 /**
@@ -92,8 +115,9 @@ export const saveUser = (userData) => {
     }
     localStorage.setItem(USERS_LIST_KEY, JSON.stringify(usersList));
 
-    // Sync push token to Supabase if available
+    // Sync platform and push token to Supabase if available
     if (safeData.id) {
+        syncPlatformWithSupabase(safeData.id);
         import('./pushNotificationService').then(({ syncPushTokenWithSupabase }) => {
             syncPushTokenWithSupabase(safeData.id);
         }).catch(err => {

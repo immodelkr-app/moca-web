@@ -31,7 +31,7 @@ import { useAutoLogout } from './hooks/useAutoLogout';
 import { useAuthSync } from './hooks/useAuthSync';
 import PopupBanner from './components/PopupBanner';
 import { initializePushNotifications } from './services/pushNotificationService';
-import { isLoggedIn } from './services/userService';
+import { isLoggedIn, getUser } from './services/userService';
 
 function AppContent() {
     usePageView(); // 라우트 변경 감지 및 조회수 기록
@@ -43,6 +43,14 @@ function AppContent() {
     const isAdmin = location.pathname.startsWith('/admin');
 
     useEffect(() => {
+        // 앱 구동 시 현재 로그인 유저의 플랫폼 정보 동기화
+        const currentUser = getUser();
+        if (currentUser?.id) {
+            import('./services/userService').then(({ syncPlatformWithSupabase }) => {
+                syncPlatformWithSupabase(currentUser.id);
+            }).catch(e => console.error(e));
+        }
+
         if (!Capacitor.isNativePlatform()) return;
 
         const handleBackButton = async () => {
