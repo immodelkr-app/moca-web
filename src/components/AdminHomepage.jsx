@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchHomepageSettings, updateHomepageSettings } from '../services/settingsService';
-import { sendBroadcastPush } from '../services/pushNotificationService';
+import { sendBroadcastPush, fetchUsersWithoutPushToken, fetchAllUsersWithPhone } from '../services/pushNotificationService';
+import { sendBulkMessage, sendFriendtalk } from '../services/solapiService';
 
 const Field = ({ label, hint, value, onChange, large }) => (
     <div className="mb-6">
@@ -54,8 +55,19 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
     const [pushConfirmOpen, setPushConfirmOpen] = useState(false);
     const [pushResult, setPushResult] = useState(null); // { success, successCount, failCount, error }
 
+    // 앱 설치 독려 메시지 발송 상태
+    const DEFAULT_INSTALL_MSG = `[아임모델 모카] 안녕하세요!\n앱을 설치하시면 새 공지·클래스·에이전시 소식을 푸시 알림으로 가장 먼저 받아보실 수 있습니다!\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp\n(구글플레이에서 '모두의 캐스팅' 검색)`;
+    const [noPushUsers, setNoPushUsers] = useState([]);
+    const [allPhoneUsers, setAllPhoneUsers] = useState([]);
+    const [noPushLoading, setNoPushLoading] = useState(false);
+    const [msgForm, setMsgForm] = useState({ type: 'sms', content: DEFAULT_INSTALL_MSG, target: 'nopush' });
+    const [isSendingMsg, setIsSendingMsg] = useState(false);
+    const [msgConfirmOpen, setMsgConfirmOpen] = useState(false);
+    const [msgResult, setMsgResult] = useState(null);
+
     useEffect(() => {
         loadSettings();
+        loadNoPushUsers();
     }, []);
 
     const loadSettings = async () => {
@@ -121,6 +133,38 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
         const result = await sendBroadcastPush(pushForm);
         setPushResult(result);
         setIsSendingPush(false);
+    };
+
+    const loadNoPushUsers = async () => {
+        setNoPushLoading(true);
+        const [{ data: noPush }, { data: allPhone }] = await Promise.all([
+            fetchUsersWithoutPushToken(),
+            fetchAllUsersWithPhone(),
+        ]);
+        setNoPushUsers(noPush || []);
+        setAllPhoneUsers(allPhone || []);
+        setNoPushLoading(false);
+    };
+
+    const handleSendMsg = async () => {
+        const targets = msgForm.target === 'nopush' ? noPushUsers : allPhoneUsers;
+        const phones = targets.map(u => u.phone).filter(Boolean);
+        if (!phones.length) return;
+        setIsSendingMsg(true);
+        setMsgResult(null);
+        setMsgConfirmOpen(false);
+        try {
+            let result;
+            if (msgForm.type === 'sms') {
+                result = await sendBulkMessage(phones, msgForm.content);
+            } else {
+                result = await sendFriendtalk(phones.map(phone => ({ phone, content: msgForm.content })));
+            }
+            setMsgResult({ success: true, count: phones.length });
+        } catch (err) {
+            setMsgResult({ success: false, error: err.message || '발송에 실패했습니다.' });
+        }
+        setIsSendingMsg(false);
     };
 
     if (isLoading) {
@@ -540,8 +584,193 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
                             <ul className="text-[11px] text-amber-600 space-y-1 list-disc list-inside">
                                 <li>전체 앱 사용자에게 즉시 발송됩니다</li>
                                 <li>발송 후 취소가 불가능합니다</li>
-                                <li>Edge Function 재배포 후 정상 작동합니다</li>
                             </ul>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <p className="text-xs font-black text-blue-700 mb-2">📥 앱 다운로드 링크</p>
+                            <a href="https://play.google.com/store/apps/details?id=com.immodel.mocapp" target="_blank" rel="noopener noreferrer"
+                                className="text-[11px] text-blue-600 underline break-all leading-relaxed">
+                                https://play.google.com/store/apps/details?id=com.immodel.mocapp
+                            </a>
+                            <p className="text-[10px] text-blue-500 mt-1">구글플레이 검색어: <strong>'모두의 캐스팅'</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── 앱 설치 독려 메시지 발송 카드 ── */}
+
+            {/* 발송 확인 모달 */}
+            {msgConfirmOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <span className="text-3xl">📲</span>
+                            <div>
+                                <h3 className="font-black text-[var(--moca-text)] text-lg">메시지 발송 확인</h3>
+                                <p className="text-xs text-[var(--moca-text-3)]">
+                                    {msgForm.target === 'nopush' ? `앱 미등록 회원 ${noPushUsers.length}명` : `전체 회원 ${allPhoneUsers.length}명`}에게 즉시 발송됩니다
+                                </p>
+                            </div>
+                        </div>
+                        <div className="bg-[var(--moca-bg)] rounded-xl p-3 mb-5 text-xs text-[var(--moca-text-2)] whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">{msgForm.content}</div>
+                        <div className="flex gap-3">
+                            <button onClick={() => setMsgConfirmOpen(false)} className="flex-1 py-2.5 rounded-xl border border-[var(--moca-border)] text-[var(--moca-text-2)] font-bold text-sm hover:bg-[var(--moca-bg)] transition-colors">취소</button>
+                            <button onClick={handleSendMsg} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm hover:opacity-90 transition-all">발송하기</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6 border-b border-[var(--moca-border)] pb-4">
+                    <div className="flex items-center gap-3">
+                        <span className="text-3xl">📲</span>
+                        <div>
+                            <h2 className="text-xl font-black text-[var(--moca-text)]">앱 설치 독려 메시지</h2>
+                            <p className="text-sm text-[var(--moca-text-3)] mt-0.5">앱 미설치 회원에게 문자(SMS) 또는 카카오 친구톡으로 안내합니다.</p>
+                        </div>
+                    </div>
+                    <button onClick={loadNoPushUsers} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-xs font-bold text-[var(--moca-text-2)] hover:bg-gray-100 transition-all">
+                        <span className="material-symbols-outlined text-[14px]">refresh</span> 새로고침
+                    </button>
+                </div>
+
+                {/* 현황 통계 카드 */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center">
+                        <p className="text-2xl font-black text-blue-700">{noPushLoading ? '…' : allPhoneUsers.length}</p>
+                        <p className="text-xs text-blue-500 font-bold mt-1">전체 회원</p>
+                        <p className="text-[10px] text-blue-400 mt-0.5">(전화번호 보유)</p>
+                    </div>
+                    <div className="bg-green-50 border border-green-100 rounded-2xl p-4 text-center">
+                        <p className="text-2xl font-black text-green-700">{noPushLoading ? '…' : allPhoneUsers.length - noPushUsers.length}</p>
+                        <p className="text-xs text-green-500 font-bold mt-1">앱 등록</p>
+                        <p className="text-[10px] text-green-400 mt-0.5">(푸시 수신 중)</p>
+                    </div>
+                    <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
+                        <p className="text-2xl font-black text-red-700">{noPushLoading ? '…' : noPushUsers.length}</p>
+                        <p className="text-xs text-red-500 font-bold mt-1">앱 미등록</p>
+                        <p className="text-[10px] text-red-400 mt-0.5">(독려 대상)</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* 왼쪽: 발송 설정 */}
+                    <div className="space-y-4">
+                        {/* 발송 방법 탭 */}
+                        <div>
+                            <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">📡 발송 방법</p>
+                            <div className="flex gap-2">
+                                {[{ key: 'sms', label: '📱 SMS 문자' }, { key: 'friendtalk', label: '💬 카카오 친구톡' }].map(t => (
+                                    <button key={t.key} onClick={() => setMsgForm(f => ({ ...f, type: t.key }))}
+                                        className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
+                                            msgForm.type === t.key
+                                                ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                                                : 'bg-[var(--moca-bg)] text-[var(--moca-text-2)] border-[var(--moca-border)] hover:border-orange-300'
+                                        }`}>{t.label}</button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 발송 대상 */}
+                        <div>
+                            <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">👥 발송 대상</p>
+                            <div className="flex gap-2">
+                                {[
+                                    { key: 'nopush', label: `앱 미등록 (${noPushUsers.length}명)`, color: 'bg-red-500' },
+                                    { key: 'all', label: `전체 회원 (${allPhoneUsers.length}명)`, color: 'bg-blue-500' },
+                                ].map(t => (
+                                    <button key={t.key} onClick={() => setMsgForm(f => ({ ...f, target: t.key }))}
+                                        className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
+                                            msgForm.target === t.key
+                                                ? `${t.color} text-white border-transparent shadow-sm`
+                                                : 'bg-[var(--moca-bg)] text-[var(--moca-text-2)] border-[var(--moca-border)] hover:border-gray-400'
+                                        }`}>{t.label}</button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 메시지 내용 */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1">
+                                <p className="text-xs font-bold text-[var(--moca-text-2)]">✍️ 메시지 내용</p>
+                                <button onClick={() => setMsgForm(f => ({ ...f, content: DEFAULT_INSTALL_MSG }))}
+                                    className="text-[10px] text-orange-500 font-bold hover:underline">기본 문구 복원</button>
+                            </div>
+                            <textarea
+                                value={msgForm.content}
+                                onChange={e => setMsgForm(f => ({ ...f, content: e.target.value }))}
+                                rows={6}
+                                className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm text-[var(--moca-text)] focus:outline-none focus:border-orange-400 transition-colors resize-none"
+                            />
+                            <p className="text-right text-[10px] text-[var(--moca-text-3)] mt-1">{msgForm.content.length}자</p>
+                        </div>
+
+                        {/* 발송 버튼 */}
+                        <button
+                            onClick={() => { if (msgForm.content.trim()) setMsgConfirmOpen(true); }}
+                            disabled={isSendingMsg || !msgForm.content.trim() || (msgForm.target === 'nopush' ? noPushUsers.length === 0 : allPhoneUsers.length === 0)}
+                            className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {isSendingMsg ? (
+                                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</>
+                            ) : (
+                                <><span className="material-symbols-outlined text-[18px]">send</span>
+                                {msgForm.target === 'nopush' ? `앱 미등록 ${noPushUsers.length}명에게 발송` : `전체 ${allPhoneUsers.length}명에게 발송`}</>
+                            )}
+                        </button>
+
+                        {/* 발송 결과 */}
+                        {msgResult && (
+                            <div className={`rounded-xl p-4 text-sm font-bold flex items-start gap-3 ${
+                                msgResult.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}>
+                                <span className="text-xl">{msgResult.success ? '✅' : '❌'}</span>
+                                <div>
+                                    {msgResult.success
+                                        ? <><p>메시지 발송 완료!</p><p className="text-xs font-normal mt-1 opacity-80">{msgResult.count}명에게 발송되었습니다.</p></>
+                                        : <><p>발송 실패</p><p className="text-xs font-normal mt-1 opacity-80">{msgResult.error}</p></>}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 오른쪽: 미리보기 + 안내 */}
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-xs font-bold text-[var(--moca-text-2)] mb-3">👁️ 메시지 미리보기</p>
+                            <div className="bg-gray-100 rounded-2xl p-4">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-black text-xs flex-shrink-0">모카</div>
+                                    <div className="flex-1 bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+                                        <p className="text-[11px] font-black text-gray-700 mb-1">
+                                            {msgForm.type === 'sms' ? '📱 문자 메시지' : '💬 카카오 친구톡'}
+                                        </p>
+                                        <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">{msgForm.content || '메시지를 입력하세요'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                            <p className="text-xs font-black text-amber-700 mb-2">⚠️ 발송 전 확인사항</p>
+                            <ul className="text-[11px] text-amber-600 space-y-1.5 list-disc list-inside">
+                                <li>솔라피 서비스를 통해 발송되므로 <strong>발송 비용</strong>이 발생합니다</li>
+                                <li>SMS: 건당 약 8~20원 / 카카오 친구톡: 건당 약 15원</li>
+                                <li>마케팅 정보 수신 동의 여부를 확인 후 발송하세요</li>
+                                <li>발송 후 취소가 불가능합니다</li>
+                            </ul>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <p className="text-xs font-black text-blue-700 mb-2">📥 앱 다운로드 링크</p>
+                            <a href="https://play.google.com/store/apps/details?id=com.immodel.mocapp" target="_blank" rel="noopener noreferrer"
+                                className="text-[11px] text-blue-600 underline break-all leading-relaxed">
+                                https://play.google.com/store/apps/details?id=com.immodel.mocapp
+                            </a>
+                            <p className="text-[10px] text-blue-500 mt-1">구글플레이 검색어: <strong>'모두의 캐스팅'</strong></p>
                         </div>
                     </div>
                 </div>
@@ -549,6 +778,7 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
 
         </div>
     );
+
 };
 
 export default AdminHomepage;

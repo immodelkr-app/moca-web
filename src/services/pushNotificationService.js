@@ -128,6 +128,7 @@ export const sendBroadcastPush = async ({ title, body, route = '/agency' }) => {
   }
 };
 
+
 /**
  * 관리자 전용: 푸시 발송 내역 조회
  * @param {number} limit - 조회할 최대 건수 (기본값: 10)
@@ -142,3 +143,46 @@ export const fetchPushHistory = async (limit = 10) => {
     .limit(limit);
   return { data: data || [], error };
 };
+
+/**
+ * 관리자 전용: 푸시 토큰 미등록 회원 목록 조회 (앱 미설치 추정)
+ * @returns {Promise<{data?: Array, error?: any}>}
+ */
+export const fetchUsersWithoutPushToken = async () => {
+  if (!supabase) return { data: [], error: 'Supabase not initialized' };
+
+  // 1. 푸시 토큰이 등록된 user_id 목록
+  const { data: tokenData, error: tokenError } = await supabase
+    .from('user_push_tokens')
+    .select('user_id');
+  if (tokenError) return { data: [], error: tokenError };
+
+  const registeredIds = [...new Set((tokenData || []).map(t => t.user_id))];
+
+  // 2. 전화번호가 있는 전체 회원 조회
+  const { data: allUsers, error: usersError } = await supabase
+    .from('users')
+    .select('id, name, phone')
+    .not('phone', 'is', null)
+    .neq('phone', '');
+  if (usersError) return { data: [], error: usersError };
+
+  // 3. 클라이언트 측에서 미등록 필터링
+  const noPushUsers = (allUsers || []).filter(u => !registeredIds.includes(u.id));
+  return { data: noPushUsers, error: null };
+};
+
+/**
+ * 관리자 전용: 전화번호가 있는 전체 회원 목록 조회
+ * @returns {Promise<{data?: Array, error?: any}>}
+ */
+export const fetchAllUsersWithPhone = async () => {
+  if (!supabase) return { data: [], error: 'Supabase not initialized' };
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name, phone')
+    .not('phone', 'is', null)
+    .neq('phone', '');
+  return { data: data || [], error };
+};
+
