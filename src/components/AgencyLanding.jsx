@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DaumPostcode from 'react-daum-postcode';
 import { fetchAgencies } from '../services/agencyService';
-import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser, checkNicknameDuplicate, signInWithSocial } from '../services/userService';
+import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser, checkNicknameDuplicate, signInWithSocial, syncUserWithCore, updateMasterUserIdInSupabase } from '../services/userService';
 import { isPasskeySupported, loginWithPasskey } from '../services/passkeyService';
 import { fetchHomepageSettings } from '../services/settingsService';
 
@@ -284,6 +284,33 @@ const AgencyLanding = () => {
 
             const finalUser = data || newUser;
             saveUser(finalUser);
+
+            // ── im-core-auth 동기화 ──────────────────────────────────────────
+            try {
+                const syncResult = await syncUserWithCore({
+                    phone: signupForm.phone,
+                    name: signupForm.name,
+                    nickname: signupForm.nickname,
+                    localUserId: finalUser.id || null,
+                    referralSource: signupForm.referralSource || [],
+                });
+
+                if (syncResult?.success && syncResult?.masterUserId) {
+                    // 1. MOCA DB에 masterUserId 기록
+                    await updateMasterUserIdInSupabase(finalUser.id, syncResult.masterUserId);
+
+                    // 2. 이미 타 앱에 가입된 계정이 있으면 통합 안내
+                    if (!syncResult.isNewUser && syncResult.linkedApps && syncResult.linkedApps.length > 0) {
+                        const existingApps = syncResult.linkedApps.join(', ');
+                        alert(`이미 ${existingApps} 앱에 가입된 계정이 존재하여 자동으로 통합되었습니다.\n앞으로 동일한 아이디와 비밀번호로 두 앱을 모두 이용하실 수 있습니다.`);
+                    }
+                }
+            } catch (syncErr) {
+                // 동기화 실패해도 회원가입 자체는 완료 처리
+                console.error('[im-core/sync] 동기화 실패:', syncErr);
+            }
+            // ────────────────────────────────────────────────────────────────
+
             handleLoginSuccess(finalUser);
         } catch (err) {
             setSignupError(err.message || '회원가입에 실패했습니다.');

@@ -691,6 +691,75 @@ export const maskNickname = (nickname) => {
 };
 
 /**
+ * im-core-auth 통합 동기화
+ * @param {{
+ *   phone: string,
+ *   name: string,
+ *   nickname: string,
+ *   localUserId?: string,
+ *   referralSource?: string[]
+ * }} userData - 동기화할 유저 정보
+ * @returns {Promise<{
+ *   success: boolean,
+ *   masterUserId: string,
+ *   integratedPoints: number,
+ *   isNewUser: boolean,
+ *   linkedApps?: string[]
+ * }>}
+ */
+export const syncUserWithCore = async (userData) => {
+    try {
+        const res = await fetch('/api/im-core/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: userData.phone || null,
+                name: userData.name || null,
+                nickname: userData.nickname || null,
+                localUserId: userData.localUserId || null,
+                referralSource: userData.referralSource || [],
+            }),
+        });
+
+        if (!res.ok) {
+            const errText = await res.text();
+            console.error('[syncUserWithCore] 서버 오류:', errText);
+            return { success: false, masterUserId: '', integratedPoints: 0, isNewUser: true };
+        }
+
+        /** @type {{ success: boolean, masterUserId: string, integratedPoints: number, isNewUser: boolean, linkedApps?: string[] }} */
+        const result = await res.json();
+        return result;
+    } catch (err) {
+        console.error('[syncUserWithCore] 요청 실패:', err);
+        return { success: false, masterUserId: '', integratedPoints: 0, isNewUser: true };
+    }
+};
+
+/**
+ * MOCA users 테이블의 master_user_id 필드 업데이트
+ * @param {string} userId - MOCA DB의 users.id (UUID)
+ * @param {string} masterUserId - im-core-auth에서 발급된 master_user_id
+ * @returns {Promise<void>}
+ */
+export const updateMasterUserIdInSupabase = async (userId, masterUserId) => {
+    if (!isSupabaseEnabled() || !userId || !masterUserId) return;
+    try {
+        const { error } = await supabase
+            .from('users')
+            .update({ master_user_id: masterUserId })
+            .eq('id', userId);
+        if (error) {
+            console.warn('[updateMasterUserIdInSupabase] 업데이트 실패:', error.message);
+        } else {
+            console.log('[updateMasterUserIdInSupabase] master_user_id 저장 완료:', masterUserId);
+        }
+    } catch (err) {
+        console.error('[updateMasterUserIdInSupabase] 예외 발생:', err);
+    }
+};
+
+/**
  * 닉네임 중복 확인
  * @param {string} nickname
  * @returns {Promise<{available: boolean, error: object|null}>}
