@@ -23,20 +23,29 @@ const APP_ID = 'MOCA';
 /**
  * im-core-auth Supabase에 REST API로 쿼리를 실행하는 헬퍼
  * @param {string} path - 테이블 경로 (e.g. '/master_users')
- * @param {RequestInit} options
+ * @param {'GET'|'POST'|'PATCH'|'DELETE'} method
+ * @param {object|null} body - JSON body (GET/DELETE 시 null)
+ * @param {string} prefer - Prefer 헤더 값
  */
-async function imCoreQuery(path, options = {}) {
+async function imCoreQuery(path, method = 'GET', body = null, prefer = '') {
     const url = `${IM_CORE_SUPABASE_URL}/rest/v1${path}`;
-    const res = await fetch(url, {
-        ...options,
+
+    const fetchOptions = {
+        method,
         headers: {
             'apikey': IM_CORE_SERVICE_ROLE_KEY,
             'Authorization': `Bearer ${IM_CORE_SERVICE_ROLE_KEY}`,
             'Content-Type': 'application/json',
-            'Prefer': options.prefer || '',
-            ...options.headers,
+            'Prefer': prefer,
         },
-    });
+    };
+
+    // GET/HEAD 요청에는 body를 붙이지 않음
+    if (body !== null && method !== 'GET' && method !== 'HEAD') {
+        fetchOptions.body = JSON.stringify(body);
+    }
+
+    const res = await fetch(url, fetchOptions);
 
     if (!res.ok) {
         const errText = await res.text();
@@ -60,20 +69,21 @@ export default async function handler(req, res) {
 
     const { phone, name, nickname, localUserId, referralSource } = req.body || {};
 
-    if (!phone && !localUserId) {
+    // 전화번호와 localUserId 중 하나는 필수
+    const cleanPhone = (phone || '').replace(/-/g, '').trim();
+    if (!cleanPhone && !localUserId) {
         return res.status(400).json({ error: '전화번호 또는 localUserId가 필요합니다.' });
     }
 
     try {
         // ── 1. 전화번호로 기존 master_user 조회 ───────────────────────────────
-        // 전화번호 포맷 통일 (하이픈 제거)
-        const cleanPhone = (phone || '').replace(/-/g, '').trim();
+        // (cleanPhone은 앞서 handler 상단에서 이미 파싱됨)
         let masterUser = null;
 
         if (cleanPhone) {
             const existingUsers = await imCoreQuery(
                 `/master_users?phone_number=eq.${encodeURIComponent(cleanPhone)}&limit=1`,
-                { method: 'GET' }
+                'GET'
             );
             if (Array.isArray(existingUsers) && existingUsers.length > 0) {
                 masterUser = existingUsers[0];
@@ -83,42 +93,54 @@ export default async function handler(req, res) {
         const isNewUser = !masterUser;
 
         // ── 2. 신규 유저면 master_users에 INSERT ─────────────────────────────
+        // NOTE: phone_number, name 컬럼은 NOT NULL이므로 빈 문자열 fallback 처리
         if (isNewUser) {
-            const insertResult = await imCoreQuery('/master_users', {
-                method: 'POST',
-                prefer: 'return=representation',
-                body: JSON.stringify({
-                    phone_number: cleanPhone || null,
-                    name: name || null,
+            const safeName = (name || '').trim() || '미입력';
+            const safePhone = cleanPhone || '';
+
+            const insertResult = await imCoreQuery(
+                '/master_users',
+                'POST',
+                {
+                    phone_number: safePhone,
+                    name: safeName,
                     integrated_points: 0,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
-                }),
-            });
+                },
+                'return=representation'
+            );
             masterUser = Array.isArray(insertResult) ? insertResult[0] : insertResult;
+        }
+
+        // masterUser가 null이면 여기서 방어 처리
+        if (!masterUser || !masterUser.id) {
+            throw new Error('master_user 생성 또는 조회에 실패했습니다.');
         }
 
         const masterUserId = masterUser.id;
 
         // ── 3. app_user_mapping에 MOCA 앱 매핑 추가 (중복 방지) ───────────────
+        // NOTE: local_user_id 컬럼은 NOT NULL이므로 빈 문자열 fallback 처리
         const existingMapping = await imCoreQuery(
             `/app_user_mapping?master_user_id=eq.${masterUserId}&app_name=eq.${APP_ID}&limit=1`,
-            { method: 'GET' }
+            'GET'
         );
 
         if (!Array.isArray(existingMapping) || existingMapping.length === 0) {
-            await imCoreQuery('/app_user_mapping', {
-                method: 'POST',
-                prefer: 'return=minimal',
-                body: JSON.stringify({
+            await imCoreQuery(
+                '/app_user_mapping',
+                'POST',
+                {
                     master_user_id: masterUserId,
                     app_name: APP_ID,
-                    local_user_id: localUserId || null,
+                    local_user_id: localUserId || '',  // NOT NULL 컬럼 → 빈 문자열로 fallback
                     nickname: nickname || null,
                     role: 'member',
                     created_at: new Date().toISOString(),
-                }),
-            });
+                },
+                'return=minimal'
+            );
         }
 
         // ── 4. 연결된 다른 앱 목록 조회 ──────────────────────────────────────
@@ -126,7 +148,7 @@ export default async function handler(req, res) {
         if (!isNewUser) {
             const allMappings = await imCoreQuery(
                 `/app_user_mapping?master_user_id=eq.${masterUserId}&app_name=neq.${APP_ID}`,
-                { method: 'GET' }
+                'GET'
             );
             if (Array.isArray(allMappings)) {
                 linkedApps = [...new Set(allMappings.map((m) => m.app_name))];
