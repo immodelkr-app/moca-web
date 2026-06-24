@@ -52,9 +52,14 @@ async function imCoreQuery(path, method = 'GET', body = null, prefer = '') {
         throw new Error(`im-core query failed [${res.status}]: ${errText}`);
     }
 
-    // 204 No Content 는 바디가 없음
     if (res.status === 204) return null;
-    return res.json();
+    
+    const text = await res.text();
+    if (!text || text.trim() === '') {
+        return null;
+    }
+    
+    return JSON.parse(text);
 }
 
 export default async function handler(req, res) {
