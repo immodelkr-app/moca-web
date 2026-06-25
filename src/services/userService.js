@@ -6,7 +6,7 @@
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { Capacitor } from '@capacitor/core';
-import { syncUserWithCore } from '../lib/imCoreAuth';
+export { syncUserWithCore } from '../lib/imCoreAuth';
 
 const USER_KEY = 'i_model_user';
 const USERS_LIST_KEY = 'i_model_users_list';
@@ -731,51 +731,6 @@ export const maskNickname = (nickname) => {
     return nickname.slice(0, mid) + '*'.repeat(nickname.length - mid - 1) + nickname.slice(-1);
 };
 
-/**
- * im-core-auth 통합 동기화
- * @param {{
- *   phone: string,
- *   name: string,
- *   nickname: string,
- *   localUserId?: string,
- *   referralSource?: string[]
- * }} userData - 동기화할 유저 정보
- * @returns {Promise<{
- *   success: boolean,
- *   masterUserId: string,
- *   integratedPoints: number,
- *   isNewUser: boolean,
- *   linkedApps?: string[]
- * }>}
- */
-export const syncUserWithCore = async (userData) => {
-    try {
-        const res = await fetch('/api/im-core/sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                phone: userData.phone || null,
-                name: userData.name || null,
-                nickname: userData.nickname || null,
-                localUserId: userData.localUserId || null,
-                referralSource: userData.referralSource || [],
-            }),
-        });
-
-        if (!res.ok) {
-            const errText = await res.text();
-            console.error('[syncUserWithCore] 서버 오류:', errText);
-            return { success: false, masterUserId: '', integratedPoints: 0, isNewUser: true };
-        }
-
-        /** @type {{ success: boolean, masterUserId: string, integratedPoints: number, isNewUser: boolean, linkedApps?: string[] }} */
-        const result = await res.json();
-        return result;
-    } catch (err) {
-        console.error('[syncUserWithCore] 요청 실패:', err);
-        return { success: false, masterUserId: '', integratedPoints: 0, isNewUser: true };
-    }
-};
 
 /**
  * MOCA users 테이블의 master_user_id 필드 업데이트
