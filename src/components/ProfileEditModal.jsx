@@ -42,8 +42,30 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
             // 1차: 정상 세션에서 유저 가져오기
             let currentUser = getUser();
 
-            // 2차: 세션 만료 등으로 null이면 localStorage 원시 데이터에서 nickname 추출 후 DB 직접 조회
-            if (!currentUser) {
+            // 실시간 DB 데이터로 세션 최신화 (master_user_id, phone 등)
+            if (isSupabaseEnabled() && currentUser?.nickname) {
+                try {
+                    const { data: dbRows } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('nickname', currentUser.nickname)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
+                    if (dbRows && dbRows.length > 0) {
+                        currentUser = dbRows[0];
+                        // 세션 갱신 (1시간 연장)
+                        const refreshed = {
+                            ...currentUser,
+                            auth_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                        };
+                        localStorage.setItem(USER_KEY, JSON.stringify(refreshed));
+                        console.log('[ProfileEditModal] Session refreshed from DB on modal open:', currentUser.nickname);
+                    }
+                } catch (e) {
+                    console.error('[ProfileEditModal] Failed to refresh session from DB:', e);
+                }
+            } else if (!currentUser) {
+                // 2차: 세션 만료 등으로 null이면 localStorage 원시 데이터에서 nickname 추출 후 DB 직접 조회
                 try {
                     const rawData = localStorage.getItem(USER_KEY);
                     if (rawData) {
@@ -86,66 +108,63 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                     marketing_consent: currentUser.marketing_consent || false,
                     terms_consent: currentUser.terms_consent || false,
                 });
+
+                // 포인트 정보 조회/연동
+                if (currentUser.master_user_id) {
+                    setHasMasterUserId(true);
+                    setPointsLoading(true);
+                    setPointsError(false);
+                    Promise.all([
+                        getPointsBalance(currentUser.master_user_id),
+                        getPointsHistory(currentUser.master_user_id),
+                    ]).then(([balRes, histRes]) => {
+                        if (balRes?.success) setPointsBalance(balRes.balance ?? 0);
+                        if (histRes?.success) setPointsHistory((histRes.history || []).slice(0, 5));
+                    }).catch(() => {
+                        setPointsError(true);
+                    }).finally(() => {
+                        setPointsLoading(false);
+                    });
+                } else if (currentUser.phone) {
+                    // master_user_id가 없는데 전화번호가 있으면 백그라운드에서 동기화 시도 (보완책)
+                    setPointsLoading(true);
+                    syncUserWithCore({
+                        phoneNumber: currentUser.phone,
+                        localUserId: currentUser.id || currentUser.nickname,
+                        name: currentUser.name || currentUser.nickname,
+                    }).then(async (syncResult) => {
+                        if (syncResult?.success && syncResult?.masterUserId) {
+                            setHasMasterUserId(true);
+                            // Supabase 업데이트
+                            if (isSupabaseEnabled()) {
+                                await updateMasterUserIdInSupabase(currentUser.id || currentUser.nickname, syncResult.masterUserId);
+                            }
+                            // 로컬스토리지 세션 업데이트
+                            const updatedUser = { ...currentUser, master_user_id: syncResult.masterUserId };
+                            localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+
+                            // 포인트 및 내역 조회
+                            Promise.all([
+                                getPointsBalance(syncResult.masterUserId),
+                                getPointsHistory(syncResult.masterUserId),
+                            ]).then(([balRes, histRes]) => {
+                                if (balRes?.success) setPointsBalance(balRes.balance ?? 0);
+                                if (histRes?.success) setPointsHistory((histRes.history || []).slice(0, 5));
+                            }).catch(() => {
+                                setPointsError(true);
+                            });
+                        }
+                    }).catch((err) => {
+                        console.error('[ProfileEditModal] 자동 동기화 실패:', err);
+                    }).finally(() => {
+                        setPointsLoading(false);
+                    });
+                }
             }
         };
 
         initUser();
         isPasskeySupported().then(setBiometricSupported);
-
-        // 포인트 전자지갑 조회
-        const u = getUser();
-        if (u) {
-            if (u.master_user_id) {
-                setHasMasterUserId(true);
-                setPointsLoading(true);
-                setPointsError(false);
-                Promise.all([
-                    getPointsBalance(u.master_user_id),
-                    getPointsHistory(u.master_user_id),
-                ]).then(([balRes, histRes]) => {
-                    if (balRes?.success) setPointsBalance(balRes.balance ?? 0);
-                    if (histRes?.success) setPointsHistory((histRes.history || []).slice(0, 5));
-                }).catch(() => {
-                    setPointsError(true);
-                }).finally(() => {
-                    setPointsLoading(false);
-                });
-            } else if (u.phone) {
-                // master_user_id가 없는데 전화번호가 있으면 백그라운드에서 동기화 시도 (보완책)
-                setPointsLoading(true);
-                syncUserWithCore({
-                    phoneNumber: u.phone,
-                    localUserId: u.id || u.nickname,
-                    name: u.name || u.nickname,
-                }).then(async (syncResult) => {
-                    if (syncResult?.success && syncResult?.masterUserId) {
-                        setHasMasterUserId(true);
-                        // Supabase 업데이트
-                        if (isSupabaseEnabled()) {
-                            await updateMasterUserIdInSupabase(u.id || u.nickname, syncResult.masterUserId);
-                        }
-                        // 로컬스토리지 세션 업데이트
-                        const updatedUser = { ...u, master_user_id: syncResult.masterUserId };
-                        localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
-
-                        // 포인트 및 내역 조회
-                        Promise.all([
-                            getPointsBalance(syncResult.masterUserId),
-                            getPointsHistory(syncResult.masterUserId),
-                        ]).then(([balRes, histRes]) => {
-                            if (balRes?.success) setPointsBalance(balRes.balance ?? 0);
-                            if (histRes?.success) setPointsHistory((histRes.history || []).slice(0, 5));
-                        }).catch(() => {
-                            setPointsError(true);
-                        });
-                    }
-                }).catch((err) => {
-                    console.error('[ProfileEditModal] 자동 동기화 실패:', err);
-                }).finally(() => {
-                    setPointsLoading(false);
-                });
-            }
-        }
 
         // Daum Postcode 스크립트 로드
         const scriptId = 'daum-postcode-script';
