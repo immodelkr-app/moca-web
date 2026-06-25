@@ -92,9 +92,8 @@ export const loginWithPasskey = async () => {
             });
 
             // 3. 가져온 Refresh Token으로 세션 복구
-            const { data, error } = await supabase.auth.setSession({
-                access_token: '', // Access token은 비워두고 refresh_token만 전달
-                refresh_token: credentials.password
+            const { data, error } = await supabase.auth.refreshSession({
+                refresh_token: credentials.password,
             });
 
             if (error) throw error;

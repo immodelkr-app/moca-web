@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { saveUser } from '../services/userService';
+import { syncUserWithCore } from '../lib/imCoreAuth';
 
 export const useAuthSync = () => {
     const isLoggedOutRef = useRef(false);
@@ -117,7 +118,28 @@ export const useAuthSync = () => {
                         await supabase.from('users').update({ grade: bestGrade }).eq('id', user.id);
                         currentRecord.grade = bestGrade;
                     }
-                    saveUser({ ...currentRecord, ...bestRecord, id: user.id });
+                    const mergedUser = { ...currentRecord, ...bestRecord, id: user.id };
+                    saveUser(mergedUser);
+
+                    // im-core-auth SSO 동기화 (master_user_id 없는 경우에만)
+                    if (!currentRecord.master_user_id && currentRecord.phone) {
+                        try {
+                            const syncResult = await syncUserWithCore({
+                                phoneNumber: currentRecord.phone,
+                                localUserId: currentRecord.id,
+                                name: currentRecord.name || currentRecord.nickname,
+                            });
+                            if (syncResult?.success && syncResult?.masterUserId) {
+                                await supabase.from('users')
+                                    .update({ master_user_id: syncResult.masterUserId })
+                                    .eq('id', currentRecord.id);
+                                saveUser({ ...mergedUser, master_user_id: syncResult.masterUserId });
+                                console.log('[useAuthSync] im-core-auth SSO 동기화 완료:', syncResult.masterUserId);
+                            }
+                        } catch (syncErr) {
+                            console.warn('[useAuthSync] im-core-auth SSO 동기화 실패 (비중단):', syncErr.message);
+                        }
+                    }
                 } else {
                     // 처음 로그인한 경우: 기존 계정 정보가 있으면 가져오고, 없으면 새로 생성
                     const rawNickname =
@@ -138,7 +160,29 @@ export const useAuthSync = () => {
                     if (insertError) {
                         console.warn('[useAuthSync] Insert failed, saving locally:', insertError.message);
                     }
-                    saveUser(created || newUser);
+                    const savedUser = created || newUser;
+                    saveUser(savedUser);
+
+                    // im-core-auth SSO 동기화 (phone이 있는 경우에만)
+                    const phoneForSync = savedUser.phone || bestRecord?.phone;
+                    if (savedUser.id && phoneForSync) {
+                        try {
+                            const syncResult = await syncUserWithCore({
+                                phoneNumber: phoneForSync,
+                                localUserId: savedUser.id,
+                                name: savedUser.name || savedUser.nickname,
+                            });
+                            if (syncResult?.success && syncResult?.masterUserId) {
+                                await supabase.from('users')
+                                    .update({ master_user_id: syncResult.masterUserId })
+                                    .eq('id', savedUser.id);
+                                saveUser({ ...savedUser, master_user_id: syncResult.masterUserId });
+                                console.log('[useAuthSync] im-core-auth SSO 동기화 완료 (신규):', syncResult.masterUserId);
+                            }
+                        } catch (syncErr) {
+                            console.warn('[useAuthSync] im-core-auth SSO 동기화 실패 (비중단):', syncErr.message);
+                        }
+                    }
                 }
 
                 console.log(`[useAuthSync] Sync complete. Grade: ${bestGrade}, shouldRedirect: ${shouldRedirect}`);

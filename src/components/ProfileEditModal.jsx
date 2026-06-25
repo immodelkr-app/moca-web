@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { getUser, updateUserProfile } from '../services/userService';
 import { isPasskeySupported, registerPasskey } from '../services/passkeyService';
+import { getPointsBalance, getPointsHistory } from '../lib/imCoreAuth';
 
 
 const USER_KEY = 'i_model_user';
@@ -12,6 +13,17 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
     const [errorMsg, setErrorMsg] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [biometricSupported, setBiometricSupported] = useState(false);
+
+    // 포인트 전자지갑 관련
+    const [hasMasterUserId, setHasMasterUserId] = useState(() => {
+        // 로컬스토리지에서 즉시 확인 (비동기 initUser 완료를 기다리지 않음)
+        const u = getUser();
+        return !!(u?.master_user_id);
+    });
+    const [pointsBalance, setPointsBalance] = useState(null);
+    const [pointsHistory, setPointsHistory] = useState([]);
+    const [pointsLoading, setPointsLoading] = useState(false);
+    const [pointsError, setPointsError] = useState(false);
 
     // 폼 상태
     const [formData, setFormData] = useState({
@@ -79,6 +91,25 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
 
         initUser();
         isPasskeySupported().then(setBiometricSupported);
+
+        // 포인트 전자지갑 조회
+        const u = getUser();
+        if (u?.master_user_id) {
+            setHasMasterUserId(true);
+            setPointsLoading(true);
+            setPointsError(false);
+            Promise.all([
+                getPointsBalance(u.master_user_id),
+                getPointsHistory(u.master_user_id),
+            ]).then(([balRes, histRes]) => {
+                if (balRes?.success) setPointsBalance(balRes.balance ?? 0);
+                if (histRes?.success) setPointsHistory((histRes.history || []).slice(0, 5));
+            }).catch(() => {
+                setPointsError(true);
+            }).finally(() => {
+                setPointsLoading(false);
+            });
+        }
 
         // Daum Postcode 스크립트 로드
         const scriptId = 'daum-postcode-script';
@@ -290,11 +321,178 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                             <p className="text-[10px] text-[#9CA3AF] ml-2 font-medium">※ 프로필 발송 시 동일한 내용의 확인 메일을 받으실 수 있습니다.</p>
                         </div>
 
-                        {/* 동의 항목 - 완료되지 않은 경우에만 더 강조하거나 상단에 노출 가능하나, 일단 하단 배치 */}
+                        {/* ── 💳 통합 포인트 전자지갑 ── */}
+                        <div className="pt-4 border-t border-[#E8E0FA] mt-2">
+                            <div className="flex items-center gap-2 mb-3">
+                                <p className="text-[#1F1235] text-[13px] font-black uppercase tracking-wider flex items-center gap-1">
+                                    💳 통합 포인트
+                                </p>
+                            </div>
+
+                            {!hasMasterUserId ? (
+                                <div className="flex items-center gap-3 py-4 px-4 rounded-2xl bg-gray-50 border border-gray-100">
+                                    <span className="material-symbols-outlined text-[22px] text-gray-300">sync</span>
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-400">포인트 연동 준비 중...</p>
+                                        <p className="text-[11px] text-gray-300 mt-0.5">다음 로그인 시 자동으로 연동됩니다</p>
+                                    </div>
+                                </div>
+                            ) : pointsLoading ? (
+                                <div className="space-y-4 animate-pulse">
+                                    <div className="h-32 bg-purple-50/50 rounded-2xl" />
+                                    <div className="h-24 bg-gray-50 rounded-2xl" />
+                                </div>
+                            ) : pointsError ? (
+                                <div className="flex flex-col items-center gap-2 py-5">
+                                    <span className="material-symbols-outlined text-[28px] text-gray-300">cloud_off</span>
+                                    <p className="text-xs text-gray-400 font-bold">잠시 후 다시 시도해 주세요</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const u = getUser();
+                                            if (!u?.master_user_id) return;
+                                            setPointsLoading(true);
+                                            setPointsError(false);
+                                            Promise.all([
+                                                getPointsBalance(u.master_user_id),
+                                                getPointsHistory(u.master_user_id),
+                                            ]).then(([balRes, histRes]) => {
+                                                if (balRes?.success) setPointsBalance(balRes.balance ?? 0);
+                                                if (histRes?.success) setPointsHistory((histRes.history || []).slice(0, 5));
+                                            }).catch(() => setPointsError(true))
+                                              .finally(() => setPointsLoading(false));
+                                        }}
+                                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-50 border border-violet-100 text-violet-600 text-xs font-bold"
+                                    >
+                                        <span className="material-symbols-outlined text-[14px]">refresh</span>
+                                        새로고침
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* 잔액 카드 */}
+                                    <div className="px-5 py-5 rounded-2xl bg-[#F3EEFF]/80 border border-[#E1D3FD]">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <div className="w-8 h-8 rounded-[10px] bg-[#633AE8] flex items-center justify-center shadow-sm">
+                                                <span className="material-symbols-outlined text-[18px] text-white">toll</span>
+                                            </div>
+                                            <p className="text-[#633AE8] text-[13px] font-black">통합 포인트 잔액</p>
+                                        </div>
+                                        
+                                        <p className="text-center text-[38px] font-black text-[#8E82B1] mb-3 tracking-tight">
+                                            {pointsBalance !== null ? pointsBalance.toLocaleString() : '0'} <span className="font-bold text-[32px]">P</span>
+                                        </p>
+
+                                        {pointsBalance === 0 && (
+                                            <p className="text-center text-[11px] text-[#A89EC7] mb-4 font-bold">
+                                                아직 적립된 포인트가 없습니다.
+                                            </p>
+                                        )}
+
+                                        <div className="w-full py-2.5 px-3 rounded-2xl bg-[#EBE3FC] text-[#633AE8] text-[11px] font-black flex items-center justify-center gap-1 shadow-sm">
+                                            <span>✨</span>
+                                            <span>포인트는 모델뷰티 앱에서 사용 가능합니다</span>
+                                        </div>
+                                    </div>
+
+                                    {/* 최근 포인트 내역 */}
+                                    <div className="bg-white border border-[#EBE3FC] rounded-2xl p-4 mt-3 shadow-sm">
+                                        <div className="pb-3 border-b border-[#F3F0FF] mb-3">
+                                            <p className="text-[13px] font-black text-[#1F1235]">최근 포인트 내역</p>
+                                        </div>
+                                        {pointsHistory.length === 0 ? (
+                                            <div className="py-6 text-center">
+                                                <p className="text-[12px] font-bold text-gray-400">내역이 없습니다.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3.5">
+                                                {pointsHistory.map((item) => {
+                                                    const isReward = item.tx_type === 'reward' || item.amount > 0;
+                                                    const date = item.created_at
+                                                        ? new Date(item.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })
+                                                        : '-';
+                                                    return (
+                                                        <div key={item.id} className="flex items-center justify-between py-0.5">
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isReward ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                                                                    <span className={`material-symbols-outlined text-[13px] ${isReward ? 'text-emerald-500' : 'text-red-400'}`}>
+                                                                        {isReward ? 'add_circle' : 'remove_circle'}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-xs font-bold text-[#1F1235] truncate">{item.description || '-'}</p>
+                                                                    <p className="text-[10px] text-[#9CA3AF]">{item.app_source || 'MOCA'} · {date}</p>
+                                                                </div>
+                                                            </div>
+                                                            <span className={`text-xs font-black flex-shrink-0 ml-2 ${isReward ? 'text-emerald-500' : 'text-red-400'}`}>
+                                                                {isReward ? '+' : ''}{Math.abs(item.amount).toLocaleString()}P
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* 보안 및 로그인 설정 (비밀번호 변경 및 생체 로그인) */}
+                        <div className="pt-4 border-t border-[#E8E0FA] mt-2 space-y-4">
+                            <p className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">보안 및 로그인 설정</p>
+                            
+                            {/* 비밀번호 변경 */}
+                            <div className="space-y-1.5">
+                                <label className="text-[#5B4E7A] text-[10px] font-bold ml-1 text-gray-500">
+                                    비밀번호 변경 (선택)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        placeholder="기존 유지 시 빈칸"
+                                        className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl pl-4 pr-12 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#9333EA] transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">
+                                            {showPassword ? 'visibility_off' : 'visibility'}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 지문/생체로그인 등록하기 */}
+                            {biometricSupported && (
+                                <button
+                                    type="button"
+                                    onClick={handleRegisterPasskey}
+                                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#F3E8FF] transition-all group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-[#9333EA]/10 flex items-center justify-center group-hover:bg-[#9333EA]/20 transition-colors">
+                                            <span className="material-symbols-outlined text-[#9333EA] text-[20px]">fingerprint</span>
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-[#1F1235] text-[13px] font-bold">지문 / 생체로그인 등록하기</p>
+                                            <p className="text-[#9CA3AF] text-[10px] font-medium">기기의 생체 정보를 사용하여 간편하게 로그인</p>
+                                        </div>
+                                    </div>
+                                    <span className="material-symbols-outlined text-[#9CA3AF] text-[18px] group-hover:text-[#9333EA] transition-colors">add_circle</span>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* 약관 및 마케팅 동의 */}
                         <div className="pt-4 border-t border-[#E8E0FA] mt-2 space-y-3">
                             <p className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider mb-1">약관 및 마케팅 동의</p>
                             
-                            {/* 서비스 이용약관 동의 (이미 동의했더라도 확인용으로 노출하거나, 미동의자만 체크 가능하게) */}
+                            {/* 서비스 이용약관 동의 */}
                             <label className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] cursor-pointer hover:bg-[#F3E8FF] transition-all">
                                 <input
                                     type="checkbox"
@@ -321,61 +519,11 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                     마케팅 정보 수신 및 활용 동의 (선택)
                                 </span>
                             </label>
-                            {!user.marketing_consent && !formData.marketing_consent && (
+                            {!user?.marketing_consent && !formData.marketing_consent && (
                                 <p className="text-[10px] text-[#9CA3AF] px-2 leading-relaxed italic">
                                     ※ 동의 시 모카의 혜택 및 이벤트 소식을 빠르게 받아보실 수 있습니다.
                                 </p>
                             )}
-                        </div>
-
-                        {/* [신규] 보안 및 로그인 설정 (지문/생체 인증) */}
-                        {biometricSupported && (
-                            <div className="pt-4 border-t border-[#E8E0FA] mt-2 space-y-3">
-                                <p className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">보안 및 로그인 설정</p>
-                                <button
-                                    type="button"
-                                    onClick={handleRegisterPasskey}
-                                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#F3E8FF] transition-all group"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-[#9333EA]/10 flex items-center justify-center group-hover:bg-[#9333EA]/20 transition-colors">
-                                            <span className="material-symbols-outlined text-[#9333EA] text-[20px]">fingerprint</span>
-                                        </div>
-                                        <div className="text-left">
-                                            <p className="text-[#1F1235] text-[13px] font-bold">지문 / 생체로그인 등록하기</p>
-                                            <p className="text-[#9CA3AF] text-[10px] font-medium">기기의 생체 정보를 사용하여 간편하게 로그인</p>
-                                        </div>
-                                    </div>
-                                    <span className="material-symbols-outlined text-[#9CA3AF] text-[18px] group-hover:text-[#9333EA] transition-colors">add_circle</span>
-                                </button>
-                            </div>
-                        )}
-
-                        {/* 비밀번호 변경 */}
-
-                        <div className="space-y-1.5 pt-4 border-t border-[#E8E0FA] mt-2">
-                            <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">
-                                비밀번호 변경 (선택)
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    placeholder="기존 유지 시 빈칸"
-                                    className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl pl-4 pr-12 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#9333EA] transition-colors"
-                                >
-                                    <span className="material-symbols-outlined text-[18px]">
-                                        {showPassword ? 'visibility_off' : 'visibility'}
-                                    </span>
-                                </button>
-                            </div>
                         </div>
 
                     </form>

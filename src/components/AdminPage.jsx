@@ -13,6 +13,7 @@ import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORI
 import { fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
 import { sendAlimtalk, sendBulkMessage, sendFriendtalk } from '../services/solapiService';
 import { fetchPushHistory, sendBroadcastPush, fetchUsersWithoutPushToken, fetchAllUsersWithPhone } from '../services/pushNotificationService';
+import { getPointsBalance, getPointsHistory, rewardPoints, deductPoints } from '../lib/imCoreAuth';
 import * as XLSX from 'xlsx';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
@@ -89,7 +90,7 @@ const AdminPage = () => {
 
     // Phase 3: AI 동향 분석 State
     const [aiSummaryAgency, setAiSummaryAgency] = useState(null); // 분석 중인 에이전시명
-    const [aiSummaryResult, setAiSummaryResult] = useState({}); // { [agencyName]: { auditioning, tips, atmosphere, overall } }
+    const [aiSummaryResult, setAiSummaryResult] = useState({}); // { [agencyName]: { auditioning, tips, atmosphere, preferred, warnings, overall } }
     const [aiSummaryLoading, setAiSummaryLoading] = useState({}); // { [agencyName]: boolean }
 
     // 회원별 모카클래스 수강 신청 건수 맵 { [user_id]: count }
@@ -1141,6 +1142,8 @@ const AdminPage = () => {
                                                 { icon: '🎬', label: '진행 오디션/미팅', key: 'auditioning', color: 'bg-purple-50 border-purple-200 text-purple-700' },
                                                 { icon: '📋', label: '필수 준비물 & 꿀팁', key: 'tips', color: 'bg-blue-50 border-blue-200 text-blue-700' },
                                                 { icon: '🏢', label: '현장 분위기 & 대기', key: 'atmosphere', color: 'bg-green-50 border-green-200 text-green-700' },
+                                                { icon: '👗', label: '선호 스타일 & 피드백', key: 'preferred', color: 'bg-pink-50 border-pink-200 text-pink-700' },
+                                                { icon: '⚠️', label: '주의 및 특이사항', key: 'warnings', color: 'bg-amber-50 border-amber-200 text-amber-700' },
                                                 { icon: '⚡', label: '한줄 요약', key: 'overall', color: 'bg-orange-50 border-orange-200 text-orange-700' },
                                             ].map(item => (
                                                 <div key={item.key} className={`p-3 rounded-xl border ${item.color}`}>
@@ -3586,6 +3589,18 @@ const AdminUserDetailModal = ({ user, onClose }) => {
     const [classApplications, setClassApplications] = useState([]);
     const [classAppsLoading, setClassAppsLoading] = useState(true);
 
+    // 포인트 전자지갑 state
+    const [pointsBalance, setPointsBalance] = useState(null);
+    const [pointsHistory, setPointsHistory] = useState([]);
+    const [pointsLoading, setPointsLoading] = useState(false);
+    const [pointsError, setPointsError] = useState(false);
+    // 수동 지급 폼
+    const [rewardForm, setRewardForm] = useState({ amount: '', description: '' });
+    const [deductForm, setDeductForm] = useState({ amount: '', description: '' });
+    const [rewardLoading, setRewardLoading] = useState(false);
+    const [deductLoading, setDeductLoading] = useState(false);
+    const [pointsMsg, setPointsMsg] = useState('');
+
     useEffect(() => {
         if (!user?.id) return;
         const loadClassApps = async () => {
@@ -3614,6 +3629,29 @@ const AdminUserDetailModal = ({ user, onClose }) => {
         };
         loadClassApps();
     }, [user.id]);
+
+    // 포인트 조회
+    const loadPoints = async () => {
+        if (!user?.master_user_id) return;
+        setPointsLoading(true);
+        setPointsError(false);
+        try {
+            const [balRes, histRes] = await Promise.all([
+                getPointsBalance(user.master_user_id),
+                getPointsHistory(user.master_user_id),
+            ]);
+            if (balRes?.success) setPointsBalance(balRes.balance ?? 0);
+            if (histRes?.success) setPointsHistory(histRes.history || []);
+        } catch {
+            setPointsError(true);
+        } finally {
+            setPointsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (user?.master_user_id) loadPoints();
+    }, [user?.master_user_id]);
 
     const referralLabels = {
         sns: 'SNS (인스타그램/페이스북 등)',
@@ -3859,6 +3897,155 @@ const AdminUserDetailModal = ({ user, onClose }) => {
                         )}
                     </div>
                 </div>
+
+            {/* ── 💳 통합 포인트 현황 ── */}
+            <div className="px-6 pb-4">
+                <div className="bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-2xl overflow-hidden">
+                    {/* 헤더 */}
+                    <div className="px-5 py-4 flex items-center justify-between border-b border-[var(--moca-border)]">
+                        <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-[14px] text-white">account_balance_wallet</span>
+                            </div>
+                            <span className="font-black text-sm text-[var(--moca-text)]">통합 포인트 현황</span>
+                        </div>
+                        {user.master_user_id ? (
+                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 font-black">
+                                <span className="material-symbols-outlined text-[11px]">check_circle</span>연동됨
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 font-black">
+                                <span className="material-symbols-outlined text-[11px]">warning</span>미연동
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="px-5 py-4">
+                        {!user.master_user_id ? (
+                            <div className="flex items-center gap-3 py-3 px-4 rounded-xl bg-amber-50 border border-amber-100">
+                                <span className="material-symbols-outlined text-[18px] text-amber-400">link_off</span>
+                                <div>
+                                    <p className="text-sm font-bold text-amber-700">통합 회원 미연동</p>
+                                    <p className="text-[11px] text-amber-500 mt-0.5">회원이 로그인하면 자동으로 연동됩니다</p>
+                                </div>
+                            </div>
+                        ) : pointsLoading ? (
+                            <div className="space-y-2 animate-pulse">
+                                <div className="h-12 bg-gray-100 rounded-xl" />
+                                <div className="h-8 bg-gray-100 rounded-xl" />
+                            </div>
+                        ) : pointsError ? (
+                            <div className="flex flex-col items-center gap-2 py-4">
+                                <span className="material-symbols-outlined text-[24px] text-gray-300">cloud_off</span>
+                                <button onClick={loadPoints} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-50 border border-violet-100 text-violet-600 text-xs font-bold">
+                                    <span className="material-symbols-outlined text-[13px]">refresh</span>재시도
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {/* 잔액 */}
+                                <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100">
+                                    <div>
+                                        <p className="text-[10px] text-violet-400 font-bold">통합 포인트 잔액</p>
+                                        <p className="text-xl font-black text-[var(--moca-text)]">
+                                            {pointsBalance !== null ? pointsBalance.toLocaleString() : '-'}
+                                            <span className="text-sm ml-1 text-violet-500">P</span>
+                                        </p>
+                                    </div>
+                                    <button onClick={loadPoints} className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center hover:bg-violet-200 transition">
+                                        <span className="material-symbols-outlined text-[14px] text-violet-600">refresh</span>
+                                    </button>
+                                </div>
+
+                                {/* 거래 내역 */}
+                                {pointsHistory.length > 0 && (
+                                    <div>
+                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-wider mb-2">거래 내역 ({pointsHistory.length}건)</p>
+                                        <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                                            {pointsHistory.map((item) => {
+                                                const isReward = item.tx_type === 'reward' || item.amount > 0;
+                                                const date = item.created_at
+                                                    ? new Date(item.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })
+                                                    : '-';
+                                                return (
+                                                    <div key={item.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 border border-gray-100 text-xs">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <span className={`font-black flex-shrink-0 ${isReward ? 'text-emerald-500' : 'text-red-400'}`}>
+                                                                {isReward ? '+' : ''}{Math.abs(item.amount).toLocaleString()}P
+                                                            </span>
+                                                            <span className="text-gray-500 truncate">{item.description || '-'}</span>
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-400 flex-shrink-0 ml-2">{item.app_source || '-'} · {date}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 수동 지급 폼 */}
+                                <div className="border-t border-[var(--moca-border)] pt-4">
+                                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-wider mb-3">관리자 수동 지급</p>
+                                    {pointsMsg && (
+                                        <p className={`text-xs font-bold mb-3 px-3 py-2 rounded-lg ${
+                                            pointsMsg.includes('실패') ? 'bg-red-50 text-red-500 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                        }`}>{pointsMsg}</p>
+                                    )}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {/* 적립 */}
+                                        <div className="space-y-2">
+                                            <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[13px]">add_circle</span>적립
+                                            </p>
+                                            <input type="number" placeholder="포인트 수량" value={rewardForm.amount}
+                                                onChange={e => setRewardForm(f => ({ ...f, amount: e.target.value }))}
+                                                className="w-full px-3 py-2 text-xs rounded-lg border border-[var(--moca-border)] bg-[var(--moca-bg)] text-[var(--moca-text)] focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+                                            <input type="text" placeholder="사유" value={rewardForm.description}
+                                                onChange={e => setRewardForm(f => ({ ...f, description: e.target.value }))}
+                                                className="w-full px-3 py-2 text-xs rounded-lg border border-[var(--moca-border)] bg-[var(--moca-bg)] text-[var(--moca-text)] focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+                                            <button disabled={rewardLoading || !rewardForm.amount || !rewardForm.description}
+                                                onClick={async () => {
+                                                    setRewardLoading(true); setPointsMsg('');
+                                                    const res = await rewardPoints({ masterUserId: user.master_user_id, appSource: 'MOCA', amount: Number(rewardForm.amount), description: rewardForm.description });
+                                                    setRewardLoading(false);
+                                                    if (res?.success) { setPointsMsg(`+${rewardForm.amount}P 적립 완료`); setRewardForm({ amount: '', description: '' }); loadPoints(); }
+                                                    else setPointsMsg('적립 실패: ' + (res?.error || '오류'));
+                                                }}
+                                                className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white text-xs font-black transition">
+                                                {rewardLoading ? '처리중...' : '적립 지급'}
+                                            </button>
+                                        </div>
+                                        {/* 차감 */}
+                                        <div className="space-y-2">
+                                            <p className="text-[11px] font-bold text-red-500 flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[13px]">remove_circle</span>차감
+                                            </p>
+                                            <input type="number" placeholder="포인트 수량" value={deductForm.amount}
+                                                onChange={e => setDeductForm(f => ({ ...f, amount: e.target.value }))}
+                                                className="w-full px-3 py-2 text-xs rounded-lg border border-[var(--moca-border)] bg-[var(--moca-bg)] text-[var(--moca-text)] focus:outline-none focus:ring-2 focus:ring-red-300" />
+                                            <input type="text" placeholder="사유" value={deductForm.description}
+                                                onChange={e => setDeductForm(f => ({ ...f, description: e.target.value }))}
+                                                className="w-full px-3 py-2 text-xs rounded-lg border border-[var(--moca-border)] bg-[var(--moca-bg)] text-[var(--moca-text)] focus:outline-none focus:ring-2 focus:ring-red-300" />
+                                            <button disabled={deductLoading || !deductForm.amount || !deductForm.description}
+                                                onClick={async () => {
+                                                    if (!window.confirm(`${deductForm.amount}P를 차감하시겠습니까?`)) return;
+                                                    setDeductLoading(true); setPointsMsg('');
+                                                    const res = await deductPoints({ masterUserId: user.master_user_id, appSource: 'MOCA', amount: Number(deductForm.amount), description: deductForm.description });
+                                                    setDeductLoading(false);
+                                                    if (res?.success) { setPointsMsg(`-${deductForm.amount}P 차감 완료`); setDeductForm({ amount: '', description: '' }); loadPoints(); }
+                                                    else setPointsMsg('차감 실패: ' + (res?.error || '오류'));
+                                                }}
+                                                className="w-full py-2 rounded-lg bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white text-xs font-black transition">
+                                                {deductLoading ? '처리중...' : '차감 지급'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-[var(--moca-border)] bg-[var(--moca-surface-2)] flex justify-end">

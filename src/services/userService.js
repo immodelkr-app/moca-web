@@ -6,6 +6,7 @@
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { Capacitor } from '@capacitor/core';
+import { syncUserWithCore } from '../lib/imCoreAuth';
 
 const USER_KEY = 'i_model_user';
 const USERS_LIST_KEY = 'i_model_users_list';
@@ -72,6 +73,26 @@ export const saveUserToSupabase = async (userData) => {
         }])
         .select()
         .single();
+
+    if (!error && data && userData.phone) {
+        // im-core-auth SSO 동기화 (회원가입 직후)
+        try {
+            const syncResult = await syncUserWithCore({
+                phoneNumber: userData.phone,
+                localUserId: data.id,
+                name: userData.name || userData.nickname,
+            });
+            if (syncResult?.success && syncResult?.masterUserId) {
+                await supabase.from('users')
+                    .update({ master_user_id: syncResult.masterUserId })
+                    .eq('id', data.id);
+                data.master_user_id = syncResult.masterUserId;
+                console.log('[userService] im-core-auth SSO 동기화 완료 (회원가입):', syncResult.masterUserId);
+            }
+        } catch (syncErr) {
+            console.warn('[userService] im-core-auth SSO 동기화 실패 (비중단):', syncErr.message);
+        }
+    }
 
     return { data, error };
 };
@@ -231,6 +252,26 @@ export const loginUser = async (nickname, password) => {
                     data.grade = 'SILVER';
                     data.grade_expires_at = null;
                 }
+            }
+        }
+
+        // im-core-auth SSO 동기화 (로그인 시 master_user_id 없으면 시도)
+        if (!data.master_user_id && data.phone) {
+            try {
+                const syncResult = await syncUserWithCore({
+                    phoneNumber: data.phone,
+                    localUserId: data.id,
+                    name: data.name || data.nickname,
+                });
+                if (syncResult?.success && syncResult?.masterUserId) {
+                    await supabase.from('users')
+                        .update({ master_user_id: syncResult.masterUserId })
+                        .eq('id', data.id);
+                    data.master_user_id = syncResult.masterUserId;
+                    console.log('[userService] im-core-auth SSO 동기화 완료 (로그인):', syncResult.masterUserId);
+                }
+            } catch (syncErr) {
+                console.warn('[userService] im-core-auth SSO 동기화 실패 (비중단):', syncErr.message);
             }
         }
 
