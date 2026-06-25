@@ -37,14 +37,16 @@ const headers = {
  */
 export async function syncUserWithCore({ phoneNumber, localUserId, name }) {
   try {
+    const cleanPhone = (phoneNumber || '').replace(/-/g, '').trim();
+    const cleanName = (name || '').trim() || '미입력';
     const res = await fetch(`${IM_CORE_AUTH_URL}/api/auth/sync`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        phoneNumber,
+        phoneNumber: cleanPhone,
         appName: 'MOCA', // DB 제약 조건상 반드시 대문자 'MOCA'
         localUserId,
-        name,
+        name: cleanName,
       }),
     });
 
