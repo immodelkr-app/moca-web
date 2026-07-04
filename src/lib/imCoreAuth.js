@@ -87,7 +87,7 @@ export async function getPointsBalance(masterUserId) {
     const data = await res.json();
     return {
       success: data.success,
-      balance: data.balance ?? data.integratedPoints ?? 0,
+      balance: data.balance ?? 0,
     };
   } catch (err) {
     console.error('[imCoreAuth] getPointsBalance 실패:', err);
@@ -121,9 +121,10 @@ export async function getPointsHistory(masterUserId) {
     const mappedList = rawList.map((item) => {
       const rawType = item.tx_type ?? item.type;
       const txType =
-        rawType === 'earn' ? 'reward' :
-        rawType === 'use'  ? 'deduct' :
         rawType === 'reward' ? 'reward' :
+        rawType === 'deduct' ? 'deduct' :
+        rawType === 'earn'   ? 'reward' :
+        rawType === 'use'    ? 'deduct' :
         'deduct';
       return {
         id:          String(item.id ?? ''),
