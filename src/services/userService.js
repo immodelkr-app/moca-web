@@ -81,6 +81,11 @@ export const saveUserToSupabase = async (userData) => {
                 phoneNumber: userData.phone,
                 localUserId: data.id,
                 name: userData.name || userData.nickname,
+                shipping_recipient: userData.name || userData.nickname,
+                shipping_phone: userData.phone,
+                shipping_zipcode: userData.zipcode || '',
+                shipping_address: userData.address || '',
+                shipping_detail: userData.address_detail || userData.detailAddress || '',
             });
             if (syncResult?.success && syncResult?.masterUserId) {
                 await supabase.from('users')
@@ -268,6 +273,10 @@ export const loginUser = async (nickname, password) => {
                     phoneNumber: data.phone,
                     localUserId: data.id,
                     name: data.name || data.nickname,
+                    shipping_recipient: data.name || data.nickname,
+                    shipping_phone: data.phone,
+                    shipping_address: data.address || '',
+                    shipping_detail: data.address_detail || '',
                 });
                 if (syncResult?.success && syncResult?.masterUserId) {
                     await supabase.from('users')

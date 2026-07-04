@@ -38,6 +38,14 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
         terms_consent: false,
     });
 
+    // 기본 배송지 상태
+    const [shippingRecipient, setShippingRecipient] = useState('');
+    const [shippingPhone, setShippingPhone] = useState('');
+    const [shippingZipcode, setShippingZipcode] = useState('');
+    const [shippingAddress, setShippingAddress] = useState('');
+    const [shippingDetail, setShippingDetail] = useState('');
+    const [shippingLoading, setShippingLoading] = useState(false);
+
     useEffect(() => {
         const initUser = async () => {
             // 1차: 정상 세션에서 유저 가져오기
@@ -110,30 +118,31 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                     terms_consent: currentUser.terms_consent || false,
                 });
 
-                // 포인트 정보 조회/연동 및 마스터 주소 정보 동기화
+                // 포인트 정보 조회/연동
                 if (currentUser.master_user_id) {
                     setHasMasterUserId(true);
                     setPointsLoading(true);
                     setPointsError(false);
+                    setShippingLoading(true);
                     Promise.all([
                         getPointsBalance(currentUser.master_user_id),
                         getPointsHistory(currentUser.master_user_id),
-                        getMasterUser(currentUser.master_user_id).catch(() => null),
-                    ]).then(([balRes, histRes, masterRes]) => {
+                        getMasterUser(currentUser.master_user_id),
+                    ]).then(([balRes, histRes, userRes]) => {
                         if (balRes?.success) setPointsBalance(balRes.balance ?? 0);
                         if (histRes?.success) setPointsHistory((histRes.history || []).slice(0, 5));
-                        if (masterRes && masterRes.success !== false) {
-                            setFormData(prev => ({
-                                ...prev,
-                                address: masterRes.shipping_address || prev.address || '',
-                                address_detail: masterRes.shipping_detail || prev.address_detail || '',
-                                zipcode: masterRes.shipping_zipcode || prev.zipcode || '',
-                            }));
+                        if (userRes?.success && userRes.user) {
+                            setShippingRecipient(userRes.user.shipping_recipient || '');
+                            setShippingPhone(userRes.user.shipping_phone || '');
+                            setShippingZipcode(userRes.user.shipping_zipcode || '');
+                            setShippingAddress(userRes.user.shipping_address || '');
+                            setShippingDetail(userRes.user.shipping_detail || '');
                         }
                     }).catch(() => {
                         setPointsError(true);
                     }).finally(() => {
                         setPointsLoading(false);
+                        setShippingLoading(false);
                     });
                 } else if (currentUser.phone) {
                     // master_user_id가 없는데 전화번호가 있으면 백그라운드에서 동기화 시도 (보완책)
@@ -142,6 +151,10 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                         phoneNumber: currentUser.phone,
                         localUserId: currentUser.id || currentUser.nickname,
                         name: currentUser.name || currentUser.nickname,
+                        shipping_recipient: currentUser.name || currentUser.nickname,
+                        shipping_phone: currentUser.phone,
+                        shipping_address: currentUser.address || '',
+                        shipping_detail: currentUser.address_detail || '',
                     }).then(async (syncResult) => {
                         if (syncResult?.success && syncResult?.masterUserId) {
                             setHasMasterUserId(true);
@@ -157,9 +170,17 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                             Promise.all([
                                 getPointsBalance(syncResult.masterUserId),
                                 getPointsHistory(syncResult.masterUserId),
-                            ]).then(([balRes, histRes]) => {
+                                getMasterUser(syncResult.masterUserId),
+                            ]).then(([balRes, histRes, userRes]) => {
                                 if (balRes?.success) setPointsBalance(balRes.balance ?? 0);
                                 if (histRes?.success) setPointsHistory((histRes.history || []).slice(0, 5));
+                                if (userRes?.success && userRes.user) {
+                                    setShippingRecipient(userRes.user.shipping_recipient || '');
+                                    setShippingPhone(userRes.user.shipping_phone || '');
+                                    setShippingZipcode(userRes.user.shipping_zipcode || '');
+                                    setShippingAddress(userRes.user.shipping_address || '');
+                                    setShippingDetail(userRes.user.shipping_detail || '');
+                                }
                             }).catch(() => {
                                 setPointsError(true);
                             });
@@ -217,17 +238,32 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
         }).open();
     };
 
+    const handleShippingAddressSearch = () => {
+        if (!window.daum || !window.daum.Postcode) {
+            alert('주소 검색 서비스를 불러오는 중입니다. 잠시만 기다려주세요.');
+            return;
+        }
+        new window.daum.Postcode({
+            oncomplete: (data) => {
+                let fullAddress = data.address;
+                let extraAddress = '';
+ 
+                if (data.addressType === 'R') {
+                    if (data.bname !== '') extraAddress += data.bname;
+                    if (data.buildingName !== '') extraAddress += (extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName);
+                    fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : '');
+                }
+ 
+                setShippingZipcode(data.zonecode);
+                setShippingAddress(fullAddress);
+            }
+        }).open();
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setErrorMsg('');
-
-        if (!formData.address?.trim()) {
-            setErrorMsg('주소는 필수 입력 항목입니다.');
-            setLoading(false);
-            return;
-        }
-
         try {
             const updates = {
                 name: formData.name,
@@ -424,6 +460,89 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                 className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                             />
                             <p className="text-[10px] text-[#9CA3AF] ml-2 font-medium">※ 프로필 발송 시 동일한 내용의 확인 메일을 받으실 수 있습니다.</p>
+                        </div>
+ 
+                        {/* ── 📍 기본 배송지 설정 ── */}
+                        <div className="pt-4 border-t border-[#E8E0FA] mt-2 space-y-4">
+                            <p className="text-[#1F1235] text-[13px] font-black uppercase tracking-wider flex items-center gap-1">
+                                📍 기본 배송지 설정
+                            </p>
+ 
+                            {!hasMasterUserId ? (
+                                <div className="flex items-center gap-3 py-4 px-4 rounded-2xl bg-gray-50 border border-gray-100">
+                                    <span className="material-symbols-outlined text-[22px] text-gray-300">sync</span>
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-400">배송지 연동 준비 중...</p>
+                                    </div>
+                                </div>
+                            ) : shippingLoading ? (
+                                <div className="space-y-4 animate-pulse">
+                                    <div className="h-24 bg-purple-50/50 rounded-2xl" />
+                                </div>
+                            ) : (
+                                <div className="space-y-3.5">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[#5B4E7A] text-[10px] font-bold ml-1 text-gray-500">배송지 수령인 (실명)</label>
+                                        <input
+                                            type="text"
+                                            name="shippingRecipient"
+                                            value={shippingRecipient}
+                                            onChange={e => setShippingRecipient(e.target.value)}
+                                            placeholder="수령인 이름 입력"
+                                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3 text-[#1F1235] text-sm font-bold focus:outline-none focus:border-[#9333EA] transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[#5B4E7A] text-[10px] font-bold ml-1 text-gray-500">배송지 연락처</label>
+                                        <input
+                                            type="tel"
+                                            name="shippingPhone"
+                                            value={shippingPhone}
+                                            onChange={e => setShippingPhone(e.target.value)}
+                                            placeholder="010-0000-0000"
+                                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3 text-[#1F1235] text-sm font-bold focus:outline-none focus:border-[#9333EA] transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[#5B4E7A] text-[10px] font-bold ml-1 text-gray-500">배송 주소</label>
+                                        <div className="flex gap-2 mb-2">
+                                            <input
+                                                type="text"
+                                                name="shippingZipcode"
+                                                value={shippingZipcode}
+                                                readOnly
+                                                onClick={handleShippingAddressSearch}
+                                                placeholder="우편번호"
+                                                className="flex-1 min-w-0 bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] cursor-pointer"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleShippingAddressSearch}
+                                                className="px-4 rounded-2xl bg-[#9333EA]/10 text-[#9333EA] font-black text-xs hover:bg-[#9333EA]/20 transition-colors border border-[#9333EA]/20 whitespace-nowrap"
+                                            >
+                                                검색
+                                            </button>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            name="shippingAddress"
+                                            value={shippingAddress}
+                                            readOnly
+                                            onClick={handleShippingAddressSearch}
+                                            placeholder="기본 주소"
+                                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] cursor-pointer mb-2"
+                                        />
+                                        <input
+                                            type="text"
+                                            name="shippingDetail"
+                                            value={shippingDetail}
+                                            onChange={e => setShippingDetail(e.target.value)}
+                                            placeholder="상세 주소 입력"
+                                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3 text-[#1F1235] text-sm font-bold focus:outline-none focus:border-[#9333EA] transition-all"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* ── 💳 통합 포인트 전자지갑 ── */}

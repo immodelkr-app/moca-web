@@ -35,7 +35,16 @@ const headers = {
  *
  * @returns {Promise<{ success: boolean, masterUserId: string, integratedPoints: number, isNewUser: boolean }>}
  */
-export async function syncUserWithCore({ phoneNumber, localUserId, name }) {
+export async function syncUserWithCore({
+  phoneNumber,
+  localUserId,
+  name,
+  shipping_recipient,
+  shipping_phone,
+  shipping_zipcode,
+  shipping_address,
+  shipping_detail
+}) {
   try {
     const cleanPhone = (phoneNumber || '').replace(/-/g, '').trim();
     const cleanName = (name || '').trim() || '미입력';
@@ -47,6 +56,11 @@ export async function syncUserWithCore({ phoneNumber, localUserId, name }) {
         appName: 'MOCA', // DB 제약 조건상 반드시 대문자 'MOCA'
         localUserId,
         name: cleanName,
+        shipping_recipient,
+        shipping_phone,
+        shipping_zipcode,
+        shipping_address,
+        shipping_detail,
       }),
     });
 
