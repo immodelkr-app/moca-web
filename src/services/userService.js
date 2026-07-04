@@ -84,9 +84,15 @@ export const saveUserToSupabase = async (userData) => {
             });
             if (syncResult?.success && syncResult?.masterUserId) {
                 await supabase.from('users')
-                    .update({ master_user_id: syncResult.masterUserId })
+                    .update({
+                        master_user_id: syncResult.masterUserId,
+                        ...(syncResult.shipping_address ? { address: syncResult.shipping_address } : {}),
+                        ...(syncResult.shipping_detail ? { address_detail: syncResult.shipping_detail } : {}),
+                    })
                     .eq('id', data.id);
                 data.master_user_id = syncResult.masterUserId;
+                if (syncResult.shipping_address) data.address = syncResult.shipping_address;
+                if (syncResult.shipping_detail) data.address_detail = syncResult.shipping_detail;
                 console.log('[userService] im-core-auth SSO 동기화 완료 (회원가입):', syncResult.masterUserId);
             }
         } catch (syncErr) {
@@ -265,9 +271,15 @@ export const loginUser = async (nickname, password) => {
                 });
                 if (syncResult?.success && syncResult?.masterUserId) {
                     await supabase.from('users')
-                        .update({ master_user_id: syncResult.masterUserId })
+                        .update({
+                            master_user_id: syncResult.masterUserId,
+                            ...(syncResult.shipping_address ? { address: syncResult.shipping_address } : {}),
+                            ...(syncResult.shipping_detail ? { address_detail: syncResult.shipping_detail } : {}),
+                        })
                         .eq('id', data.id);
                     data.master_user_id = syncResult.masterUserId;
+                    if (syncResult.shipping_address) data.address = syncResult.shipping_address;
+                    if (syncResult.shipping_detail) data.address_detail = syncResult.shipping_detail;
                     console.log('[userService] im-core-auth SSO 동기화 완료 (로그인):', syncResult.masterUserId);
                 }
             } catch (syncErr) {

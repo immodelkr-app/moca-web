@@ -131,9 +131,18 @@ export const useAuthSync = () => {
                             });
                             if (syncResult?.success && syncResult?.masterUserId) {
                                 await supabase.from('users')
-                                    .update({ master_user_id: syncResult.masterUserId })
+                                    .update({
+                                        master_user_id: syncResult.masterUserId,
+                                        ...(syncResult.shipping_address ? { address: syncResult.shipping_address } : {}),
+                                        ...(syncResult.shipping_detail ? { address_detail: syncResult.shipping_detail } : {}),
+                                    })
                                     .eq('id', currentRecord.id);
-                                saveUser({ ...mergedUser, master_user_id: syncResult.masterUserId });
+                                saveUser({
+                                    ...mergedUser,
+                                    master_user_id: syncResult.masterUserId,
+                                    ...(syncResult.shipping_address ? { address: syncResult.shipping_address } : {}),
+                                    ...(syncResult.shipping_detail ? { address_detail: syncResult.shipping_detail } : {}),
+                                });
                                 console.log('[useAuthSync] im-core-auth SSO 동기화 완료:', syncResult.masterUserId);
                             }
                         } catch (syncErr) {
@@ -174,9 +183,18 @@ export const useAuthSync = () => {
                             });
                             if (syncResult?.success && syncResult?.masterUserId) {
                                 await supabase.from('users')
-                                    .update({ master_user_id: syncResult.masterUserId })
+                                    .update({
+                                        master_user_id: syncResult.masterUserId,
+                                        ...(syncResult.shipping_address ? { address: syncResult.shipping_address } : {}),
+                                        ...(syncResult.shipping_detail ? { address_detail: syncResult.shipping_detail } : {}),
+                                    })
                                     .eq('id', savedUser.id);
-                                saveUser({ ...savedUser, master_user_id: syncResult.masterUserId });
+                                saveUser({
+                                    ...savedUser,
+                                    master_user_id: syncResult.masterUserId,
+                                    ...(syncResult.shipping_address ? { address: syncResult.shipping_address } : {}),
+                                    ...(syncResult.shipping_detail ? { address_detail: syncResult.shipping_detail } : {}),
+                                });
                                 console.log('[useAuthSync] im-core-auth SSO 동기화 완료 (신규):', syncResult.masterUserId);
                             }
                         } catch (syncErr) {

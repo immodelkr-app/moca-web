@@ -220,3 +220,62 @@ export async function deductPoints({ masterUserId, amount, description }) {
     throw err;
   }
 }
+
+// ---------------------------------------------------------------------------
+// 6. 마스터 유저 정보 조회
+// ---------------------------------------------------------------------------
+/**
+ * masterUserId 기준으로 마스터 유저 상세 정보를 조회합니다.
+ *
+ * @param {string} masterUserId
+ * @returns {Promise<Object>}
+ */
+export async function getMasterUser(masterUserId) {
+  try {
+    const res = await fetch(`${IM_CORE_AUTH_URL}/api/auth/user/${masterUserId}`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP ${res.status}`);
+    }
+
+    return res.json();
+  } catch (err) {
+    console.error('[imCoreAuth] getMasterUser 실패:', err);
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 7. 마스터 유저 정보 및 주소 업데이트
+// ---------------------------------------------------------------------------
+/**
+ * 마스터 유저의 정보를 업데이트합니다.
+ *
+ * @param {string} masterUserId
+ * @param {Object} updateFields - { name, shipping_recipient, shipping_phone, shipping_zipcode, shipping_address, shipping_detail }
+ * @returns {Promise<Object>}
+ */
+export async function updateMasterUser(masterUserId, updateFields) {
+  try {
+    const res = await fetch(`${IM_CORE_AUTH_URL}/api/auth/user/${masterUserId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(updateFields),
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP ${res.status}`);
+    }
+
+    return res.json();
+  } catch (err) {
+    console.error('[imCoreAuth] updateMasterUser 실패:', err);
+    throw err;
+  }
+}
+

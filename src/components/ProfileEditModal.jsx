@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { getUser, updateUserProfile, updateMasterUserIdInSupabase } from '../services/userService';
 import { isPasskeySupported, registerPasskey } from '../services/passkeyService';
-import { getPointsBalance, getPointsHistory, syncUserWithCore } from '../lib/imCoreAuth';
+import { getPointsBalance, getPointsHistory, syncUserWithCore, getMasterUser, updateMasterUser } from '../lib/imCoreAuth';
 
 
 const USER_KEY = 'i_model_user';
@@ -31,6 +31,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
         phone: '',
         address: '',
         address_detail: '',
+        zipcode: '',
         email: '',
         password: '',
         marketing_consent: false,
@@ -109,7 +110,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                     terms_consent: currentUser.terms_consent || false,
                 });
 
-                // 포인트 정보 조회/연동
+                // 포인트 정보 조회/연동 및 마스터 주소 정보 동기화
                 if (currentUser.master_user_id) {
                     setHasMasterUserId(true);
                     setPointsLoading(true);
@@ -117,9 +118,18 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                     Promise.all([
                         getPointsBalance(currentUser.master_user_id),
                         getPointsHistory(currentUser.master_user_id),
-                    ]).then(([balRes, histRes]) => {
+                        getMasterUser(currentUser.master_user_id).catch(() => null),
+                    ]).then(([balRes, histRes, masterRes]) => {
                         if (balRes?.success) setPointsBalance(balRes.balance ?? 0);
                         if (histRes?.success) setPointsHistory((histRes.history || []).slice(0, 5));
+                        if (masterRes && masterRes.success !== false) {
+                            setFormData(prev => ({
+                                ...prev,
+                                address: masterRes.shipping_address || prev.address || '',
+                                address_detail: masterRes.shipping_detail || prev.address_detail || '',
+                                zipcode: masterRes.shipping_zipcode || prev.zipcode || '',
+                            }));
+                        }
                     }).catch(() => {
                         setPointsError(true);
                     }).finally(() => {
@@ -200,7 +210,8 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
 
                 setFormData(prev => ({
                     ...prev,
-                    address: fullAddress
+                    address: fullAddress,
+                    zipcode: data.zonecode
                 }));
             }
         }).open();
@@ -210,6 +221,12 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
         e.preventDefault();
         setLoading(true);
         setErrorMsg('');
+
+        if (!formData.address?.trim()) {
+            setErrorMsg('주소는 필수 입력 항목입니다.');
+            setLoading(false);
+            return;
+        }
 
         try {
             const updates = {
@@ -228,6 +245,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
 
             if (!user?.id && !user?.nickname) {
                 setErrorMsg('사용자 정보를 찾을 수 없습니다.');
+                setLoading(false);
                 return;
             }
 
@@ -240,6 +258,24 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                 setErrorMsg(updateErr.message || '정보 수정에 실패했습니다.');
             } else {
                 console.log('[ProfileEditModal] Update successful');
+                
+                // im-core-auth 주소 양방향 동기화
+                if (user?.master_user_id) {
+                    try {
+                        await updateMasterUser(user.master_user_id, {
+                            name: formData.name,
+                            shipping_recipient: formData.name,
+                            shipping_phone: formData.phone,
+                            shipping_zipcode: formData.zipcode || null,
+                            shipping_address: formData.address,
+                            shipping_detail: formData.address_detail || null,
+                        });
+                        console.log('[ProfileEditModal] im-core-auth 주소 동기화 완료');
+                    } catch (syncErr) {
+                        console.warn('[ProfileEditModal] im-core-auth 주소 동기화 실패 (비중단):', syncErr.message);
+                    }
+                }
+                
                 onUpdateSuccess?.(); // HomeDashboard에서 window.location.reload() 수행함
             }
         } catch (err) {
@@ -324,6 +360,20 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                 className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#1F1235] text-sm font-bold placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
                             />
                         </div>
+
+                        {/* 우편번호 */}
+                        {formData.zipcode && (
+                            <div className="space-y-1.5">
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">우편번호</label>
+                                <input
+                                    type="text"
+                                    name="zipcode"
+                                    value={formData.zipcode}
+                                    readOnly
+                                    className="w-full bg-[#F3E8FF] border border-[#E8E0FA] rounded-2xl px-4 py-3.5 text-[#9333EA] text-sm font-bold shadow-inner"
+                                />
+                            </div>
+                        )}
 
                         {/* 주소 */}
                         <div className="space-y-1.5">
