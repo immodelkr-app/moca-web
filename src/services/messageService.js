@@ -48,7 +48,7 @@ export const fetchMessageDetail = async (id) => {
     }
 };
 
-export const postMessage = async (title, content, imageFile, linkUrl = null) => {
+export const createAnnouncementMessage = async (title, content, imageFile, linkUrl = null) => {
     let image_url = null;
 
     if (isSupabaseEnabled()) {
@@ -91,6 +91,8 @@ export const postMessage = async (title, content, imageFile, linkUrl = null) => 
         localStorage.setItem(LOCAL_ANNOUNCEMENT_KEY, JSON.stringify(list));
     }
 };
+
+export const postMessage = createAnnouncementMessage;
 
 export const updateMessage = async (id, title, content, linkUrl = null, imageFile = null) => {
     if (isSupabaseEnabled()) {
