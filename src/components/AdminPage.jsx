@@ -13,6 +13,7 @@ import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORI
 import { fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
 import { sendAlimtalk, sendBulkMessage, sendFriendtalk } from '../services/solapiService';
 import { fetchPushHistory, sendBroadcastPush, fetchUsersWithoutPushToken, fetchAllUsersWithPhone } from '../services/pushNotificationService';
+import { fetchMessagesList, postMessage, updateMessage, deleteMessage } from '../services/messageService';
 import { getPointsBalance, getPointsHistory, rewardPoints, deductPoints } from '../lib/imCoreAuth';
 import * as XLSX from 'xlsx';
 
