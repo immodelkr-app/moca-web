@@ -48,14 +48,15 @@ export const fetchMessageDetail = async (id) => {
     }
 };
 
-// Helper to safely convert File to Blob (prevents Capacitor/WebView postMessage serialization issues with File objects)
-const fileToBlob = async (file) => {
-    if (!file) return null;
-    if (typeof file.arrayBuffer === 'function') {
-        const buffer = await file.arrayBuffer();
-        return new Blob([buffer], { type: file.type || 'image/jpeg' });
-    }
-    return file;
+// Helper to convert File to Data URL (guarantees image display even if Supabase Storage fails/blocks)
+const fileToDataUrl = (file) => {
+    return new Promise((resolve) => {
+        if (!file) return resolve(null);
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result || null);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+    });
 };
 
 export const createAnnouncementMessage = async (title, content, imageFile, linkUrl = null) => {
@@ -63,29 +64,36 @@ export const createAnnouncementMessage = async (title, content, imageFile, linkU
 
     if (isSupabaseEnabled()) {
         if (imageFile) {
-            const fileExt = imageFile.name ? imageFile.name.split('.').pop() : 'jpg';
-            const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
-            const filePath = `messages/${fileName}`;
+            try {
+                const fileExt = imageFile.name ? imageFile.name.split('.').pop() : 'jpg';
+                const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+                const filePath = `messages/${fileName}`;
 
-            const uploadBody = await fileToBlob(imageFile);
+                const uploadBody = await fileToBlob(imageFile);
 
-            const { error: uploadError } = await supabase.storage
-                .from('moca_assets')
-                .upload(filePath, uploadBody, {
-                    contentType: imageFile.type || 'image/jpeg',
-                    upsert: true,
-                });
+                const { error: uploadError } = await supabase.storage
+                    .from('moca_assets')
+                    .upload(filePath, uploadBody, {
+                        contentType: imageFile.type || 'image/jpeg',
+                        upsert: true,
+                    });
 
-            if (uploadError) {
-                console.error('Upload Error:', uploadError);
-                throw new Error('이미지 업로드에 실패했습니다. (' + (uploadError.message || 'Storage 설정 확인 필요') + ')');
+                if (!uploadError) {
+                    const { data: publicUrlData } = supabase.storage
+                        .from('moca_assets')
+                        .getPublicUrl(filePath);
+                    image_url = publicUrlData?.publicUrl || null;
+                } else {
+                    console.warn('Storage upload error, falling back to Data URL:', uploadError);
+                }
+            } catch (err) {
+                console.warn('Storage exception, falling back to Data URL:', err);
             }
 
-            const { data: publicUrlData } = supabase.storage
-                .from('moca_assets')
-                .getPublicUrl(filePath);
-
-            image_url = publicUrlData.publicUrl;
+            // Storage 업로드에 실패해도 Data URL로 사진 첨부 보장
+            if (!image_url) {
+                image_url = await fileToDataUrl(imageFile);
+            }
         }
 
         // image_url 컬럼이 없는 경우를 대비해 이미지가 없으면 제외
@@ -102,7 +110,9 @@ export const createAnnouncementMessage = async (title, content, imageFile, linkU
         // Local storage demo fallback
         const raw = localStorage.getItem(LOCAL_ANNOUNCEMENT_KEY);
         const list = raw ? JSON.parse(raw) : [];
-        list.push({ id: Date.now(), title, content, image_url: null, created_at: new Date().toISOString() });
+        let localImg = null;
+        if (imageFile) localImg = await fileToDataUrl(imageFile);
+        list.push({ id: Date.now(), title, content, image_url: localImg, created_at: new Date().toISOString() });
         localStorage.setItem(LOCAL_ANNOUNCEMENT_KEY, JSON.stringify(list));
     }
 };
@@ -114,26 +124,38 @@ export const updateMessage = async (id, title, content, linkUrl = null, imageFil
         if (removeImage) {
             updateData.image_url = null;
         } else if (imageFile) {
-            const fileExt = imageFile.name ? imageFile.name.split('.').pop() : 'jpg';
-            const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
-            const filePath = `messages/${fileName}`;
+            let image_url = null;
+            try {
+                const fileExt = imageFile.name ? imageFile.name.split('.').pop() : 'jpg';
+                const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+                const filePath = `messages/${fileName}`;
 
-            const uploadBody = await fileToBlob(imageFile);
+                const uploadBody = await fileToBlob(imageFile);
 
-            const { error: uploadError } = await supabase.storage
-                .from('moca_assets')
-                .upload(filePath, uploadBody, {
-                    contentType: imageFile.type || 'image/jpeg',
-                    upsert: true,
-                });
+                const { error: uploadError } = await supabase.storage
+                    .from('moca_assets')
+                    .upload(filePath, uploadBody, {
+                        contentType: imageFile.type || 'image/jpeg',
+                        upsert: true,
+                    });
 
-            if (uploadError) throw new Error('이미지 업로드에 실패했습니다: ' + uploadError.message);
+                if (!uploadError) {
+                    const { data: publicUrlData } = supabase.storage
+                        .from('moca_assets')
+                        .getPublicUrl(filePath);
+                    image_url = publicUrlData?.publicUrl || null;
+                }
+            } catch (err) {
+                console.warn('Storage error on update, falling back to Data URL:', err);
+            }
 
-            const { data: publicUrlData } = supabase.storage
-                .from('moca_assets')
-                .getPublicUrl(filePath);
+            if (!image_url) {
+                image_url = await fileToDataUrl(imageFile);
+            }
 
-            updateData.image_url = publicUrlData.publicUrl;
+            if (image_url) {
+                updateData.image_url = image_url;
+            }
         }
 
         const { error } = await supabase
@@ -144,10 +166,13 @@ export const updateMessage = async (id, title, content, linkUrl = null, imageFil
     } else {
         const raw = localStorage.getItem(LOCAL_ANNOUNCEMENT_KEY);
         const list = raw ? JSON.parse(raw) : [];
+        let localImg = null;
+        if (imageFile) localImg = await fileToDataUrl(imageFile);
         const updated = list.map(m => {
             if (m.id === id) {
                 const item = { ...m, title, content, link_url: linkUrl || null };
                 if (removeImage) item.image_url = null;
+                else if (localImg) item.image_url = localImg;
                 return item;
             }
             return m;
