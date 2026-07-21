@@ -48,22 +48,37 @@ export const fetchMessageDetail = async (id) => {
     }
 };
 
+// Helper to safely convert File to Blob (prevents Capacitor/WebView postMessage serialization issues with File objects)
+const fileToBlob = async (file) => {
+    if (!file) return null;
+    if (typeof file.arrayBuffer === 'function') {
+        const buffer = await file.arrayBuffer();
+        return new Blob([buffer], { type: file.type || 'image/jpeg' });
+    }
+    return file;
+};
+
 export const createAnnouncementMessage = async (title, content, imageFile, linkUrl = null) => {
     let image_url = null;
 
     if (isSupabaseEnabled()) {
         if (imageFile) {
-            const fileExt = imageFile.name.split('.').pop();
+            const fileExt = imageFile.name ? imageFile.name.split('.').pop() : 'jpg';
             const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
             const filePath = `messages/${fileName}`;
 
+            const uploadBody = await fileToBlob(imageFile);
+
             const { error: uploadError } = await supabase.storage
                 .from('moca_assets')
-                .upload(filePath, imageFile);
+                .upload(filePath, uploadBody, {
+                    contentType: imageFile.type || 'image/jpeg',
+                    upsert: true,
+                });
 
             if (uploadError) {
                 console.error('Upload Error:', uploadError);
-                throw new Error('이미지 업로드에 실패했습니다. (Storage 설정 확인 필요)');
+                throw new Error('이미지 업로드에 실패했습니다. (' + (uploadError.message || 'Storage 설정 확인 필요') + ')');
             }
 
             const { data: publicUrlData } = supabase.storage
@@ -97,15 +112,20 @@ export const updateMessage = async (id, title, content, linkUrl = null, imageFil
         const updateData = { title, content, link_url: linkUrl || null };
 
         if (imageFile) {
-            const fileExt = imageFile.name.split('.').pop();
+            const fileExt = imageFile.name ? imageFile.name.split('.').pop() : 'jpg';
             const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
             const filePath = `messages/${fileName}`;
 
+            const uploadBody = await fileToBlob(imageFile);
+
             const { error: uploadError } = await supabase.storage
                 .from('moca_assets')
-                .upload(filePath, imageFile);
+                .upload(filePath, uploadBody, {
+                    contentType: imageFile.type || 'image/jpeg',
+                    upsert: true,
+                });
 
-            if (uploadError) throw new Error('이미지 업로드에 실패했습니다.');
+            if (uploadError) throw new Error('이미지 업로드에 실패했습니다: ' + uploadError.message);
 
             const { data: publicUrlData } = supabase.storage
                 .from('moca_assets')
