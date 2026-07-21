@@ -56,6 +56,7 @@ const AdminPage = () => {
     const [editContent, setEditContent] = useState('');
     const [editLinkUrl, setEditLinkUrl] = useState('');
     const [editImage, setEditImage] = useState(null);
+    const [removeExistingImage, setRemoveExistingImage] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
 
     // 알리고 메시지 발송 State
@@ -419,6 +420,7 @@ const AdminPage = () => {
         setEditContent(a.content || '');
         setEditLinkUrl(a.link_url || '');
         setEditImage(null);
+        setRemoveExistingImage(false);
         setLoungeView('edit');
     };
 
@@ -429,7 +431,14 @@ const AdminPage = () => {
         setIsUpdating(true);
         setError('');
         try {
-            await updateMessage(editingAnnouncement.id, editTitle.trim(), editContent.trim(), editLinkUrl.trim() || null, editImage || null);
+            await updateMessage(
+                editingAnnouncement.id,
+                editTitle.trim(),
+                editContent.trim(),
+                editLinkUrl.trim() || null,
+                editImage || null,
+                removeExistingImage
+            );
             setSuccessMsg('✅ 공지가 수정되었습니다.');
             await loadAnnouncements();
             setLoungeView('list');
@@ -2051,20 +2060,60 @@ const AdminPage = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">사진 변경 (선택)</label>
-                                        {editingAnnouncement.image_url && !editImage && (
-                                            <div className="mb-2 rounded-xl overflow-hidden border border-[var(--moca-border)] w-32">
-                                                <img src={editingAnnouncement.image_url} alt="현재 이미지" className="w-full h-auto object-cover opacity-70" />
-                                                <p className="text-[10px] text-[var(--moca-text-3)] text-center py-1">현재 이미지</p>
+                                        <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">사진 관리 (추가 / 변경 / 삭제)</label>
+                                        {editingAnnouncement.image_url && (
+                                            <div className="mb-3 p-3 rounded-xl border border-[var(--moca-border)] bg-[var(--moca-surface-2)] flex items-center justify-between gap-4">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={editingAnnouncement.image_url} alt="현재 등록된 사진" className="w-16 h-16 object-cover rounded-lg border border-[var(--moca-border)]" />
+                                                    <div>
+                                                        <p className="text-xs font-bold text-[var(--moca-text)]">현재 등록된 사진</p>
+                                                        {removeExistingImage ? (
+                                                            <p className="text-xs text-red-400 font-bold mt-1">⚠️ 저장 시 이 사진이 삭제됩니다</p>
+                                                        ) : (
+                                                            <p className="text-[11px] text-[var(--moca-text-3)] mt-0.5">등록된 사진을 삭제하거나 교체할 수 있습니다.</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {removeExistingImage ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setRemoveExistingImage(false)}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--moca-primary-lt)] text-[var(--moca-accent)] hover:bg-[var(--moca-primary)]/20 transition-colors flex items-center gap-1"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[14px]">undo</span>
+                                                        삭제 취소
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setRemoveExistingImage(true);
+                                                            setEditImage(null);
+                                                        }}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-1"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[14px]">delete</span>
+                                                        사진 삭제
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
+
+                                        <p className="text-xs font-bold text-[var(--moca-text-2)] mb-1">
+                                            {editingAnnouncement.image_url ? (removeExistingImage ? '새 사진으로 교체하기 (선택)' : '사진 교체하기 (선택)') : '사진 등록하기 (선택)'}
+                                        </p>
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={(e) => { if (e.target.files?.[0]) setEditImage(e.target.files[0]); }}
+                                            onChange={(e) => {
+                                                if (e.target.files?.[0]) {
+                                                    setEditImage(e.target.files[0]);
+                                                    setRemoveExistingImage(false);
+                                                }
+                                            }}
                                             className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-[var(--moca-primary-lt)] file:text-[var(--moca-accent)] hover:file:bg-[var(--moca-primary)]/20"
                                         />
-                                        {editImage && <p className="text-xs text-green-400 mt-2">새 파일: {editImage.name}</p>}
+                                        {editImage && <p className="text-xs text-green-400 mt-2 font-bold">✨ 업로드할 사진: {editImage.name}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">연결 링크 (선택)</label>

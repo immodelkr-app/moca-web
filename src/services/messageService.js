@@ -107,11 +107,13 @@ export const createAnnouncementMessage = async (title, content, imageFile, linkU
     }
 };
 
-export const updateMessage = async (id, title, content, linkUrl = null, imageFile = null) => {
+export const updateMessage = async (id, title, content, linkUrl = null, imageFile = null, removeImage = false) => {
     if (isSupabaseEnabled()) {
         const updateData = { title, content, link_url: linkUrl || null };
 
-        if (imageFile) {
+        if (removeImage) {
+            updateData.image_url = null;
+        } else if (imageFile) {
             const fileExt = imageFile.name ? imageFile.name.split('.').pop() : 'jpg';
             const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
             const filePath = `messages/${fileName}`;
@@ -142,7 +144,14 @@ export const updateMessage = async (id, title, content, linkUrl = null, imageFil
     } else {
         const raw = localStorage.getItem(LOCAL_ANNOUNCEMENT_KEY);
         const list = raw ? JSON.parse(raw) : [];
-        const updated = list.map(m => m.id === id ? { ...m, title, content } : m);
+        const updated = list.map(m => {
+            if (m.id === id) {
+                const item = { ...m, title, content, link_url: linkUrl || null };
+                if (removeImage) item.image_url = null;
+                return item;
+            }
+            return m;
+        });
         localStorage.setItem(LOCAL_ANNOUNCEMENT_KEY, JSON.stringify(updated));
     }
 };
