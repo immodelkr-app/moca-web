@@ -92,8 +92,6 @@ export const createAnnouncementMessage = async (title, content, imageFile, linkU
     }
 };
 
-export const postMessage = createAnnouncementMessage;
-
 export const updateMessage = async (id, title, content, linkUrl = null, imageFile = null) => {
     if (isSupabaseEnabled()) {
         const updateData = { title, content, link_url: linkUrl || null };

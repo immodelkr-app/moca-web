@@ -4,7 +4,7 @@
  *
  * .env에 아래 변수를 추가해야 실제 DB 저장이 됩니다:
  *   VITE_SUPABASE_URL=https://xxxx.supabase.co
- *   VITE_SUPABASE_ANON_KEY=eyJhbGc...
+ *   VITE_SUPABASE_ANON_KEY=eyJhbGc...\
  */
 import { createClient } from '@supabase/supabase-js';
 
@@ -21,6 +21,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
     }
 }
 
+// ✅ Capacitor WebView 환경에서 window.postMessage 충돌 방지용 안전한 fetch 래퍼
+// Capacitor 브리지는 window.postMessage를 인터셉트하므로,
+// supabase-js 내부의 BroadcastChannel / postMessage 사용이 충돌을 일으킬 수 있습니다.
+const safeFetch = (...args) => {
+    return fetch(...args);
+};
+
 export const supabase = supabaseUrl && supabaseAnonKey
     ? createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
@@ -31,9 +38,23 @@ export const supabase = supabaseUrl && supabaseAnonKey
             },
             persistSession: true,
             autoRefreshToken: true,
-            detectSessionInUrl: true,
-        }
+            detectSessionInUrl: false, // Capacitor WebView에서 URL 감지 비활성화
+            storageKey: 'moca-supabase-auth', // 고정 스토리지 키
+        },
+        global: {
+            // ✅ Capacitor WebView에서 supabase-js가 내부적으로
+            // window.postMessage를 호출하는 것을 방지하기 위한 fetch 래퍼
+            fetch: safeFetch,
+            headers: {},
+        },
+        realtime: {
+            // ✅ 불필요한 실시간 연결 비활성화 (어드민 공지 등록에는 불필요)
+            params: {
+                eventsPerSecond: 2,
+            },
+        },
     })
     : null;
 
 export const isSupabaseEnabled = () => !!supabase;
+
