@@ -138,3 +138,76 @@ export const updatePhotoStatus = async (photoId, status) => {
 
     return { success: !error };
 };
+
+/**
+ * 관리자: 사진에 피드백(admin_comment) 저장 + 상태 변경
+ * GOLD 회원용 단방향 피드백
+ * @param {string} photoId
+ * @param {'pending'|'approved'|'needs_more'} status
+ * @param {string} comment
+ * @returns {Promise<{success: boolean, error: string|null}>}
+ */
+export const updatePhotoFeedback = async (photoId, status, comment) => {
+    if (!isSupabaseEnabled()) return { success: false, error: 'Supabase 미설정' };
+
+    const { error } = await supabase
+        .from('model_current_photos')
+        .update({
+            status,
+            admin_comment: comment || null,
+            feedback_at: new Date().toISOString(),
+        })
+        .eq('id', photoId);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, error: null };
+};
+
+/**
+ * 1:1 피드백 댓글 추가 (아임모델/전속모델용 양방향 소통)
+ * @param {string} photoId
+ * @param {'admin'|'model'} senderType
+ * @param {string|null} senderId
+ * @param {string} senderName
+ * @param {string} content
+ * @returns {Promise<{success: boolean, data: object|null, error: string|null}>}
+ */
+export const addPhotoFeedbackComment = async (photoId, senderType, senderId, senderName, content) => {
+    if (!isSupabaseEnabled()) return { success: false, data: null, error: 'Supabase 미설정' };
+
+    const { data, error } = await supabase
+        .from('photo_feedbacks')
+        .insert([{
+            photo_id: photoId,
+            sender_type: senderType,
+            sender_id: senderId || null,
+            sender_name: senderName || '',
+            content,
+        }])
+        .select()
+        .single();
+
+    if (error) return { success: false, data: null, error: error.message };
+    return { success: true, data, error: null };
+};
+
+/**
+ * 특정 사진의 1:1 피드백 댓글 목록 조회
+ * @param {string} photoId
+ * @returns {Promise<Array>}
+ */
+export const fetchPhotoFeedbackComments = async (photoId) => {
+    if (!isSupabaseEnabled()) return [];
+
+    const { data, error } = await supabase
+        .from('photo_feedbacks')
+        .select('*')
+        .eq('photo_id', photoId)
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        console.warn('[fetchPhotoFeedbackComments] 조회 실패:', error.message);
+        return [];
+    }
+    return data || [];
+};

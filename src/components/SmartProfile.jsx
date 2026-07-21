@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser, updateSmartProfile } from '../services/userService';
-import { uploadCurrentPhoto, fetchUserCurrentPhotos, deleteCurrentPhoto } from '../services/currentPhotosService';
+import {
+    uploadCurrentPhoto,
+    fetchUserCurrentPhotos,
+    deleteCurrentPhoto,
+    fetchPhotoFeedbackComments,
+    addPhotoFeedbackComment,
+} from '../services/currentPhotosService';
 
 const GOOGLE_API_KEY = 'AIzaSyDHL15S2cq0umttfXh2ka6TFddamWJ9byI';
 const GOOGLE_CLIENT_ID = '1035713999053-4i9a5k0gsn0457uroib1eef93cjssedo.apps.googleusercontent.com';
@@ -39,6 +45,17 @@ const SmartProfile = () => {
     const [currentPhotoMsg, setCurrentPhotoMsg] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const [showGradePopup, setShowGradePopup] = useState(false);
+
+    // 피드백 말풍선 (GOLD 회원용)
+    const [feedbackPopupPhoto, setFeedbackPopupPhoto] = useState(null);
+
+    // 1:1 피드백 채팅 (IMODEL/VIP용)
+    const [chatPhoto, setChatPhoto] = useState(null);
+    const [chatComments, setChatComments] = useState([]);
+    const [chatLoading, setChatLoading] = useState(false);
+    const [chatInput, setChatInput] = useState('');
+    const [chatSending, setChatSending] = useState(false);
+    const chatBottomRef = useRef(null);
 
     useEffect(() => {
         if (!user) return;
@@ -217,7 +234,9 @@ const SmartProfile = () => {
 
     // 등급 체크: GOLD 이상만 현재모습 사진 사용 가능
     const ALLOWED_GRADES = ['GOLD', 'IMODEL', 'VIP'];
+    const CHAT_GRADES = ['IMODEL', 'VIP'];   // 아임모델/전속모델 - 1:1 채팅 피드백
     const isPhotoAllowed = ALLOWED_GRADES.includes(user?.grade);
+    const isChatAllowed = CHAT_GRADES.includes(user?.grade);
 
     const handleCurrentPhotoClick = () => {
         if (!isPhotoAllowed) {
@@ -225,6 +244,48 @@ const SmartProfile = () => {
             return;
         }
         currentPhotoInputRef.current?.click();
+    };
+
+    // GOLD: 피드백 말풍선 열기
+    const handlePhotoCardClick = (photo) => {
+        if (isChatAllowed) {
+            // 아임모델/전속모델: 1:1 채팅 열기
+            openChatModal(photo);
+        } else if (isPhotoAllowed && photo.admin_comment) {
+            // GOLD: 피드백 말풍선
+            setFeedbackPopupPhoto(photo);
+        } else {
+            setSelectedPhoto(photo);
+        }
+    };
+
+    // 1:1 채팅 모달 열기 (IMODEL/VIP)
+    const openChatModal = async (photo) => {
+        setChatPhoto(photo);
+        setChatLoading(true);
+        const comments = await fetchPhotoFeedbackComments(photo.id);
+        setChatComments(comments);
+        setChatLoading(false);
+        setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    };
+
+    // 1:1 채팅 댓글 전송
+    const handleSendChatComment = async () => {
+        if (!chatInput.trim() || chatSending) return;
+        setChatSending(true);
+        const { success, data } = await addPhotoFeedbackComment(
+            chatPhoto.id,
+            'model',
+            user?.id || null,
+            user?.name || user?.nickname || '모델',
+            chatInput.trim()
+        );
+        if (success && data) {
+            setChatComments(prev => [...prev, data]);
+            setChatInput('');
+            setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        }
+        setChatSending(false);
     };
 
     const handleCurrentPhotoChange = async (e) => {
@@ -671,17 +732,42 @@ const SmartProfile = () => {
                         <div className="grid grid-cols-3 gap-3">
                             {currentPhotos.map((photo) => {
                                 const sl = STATUS_LABEL[photo.status] || STATUS_LABEL.pending;
+                                const hasFeedback = !!photo.admin_comment;
+                                const isNeedsMore = photo.status === 'needs_more';
                                 return (
                                     <div key={photo.id} className="relative">
                                         <img
                                             src={photo.photo_url}
                                             alt="현재모습"
-                                            onClick={() => setSelectedPhoto(photo)}
-                                            className="w-full aspect-square object-cover rounded-xl border border-[#E8E0FA] cursor-pointer active:scale-95 transition-transform"
+                                            onClick={() => handlePhotoCardClick(photo)}
+                                            className={`w-full aspect-square object-cover rounded-xl border cursor-pointer active:scale-95 transition-transform ${
+                                                isNeedsMore ? 'border-red-400 ring-2 ring-red-400/40' : 'border-[#E8E0FA]'
+                                            }`}
                                         />
+                                        {/* 상태 뱃지 */}
                                         <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black ${sl.bg} ${sl.color}`}>
                                             {sl.text}
                                         </span>
+                                        {/* GOLD: 피드백 말풍선 아이콘 */}
+                                        {!isChatAllowed && hasFeedback && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setFeedbackPopupPhoto(photo); }}
+                                                className="absolute bottom-1.5 left-1.5 w-6 h-6 rounded-full bg-amber-400/90 flex items-center justify-center shadow-md animate-bounce"
+                                                title="어드민 피드백 보기"
+                                            >
+                                                <span className="material-symbols-outlined text-[12px] text-white">chat</span>
+                                            </button>
+                                        )}
+                                        {/* IMODEL/VIP: 1:1 채팅 아이콘 */}
+                                        {isChatAllowed && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); openChatModal(photo); }}
+                                                className="absolute bottom-1.5 left-1.5 w-6 h-6 rounded-full bg-purple-500/90 flex items-center justify-center shadow-md"
+                                                title="1:1 피드백 대화"
+                                            >
+                                                <span className="material-symbols-outlined text-[12px] text-white">forum</span>
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => handleDeleteCurrentPhoto(photo)}
                                             className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-red-500/80 hover:bg-red-600 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
@@ -797,7 +883,7 @@ const SmartProfile = () => {
             );
         })()}
 
-        {/* ── 등급 제한 안내 팝업 ── */}
+        {/* ── 등급 제한 안내 팝업 (실버 → GOLD 유도) ── */}
         {showGradePopup && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6" onClick={() => setShowGradePopup(false)}>
                 <div
@@ -807,18 +893,25 @@ const SmartProfile = () => {
                     <div className="w-16 h-16 bg-[#F59E0B]/15 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="material-symbols-outlined text-4xl text-[#FCD34D]">lock</span>
                     </div>
+                    <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 mb-3">
+                        <span className="text-amber-600 text-[11px] font-black">🥈 현재 SILVER 등급</span>
+                    </div>
                     <h3 className="text-[#1F1235] font-black text-lg mb-2">GOLD 회원 이상 전용 기능</h3>
-                    <p className="text-[#5B4E7A] text-sm leading-relaxed mb-2">
-                        <span className="text-amber-600 font-bold">현재모습 사진등록</span>은<br />
-                        <span className="text-amber-600 font-black">GOLD 회원</span> 이상부터 사용 가능합니다.
+                    <p className="text-[#5B4E7A] text-sm leading-relaxed mb-1">
+                        <span className="text-amber-600 font-bold">현재모습 사진등록</span>은
                     </p>
-                    <p className="text-[#9CA3AF] text-xs mb-5">
-                        GOLD 회원 업그레이드는 카카오톡으로 문의해 주세요.
+                    <p className="text-[#5B4E7A] text-sm leading-relaxed mb-1">
+                        <span className="text-amber-600 font-black">🌟 GOLD 회원 이상</span>부터 사용 가능합니다.
                     </p>
+                    <div className="bg-amber-50/80 rounded-2xl p-3 mb-4 mt-2 text-left">
+                        <p className="text-[#9CA3AF] text-[11px] leading-relaxed">
+                            ✅ GOLD 등급: 어드민 피드백 수신 가능<br/>
+                            ✅ 아임모델/전속모델: 1:1 피드백 대화 가능
+                        </p>
+                    </div>
 
                     {/* 버튼 영역 */}
                     <div className="flex flex-col gap-2.5">
-                        {/* 모델활동 신청 페이지 이동 */}
                         <button
                             onClick={() => { setShowGradePopup(false); navigate('/upgrade'); }}
                             className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] text-black font-black text-sm shadow-lg shadow-[#F59E0B]/25 hover:opacity-90 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
@@ -826,8 +919,6 @@ const SmartProfile = () => {
                             <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
                             GOLD 회원 신청 안내 보기
                         </button>
-
-                        {/* 카카오톡 문의하기 */}
                         <button
                             onClick={() => { setShowGradePopup(false); window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank'); }}
                             className="w-full py-3.5 rounded-2xl bg-[#FEE500]/10 border border-[#FEE500]/20 text-[#FADA0B] font-black text-sm hover:bg-[#FEE500]/18 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
@@ -835,13 +926,180 @@ const SmartProfile = () => {
                             <span className="material-symbols-outlined text-[18px]">chat</span>
                             카카오톡 문의하기
                         </button>
-
-                        {/* 닫기 */}
                         <button
                             onClick={() => setShowGradePopup(false)}
                             className="w-full py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] text-[#9CA3AF] font-bold text-sm hover:bg-[#EDE8FF] transition-colors"
                         >
                             닫기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* ── GOLD 피드백 말풍선 모달 ── */}
+        {feedbackPopupPhoto && (
+            <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setFeedbackPopupPhoto(null)}>
+                <div
+                    className="w-full max-w-md bg-white rounded-t-3xl p-6 shadow-2xl animate-slideUp"
+                    onClick={e => e.stopPropagation()}
+                >
+                    {/* 사진 미리보기 */}
+                    <div className="flex items-start gap-4 mb-4">
+                        <img
+                            src={feedbackPopupPhoto.photo_url}
+                            alt="현재모습"
+                            className="w-20 h-20 object-cover rounded-2xl border border-[#E8E0FA] flex-shrink-0"
+                        />
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                                <div className="w-7 h-7 rounded-xl bg-amber-100 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-[15px] text-amber-600">support_agent</span>
+                                </div>
+                                <span className="text-[#1F1235] font-black text-sm">운영자 피드백</span>
+                                <span className="text-[#9CA3AF] text-[10px]">
+                                    {feedbackPopupPhoto.feedback_at
+                                        ? new Date(feedbackPopupPhoto.feedback_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+                                        : ''}
+                                </span>
+                            </div>
+                            {/* 말풍선 */}
+                            <div className="bg-amber-50 border border-amber-200 rounded-2xl rounded-tl-sm p-3 relative">
+                                <p className="text-[#5B4E7A] text-sm leading-relaxed">{feedbackPopupPhoto.admin_comment}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {feedbackPopupPhoto.status === 'needs_more' && (
+                        <div className="bg-red-50 border border-red-200 rounded-2xl p-3 mb-4 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[16px] text-red-500">info</span>
+                            <p className="text-red-600 text-xs font-black">위 피드백을 확인하고 사진을 다시 올려주세요!</p>
+                        </div>
+                    )}
+
+                    <button
+                        onClick={() => setFeedbackPopupPhoto(null)}
+                        className="w-full py-3.5 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] text-[#5B4E7A] font-black text-sm hover:bg-[#EDE8FF] transition-colors"
+                    >
+                        확인
+                    </button>
+                </div>
+            </div>
+        )}
+
+        {/* ── IMODEL/VIP 1:1 피드백 채팅 모달 ── */}
+        {chatPhoto && (
+            <div className="fixed inset-0 z-[200] flex flex-col bg-[#F8F5FF]">
+                {/* 헤더 */}
+                <div className="flex items-center gap-3 px-4 pt-12 pb-3 bg-white border-b border-[#E8E0FA] flex-shrink-0">
+                    <button
+                        onClick={() => { setChatPhoto(null); setChatComments([]); setChatInput(''); }}
+                        className="w-9 h-9 rounded-xl bg-[#F3E8FF] flex items-center justify-center"
+                    >
+                        <span className="material-symbols-outlined text-[20px] text-[#7C3AED]">arrow_back</span>
+                    </button>
+                    <img
+                        src={chatPhoto.photo_url}
+                        alt="사진"
+                        className="w-10 h-10 object-cover rounded-xl border border-[#E8E0FA]"
+                    />
+                    <div className="flex-1">
+                        <p className="font-black text-[#1F1235] text-sm">사진 피드백 대화</p>
+                        <p className="text-[#9CA3AF] text-[11px]">운영자와 1:1로 소통하세요</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                        chatPhoto.status === 'approved' ? 'bg-emerald-100 text-emerald-600' :
+                        chatPhoto.status === 'needs_more' ? 'bg-red-100 text-red-600' :
+                        'bg-yellow-100 text-yellow-600'
+                    }`}>
+                        {chatPhoto.status === 'approved' ? '승인' : chatPhoto.status === 'needs_more' ? '추가요청' : '검토중'}
+                    </span>
+                </div>
+
+                {/* 어드민 단방향 피드백 (있는 경우) */}
+                {chatPhoto.admin_comment && (
+                    <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 flex-shrink-0">
+                        <div className="flex items-start gap-2">
+                            <span className="material-symbols-outlined text-[15px] text-amber-600 mt-0.5">support_agent</span>
+                            <div>
+                                <p className="text-[10px] text-amber-600 font-black mb-0.5">운영자 피드백</p>
+                                <p className="text-amber-800 text-xs leading-relaxed">{chatPhoto.admin_comment}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 채팅 메시지 영역 */}
+                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                    {chatLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                            <div className="w-6 h-6 rounded-full border-2 border-[#9333EA] border-t-transparent animate-spin" />
+                        </div>
+                    ) : chatComments.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-10 text-[#9CA3AF]">
+                            <span className="material-symbols-outlined text-[40px] mb-2">forum</span>
+                            <p className="text-xs font-bold text-center">아직 대화가 없습니다.<br/>운영자의 피드백을 기다려 주세요.</p>
+                        </div>
+                    ) : (
+                        chatComments.map((c) => {
+                            const isAdmin = c.sender_type === 'admin';
+                            return (
+                                <div key={c.id} className={`flex items-end gap-2 ${isAdmin ? '' : 'flex-row-reverse'}`}>
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                        isAdmin ? 'bg-amber-100' : 'bg-[#9333EA]/20'
+                                    }`}>
+                                        <span className={`material-symbols-outlined text-[16px] ${
+                                            isAdmin ? 'text-amber-600' : 'text-[#9333EA]'
+                                        }`}>
+                                            {isAdmin ? 'support_agent' : 'person'}
+                                        </span>
+                                    </div>
+                                    <div className={`max-w-[72%] ${ isAdmin ? '' : 'items-end flex flex-col' }`}>
+                                        <p className={`text-[10px] font-black mb-0.5 ${
+                                            isAdmin ? 'text-amber-600' : 'text-[#9333EA] text-right'
+                                        }`}>
+                                            {isAdmin ? '아임모델 김대표' : (user?.nickname || user?.name || c.sender_name || '나')}
+                                        </p>
+                                        <div className={`px-3 py-2.5 rounded-2xl ${
+                                            isAdmin
+                                                ? 'bg-white border border-[#E8E0FA] rounded-tl-sm'
+                                                : 'bg-[#9333EA] rounded-tr-sm'
+                                        }`}>
+                                            <p className={`text-sm leading-relaxed ${
+                                                isAdmin ? 'text-[#1F1235]' : 'text-white'
+                                            }`}>{c.content}</p>
+                                        </div>
+                                        <p className="text-[9px] text-[#9CA3AF] mt-0.5">
+                                            {new Date(c.created_at).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                    <div ref={chatBottomRef} />
+                </div>
+
+                {/* 입력창 */}
+                <div className="flex-shrink-0 px-4 py-3 pb-6 bg-white border-t border-[#E8E0FA]">
+                    <div className="flex gap-2 items-end">
+                        <textarea
+                            value={chatInput}
+                            onChange={e => setChatInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendChatComment(); } }}
+                            placeholder="운영자에게 메시지를 보내세요..."
+                            rows={1}
+                            className="flex-1 bg-[#F8F5FF] border border-[#E8E0FA] rounded-2xl px-4 py-3 text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] resize-none"
+                        />
+                        <button
+                            onClick={handleSendChatComment}
+                            disabled={!chatInput.trim() || chatSending}
+                            className="w-11 h-11 rounded-2xl bg-[#9333EA] flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all flex-shrink-0"
+                        >
+                            {chatSending
+                                ? <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                : <span className="material-symbols-outlined text-[20px] text-white">send</span>
+                            }
                         </button>
                     </div>
                 </div>

@@ -59,29 +59,20 @@ const AdminContractViewerModal = ({ contract, onClose }) => {
                             </div>
 
                             <div>
-                                <h3 className="font-extrabold text-black text-lg mb-2">제3조 [교육비 비용]</h3>
-                                <p>1. "을"은 제2조의 수강 기간에 해당하는 교육 및 관리 비용을 "갑"이 정한 방식(일시납 또는 월납)에 따라 선불로 납부한다.</p>
-                                <p className="flex items-center flex-wrap">2. 납부 금액: 월 금 
-                                    <span className="font-bold text-red-600 underline mx-2">{contract.fee}</span>원 (VAT 별도)
-                                </p>
-                                <p>3. 해당 비용은 "갑"이 제공하는 모델 실무 교육, 이미지 컨설팅, 에이전시 홍보 대행 업무 등에 사용된다.</p>
-                            </div>
-
-                            <div>
-                                <h3 className="font-extrabold text-black text-lg mb-2">제4조 [수익 분배]</h3>
+                                <h3 className="font-extrabold text-black text-lg mb-2">제3조 [수익 분배]</h3>
                                 <p>1. 기본 배분 비율: 광고주로부터 지급받은 총액에서 제반 경비와 원천세(3.3%)를 공제한 순수익을 기준으로, "갑" 3 : "을" 7 (모델 70%)의 비율로 배분한다.</p>
                                 <p>2. 지급 시기: 수익금 지급은 광고주로부터 입금이 확인된 후, "갑"의 정기 정산일에 "을"의 지정 계좌로 이체한다.</p>
                             </div>
 
                             <div>
-                                <h3 className="font-extrabold text-black text-lg mb-2">제5조 ["을"의 의무 및 계약 위반]</h3>
+                                <h3 className="font-extrabold text-black text-lg mb-2">제4조 ["을"의 의무 및 계약 위반]</h3>
                                 <p>1. [교육 참여]: "을"은 계약 기간 동안 "갑"이 진행하는 에이전시 투어반 교육 및 오디션 실습에 성실히 참여해야 한다.</p>
                                 <p>2. [프로필 촬영]: 캐스팅 제안에 필수적인 프로필 사진(PPT 등)은 "을"이 비용을 전액 부담하여 개별적으로 촬영 및 준비해야 한다. 단, "갑"은 컨셉과 의상에 대한 전문 가이드를 제공한다. 개인적 외부 촬영은 가능하다.</p>
                                 <p>3. [독점 활동]: "을"은 본 계약 기간 동안 "갑"의 사전 동의 없이 타 에이전시와 전속 계약을 체결하거나 독자적인 영업 활동으로 "갑"의 업무를 방해해서는 안 된다.</p>
                             </div>
 
                             <div>
-                                <h3 className="font-extrabold text-black text-lg mb-2">제6조 ["갑"의 지원 업무 및 교육]</h3>
+                                <h3 className="font-extrabold text-black text-lg mb-2">제5조 ["갑"의 지원 업무 및 교육]</h3>
                                 <p>1. [교육 제공]: "갑"은 에이전시 투어 기간 동안 "을"의 경쟁력 강화를 위하여 표정, 포즈, 연기 등 실무 교육을 주기적으로 진행한다.</p>
                                 <p>2. [매니지먼트]: "갑"은 "을"의 프로필을 주요 에이전시 및 프로덕션에 전달하여 오디션 기회를 확보하는 데 주력한다.</p>
                                 <p>3. [협상 및 계약 관리]: "갑"은 광고주(또는 에이전시)와의 모델료(출연료) 협상을 전담하며, 광고 출연 계약 체결에 관한 일정 조율 및 제반 관리 업무를 수행하여 "을"의 권익을 보호한다.</p>
@@ -89,14 +80,14 @@ const AdminContractViewerModal = ({ contract, onClose }) => {
                             </div>
 
                             <div>
-                                <h3 className="font-extrabold text-black text-lg mb-2">제7조 [초상권 및 저작권 귀속]</h3>
+                                <h3 className="font-extrabold text-black text-lg mb-2">제6조 [초상권 및 저작권 귀속] (신설)</h3>
                                 <p>1. [권리 귀속]: 본 계약 기간 동안 "갑"의 기획 및 주관하에 제작된 모든 콘텐츠(사진, 영상, 프로필, 교육 자료 등)에 대한 저작권 및 소유권은 "갑"에게 귀속된다.</p>
                                 <p>2. [마케팅 활용]: "갑"은 "을"의 초상(얼굴 및 신체 이미지)이 담긴 자료를 "갑"의 브랜드(아임모델 외) 홍보 및 마케팅(홈페이지, 블로그, 유튜브, SNS, 보도자료 등 온/오프라인 매체)을 위해 자유롭게 활용할 수 있으며, "을"은 이에 동의한다.</p>
                                 <p>3. [활용 기간]: 위 홍보 자료는 계약 종료 후에도 "갑"의 포트폴리오 및 아카이브 목적으로 게시, 유지될 수 있다.</p>
                             </div>
 
                             <div>
-                                <h3 className="font-extrabold text-black text-lg mb-2">제8조 [관할 법원]</h3>
+                                <h3 className="font-extrabold text-black text-lg mb-2">제7조 [관할 법원]</h3>
                                 <p>본 협약과 관련하여 분쟁이 발생할 경우 "갑"의 본점 소재지 관할 법원을 1심 관할 법원으로 한다.</p>
                                 <p className="mt-4 font-bold">위 내용을 증명하기 위해 협약서 2통을 작성하여 서명 날인 후 "갑"과 "을"이 각각 1통씩 보관한다.</p>
                             </div>

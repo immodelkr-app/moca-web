@@ -8,7 +8,7 @@ import AdminClasses from './AdminClasses';
 import AdminHomepage from './AdminHomepage';
 import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost, parseImageUrls } from '../services/certificationService';
-import { fetchAllCurrentPhotos, updatePhotoStatus, deleteCurrentPhoto } from '../services/currentPhotosService';
+import { fetchAllCurrentPhotos, updatePhotoStatus, updatePhotoFeedback, deleteCurrentPhoto, addPhotoFeedbackComment, fetchPhotoFeedbackComments } from '../services/currentPhotosService';
 import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
 import { fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
 import { sendAlimtalk, sendBulkMessage, sendFriendtalk } from '../services/solapiService';
@@ -37,6 +37,37 @@ const AdminPage = () => {
     const [updatingId, setUpdatingId] = useState(null);
     const [successMsg, setSuccessMsg] = useState('');
     const [contracts, setContracts] = useState([]);
+    // 전속모델(VIP)인데 계약서가 없는 인원을 포함한 가공된 계약서 목록
+    const allContracts = useMemo(() => {
+        const vipUsers = users.filter(u => u.grade === 'VIP');
+        const contractPhones = new Set(
+            contracts.map(c => c.member_phone?.replace(/-/g, '').trim())
+        );
+
+        const missingContracts = vipUsers
+            .filter(u => {
+                const cleanedPhone = u.phone?.replace(/-/g, '').trim();
+                return cleanedPhone && !contractPhones.has(cleanedPhone);
+            })
+            .map(u => ({
+                id: `missing-${u.id}`,
+                member_name: u.name || u.nickname,
+                member_phone: u.phone,
+                member_id_num: '미작성',
+                member_address: '미작성',
+                start_date: '-',
+                end_date: '-',
+                fee: '',
+                sign_date: '-',
+                signature_image: null,
+                status: 'no_contract',
+                created_at: u.created_at || new Date().toISOString(),
+            }));
+
+        return [...contracts, ...missingContracts].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+    }, [contracts, users]);
     const [selectedContract, setSelectedContract] = useState(null);
     const [isContractViewerOpen, setIsContractViewerOpen] = useState(false);
     const [selectedUserForDetail, setSelectedUserForDetail] = useState(null);
@@ -71,6 +102,20 @@ const AdminPage = () => {
     const [currentPhotosFilter, setCurrentPhotosFilter] = useState('all'); // 'all' | 'pending' | 'approved' | 'needs_more'
     const [currentPhotosSearch, setCurrentPhotosSearch] = useState('');
 
+    // 피드백 작성 모달 State
+    const [feedbackModal, setFeedbackModal] = useState(null); // null | { photo, user_grade }
+    const [feedbackText, setFeedbackText] = useState('');
+    const [feedbackStatus, setFeedbackStatus] = useState('needs_more');
+    const [feedbackSaving, setFeedbackSaving] = useState(false);
+
+    // 1:1 어드민 채팅 State
+    const [adminChatPhoto, setAdminChatPhoto] = useState(null);
+    const [adminChatComments, setAdminChatComments] = useState([]);
+    const [adminChatLoading, setAdminChatLoading] = useState(false);
+    const [adminChatInput, setAdminChatInput] = useState('');
+    const [adminChatSending, setAdminChatSending] = useState(false);
+    const adminChatBottomRef = useRef(null);
+
     // Q&A 게시판 관리 State
     const [qnaPosts, setQnaPosts] = useState([]);
     const [qnaLoading, setQnaLoading] = useState(false);
@@ -97,8 +142,6 @@ const AdminPage = () => {
 
     // 회원별 모카클래스 수강 신청 건수 맵 { [user_id]: count }
     const [userClassAppCounts, setUserClassAppCounts] = useState({});
-    // 수강생만 보기 필터
-    const [onlyHasClass, setOnlyHasClass] = useState(false);
 
     // 푸시 발송 내역
     const [pushHistory, setPushHistory] = useState([]);
@@ -599,27 +642,34 @@ const AdminPage = () => {
 
     // 필터링된 유저 (표에 표시될 데이터)
     const filteredUsers = useMemo(() => processedUsers.filter(u => {
-        const matchGrade = filterGrade === 'ALL' || u.grade === filterGrade;
+        const matchGrade = filterGrade === 'ALL'
+            ? true
+            : filterGrade === 'CLASS'
+                ? (userClassAppCounts[u.id] ?? 0) > 0
+                : u.grade === filterGrade;
         const matchSearch = !searchQuery ||
             u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             u.name?.includes(searchQuery) ||
             u.phone?.includes(searchQuery);
-        const matchClass = !onlyHasClass || (userClassAppCounts[u.id] ?? 0) > 0;
-        return matchGrade && matchSearch && matchClass;
-    }), [processedUsers, filterGrade, searchQuery, onlyHasClass, userClassAppCounts]);
+        return matchGrade && matchSearch;
+    }), [processedUsers, filterGrade, searchQuery, userClassAppCounts]);
 
     // 등급별 통계 (전체 회원 대상, 검색어가 있다면 검색 결과 대상)
     // 상단 카드는 선택된 '등급 필터'에 영향을 받지 않고 전체 분포를 보여줍니다.
+    // 만약 '수강생만' 필터가 켜져 있다면(filterGrade === 'CLASS'), 등급별 수치도 수강생 기준 분포로 보여줍니다.
     const gradeStats = useMemo(() => grades.reduce((acc, g) => {
-        const baseListForStats = searchQuery ? processedUsers.filter(u => 
-            u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            u.name?.includes(searchQuery) ||
-            u.phone?.includes(searchQuery)
-        ) : processedUsers;
+        const baseListForStats = processedUsers.filter(u => {
+            const matchSearch = !searchQuery ||
+                u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                u.name?.includes(searchQuery) ||
+                u.phone?.includes(searchQuery);
+            const matchClass = filterGrade !== 'CLASS' || (userClassAppCounts[u.id] ?? 0) > 0;
+            return matchSearch && matchClass;
+        });
 
         acc[g] = baseListForStats.filter(u => u.grade === g).length;
         return acc;
-    }, {}), [processedUsers, searchQuery]);
+    }, {}), [processedUsers, searchQuery, filterGrade, userClassAppCounts]);
 
     // 조회수 통계 계산
     const now = new Date();
@@ -1699,7 +1749,7 @@ const AdminPage = () => {
                 {activeTab === 'users' && (
                     <div className="animate-fadeIn">
                         {/* 통계 카드 */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
                             {grades.map(grade => {
                                 const info = GRADE_INFO[grade];
                                 const emoji = GRADE_EMOJI[grade];
@@ -1729,6 +1779,29 @@ const AdminPage = () => {
                                     </div>
                                 );
                             })}
+                            {/* 총회원 카드 */}
+                            <div
+                                onClick={() => setFilterGrade('ALL')}
+                                className={`rounded-2xl border p-5 cursor-pointer transition-all hover:scale-[1.02] ${filterGrade === 'ALL'
+                                    ? 'bg-[var(--moca-primary-lt)] border-[var(--moca-primary)]'
+                                    : 'bg-[var(--moca-surface-2)] border-[var(--moca-border)] hover:bg-[var(--moca-primary-lt)]'
+                                    }`}
+                            >
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-2xl">👥</span>
+                                    <span className="text-xs font-black px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                                        총회원
+                                    </span>
+                                </div>
+                                <p className="text-3xl font-black text-[var(--moca-text)]">
+                                    {loading ? (
+                                        <span className="text-sm font-medium text-[var(--moca-text-3)] animate-pulse">불러오는 중...</span>
+                                    ) : (
+                                        processedUsers.length
+                                    )}
+                                </p>
+                                <p className="text-[var(--moca-text-3)] text-xs mt-1">명</p>
+                            </div>
                         </div>
 
                         {/* 검색 & 필터 */}
@@ -1758,9 +1831,9 @@ const AdminPage = () => {
                                 ))}
                                 {/* 수강생만 보기 필터 */}
                                 <button
-                                    onClick={() => setOnlyHasClass(v => !v)}
+                                    onClick={() => setFilterGrade(filterGrade === 'CLASS' ? 'ALL' : 'CLASS')}
                                     className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap ${
-                                        onlyHasClass
+                                        filterGrade === 'CLASS'
                                         ? 'bg-indigo-500 border-indigo-500 text-white'
                                         : 'bg-[var(--moca-surface-2)] border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-[var(--moca-text)] hover:border-indigo-300'
                                     }`}
@@ -1795,7 +1868,7 @@ const AdminPage = () => {
                                 {/* 회원 수 */}
                                 <p className="text-[var(--moca-text-3)] text-sm mb-4">
                                     총 <span className="text-[var(--moca-text)] font-bold">{filteredUsers.length}</span>명
-                                    {filterGrade !== 'ALL' && ` (${filterGrade} 필터 중)`}
+                                    {filterGrade !== 'ALL' && ` (${filterGrade === 'CLASS' ? '수강생만' : GRADE_INFO[filterGrade]?.label || filterGrade} 필터 중)`}
                                 </p>
 
                                 {/* 회원 테이블 */}
@@ -2757,7 +2830,7 @@ const AdminPage = () => {
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="text-sm font-bold text-[var(--moca-text-3)]">
-                                    총 {contracts.length}건 · 대기 {contracts.filter(c => c.status === 'pending').length}건
+                                    총 {allContracts.length}건 · 대기 {contracts.filter(c => c.status === 'pending').length}건 · 미제출 {allContracts.filter(c => c.status === 'no_contract').length}건
                                 </span>
                                 <button
                                     onClick={() => {
@@ -2781,12 +2854,14 @@ const AdminPage = () => {
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-xl font-black text-black flex items-center gap-3">
                                         계약서 상세 조회
-                                        <button 
-                                            onClick={() => setIsContractViewerOpen(true)}
-                                            className="ml-4 text-xs bg-[var(--moca-primary-lt)] text-[var(--moca-primary)] border border-[var(--moca-primary)]/30 px-3 py-1.5 rounded-lg hover:bg-[var(--moca-primary)]/15 transition-colors"
-                                        >
-                                            📄 계약서 전문 보기
-                                        </button>
+                                        {selectedContract.status !== 'no_contract' && (
+                                            <button 
+                                                onClick={() => setIsContractViewerOpen(true)}
+                                                className="ml-4 text-xs bg-[var(--moca-primary-lt)] text-[var(--moca-primary)] border border-[var(--moca-primary)]/30 px-3 py-1.5 rounded-lg hover:bg-[var(--moca-primary)]/15 transition-colors"
+                                            >
+                                                📄 계약서 전문 보기
+                                            </button>
+                                        )}
                                     </h3>
                                     <button onClick={() => setSelectedContract(null)} className="text-sm text-gray-500 underline">← 목록으로</button>
                                 </div>
@@ -2797,10 +2872,9 @@ const AdminPage = () => {
                                     <div><span className="font-bold text-gray-500">주소:</span> {selectedContract.member_address}</div>
                                     <div><span className="font-bold text-gray-500">계약 시작:</span> {selectedContract.start_date}</div>
                                     <div><span className="font-bold text-gray-500">계약 종료:</span> {selectedContract.end_date}</div>
-                                    <div><span className="font-bold text-gray-500">월 교육비:</span> {selectedContract.fee}원</div>
                                     <div><span className="font-bold text-gray-500">서명일:</span> {selectedContract.sign_date}</div>
-                                    <div><span className="font-bold text-gray-500">제출일시:</span> {new Date(selectedContract.created_at).toLocaleString('ko-KR')}</div>
-                                    <div><span className="font-bold text-gray-500">현재 상태:</span> <span className={`font-black ${selectedContract.status === 'approved' ? 'text-green-600' : selectedContract.status === 'rejected' ? 'text-red-500' : 'text-yellow-600'}`}>{selectedContract.status === 'approved' ? '✅ 승인완료' : selectedContract.status === 'rejected' ? '❌ 반려' : '⏳ 검토 대기'}</span></div>
+                                    <div><span className="font-bold text-gray-500">제출일시:</span> {selectedContract.status === 'no_contract' ? '미제출' : new Date(selectedContract.created_at).toLocaleString('ko-KR')}</div>
+                                    <div><span className="font-bold text-gray-500">현재 상태:</span> <span className={`font-black ${selectedContract.status === 'approved' ? 'text-green-600' : (selectedContract.status === 'rejected' || selectedContract.status === 'no_contract') ? 'text-red-500' : 'text-yellow-600'}`}>{selectedContract.status === 'approved' ? '✅ 승인완료' : selectedContract.status === 'rejected' ? '❌ 반려' : selectedContract.status === 'no_contract' ? '❌ 서명 미제출' : '⏳ 검토 대기'}</span></div>
                                 </div>
                                 {selectedContract.signature_image && (
                                     <div className="mb-6">
@@ -2808,6 +2882,27 @@ const AdminPage = () => {
                                         <div className="border-2 border-gray-300 rounded-lg p-3 inline-block bg-gray-50">
                                             <img src={selectedContract.signature_image} alt="서명" className="max-h-24" />
                                         </div>
+                                    </div>
+                                )}
+                                {selectedContract.status === 'no_contract' && (
+                                    <div className="mt-6 p-6 bg-red-50 rounded-xl border border-red-200 text-center">
+                                        <p className="text-red-700 font-bold mb-3 flex items-center justify-center gap-2">
+                                            <span className="material-symbols-outlined">warning</span>
+                                            아직 전속계약서 서명이 제출되지 않았습니다.
+                                        </p>
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText('https://immoca.kr/contract')
+                                                    .then(() => {
+                                                        setSuccessMsg('✅ 계약 초대 링크가 복사되었습니다! 카카오톡 또는 문자로 발송해주세요.');
+                                                        setTimeout(() => setSuccessMsg(''), 4000);
+                                                    });
+                                            }}
+                                            className="inline-flex items-center gap-2 bg-[var(--moca-primary)] hover:bg-[var(--moca-primary)]/90 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md"
+                                        >
+                                            <span className="material-symbols-outlined text-[18px]">link</span>
+                                            계약 초대 링크 복사
+                                        </button>
                                     </div>
                                 )}
                                 {selectedContract.status === 'pending' && (
@@ -2866,14 +2961,14 @@ const AdminPage = () => {
                             </div>
                         ) : (
                             /* 계약서 목록 테이블 */
-                            contracts.length === 0 ? (
+                            allContracts.length === 0 ? (
                                 <div className="text-center py-20 text-[var(--moca-text-3)]">
                                     <span className="material-symbols-outlined text-6xl mb-4 block">contract</span>
                                     <p className="font-bold">제출된 계약서가 없습니다.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    {contracts.map(c => (
+                                    {allContracts.map(c => (
                                         <div
                                             key={c.id}
                                             onClick={() => setSelectedContract(c)}
@@ -2883,9 +2978,10 @@ const AdminPage = () => {
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${
                                                     c.status === 'approved' ? 'bg-green-500/20 text-green-300' :
                                                     c.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
+                                                    c.status === 'no_contract' ? 'bg-gray-500/20 text-gray-400' :
                                                     'bg-yellow-500/20 text-yellow-300'
                                                 }`}>
-                                                    {c.status === 'approved' ? '✅' : c.status === 'rejected' ? '❌' : '⏳'}
+                                                    {c.status === 'approved' ? '✅' : c.status === 'rejected' ? '❌' : c.status === 'no_contract' ? '📝' : '⏳'}
                                                 </div>
                                                 <div>
                                                     <p className="font-black text-[var(--moca-text)] text-base">{c.member_name}</p>
@@ -2894,13 +2990,14 @@ const AdminPage = () => {
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right hidden sm:block">
-                                                    <p className="text-[var(--moca-text-2)] text-xs">{new Date(c.created_at).toLocaleDateString('ko-KR')} 제출</p>
+                                                    <p className="text-[var(--moca-text-2)] text-xs">{c.status === 'no_contract' ? '가입일' : new Date(c.created_at).toLocaleDateString('ko-KR')} {c.status === 'no_contract' ? '' : '제출'}</p>
                                                     <p className={`text-xs font-black mt-0.5 ${
                                                         c.status === 'approved' ? 'text-green-400' :
                                                         c.status === 'rejected' ? 'text-red-400' :
+                                                        c.status === 'no_contract' ? 'text-red-400' :
                                                         'text-yellow-400'
                                                     }`}>
-                                                        {c.status === 'approved' ? '승인완료' : c.status === 'rejected' ? '반려됨' : '검토 대기 중'}
+                                                        {c.status === 'approved' ? '승인완료' : c.status === 'rejected' ? '반려됨' : c.status === 'no_contract' ? '서명 미제출' : '검토 대기 중'}
                                                     </p>
                                                 </div>
                                                 <span className="material-symbols-outlined text-[var(--moca-text-3)] group-hover:text-[var(--moca-text-2)] transition-colors">chevron_right</span>
@@ -3279,7 +3376,7 @@ const AdminPage = () => {
                     const groups = {};
                     filtered.forEach(p => {
                         const key = p.user_nickname || p.user_id || 'unknown';
-                        if (!groups[key]) groups[key] = { name: p.user_name, nickname: p.user_nickname, photos: [] };
+                        if (!groups[key]) groups[key] = { name: p.user_name, nickname: p.user_nickname, grade: p.user_grade, photos: [] };
                         groups[key].photos.push(p);
                     });
 
@@ -3288,21 +3385,6 @@ const AdminPage = () => {
                             <div>
                                 <h2 className="text-2xl font-black text-[var(--moca-text)]">📸 현재모습 사진 관리</h2>
                                 <p className="text-[var(--moca-text-3)] text-sm mt-1">모델이 업로드한 현재모습 사진을 확인하고 상태를 관리합니다.</p>
-                            </div>
-
-                            {/* Supabase 테이블 안내 */}
-                            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 text-emerald-300 text-sm">
-                                <p className="font-black mb-1">📌 Supabase 테이블 생성 필요 (최초 1회)</p>
-                                <code className="text-xs text-emerald-200/80 whitespace-pre-wrap block bg-black/30 rounded-lg p-3 mt-2">{`CREATE TABLE model_current_photos (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  user_nickname TEXT,
-  user_name TEXT,
-  photo_url TEXT NOT NULL,
-  storage_path TEXT,
-  status TEXT DEFAULT 'pending',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);`}</code>
                             </div>
 
                             {/* 필터 + 검색 */}
@@ -3362,27 +3444,28 @@ const AdminPage = () => {
                                                             </span>
                                                             {/* 액션 버튼들 */}
                                                             <div className="absolute bottom-0 left-0 right-0 rounded-b-xl bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-around py-1.5 gap-1 px-1">
-                                                                {/* 승인 */}
+                                                                {/* 피드백 작성 */}
+                                                                <button
+                                                                    title="피드백 작성"
+                                                                    onClick={() => {
+                                                                        setFeedbackModal({ photo, user_grade: group.grade });
+                                                                        setFeedbackText(photo.admin_comment || '');
+                                                                        setFeedbackStatus(photo.status || 'needs_more');
+                                                                    }}
+                                                                    className="flex-1 py-1 rounded-lg bg-amber-500/30 text-amber-300 text-[10px] font-black hover:bg-amber-500/50 transition"
+                                                                >
+                                                                    💬피드백
+                                                                </button>
+                                                                {/* 빠른 승인 */}
                                                                 <button
                                                                     title="승인"
                                                                     onClick={async () => {
-                                                                        await updatePhotoStatus(photo.id, 'approved');
+                                                                        await updatePhotoFeedback(photo.id, 'approved', photo.admin_comment || null);
                                                                         setCurrentPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'approved' } : p));
                                                                     }}
                                                                     className="flex-1 py-1 rounded-lg bg-emerald-500/30 text-emerald-300 text-[10px] font-black hover:bg-emerald-500/50 transition"
                                                                 >
                                                                     ✓승인
-                                                                </button>
-                                                                {/* 추가요청 */}
-                                                                <button
-                                                                    title="추가요청"
-                                                                    onClick={async () => {
-                                                                        await updatePhotoStatus(photo.id, 'needs_more');
-                                                                        setCurrentPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'needs_more' } : p));
-                                                                    }}
-                                                                    className="flex-1 py-1 rounded-lg bg-red-500/30 text-red-300 text-[10px] font-black hover:bg-red-500/50 transition"
-                                                                >
-                                                                    +요청
                                                                 </button>
                                                                 {/* 링크복사 */}
                                                                 <button
@@ -3416,6 +3499,12 @@ const AdminPage = () => {
                                                                     <span className="material-symbols-outlined text-[14px]">delete</span>
                                                                 </button>
                                                             </div>
+                                                            {/* 피드백 표시 점 */}
+                                                            {photo.admin_comment && (
+                                                                <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-amber-400 flex items-center justify-center">
+                                                                    <span className="material-symbols-outlined text-[9px] text-white">chat</span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
@@ -3424,6 +3513,184 @@ const AdminPage = () => {
                                     ))}
                                 </div>
                             )}
+                        </div>
+                    );
+                })()}
+
+                {/* ── 피드백 작성 모달 ── */}
+                {feedbackModal && (() => {
+                    const FEEDBACK_TEMPLATES = [
+                        '환하게 찍힌 정면 전신 컷이 필요합니다.',
+                        '조명이 지나치게 어두합니다. 밝은 배경에서 다시 찍어주세요.',
+                        '정면 상반신 컷이 없습니다. 1장 추가 부탁드립니다.',
+                        '최근 헤어 스타일이 잘 보이는 컷으로 교체해 주세요.',
+                        '자연스러운 표정의 카메라 시선 컷이 필요합니다.',
+                        '배경이 지저분합니다. 흰 벽 앞에서 스튜디오 컷 추천드립니다.',
+                    ];
+                    const isVipUser = ['IMODEL', 'VIP'].includes(feedbackModal.user_grade);
+                    return (
+                        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setFeedbackModal(null)}>
+                            <div className="w-full max-w-lg bg-[var(--moca-surface)] border border-[var(--moca-border)] rounded-3xl p-6 shadow-2xl animate-fadeIn" onClick={e => e.stopPropagation()}>
+                                <div className="flex items-start gap-4 mb-5">
+                                    <img src={feedbackModal.photo.photo_url} alt="" className="w-20 h-20 object-cover rounded-2xl border border-[var(--moca-border)] flex-shrink-0" />
+                                    <div className="flex-1">
+                                        <h3 className="text-[var(--moca-text)] font-black text-base mb-0.5">피드백 작성</h3>
+                                        <p className="text-[var(--moca-text-3)] text-xs">{feedbackModal.photo.user_name || feedbackModal.photo.user_nickname} 님의 사진</p>
+                                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-black ${ isVipUser ? 'bg-purple-500/20 text-purple-300' : 'bg-amber-500/20 text-amber-300' }`}>
+                                            {isVipUser ? '크루 1:1 대화 사용 등급' : 'GOLD 단방향 피드백'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* 상태 선택 */}
+                                <div className="mb-4">
+                                    <label className="text-[var(--moca-text-2)] text-xs font-black mb-2 block">사진 상태 변경</label>
+                                    <div className="flex gap-2">
+                                        {[{ v: 'approved', label: '✓ 승인', cls: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' }, { v: 'needs_more', label: '+ 추가요청', cls: 'bg-red-500/20 border-red-500/40 text-red-300' }, { v: 'pending', label: '⏳ 검토중', cls: 'bg-yellow-500/20 border-yellow-500/40 text-yellow-300' }].map(opt => (
+                                            <button key={opt.v} onClick={() => setFeedbackStatus(opt.v)}
+                                                className={`flex-1 py-2 rounded-xl text-[11px] font-black border transition-all ${ feedbackStatus === opt.v ? opt.cls : 'bg-[var(--moca-surface-2)] border-[var(--moca-border)] text-[var(--moca-text-3)]' }`}>
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 템플릿 */}
+                                <div className="mb-3">
+                                    <label className="text-[var(--moca-text-2)] text-xs font-black mb-2 block">빠른 입력 템플릿</label>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {FEEDBACK_TEMPLATES.map((t, i) => (
+                                            <button key={i} onClick={() => setFeedbackText(t)}
+                                                className="px-2.5 py-1 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text-2)] text-[10px] font-bold hover:border-amber-500/40 hover:text-amber-300 transition">
+                                                {t.length > 16 ? t.slice(0, 16) + '…' : t}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <textarea value={feedbackText} onChange={e => setFeedbackText(e.target.value)}
+                                    placeholder="모델에게 전달할 피드백을 입력하세요..."
+                                    rows={3}
+                                    className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-2xl px-4 py-3 text-[var(--moca-text)] text-sm placeholder-[var(--moca-text-3)] focus:outline-none focus:border-amber-500/50 resize-none mb-4"
+                                />
+
+                                {/* VIP 전용 1:1 대화방 링크 */}
+                                {isVipUser && (
+                                    <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl px-4 py-2.5 mb-4 flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[16px] text-purple-400">forum</span>
+                                        <p className="text-purple-300 text-xs font-black flex-1">아임모델/전속모델 전용 → 1:1 대화를 통해 더 자세히 소통하세요.</p>
+                                        <button onClick={async () => {
+                                            setFeedbackModal(null);
+                                            setAdminChatPhoto(feedbackModal.photo);
+                                            setAdminChatLoading(true);
+                                            const comments = await fetchPhotoFeedbackComments(feedbackModal.photo.id);
+                                            setAdminChatComments(comments);
+                                            setAdminChatLoading(false);
+                                            setTimeout(() => adminChatBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+                                        }} className="px-3 py-1.5 rounded-xl bg-purple-500/30 text-purple-300 text-[11px] font-black hover:bg-purple-500/50 transition">
+                                            대화방 열기
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-2">
+                                    <button onClick={() => setFeedbackModal(null)}
+                                        className="flex-1 py-3 rounded-2xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text-3)] font-black text-sm hover:text-[var(--moca-text)] transition">
+                                        취소
+                                    </button>
+                                    <button onClick={async () => {
+                                        setFeedbackSaving(true);
+                                        const { success } = await updatePhotoFeedback(feedbackModal.photo.id, feedbackStatus, feedbackText.trim() || null);
+                                        if (success) {
+                                            setCurrentPhotos(prev => prev.map(p => p.id === feedbackModal.photo.id
+                                                ? { ...p, status: feedbackStatus, admin_comment: feedbackText.trim() || null, feedback_at: new Date().toISOString() }
+                                                : p
+                                            ));
+                                            setFeedbackModal(null);
+                                        }
+                                        setFeedbackSaving(false);
+                                    }} disabled={feedbackSaving}
+                                        className="flex-1 py-3 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-black text-sm hover:bg-amber-500/30 transition disabled:opacity-50">
+                                        {feedbackSaving ? '저장 중...' : '피드백 저장'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* ── 1:1 어드민 채팅 모달 (IMODEL/VIP) ── */}
+                {adminChatPhoto && (() => {
+                    const handleAdminSend = async () => {
+                        if (!adminChatInput.trim() || adminChatSending) return;
+                        setAdminChatSending(true);
+                        const { success, data } = await addPhotoFeedbackComment(adminChatPhoto.id, 'admin', null, '아임모델 김대표', adminChatInput.trim());
+                        if (success && data) {
+                            setAdminChatComments(prev => [...prev, data]);
+                            setAdminChatInput('');
+                            setTimeout(() => adminChatBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+                        }
+                        setAdminChatSending(false);
+                    };
+                    return (
+                        <div className="fixed inset-0 z-[300] flex flex-col bg-[var(--moca-bg)]">
+                            <div className="flex items-center gap-3 px-4 pt-5 pb-3 bg-[var(--moca-surface)] border-b border-[var(--moca-border)] flex-shrink-0">
+                                <button onClick={() => { setAdminChatPhoto(null); setAdminChatComments([]); setAdminChatInput(''); }}
+                                    className="w-9 h-9 rounded-xl bg-[var(--moca-primary-lt)] flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-[20px] text-[var(--moca-primary)]">arrow_back</span>
+                                </button>
+                                <img src={adminChatPhoto.photo_url} alt="" className="w-10 h-10 object-cover rounded-xl border border-[var(--moca-border)]" />
+                                <div className="flex-1">
+                                    <p className="font-black text-[var(--moca-text)] text-sm">1:1 피드백 대화</p>
+                                    <p className="text-[var(--moca-text-3)] text-[11px]">{adminChatPhoto.user_name || adminChatPhoto.user_nickname} 님과 소통</p>
+                                </div>
+                            </div>
+                            {adminChatPhoto.admin_comment && (
+                                <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 flex-shrink-0">
+                                    <p className="text-amber-300 text-xs">피드백: {adminChatPhoto.admin_comment}</p>
+                                </div>
+                            )}
+                            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                                {adminChatLoading ? (
+                                    <div className="flex items-center justify-center py-8"><div className="w-6 h-6 rounded-full border-2 border-[var(--moca-primary)] border-t-transparent animate-spin" /></div>
+                                ) : adminChatComments.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-10 text-[var(--moca-text-3)]">
+                                        <span className="material-symbols-outlined text-[40px] mb-2">forum</span>
+                                        <p className="text-xs font-bold text-center">아직 대화가 없습니다.</p>
+                                    </div>
+                                ) : adminChatComments.map((c) => {
+                                    const isAdmin = c.sender_type === 'admin';
+                                    const modelDisplayName = c.sender_name && c.sender_name !== '모델' ? c.sender_name : (adminChatPhoto.user_name || adminChatPhoto.user_nickname || '모델');
+                                    return (
+                                        <div key={c.id} className={`flex items-end gap-2 ${isAdmin ? 'flex-row-reverse' : ''}`}>
+                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${ isAdmin ? 'bg-[var(--moca-primary)]/20' : 'bg-amber-500/20' }`}>
+                                                <span className={`material-symbols-outlined text-[16px] ${ isAdmin ? 'text-[var(--moca-primary)]' : 'text-amber-400' }`}>{isAdmin ? 'support_agent' : 'person'}</span>
+                                            </div>
+                                            <div className={`max-w-[72%] ${ isAdmin ? 'items-end flex flex-col' : '' }`}>
+                                                <p className={`text-[10px] font-black mb-0.5 ${ isAdmin ? 'text-[var(--moca-primary)] text-right' : 'text-amber-400' }`}>{isAdmin ? '아임모델 김대표' : modelDisplayName}</p>
+                                                <div className={`px-3 py-2.5 rounded-2xl ${ isAdmin ? 'bg-[var(--moca-primary)]/20 border border-[var(--moca-primary)]/30 rounded-tr-sm' : 'bg-[var(--moca-surface)] border border-[var(--moca-border)] rounded-tl-sm' }`}>
+                                                    <p className="text-[var(--moca-text)] text-sm leading-relaxed">{c.content}</p>
+                                                </div>
+                                                <p className="text-[9px] text-[var(--moca-text-3)] mt-0.5">{new Date(c.created_at).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                <div ref={adminChatBottomRef} />
+                            </div>
+                            <div className="flex-shrink-0 px-4 py-3 bg-[var(--moca-surface)] border-t border-[var(--moca-border)]">
+                                <div className="flex gap-2 items-end">
+                                    <textarea value={adminChatInput} onChange={e => setAdminChatInput(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAdminSend(); } }}
+                                        placeholder="모델에게 메시지를 보내세요..." rows={1}
+                                        className="flex-1 bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-2xl px-4 py-3 text-[var(--moca-text)] text-sm placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] resize-none"
+                                    />
+                                    <button onClick={handleAdminSend} disabled={!adminChatInput.trim() || adminChatSending}
+                                        className="w-11 h-11 rounded-2xl bg-[var(--moca-primary)] flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all flex-shrink-0">
+                                        {adminChatSending ? <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> : <span className="material-symbols-outlined text-[20px] text-white">send</span>}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     );
                 })()}
