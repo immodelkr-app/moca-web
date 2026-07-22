@@ -111,41 +111,41 @@ const TourDiary = () => {
                 </button>
                 <div className="flex items-center gap-3 mb-3 justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#6C63FF] to-[#A78BFA]" />
-                        <h1 className="text-xl lg:text-2xl font-bold text-[#1F1235] tracking-tight">투어일지</h1>
+                        <div className="w-1.5 h-5 rounded-full bg-gradient-to-b from-[#8B5CF6] to-[#6D28D9]" />
+                        <h1 className="text-lg lg:text-xl font-bold text-[#1F1235] tracking-tight">투어일지</h1>
                     </div>
                     {activeTab === 'diary' && (
                         <button
                             onClick={() => navigate('/home/calendar')}
-                            className="px-4 py-2 bg-[#F3E8FF] hover:bg-[#EDE8FF] border border-[#E8E0FA] rounded-xl text-xs font-bold text-[#7C3AED] transition-colors flex items-center gap-1"
+                            className="px-3.5 py-1.5 bg-white hover:bg-[#F3E8FF] border border-[#E8E0FA] rounded-full text-xs font-bold text-[#7C3AED] shadow-2xs transition-all flex items-center gap-1 active:scale-95"
                         >
-                            <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+                            <span className="material-symbols-outlined text-[15px]">calendar_month</span>
                             캘린더
                         </button>
                     )}
                 </div>
 
-                {/* 탭 네비게이션 */}
-                <div className="flex gap-2 mb-6 bg-[#F3E8FF] p-1 rounded-2xl overflow-x-auto no-scrollbar">
+                {/* 탭 네비게이션 (Pill 캡슐 스타일) */}
+                <div className="flex gap-1.5 mb-6 bg-[#F3E8FF] p-1.5 rounded-full overflow-x-auto no-scrollbar border border-[#E8E0FA]">
                     <button
                         onClick={() => setActiveTab('diary')}
-                        className={`flex-1 min-w-[100px] flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'diary' ? 'bg-[#9333EA] text-white shadow-lg shadow-[#9333EA]/30' : 'text-[#5B4E7A] hover:text-[#1F1235]'}`}
+                        className={`flex-1 min-w-[90px] flex items-center justify-center gap-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'diary' ? 'bg-[#8B5CF6] text-white shadow-2xs' : 'text-[#5B4E7A] hover:text-[#1F1235]'}`}
                     >
-                        <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                        <span className="material-symbols-outlined text-[15px]">edit_note</span>
                         방문 기록
                     </button>
                     <button
                         onClick={() => setActiveTab('casting')}
-                        className={`flex-1 min-w-[100px] flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'casting' ? 'bg-[#9333EA] text-white shadow-lg shadow-[#9333EA]/30' : 'text-[#5B4E7A] hover:text-[#1F1235]'}`}
+                        className={`flex-1 min-w-[90px] flex items-center justify-center gap-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'casting' ? 'bg-[#8B5CF6] text-white shadow-2xs' : 'text-[#5B4E7A] hover:text-[#1F1235]'}`}
                     >
-                        <Trophy size={16} />
+                        <Trophy size={14} />
                         캐스팅 기록
                     </button>
                     <button
                         onClick={() => setActiveTab('email')}
-                        className={`flex-1 min-w-[100px] flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'email' ? 'bg-[#9333EA] text-white shadow-lg shadow-[#9333EA]/30' : 'text-[#5B4E7A] hover:text-[#1F1235]'}`}
+                        className={`flex-1 min-w-[90px] flex items-center justify-center gap-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'email' ? 'bg-[#8B5CF6] text-white shadow-2xs' : 'text-[#5B4E7A] hover:text-[#1F1235]'}`}
                     >
-                        <span className="material-symbols-outlined text-[16px]">mail</span>
+                        <span className="material-symbols-outlined text-[15px]">mail</span>
                         발송 내역
                     </button>
                 </div>

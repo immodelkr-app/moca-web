@@ -170,22 +170,22 @@ const Layout = () => {
             <div className="flex-1 lg:ml-64 flex flex-col min-h-screen relative w-full max-w-full overflow-x-hidden">
 
                 {/* ── 모바일 탑 헤더 ── */}
-                <header className="lg:hidden flex items-center justify-between px-5 pb-3 bg-white border-b border-[#E8E0FA] z-[100] sticky top-0 w-full shadow-sm" style={{ paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 0px))' }}>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-2xl font-black tracking-tighter">MOCA</span>
+                <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-[#E8E0FA] z-[100] sticky top-0 w-full shadow-2xs" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8B5CF6] to-[#6D28D9] text-xl font-black tracking-tight">MOCA</span>
                     <div className="flex items-center gap-2">
                         {userId && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#F3E8FF] border border-[#E8E0FA]">
-                            <span className="text-[13px]">{gradeEmoji}</span>
-                            <span className={`font-black text-[10px] tracking-wide ${gradeColor}`}>{gradeLabel}</span>
-                            <span className="text-[#1F1235] font-bold text-[11px]">{userId}님</span>
-                        </div>
+                            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F3E8FF] border border-[#E8E0FA]">
+                                <span className="text-[12px]">{gradeEmoji}</span>
+                                <span className={`font-extrabold text-[10px] ${gradeColor}`}>{gradeLabel}</span>
+                                <span className="text-[#1F1235] font-bold text-[10px] truncate max-w-[70px]">{userId}님</span>
+                            </div>
                         )}
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-[#F8F5FF] hover:bg-[#F3E8FF] border border-[#E8E0FA] rounded-full transition-all"
+                            className="flex items-center gap-1 px-2.5 py-1 bg-[#F8F5FF] hover:bg-[#F3E8FF] border border-[#E8E0FA] rounded-full transition-all active:scale-95"
                         >
-                            <span className="text-[10px] font-bold text-[#9CA3AF] whitespace-nowrap">로그아웃</span>
-                            <span className="material-symbols-outlined text-[13px] text-[#9CA3AF]">logout</span>
+                            <span className="text-[10px] font-bold text-[#7C3AED]">로그아웃</span>
+                            <span className="material-symbols-outlined text-[13px] text-[#7C3AED]">logout</span>
                         </button>
                     </div>
                 </header>
@@ -239,10 +239,10 @@ const Layout = () => {
                                 >
                                     {({ isActive }) => (
                                         <>
-                                            <span className={`material-symbols-outlined text-[26px] transition-all duration-300 ${isActive ? 'fill-1 text-[#9333EA] drop-shadow-md scale-110' : 'text-[#9CA3AF]'}`}>
+                                            <span className={`material-symbols-outlined text-[24px] transition-all duration-300 ${isActive ? 'fill-1 text-[#8B5CF6] scale-105' : 'text-[#9CA3AF]'}`}>
                                                 {icon}
                                             </span>
-                                            <span className={`text-[10px] font-black transition-all ${isActive ? 'text-[#9333EA]' : 'text-[#9CA3AF]'}`}>
+                                            <span className={`text-[10px] font-bold transition-all ${isActive ? 'text-[#8B5CF6]' : 'text-[#9CA3AF]'}`}>
                                                 {label}
                                             </span>
                                         </>
@@ -256,10 +256,10 @@ const Layout = () => {
                             className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all active:scale-95"
                             onClick={() => setShowMoreMenu(prev => !prev)}
                         >
-                            <span className={`material-symbols-outlined text-[26px] transition-all duration-300 ${showMoreMenu ? 'text-[#9333EA] drop-shadow-md scale-110' : 'text-[#9CA3AF]'}`}>
+                            <span className={`material-symbols-outlined text-[24px] transition-all duration-300 ${showMoreMenu ? 'text-[#8B5CF6] scale-105' : 'text-[#9CA3AF]'}`}>
                                 more_horiz
                             </span>
-                            <span className={`text-[10px] font-black transition-all ${showMoreMenu ? 'text-[#9333EA]' : 'text-[#9CA3AF]'}`}>
+                            <span className={`text-[10px] font-bold transition-all ${showMoreMenu ? 'text-[#8B5CF6]' : 'text-[#9CA3AF]'}`}>
                                 더보기
                             </span>
                         </button>
