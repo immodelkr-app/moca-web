@@ -59,13 +59,18 @@ const HomeDashboard = () => {
     return (
         <div className="min-h-screen flex flex-col pb-24" style={{ backgroundColor: 'var(--moca-bg, #F3F0FF)' }}>
 
-            {/* ── 1. 상단 메인 헤더 (MOCA 브랜드 + 아바타 프로필 & 알림 종) ── */}
-            <header className="flex items-center justify-between px-6 pt-7 pb-4">
-                <h1 className="text-3xl moca-brand-logo tracking-tight leading-none text-[#1F1235]">
-                    MOCA
-                </h1>
+            {/* ── 1. 웰컴 타이틀 & 프로필/알림 헤더 (중복 MOCA 로고 제거) ── */}
+            <section className="px-6 pt-6 pb-3 flex items-start justify-between">
+                <div>
+                    <h2 className="text-2xl font-black text-[#1F1235] tracking-tight mb-1">
+                        안녕하세요, {nickname}님!
+                    </h2>
+                    <p className="text-sm font-medium text-[#64748B]">
+                        오늘도 MOCA와 함께 멋진 하루 보내세요!
+                    </p>
+                </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 pt-0.5">
                     {/* 아바타 프로필 버튼 */}
                     <button
                         onClick={() => setIsProfileModalOpen(true)}
@@ -87,16 +92,6 @@ const HomeDashboard = () => {
                         {ticker && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#EF4444]"></span>}
                     </button>
                 </div>
-            </header>
-
-            {/* ── 2. 웰컴 타이틀 영역 ── */}
-            <section className="px-6 pt-2 pb-4">
-                <h2 className="text-2xl font-black text-[#1F1235] tracking-tight mb-1">
-                    안녕하세요, {nickname}님!
-                </h2>
-                <p className="text-sm font-medium text-[#64748B]">
-                    오늘도 MOCA와 함께 멋진 하루 보내세요!
-                </p>
             </section>
 
             {/* ── 3. 옵션 B: 확대된 소프트 캡슐 공지바 (자동 롤링 애니메이션) ── */}

@@ -171,7 +171,7 @@ const Layout = () => {
 
                 {/* ── 모바일 탑 헤더 ── */}
                 <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-[#E8E0FA] z-[100] sticky top-0 w-full shadow-2xs" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8B5CF6] to-[#6D28D9] text-xl font-black tracking-tight">MOCA</span>
+                    <span className="text-2xl moca-brand-logo text-[#1F1235] tracking-tight">MOCA</span>
                     <div className="flex items-center gap-2">
                         {userId && (
                             <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F3E8FF] border border-[#E8E0FA]">
