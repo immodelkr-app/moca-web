@@ -223,29 +223,31 @@ const Layout = () => {
                     </footer>
                 </main>
 
-                {/* ── 모바일 5탭 하단 내비게이션 ── */}
-                <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-[#E8E0FA] shadow-moca-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-                    <div className="flex items-center justify-around h-16 max-w-[430px] mx-auto px-2">
+                {/* ── 모바일 5탭 하단 내비게이션 (소프트 퍼플 파스텔 캡슐 스타일) ── */}
+                <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-md border-t border-[#E8E0FA] shadow-moca-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+                    <div className="flex items-center justify-around h-16 max-w-[430px] mx-auto px-3">
                         {/* 4개 주요 탭 */}
                         {bottomTabs.map(({ to, icon, label }) => {
-                            const isActive = location.pathname === to || location.pathname.startsWith(to + '/') && to !== '/home/dashboard'
-                                || (to === '/home/dashboard' && location.pathname === '/home/dashboard');
                             return (
                                 <NavLink
                                     key={to}
                                     to={to}
-                                    className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all active:scale-95"
+                                    className="flex items-center justify-center flex-1 py-1 transition-all active:scale-95"
                                     onClick={() => setShowMoreMenu(false)}
                                 >
                                     {({ isActive }) => (
-                                        <>
-                                            <span className={`material-symbols-outlined text-[24px] transition-all duration-300 ${isActive ? 'fill-1 text-[#8B5CF6] scale-105' : 'text-[#9CA3AF]'}`}>
+                                        <div className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-2xl transition-all duration-300 ${
+                                            isActive 
+                                                ? 'bg-[#EDE9FE] text-[#7C3AED] shadow-2xs' 
+                                                : 'text-[#9CA3AF] hover:text-[#7C3AED]'
+                                        }`}>
+                                            <span className={`material-symbols-outlined text-[21px] transition-all ${isActive ? 'fill-1 text-[#7C3AED] scale-105' : ''}`}>
                                                 {icon}
                                             </span>
-                                            <span className={`text-[10px] font-bold transition-all ${isActive ? 'text-[#8B5CF6]' : 'text-[#9CA3AF]'}`}>
+                                            <span className={`text-[10px] font-black tracking-tight ${isActive ? 'text-[#7C3AED]' : ''}`}>
                                                 {label}
                                             </span>
-                                        </>
+                                        </div>
                                     )}
                                 </NavLink>
                             );
@@ -253,15 +255,21 @@ const Layout = () => {
 
                         {/* 더보기 탭 */}
                         <button
-                            className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all active:scale-95"
+                            className="flex items-center justify-center flex-1 py-1 transition-all active:scale-95"
                             onClick={() => setShowMoreMenu(prev => !prev)}
                         >
-                            <span className={`material-symbols-outlined text-[24px] transition-all duration-300 ${showMoreMenu ? 'text-[#8B5CF6] scale-105' : 'text-[#9CA3AF]'}`}>
-                                more_horiz
-                            </span>
-                            <span className={`text-[10px] font-bold transition-all ${showMoreMenu ? 'text-[#8B5CF6]' : 'text-[#9CA3AF]'}`}>
-                                더보기
-                            </span>
+                            <div className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-2xl transition-all duration-300 ${
+                                showMoreMenu 
+                                    ? 'bg-[#EDE9FE] text-[#7C3AED] shadow-2xs' 
+                                    : 'text-[#9CA3AF] hover:text-[#7C3AED]'
+                            }`}>
+                                <span className={`material-symbols-outlined text-[21px] transition-all ${showMoreMenu ? 'text-[#7C3AED] scale-105' : ''}`}>
+                                    more_horiz
+                                </span>
+                                <span className={`text-[10px] font-black tracking-tight ${showMoreMenu ? 'text-[#7C3AED]' : ''}`}>
+                                    더보기
+                                </span>
+                            </div>
                         </button>
                     </div>
                 </nav>
