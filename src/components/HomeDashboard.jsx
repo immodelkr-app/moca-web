@@ -64,8 +64,9 @@ const HomeDashboard = () => {
             {/* ── 1. 웰컴 타이틀 & 프로필/알림 헤더 (중복 MOCA 로고 제거) ── */}
             <section className="px-6 pt-6 pb-3 flex items-start justify-between">
                 <div>
-                    <h2 className="text-2xl font-black text-[#1F1235] tracking-tight mb-1">
-                        안녕하세요, {nickname}님!
+                    <h2 className="text-2xl tracking-tight mb-1 flex items-baseline">
+                        <span className="font-serif italic font-bold text-[#8B5CF6] text-2.5xl mr-1.5">Hello,</span>
+                        <span className="font-black text-[#1F1235]">{nickname}모델님!</span>
                     </h2>
                     <p className="text-sm font-medium text-[#64748B]">
                         오늘도 MOCA와 함께 멋진 하루 보내세요!
