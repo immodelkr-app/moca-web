@@ -24,10 +24,12 @@ const HomeDashboard = () => {
     const [grade, setGrade] = useState(getUserGrade() || 'SILVER');
     const nickname = user?.name || user?.nickname || '모카 회원';
 
-    const [ticker, setTicker] = useState('');
-    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-
-    const [notices, setNotices] = useState([]);
+    const [noticesList, setNoticesList] = useState([
+        '📢 [필독] 프로필 관리 PPT 마이박스 & 구글 공유 설정 방법',
+        '🎬 [오디션] 2026 S/S 브랜드 광고모델 수시 지원 채용 공지',
+        '💡 [꿀팁] 에이전시 피드백 채팅을 통한 프로필 합격률 높이기',
+    ]);
+    const [noticeIdx, setNoticeIdx] = useState(0);
 
     useEffect(() => {
         syncUserGrade().then(() => {
@@ -36,11 +38,23 @@ const HomeDashboard = () => {
 
         fetchMessagesList().then(data => {
             if (data && data.length > 0) {
-                setNotices(data.slice(0, 2));
-                setTicker(data[0]?.title || data[0]?.content?.slice(0, 40) || '');
+                const titles = data.map(d => d.title || d.content?.slice(0, 45)).filter(Boolean);
+                if (titles.length > 0) {
+                    setNoticesList(titles);
+                    setTicker(titles[0]);
+                }
             }
         }).catch(() => { });
     }, []);
+
+    // 공지 롤링 타이머 (3.5초마다 슬라이딩 전환)
+    useEffect(() => {
+        if (noticesList.length <= 1) return;
+        const timer = setInterval(() => {
+            setNoticeIdx(prev => (prev + 1) % noticesList.length);
+        }, 3500);
+        return () => clearInterval(timer);
+    }, [noticesList]);
 
     return (
         <div className="min-h-screen flex flex-col pb-24" style={{ backgroundColor: 'var(--moca-bg, #F3F0FF)' }}>
@@ -85,71 +99,31 @@ const HomeDashboard = () => {
                 </p>
             </section>
 
-            {/* ── 3. 주요 공지사항 (옵션 A: 미니 카드형 최근 공지 2개) ── */}
-            <div className="px-6 mb-7">
-                <div className="bg-white border border-[#E8E0FA] rounded-2xl p-4.5 shadow-2xs">
-                    <div className="flex items-center justify-between mb-3 border-b border-[#F3E8FF] pb-2.5">
-                        <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-0.5 rounded-full bg-[#EDE9FE] text-[#7C3AED] text-[11px] font-black flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[13px]">campaign</span>
-                                MOCA 공지사항
-                            </span>
-                        </div>
-                        <button
-                            onClick={() => navigate('/home/message')}
-                            className="text-[11px] font-bold text-[#8B5CF6] hover:text-[#7C3AED] flex items-center gap-0.5 active:scale-95 transition-transform"
-                        >
-                            전체보기
-                            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                        </button>
+            {/* ── 3. 옵션 B: 확대된 소프트 캡슐 공지바 (자동 롤링 애니메이션) ── */}
+            <div className="px-6 mb-6">
+                <div
+                    onClick={() => navigate('/home/message')}
+                    className="flex items-center gap-3 px-4.5 py-3.5 rounded-full bg-white/95 border border-[#DDD6FE] text-[#6D28D9] shadow-2xs cursor-pointer active:scale-[0.99] transition-all overflow-hidden"
+                >
+                    <div className="w-7.5 h-7.5 rounded-full bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center flex-shrink-0 shadow-2xs">
+                        <span className="material-symbols-outlined text-[17px]">campaign</span>
                     </div>
 
-                    <div className="space-y-2.5">
-                        {notices.length > 0 ? (
-                            notices.map((n, idx) => (
-                                <div
-                                    key={n.id || idx}
-                                    onClick={() => navigate('/home/message')}
-                                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-[#F8F5FF] cursor-pointer transition-colors active:scale-[0.99]"
-                                >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6] flex-shrink-0" />
-                                    <p className="text-xs font-bold text-[#1F1235] truncate flex-1 leading-snug">
-                                        {n.title || n.content}
-                                    </p>
-                                    <span className="text-[10px] font-bold text-[#9CA3AF] flex-shrink-0">
-                                        {n.created_at ? new Date(n.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) : 'NEW'}
-                                    </span>
-                                </div>
-                            ))
-                        ) : (
-                            <>
-                                <div
-                                    onClick={() => navigate('/home/message')}
-                                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-[#F8F5FF] cursor-pointer transition-colors active:scale-[0.99]"
-                                >
-                                    <span className="w-2 h-2 rounded-full bg-[#8B5CF6] flex-shrink-0" />
-                                    <p className="text-xs font-bold text-[#1F1235] truncate flex-1 leading-snug">
-                                        📢 [안내] 프로필 관리 PPT 마이박스 및 구글드라이브 공유 방법
-                                    </p>
-                                    <span className="text-[10px] font-bold text-[#7C3AED] bg-[#EDE9FE] px-1.5 py-0.5 rounded-md flex-shrink-0">
-                                        필독
-                                    </span>
-                                </div>
-                                <div
-                                    onClick={() => navigate('/home/message')}
-                                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-[#F8F5FF] cursor-pointer transition-colors active:scale-[0.99]"
-                                >
-                                    <span className="w-2 h-2 rounded-full bg-[#C084FC] flex-shrink-0" />
-                                    <p className="text-xs font-bold text-[#5B4E7A] truncate flex-1 leading-snug">
-                                        🎬 2026 S/S 브랜드 광고모델 오디션 수시 지원 공지
-                                    </p>
-                                    <span className="text-[10px] font-bold text-[#64748B] flex-shrink-0">
-                                        NEW
-                                    </span>
-                                </div>
-                            </>
-                        )}
+                    <div className="flex-1 h-5 overflow-hidden relative">
+                        <div
+                            className="transition-transform duration-500 ease-in-out"
+                            style={{ transform: `translateY(-${noticeIdx * 20}px)` }}
+                        >
+                            {noticesList.map((item, i) => (
+                                <p key={i} className="h-5 text-xs font-black text-[#1F1235] truncate flex items-center gap-1.5 leading-none">
+                                    <span className="px-1.5 py-0.5 rounded bg-[#EDE9FE] text-[#7C3AED] text-[10px] font-black flex-shrink-0">공지</span>
+                                    <span className="truncate">{item}</span>
+                                </p>
+                            ))}
+                        </div>
                     </div>
+
+                    <span className="material-symbols-outlined text-[#8B5CF6] text-[18px] flex-shrink-0">chevron_right</span>
                 </div>
             </div>
 
