@@ -17,3 +17,5 @@ node_modules
 # Test keys and scripts
 list-models.js
 test-new-key-*.js
+
+.vercel

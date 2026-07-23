@@ -16,11 +16,12 @@ import {
 import ProfileEditModal from './ProfileEditModal';
 import CastingEmailModal from './CastingEmailModal';
 import VisitMemoModal from './VisitMemoModal';
+import AgencyDetailModal from './AgencyDetailModal';
 
 
 
 
-const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
+const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => {
     const naverMapsUrl = `https://map.naver.com/v5/search/${encodeURIComponent(agency.address || agency.name)}`;
 
     const colors = [
@@ -70,7 +71,10 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
     const userGrade = getUserGrade();
 
     return (
-        <div className={`relative rounded-2xl border ${color.border} bg-white p-5 flex flex-col gap-4 hover:scale-[1.01] hover:shadow-md transition-all duration-200 overflow-hidden shadow-sm`}>
+        <div
+            onClick={() => onDetail(agency)}
+            className={`relative rounded-2xl border ${color.border} bg-white p-5 flex flex-col gap-4 hover:scale-[1.01] hover:shadow-md transition-all duration-200 overflow-hidden shadow-sm cursor-pointer group`}
+        >
             {/* Number badge */}
             <div className={`absolute top-4 right-4 w-7 h-7 rounded-full ${color.dot} flex items-center justify-center`}>
                 <span className="text-white text-[11px] font-black">{index + 1}</span>
@@ -78,70 +82,65 @@ const AgencyCard = ({ agency, index, onAction, onSend, sendInfo }) => {
 
             {/* Header */}
             <div className="flex items-start gap-3 pr-8">
-                <div className={`w-10 h-10 rounded-xl ${color.dot}/20 flex items-center justify-center flex-shrink-0`}>
+                <div className={`w-10 h-10 rounded-xl ${color.dot}/15 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}>
                     <span className={`material-symbols-outlined text-[20px] ${color.accent}`}>apartment</span>
                 </div>
                 <div>
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <h3 className="font-black text-base text-[#1F1235] leading-tight">{agency.name}</h3>
+                        <h3 className="font-bold text-base text-[#1F1235] leading-tight group-hover:text-[#7C3AED] transition-colors">{agency.name}</h3>
                         {timeAgoStr && (
-                            <span className="text-white/85 text-xs font-semibold bg-white/10 py-0.5 px-2 rounded-md border border-white/15 whitespace-nowrap">
+                            <span className="text-[#7C3AED] text-[11px] font-bold bg-[#F3E8FF] py-0.5 px-2 rounded-full border border-[#E8E0FA] whitespace-nowrap">
                                 🕒 {timeAgoStr}
                             </span>
                         )}
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-widest ${color.accent}`}>{agency.category}</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${color.accent}`}>{agency.category}</span>
                 </div>
             </div>
 
             {/* Address */}
-            <div className="flex items-start gap-2.5">
-                <span className="material-symbols-outlined text-[16px] text-[#9CA3AF] mt-0.5 flex-shrink-0">location_on</span>
-                <p className="text-[#1F1235] text-sm leading-relaxed">{agency.address}</p>
+            <div className="flex items-start gap-2 text-xs text-[#5B4E7A] leading-relaxed">
+                <span className="material-symbols-outlined text-[15px] text-[#9CA3AF] mt-0.5 flex-shrink-0">location_on</span>
+                <p className="font-medium">{agency.address}</p>
             </div>
 
             {/* Phone */}
             {agency.phone && (
-                <a href={`tel:${agency.phone}`} className="flex items-center gap-2.5 group">
-                    <span className="material-symbols-outlined text-[16px] text-[#9CA3AF] flex-shrink-0">call</span>
-                    <span className={`text-sm font-bold ${color.accent} group-hover:underline`}>{agency.phone}</span>
-                </a>
+                <div className="flex items-center gap-2 text-xs">
+                    <span className="material-symbols-outlined text-[15px] text-[#9CA3AF] flex-shrink-0">call</span>
+                    <span className={`font-bold ${color.accent}`}>{agency.phone}</span>
+                </div>
             )}
 
             {/* Email (Gold Members Only) */}
             {userGrade === 'GOLD' && agency.email && (
-                <a href={`mailto:${agency.email}`} className="flex items-center gap-2.5 group">
-                    <span className="material-symbols-outlined text-[16px] text-[#9CA3AF] flex-shrink-0">mail</span>
-                    <span className={`text-sm font-bold ${color.accent} group-hover:underline`}>{agency.email}</span>
-                </a>
+                <div className="flex items-center gap-2 text-xs">
+                    <span className="material-symbols-outlined text-[15px] text-[#9CA3AF] flex-shrink-0">mail</span>
+                    <span className={`font-bold ${color.accent}`}>{agency.email}</span>
+                </div>
             )}
 
             {/* Action buttons */}
-            <div className="flex flex-col gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
                 <a
                     href={naverMapsUrl}
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => onAction(e, agency, naverMapsUrl)}
-                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors cursor-pointer"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors cursor-pointer"
                 >
                     <span className="text-[13px] font-black text-[#03C75A]">N</span>
                     <span className="text-[#5B4E7A] text-[13px] font-bold">네이버 지도</span>
                 </a>
                 <button
-                    onClick={(e) => onAction(e, agency, null)}
-                    className="w-full flex items-center justify-center gap-2 py-3 mt-1 rounded-xl bg-[#6C63FF]/15 hover:bg-[#6C63FF]/25 border border-[#9B8AFB]/35 transition-colors cursor-pointer text-[#6C63FF] font-black text-[13px]"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onAction(e, agency, null);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20 active:scale-[0.97] transition-all cursor-pointer font-black text-[13px]"
                 >
                     <span className="material-symbols-outlined text-[18px]">edit_note</span>
                     투어일지
-                </button>
-                {/* 이력서 쏘기 버튼 */}
-                <button
-                    onClick={() => onSend(agency)}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl transition-all cursor-pointer font-black text-[13px] active:scale-[0.97] bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/25"
-                >
-                    <span className="material-symbols-outlined text-[18px]">forward_to_inbox</span>
-                    프로필발송
                 </button>
             </div>
         </div>
@@ -155,6 +154,7 @@ const AgencyDirectory = () => {
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [selectedAgency, setSelectedAgency] = useState(null);
+    const [detailModalAgency, setDetailModalAgency] = useState(null);
     const [memoModalAgency, setMemoModalAgency] = useState(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [sendHistory, setSendHistory] = useState([]);
@@ -334,17 +334,17 @@ const AgencyDirectory = () => {
                             </div>
                             {/* 롤링 티커 */}
                             {recentMessages.length > 0 ? (
-                                <div className="overflow-hidden h-[56px]">
+                                <div className="overflow-hidden min-h-[60px] flex items-center pb-1">
                                     <p
                                         key={tickerIndex}
-                                        className="text-white font-black text-xl leading-tight line-clamp-2 transition-all duration-300"
+                                        className="text-white font-black text-lg sm:text-xl leading-snug line-clamp-2 transition-all duration-300"
                                         style={{ opacity: tickerVisible ? 1 : 0, transform: tickerVisible ? 'translateY(0)' : 'translateY(-8px)' }}
                                     >
                                         {recentMessages[tickerIndex]?.title}
                                     </p>
                                 </div>
                             ) : (
-                                <p className="text-white font-black text-xl leading-tight">생생한 꿀팁 &amp; 시크릿 공지</p>
+                                <p className="text-white font-black text-lg sm:text-xl leading-snug">생생한 꿀팁 &amp; 시크릿 공지</p>
                             )}
                             <p className="text-white/80 text-xs mt-2 flex items-center gap-1">
                                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/70 animate-pulse"></span>
@@ -357,54 +357,21 @@ const AgencyDirectory = () => {
                     </div>
                 </div>
 
-                {/* 이력서 발송 현황 배너 */}
-                {isUnlimited ? (
-                    <div
-                        className="flex items-center gap-4 px-6 py-4 rounded-3xl bg-white border border-[#E8E0FA] mb-6 cursor-pointer hover:bg-[#F8F5FF] transition-all shadow-sm group"
-                        onClick={() => navigate('/home/smart-profile')}
-                    >
-                        <div className="w-12 h-12 rounded-2xl bg-[#A78BFA]/10 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                            <span className="material-symbols-outlined text-[24px] text-[#A78BFA]">all_inclusive</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[#1F1235] font-black text-[15px]">
-                                이번달 프로필 발송: <span className="text-[#A78BFA]">무제한</span>
-                            </p>
-                            <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold">✨ {GRADE_INFO[grade]?.label || 'GOLD'} 혜택 · 무제한 발송 가능 · 탭하여 내 프로필 설정</p>
-                        </div>
-                        <span className="material-symbols-outlined text-[20px] text-[#E8E0FA] group-hover:text-[#9333EA] transition-colors">chevron_right</span>
-                    </div>
-                ) : (
-                    <div
-                        className="flex items-center gap-4 px-6 py-4 rounded-3xl bg-white border border-[#E8E0FA] mb-6 cursor-pointer hover:bg-[#F8F5FF] transition-all shadow-sm group"
-                        onClick={() => navigate('/home/smart-profile')}
-                    >
-                        <div className="w-12 h-12 rounded-2xl bg-[#10B981]/10 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                            <span className="material-symbols-outlined text-[24px] text-[#10B981]">forward_to_inbox</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[#1F1235] font-black text-[15px]">
-                                이번달 프로필 발송: <span className="text-[#10B981]">{getMonthlyCount(sendHistory)}</span>/{SILVER_MONTHLY_LIMIT}회 사용
-                            </p>
-                            <p className="text-[#9CA3AF] text-[12px] mt-0.5 font-bold">GOLD 등급 → 무제한 · 탭하여 내 프로필 설정</p>
-                        </div>
-                        <span className="material-symbols-outlined text-[20px] text-[#E8E0FA] group-hover:text-[#9333EA] transition-colors">chevron_right</span>
-                    </div>
-                )}
 
-                {/* Search bar */}
+
+                {/* Search bar (Pill style) */}
                 <div className="relative max-w-2xl">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[18px] text-[#9CA3AF]">search</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[18px] text-[#8B5CF6]">search</span>
                     <input
                         type="text"
                         placeholder="에이전시 이름 또는 주소 검색..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white border border-[#E8E0FA] text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA]/50 focus:ring-2 focus:ring-[#9333EA]/10 transition-all font-medium shadow-sm"
+                        className="w-full pl-11 pr-10 py-3 rounded-full bg-white border border-[#E8E0FA] text-[#1F1235] text-xs sm:text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/10 transition-all font-semibold shadow-2xs"
                     />
                     {search && (
-                        <button onClick={() => setSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors">
-                            <span className="material-symbols-outlined text-[18px]">close</span>
+                        <button onClick={() => setSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                            <span className="material-symbols-outlined text-[16px]">close</span>
                         </button>
                     )}
                 </div>
@@ -442,6 +409,7 @@ const AgencyDirectory = () => {
                                         index={i}
                                         onAction={handleActionClick}
                                         onSend={handleSend}
+                                        onDetail={(agency) => setDetailModalAgency(agency)}
                                         sendInfo={getSendInfo(sendHistory, agency.name)}
                                     />
                                 ))}
@@ -509,6 +477,17 @@ const AgencyDirectory = () => {
             </div>
 
 
+
+            {/* 에이전시 상세 모달 */}
+            {detailModalAgency && (
+                <AgencyDetailModal
+                    agency={detailModalAgency}
+                    sendInfo={getSendInfo(sendHistory, detailModalAgency.name)}
+                    onClose={() => setDetailModalAgency(null)}
+                    onWriteMemo={(agency) => setMemoModalAgency(agency)}
+                    onSendProfile={(agency) => handleSend(agency)}
+                />
+            )}
 
             {/* 에이전시 이메일 직접 입력 모달 */}
             {castingModal && (
