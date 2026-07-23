@@ -30,6 +30,7 @@ const HomeDashboard = () => {
         '💡 [꿀팁] 에이전시 피드백 채팅을 통한 프로필 합격률 높이기',
     ]);
     const [noticeIdx, setNoticeIdx] = useState(0);
+    const [ticker, setTicker] = useState('');
 
     useEffect(() => {
         syncUserGrade().then(() => {
