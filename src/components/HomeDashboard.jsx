@@ -22,7 +22,7 @@ const HomeDashboard = () => {
     const navigate = useNavigate();
     const user = getUser();
     const [grade, setGrade] = useState(getUserGrade() || 'SILVER');
-    const nickname = user?.name || user?.nickname || '모카 회원';
+    const nickname = user?.nickname || user?.name || '모카';
 
     const [noticesList, setNoticesList] = useState([
         '📢 [필독] 프로필 관리 PPT 마이박스 & 구글 공유 설정 방법',
@@ -61,23 +61,24 @@ const HomeDashboard = () => {
     return (
         <div className="min-h-screen flex flex-col pb-24" style={{ backgroundColor: 'var(--moca-bg, #F3F0FF)' }}>
 
-            {/* ── 1. 웰컴 타이틀 & 프로필/알림 헤더 (중복 MOCA 로고 제거) ── */}
-            <section className="px-6 pt-6 pb-3 flex items-start justify-between">
-                <div>
-                    <h2 className="text-2xl tracking-tight mb-1 flex items-baseline">
-                        <span className="font-serif italic font-bold text-[#8B5CF6] text-2.5xl mr-1.5">Hello,</span>
-                        <span className="font-black text-[#1F1235]">{nickname}모델님!</span>
+            {/* ── 1. 웰컴 타이틀 & 프로필/알림 헤더 (비율 및 위치 정갈한 수평 핏) ── */}
+            <section className="px-6 pt-5 pb-3 flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                    <h2 className="text-xl font-bold tracking-tight mb-1 flex items-baseline flex-wrap">
+                        <span className="font-serif italic font-semibold text-[#8B5CF6] text-xl mr-1.5">Hello,</span>
+                        <span className="font-bold text-[#1F1235]">{nickname}모델님!</span>
                     </h2>
-                    <p className="text-sm font-medium text-[#64748B]">
+                    <p className="text-xs font-medium text-[#64748B]">
                         오늘도 MOCA와 함께 멋진 하루 보내세요!
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2.5 pt-0.5">
+                <div className="flex items-center gap-2 flex-shrink-0">
                     {/* 아바타 프로필 버튼 */}
                     <button
                         onClick={() => setIsProfileModalOpen(true)}
-                        className="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow-sm flex items-center justify-center bg-[#DDD6FE] text-[#6D28D9] font-bold text-sm active:scale-95 transition-transform"
+                        className="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow-sm flex items-center justify-center bg-[#DDD6FE] text-[#6D28D9] font-bold text-xs active:scale-95 transition-transform"
+                        title="나의 프로필 수정"
                     >
                         {user?.profile_image ? (
                             <img src={user.profile_image} alt="Profile" className="w-full h-full object-cover" />
@@ -90,8 +91,9 @@ const HomeDashboard = () => {
                     <button
                         onClick={() => navigate('/home/message')}
                         className="w-9 h-9 rounded-full bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center active:scale-95 transition-transform relative"
+                        title="공지사항 및 알림"
                     >
-                        <span className="material-symbols-outlined text-[20px]">notifications</span>
+                        <span className="material-symbols-outlined text-[19px]">notifications</span>
                         {ticker && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#EF4444]"></span>}
                     </button>
                 </div>
