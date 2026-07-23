@@ -334,22 +334,27 @@ const AgencyLanding = () => {
     return (
         <div className="min-h-screen flex flex-col font-display" style={{ backgroundColor: 'var(--moca-bg)' }}>
             {/* ── 상단 네비 바 ── */}
-            <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-[#E8E0FA] z-[200] flex items-center justify-between px-5 md:px-10 pb-3" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-2xl font-black tracking-tighter">MOCA</span>
-                <div className="flex items-center gap-3">
+            <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-[#E8E0FA] z-[200] flex items-center justify-between px-5 md:px-10 py-4" style={{ paddingTop: 'calc(0.85rem + env(safe-area-inset-top, 0px))' }}>
+                <span className="text-2xl font-bold tracking-tight text-[#1F1235] font-serif">MOCA</span>
+                <div className="flex items-center gap-2.5">
                     {isLoggedIn ? (
                         <button
                             onClick={() => navigate('/home/dashboard')}
-                            className="bg-[#9333EA] text-white px-5 py-2 rounded-full font-black text-sm shadow-moca hover:opacity-90 transition-all"
+                            className="bg-[#8B5CF6] text-white px-5 py-2 rounded-full font-bold text-sm shadow-xs hover:bg-[#7C3AED] active:scale-95 transition-all"
                         >
                             대시보드
                         </button>
                     ) : (
                         <>
-                            <button onClick={handleLoginClick} className="text-[#5B4E7A] font-bold text-sm px-3 py-2">로그인</button>
+                            <button
+                                onClick={handleLoginClick}
+                                className="text-[#7C3AED] hover:bg-[#F3E8FF] px-4 py-2 rounded-full font-bold text-sm transition-all"
+                            >
+                                로그인
+                            </button>
                             <button
                                 onClick={() => setShowSignup(true)}
-                                className="bg-[#9333EA] text-white px-5 py-2 rounded-full font-black text-sm shadow-moca hover:opacity-90 transition-all"
+                                className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white px-5 py-2 rounded-full font-bold text-sm shadow-xs active:scale-95 transition-all"
                             >
                                 회원가입
                             </button>
@@ -359,16 +364,16 @@ const AgencyLanding = () => {
             </nav>
 
             {/* ── 히어로 섹션 ── */}
-            <section className="pt-32 pb-20 px-5 text-center">
+            <section className="pt-32 pb-16 px-5 text-center">
                 <div className={`transition-all duration-1000 transform ${loaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-                    <span className="inline-block px-4 py-1.5 rounded-full bg-[#F3E8FF] text-[#9333EA] text-xs font-bold tracking-widest mb-4 uppercase">
+                    <span className="inline-block px-4 py-1.5 rounded-full bg-[#EDE9FE] text-[#7C3AED] text-xs font-bold tracking-widest mb-4 uppercase">
                         {homeSettings.heroBadgeGuest}
                     </span>
-                    <h1 className="text-3xl md:text-5xl font-extrabold text-[#1F1235] leading-tight tracking-tight mb-6">
+                    <h1 className="text-3xl md:text-5xl font-black text-[#1F1235] leading-tight tracking-tight mb-6">
                         {homeSettings.heroTitle1?.split('\n').map((line, i) => (
                             <React.Fragment key={i}>{line}<br /></React.Fragment>
                         ))}
-                        <span className="text-[#9333EA]">
+                        <span className="text-[#7C3AED]">
                             {homeSettings.heroTitle2?.split('\n').map((line, i) => (
                                 <React.Fragment key={i}>{line}{i < homeSettings.heroTitle2.split('\n').length - 1 ? <br /> : ''}</React.Fragment>
                             ))}
@@ -382,16 +387,16 @@ const AgencyLanding = () => {
                         <br />
                         {homeSettings.heroSubtitle2}
                     </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-md mx-auto">
                         <button
                             onClick={() => handleProtectedNavigation('/agencies')}
-                            className="w-full sm:w-auto px-10 py-5 rounded-3xl bg-[#9333EA] text-white font-bold text-lg shadow-moca-lg hover:scale-105 active:scale-95 transition-all"
+                            className="w-full sm:w-auto flex-1 px-8 py-4 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white font-bold text-base shadow-md hover:shadow-lg active:scale-95 transition-all"
                         >
                             에이전시 투어 시작하기
                         </button>
                         <button
                             onClick={() => handleProtectedNavigation('/home/smart-profile')}
-                            className="w-full sm:w-auto px-10 py-5 rounded-3xl bg-white border-2 border-[#E8E0FA] text-[#1F1235] font-bold text-lg hover:bg-[#F8F5FF] transition-all"
+                            className="w-full sm:w-auto flex-1 px-8 py-4 rounded-2xl bg-white border border-[#E8E0FA] text-[#1F1235] font-bold text-base shadow-2xs hover:bg-[#F8F5FF] active:scale-95 transition-all"
                         >
                             스마트 프로필 만들기
                         </button>
@@ -399,34 +404,53 @@ const AgencyLanding = () => {
                 </div>
             </section>
 
-            {/* ── 주요 기능 섹션 ── */}
-            <section className="py-20 bg-white">
+            {/* ── 주요 기능 3대 파스텔 카드 섹션 ── */}
+            <section className="py-16 bg-white/60 backdrop-blur-sm">
                 <div className="max-w-6xl mx-auto px-5">
-                    <div className="grid md:grid-cols-3 gap-8">
-                        <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
-                            <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">{homeSettings.feature1Icon || 'apartment'}</span>
-                            <h3 className="text-xl font-bold text-[#1F1235] mb-3">{homeSettings.feature1Title || '중요 모델 에이전시 리스트'}</h3>
-                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">
+                    <div className="grid md:grid-cols-3 gap-6">
+
+                        {/* 카드 1: 중요 모델 에이전시 리스트 (파스텔 소프트 바이올렛) */}
+                        <div className="p-7 rounded-3xl bg-gradient-to-b from-[#F3E8FF] via-[#E9D5FF] to-[#D8B4FE] border border-white/60 shadow-sm hover:scale-[1.02] transition-transform">
+                            <div className="w-14 h-14 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-5">
+                                <span className="material-symbols-outlined text-[#7C3AED] text-[32px]">folder_managed</span>
+                            </div>
+                            <h3 className="text-xl font-black text-[#1F1235] mb-2">
+                                {homeSettings.feature1Title || '중요 모델 에이전시 리스트'}
+                            </h3>
+                            <p className="text-xs font-bold text-[#6D28D9]/90 leading-relaxed">
                                 {(homeSettings.feature1Desc || '실시간으로 업데이트되는 {{count}}개 에이전시의 주소와 연락처, 특징을 한눈에.')
                                     .replace('{{count}}', agencyCount)}
                             </p>
                         </div>
-                        <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
-                            <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">{homeSettings.feature2Icon || 'forward_to_inbox'}</span>
-                            <h3 className="text-xl font-bold text-[#1F1235] mb-3">{homeSettings.feature2Title || '간편 프로필 발송'}</h3>
-                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">
+
+                        {/* 카드 2: 간편 프로필 발송 (파스텔 소프트 바이올렛) */}
+                        <div className="p-7 rounded-3xl bg-gradient-to-b from-[#F3E8FF] via-[#E9D5FF] to-[#D8B4FE] border border-white/60 shadow-sm hover:scale-[1.02] transition-transform">
+                            <div className="w-14 h-14 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-5">
+                                <span className="material-symbols-outlined text-[#7C3AED] text-[32px]">mark_email_read</span>
+                            </div>
+                            <h3 className="text-xl font-black text-[#1F1235] mb-2">
+                                {homeSettings.feature2Title || '간편 프로필 발송'}
+                            </h3>
+                            <p className="text-xs font-bold text-[#6D28D9]/90 leading-relaxed">
                                 {(homeSettings.feature2Desc || '번거로운 이메일 발송은 이제 그만. 클릭 한 번으로 수십 곳의 에이전시에 프로필을 전달하세요.')
                                     .replace('{{count}}', agencyCount)}
                             </p>
                         </div>
-                        <div className="p-8 rounded-3xl bg-[#F8F5FF] border border-[#E8E0FA]">
-                            <span className="material-symbols-outlined text-[#9333EA] text-4xl mb-4">{homeSettings.feature3Icon || 'event_note'}</span>
-                            <h3 className="text-xl font-bold text-[#1F1235] mb-3">{homeSettings.feature3Title || '투어일지 & 캘린더'}</h3>
-                            <p className="text-[#5B4E7A] text-sm leading-relaxed font-medium">
+
+                        {/* 카드 3: 투어일지 & 캘린더 (화이트 라운드 파스텔) */}
+                        <div className="p-7 rounded-3xl bg-white border border-[#E8E0FA] shadow-2xs hover:scale-[1.02] transition-transform">
+                            <div className="w-14 h-14 rounded-2xl bg-[#EDE9FE] flex items-center justify-center mb-5">
+                                <span className="material-symbols-outlined text-[#7C3AED] text-[32px]">event_note</span>
+                            </div>
+                            <h3 className="text-xl font-black text-[#1F1235] mb-2">
+                                {homeSettings.feature3Title || '투어일지 & 캘린더'}
+                            </h3>
+                            <p className="text-xs font-bold text-[#5B4E7A] leading-relaxed">
                                 {(homeSettings.feature3Desc || '내가 보낸 프로필과 투어 일정을 체계적으로 관리하고 다른 모델들과 정보를 공유하세요.')
                                     .replace('{{count}}', agencyCount)}
                             </p>
                         </div>
+
                     </div>
                 </div>
             </section>
