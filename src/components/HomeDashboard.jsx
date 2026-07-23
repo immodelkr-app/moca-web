@@ -114,7 +114,7 @@ const HomeDashboard = () => {
                             에이전시 리스트
                         </h3>
                         <p className="text-[11px] font-bold text-[#6D28D9]/80 leading-tight">
-                            등록된 모델 &amp;<br />에이전시 확인
+                            광고전문<br />에이전시 확인
                         </p>
                     </button>
 
@@ -130,7 +130,7 @@ const HomeDashboard = () => {
                             프로필 메일발송
                         </h3>
                         <p className="text-[11px] font-bold text-[#6D28D9]/80 leading-tight">
-                            클라이언트에게<br />바로 발송
+                            에이전시에<br />프로필 발송
                         </p>
                     </button>
 
