@@ -27,6 +27,8 @@ const HomeDashboard = () => {
     const [ticker, setTicker] = useState('');
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
+    const [notices, setNotices] = useState([]);
+
     useEffect(() => {
         syncUserGrade().then(() => {
             setGrade(getUserGrade() || 'SILVER');
@@ -34,6 +36,7 @@ const HomeDashboard = () => {
 
         fetchMessagesList().then(data => {
             if (data && data.length > 0) {
+                setNotices(data.slice(0, 2));
                 setTicker(data[0]?.title || data[0]?.content?.slice(0, 40) || '');
             }
         }).catch(() => { });
@@ -82,19 +85,71 @@ const HomeDashboard = () => {
                 </p>
             </section>
 
-            {/* ── 3. 공지사항 알림 캡슐 바 ── */}
-            <div className="px-6 mb-6">
-                <div
-                    onClick={() => navigate('/home/message')}
-                    className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#EDE9FE]/70 border border-[#DDD6FE] text-[#6D28D9] shadow-2xs cursor-pointer active:scale-[0.99] transition-all"
-                >
-                    <div className="w-7 h-7 rounded-full bg-[#C4B5FD] text-[#5B21B6] flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-[16px]">campaign</span>
+            {/* ── 3. 주요 공지사항 (옵션 A: 미니 카드형 최근 공지 2개) ── */}
+            <div className="px-6 mb-7">
+                <div className="bg-white border border-[#E8E0FA] rounded-2xl p-4.5 shadow-2xs">
+                    <div className="flex items-center justify-between mb-3 border-b border-[#F3E8FF] pb-2.5">
+                        <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-full bg-[#EDE9FE] text-[#7C3AED] text-[11px] font-black flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[13px]">campaign</span>
+                                MOCA 공지사항
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => navigate('/home/message')}
+                            className="text-[11px] font-bold text-[#8B5CF6] hover:text-[#7C3AED] flex items-center gap-0.5 active:scale-95 transition-transform"
+                        >
+                            전체보기
+                            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+                        </button>
                     </div>
-                    <p className="text-xs font-bold text-[#5B21B6] flex-1 truncate">
-                        {ticker ? `공지: ${ticker}` : '공지: 2024 S/S 오디션 지원 마감일 (~5.31)'}
-                    </p>
-                    <span className="material-symbols-outlined text-[#8B5CF6] text-[16px]">chevron_right</span>
+
+                    <div className="space-y-2.5">
+                        {notices.length > 0 ? (
+                            notices.map((n, idx) => (
+                                <div
+                                    key={n.id || idx}
+                                    onClick={() => navigate('/home/message')}
+                                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-[#F8F5FF] cursor-pointer transition-colors active:scale-[0.99]"
+                                >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6] flex-shrink-0" />
+                                    <p className="text-xs font-bold text-[#1F1235] truncate flex-1 leading-snug">
+                                        {n.title || n.content}
+                                    </p>
+                                    <span className="text-[10px] font-bold text-[#9CA3AF] flex-shrink-0">
+                                        {n.created_at ? new Date(n.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) : 'NEW'}
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            <>
+                                <div
+                                    onClick={() => navigate('/home/message')}
+                                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-[#F8F5FF] cursor-pointer transition-colors active:scale-[0.99]"
+                                >
+                                    <span className="w-2 h-2 rounded-full bg-[#8B5CF6] flex-shrink-0" />
+                                    <p className="text-xs font-bold text-[#1F1235] truncate flex-1 leading-snug">
+                                        📢 [안내] 프로필 관리 PPT 마이박스 및 구글드라이브 공유 방법
+                                    </p>
+                                    <span className="text-[10px] font-bold text-[#7C3AED] bg-[#EDE9FE] px-1.5 py-0.5 rounded-md flex-shrink-0">
+                                        필독
+                                    </span>
+                                </div>
+                                <div
+                                    onClick={() => navigate('/home/message')}
+                                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-[#F8F5FF] cursor-pointer transition-colors active:scale-[0.99]"
+                                >
+                                    <span className="w-2 h-2 rounded-full bg-[#C084FC] flex-shrink-0" />
+                                    <p className="text-xs font-bold text-[#5B4E7A] truncate flex-1 leading-snug">
+                                        🎬 2026 S/S 브랜드 광고모델 오디션 수시 지원 공지
+                                    </p>
+                                    <span className="text-[10px] font-bold text-[#64748B] flex-shrink-0">
+                                        NEW
+                                    </span>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 
