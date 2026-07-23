@@ -100,9 +100,9 @@ const HomeDashboard = () => {
             <div className="px-6 mb-6">
                 <div
                     onClick={() => navigate('/home/message')}
-                    className="flex items-center gap-3 px-4.5 py-3.5 rounded-full bg-white/95 border border-[#DDD6FE] text-[#6D28D9] shadow-2xs cursor-pointer active:scale-[0.99] transition-all overflow-hidden"
+                    className="flex items-center gap-3 pl-5 pr-4 py-3.5 rounded-full bg-white/95 border border-[#DDD6FE] text-[#6D28D9] shadow-2xs cursor-pointer active:scale-[0.99] transition-all overflow-hidden"
                 >
-                    <div className="w-7.5 h-7.5 rounded-full bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center flex-shrink-0 shadow-2xs">
+                    <div className="w-7.5 h-7.5 rounded-full bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center flex-shrink-0 shadow-2xs ml-0.5">
                         <span className="material-symbols-outlined text-[17px]">campaign</span>
                     </div>
 
@@ -120,7 +120,7 @@ const HomeDashboard = () => {
                         </div>
                     </div>
 
-                    <span className="material-symbols-outlined text-[#8B5CF6] text-[18px] flex-shrink-0">chevron_right</span>
+                    <span className="material-symbols-outlined text-[#8B5CF6] text-[18px] flex-shrink-0 mr-0.5">chevron_right</span>
                 </div>
             </div>
 
