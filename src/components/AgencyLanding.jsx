@@ -335,7 +335,7 @@ const AgencyLanding = () => {
         <div className="min-h-screen flex flex-col font-display" style={{ backgroundColor: 'var(--moca-bg)' }}>
             {/* ── 상단 네비 바 ── */}
             <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-[#E8E0FA] z-[200] flex items-center justify-between px-5 md:px-10 py-4" style={{ paddingTop: 'calc(0.85rem + env(safe-area-inset-top, 0px))' }}>
-                <span className="text-2xl font-bold tracking-tight text-[#1F1235] font-serif">MOCA</span>
+                <span className="text-3xl moca-brand-logo text-[#1F1235] tracking-tight leading-none">MOCA</span>
                 <div className="flex items-center gap-2.5">
                     {isLoggedIn ? (
                         <button
@@ -459,7 +459,7 @@ const AgencyLanding = () => {
             <footer className="w-full border-t border-[#E8E0FA] bg-[#F8F5FF] px-6 py-12">
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
                     <div className="text-center md:text-left">
-                        <span className="text-[#9333EA] text-xl font-black tracking-tighter">MOCA</span>
+                        <span className="text-2xl moca-brand-logo text-[#1F1235] tracking-tight">MOCA</span>
                         <p className="text-[#9CA3AF] text-xs font-bold mt-2">© 2026 글로벌 아임(IMMOCA). All rights reserved.</p>
                     </div>
                     <div className="flex flex-col items-center md:items-end gap-4">

@@ -44,7 +44,7 @@ const HomeDashboard = () => {
 
             {/* ── 1. 상단 메인 헤더 (MOCA 브랜드 + 아바타 프로필 & 알림 종) ── */}
             <header className="flex items-center justify-between px-6 pt-7 pb-4">
-                <h1 className="text-2xl font-bold tracking-tight text-[#1F1235] font-serif">
+                <h1 className="text-3xl moca-brand-logo tracking-tight leading-none text-[#1F1235]">
                     MOCA
                 </h1>
 

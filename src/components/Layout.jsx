@@ -111,7 +111,7 @@ const Layout = () => {
             <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-white border-r border-[#E8E0FA] fixed left-0 top-0 z-50 shadow-moca">
                 {/* 로고 & 유저 */}
                 <div className="px-6 py-7 border-b border-[#E8E0FA] flex flex-col items-center text-center">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-4xl font-black tracking-tighter pb-1">MOCA</span>
+                    <span className="text-4xl moca-brand-logo text-[#1F1235] tracking-tight pb-1">MOCA</span>
                     <p className="text-[10px] text-[#9CA3AF] mt-1 font-bold uppercase tracking-widest mb-4">아임모델 에이전시</p>
                     {userId && (
                         <div className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#F3E8FF] border border-[#E8E0FA] w-full justify-center">
