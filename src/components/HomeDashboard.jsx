@@ -31,6 +31,7 @@ const HomeDashboard = () => {
     ]);
     const [noticeIdx, setNoticeIdx] = useState(0);
     const [ticker, setTicker] = useState('');
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     useEffect(() => {
         syncUserGrade().then(() => {
