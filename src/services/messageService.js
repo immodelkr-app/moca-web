@@ -8,7 +8,7 @@ export const fetchMessagesList = async () => {
     if (isSupabaseEnabled()) {
         const { data, error } = await supabase
             .from('moca_announcements')
-            .select('id, title, content, created_at, image_url, link_url')
+            .select('*')
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -59,7 +59,7 @@ const fileToDataUrl = (file) => {
     });
 };
 
-export const createAnnouncementMessage = async (title, content, imageFile, linkUrl = null) => {
+export const createAnnouncementMessage = async (title, content, imageFile, linkUrl = null, styleOptions = {}) => {
     let image_url = null;
 
     if (isSupabaseEnabled()) {
@@ -97,7 +97,14 @@ export const createAnnouncementMessage = async (title, content, imageFile, linkU
         }
 
         // image_url 컬럼이 없는 경우를 대비해 이미지가 없으면 제외
-        const insertData = { title, content };
+        const insertData = {
+            title,
+            content,
+            font_family: styleOptions.font_family || 'Pretendard',
+            font_size: styleOptions.font_size || 'md',
+            highlight_gradient: styleOptions.highlight_gradient || 'purple',
+            highlight_style: styleOptions.highlight_style || 'gradient',
+        };
         if (image_url) insertData.image_url = image_url;
         if (linkUrl) insertData.link_url = linkUrl;
 
@@ -112,14 +119,32 @@ export const createAnnouncementMessage = async (title, content, imageFile, linkU
         const list = raw ? JSON.parse(raw) : [];
         let localImg = null;
         if (imageFile) localImg = await fileToDataUrl(imageFile);
-        list.push({ id: Date.now(), title, content, image_url: localImg, created_at: new Date().toISOString() });
+        list.push({
+            id: Date.now(),
+            title,
+            content,
+            image_url: localImg,
+            font_family: styleOptions.font_family || 'Pretendard',
+            font_size: styleOptions.font_size || 'md',
+            highlight_gradient: styleOptions.highlight_gradient || 'purple',
+            highlight_style: styleOptions.highlight_style || 'gradient',
+            created_at: new Date().toISOString()
+        });
         localStorage.setItem(LOCAL_ANNOUNCEMENT_KEY, JSON.stringify(list));
     }
 };
 
-export const updateMessage = async (id, title, content, linkUrl = null, imageFile = null, removeImage = false) => {
+export const updateMessage = async (id, title, content, linkUrl = null, imageFile = null, removeImage = false, styleOptions = {}) => {
     if (isSupabaseEnabled()) {
-        const updateData = { title, content, link_url: linkUrl || null };
+        const updateData = {
+            title,
+            content,
+            link_url: linkUrl || null,
+            font_family: styleOptions.font_family || 'Pretendard',
+            font_size: styleOptions.font_size || 'md',
+            highlight_gradient: styleOptions.highlight_gradient || 'purple',
+            highlight_style: styleOptions.highlight_style || 'gradient',
+        };
 
         if (removeImage) {
             updateData.image_url = null;
@@ -170,7 +195,16 @@ export const updateMessage = async (id, title, content, linkUrl = null, imageFil
         if (imageFile) localImg = await fileToDataUrl(imageFile);
         const updated = list.map(m => {
             if (m.id === id) {
-                const item = { ...m, title, content, link_url: linkUrl || null };
+                const item = {
+                    ...m,
+                    title,
+                    content,
+                    link_url: linkUrl || null,
+                    font_family: styleOptions.font_family || 'Pretendard',
+                    font_size: styleOptions.font_size || 'md',
+                    highlight_gradient: styleOptions.highlight_gradient || 'purple',
+                    highlight_style: styleOptions.highlight_style || 'gradient',
+                };
                 if (removeImage) item.image_url = null;
                 else if (localImg) item.image_url = localImg;
                 return item;

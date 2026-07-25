@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchMessagesList, fetchMessageDetail, fetchComments, postComment } from '../services/messageService';
 import { getUser } from '../services/userService';
+import { FONT_OPTIONS, FONT_SIZE_OPTIONS, GRADIENT_OPTIONS } from './AdminHomepage';
 
 const KimDaepyoMessage = () => {
     const navigate = useNavigate();
@@ -87,19 +88,45 @@ const KimDaepyoMessage = () => {
                         <span className="text-xs text-[#9CA3AF] font-medium">{formatDate(selectedMessage.created_at)}</span>
                     </div>
 
-                    <h2 className="text-[#1F1235] text-2xl font-black mb-5 leading-snug break-words">
-                        {selectedMessage.title}
-                    </h2>
+                    {(() => {
+                        const fontOpt = FONT_OPTIONS.find(f => f.id === selectedMessage.font_family) || FONT_OPTIONS[0];
+                        const sizeOpt = FONT_SIZE_OPTIONS.find(s => s.id === selectedMessage.font_size) || FONT_SIZE_OPTIONS[1];
+                        const gradOpt = GRADIENT_OPTIONS.find(g => g.id === selectedMessage.highlight_gradient) || GRADIENT_OPTIONS[0];
+                        const highlightStyle = selectedMessage.highlight_style || 'gradient';
 
-                    {selectedMessage.image_url && (
-                        <div className="mb-6 rounded-2xl overflow-hidden shadow-md border border-[#E8E0FA]">
-                            <img src={selectedMessage.image_url} alt="본문 이미지" className="w-full h-auto object-cover" />
-                        </div>
-                    )}
+                        const getHighlightClass = () => {
+                            if (highlightStyle === 'solid') return gradOpt.text;
+                            if (highlightStyle === 'underline') return `${gradOpt.text} underline underline-offset-4 decoration-4`;
+                            if (highlightStyle === 'glow') return `text-transparent bg-clip-text bg-gradient-to-r ${gradOpt.style} drop-shadow-[0_2px_12px_rgba(147,51,234,0.4)]`;
+                            return `text-transparent bg-clip-text bg-gradient-to-r ${gradOpt.style}`;
+                        };
 
-                    <div className="text-[#5B4E7A] text-[15px] leading-loose whitespace-pre-wrap break-words mb-8 pb-6 border-b border-[#E8E0FA]">
-                        {selectedMessage.content}
-                    </div>
+                        return (
+                            <>
+                                <h2
+                                    className={`text-[#1F1235] ${sizeOpt.heroClass} font-black mb-5 leading-snug break-words`}
+                                    style={{ fontFamily: fontOpt.family }}
+                                >
+                                    <span className={`inline-block ${getHighlightClass()}`}>
+                                        {selectedMessage.title}
+                                    </span>
+                                </h2>
+
+                                {selectedMessage.image_url && (
+                                    <div className="mb-6 rounded-2xl overflow-hidden shadow-md border border-[#E8E0FA]">
+                                        <img src={selectedMessage.image_url} alt="본문 이미지" className="w-full h-auto object-cover" />
+                                    </div>
+                                )}
+
+                                <div
+                                    className="text-[#5B4E7A] text-[15px] leading-loose whitespace-pre-wrap break-words mb-8 pb-6 border-b border-[#E8E0FA] font-medium"
+                                    style={{ fontFamily: fontOpt.family }}
+                                >
+                                    {selectedMessage.content}
+                                </div>
+                            </>
+                        );
+                    })()}
 
                     {selectedMessage.link_url && (
                         <div className="mb-8 pb-6 border-b border-[#E8E0FA]">

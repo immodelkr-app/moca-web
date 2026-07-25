@@ -5,7 +5,7 @@ import { GRADE_INFO, GRADE_EMOJI, logoutUser } from '../services/userService';
 import AdminUpgradeRequests from './AdminUpgradeRequests';
 import AdminPopups from './AdminPopups';
 import AdminClasses from './AdminClasses';
-import AdminHomepage from './AdminHomepage';
+import AdminHomepage, { FONT_OPTIONS, FONT_SIZE_OPTIONS, GRADIENT_OPTIONS, HIGHLIGHT_STYLE_OPTIONS } from './AdminHomepage';
 import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost, parseImageUrls } from '../services/certificationService';
 import { fetchAllCurrentPhotos, updatePhotoStatus, updatePhotoFeedback, deleteCurrentPhoto, addPhotoFeedbackComment, fetchPhotoFeedbackComments } from '../services/currentPhotosService';
@@ -77,6 +77,10 @@ const AdminPage = () => {
     const [announcementContent, setAnnouncementContent] = useState('');
     const [announcementImage, setAnnouncementImage] = useState(null);
     const [announcementLinkUrl, setAnnouncementLinkUrl] = useState('');
+    const [noticeFontFamily, setNoticeFontFamily] = useState('Pretendard');
+    const [noticeFontSize, setNoticeFontSize] = useState('md');
+    const [noticeHighlightGradient, setNoticeHighlightGradient] = useState('purple');
+    const [noticeHighlightStyle, setNoticeHighlightStyle] = useState('gradient');
     const [isPosting, setIsPosting] = useState(false);
     const [castingStats, setCastingStats] = useState([]);
     const [senderStats, setSenderStats] = useState([]); // 프로필 발송 많이 보낸 유저 통계
@@ -87,6 +91,10 @@ const AdminPage = () => {
     const [editContent, setEditContent] = useState('');
     const [editLinkUrl, setEditLinkUrl] = useState('');
     const [editImage, setEditImage] = useState(null);
+    const [editFontFamily, setEditFontFamily] = useState('Pretendard');
+    const [editFontSize, setEditFontSize] = useState('md');
+    const [editHighlightGradient, setEditHighlightGradient] = useState('purple');
+    const [editHighlightStyle, setEditHighlightStyle] = useState('gradient');
     const [removeExistingImage, setRemoveExistingImage] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
 
@@ -463,6 +471,10 @@ const AdminPage = () => {
         setEditContent(a.content || '');
         setEditLinkUrl(a.link_url || '');
         setEditImage(null);
+        setEditFontFamily(a.font_family || 'Pretendard');
+        setEditFontSize(a.font_size || 'md');
+        setEditHighlightGradient(a.highlight_gradient || 'purple');
+        setEditHighlightStyle(a.highlight_style || 'gradient');
         setRemoveExistingImage(false);
         setLoungeView('edit');
     };
@@ -480,7 +492,13 @@ const AdminPage = () => {
                 editContent.trim(),
                 editLinkUrl.trim() || null,
                 editImage || null,
-                removeExistingImage
+                removeExistingImage,
+                {
+                    font_family: editFontFamily,
+                    font_size: editFontSize,
+                    highlight_gradient: editHighlightGradient,
+                    highlight_style: editHighlightStyle,
+                }
             );
             setSuccessMsg('✅ 공지가 수정되었습니다.');
             await loadAnnouncements();
@@ -521,13 +539,23 @@ const AdminPage = () => {
                 announcementTitle.trim(),
                 announcementContent.trim(),
                 announcementImage || null,
-                announcementLinkUrl.trim() || null
+                announcementLinkUrl.trim() || null,
+                {
+                    font_family: noticeFontFamily,
+                    font_size: noticeFontSize,
+                    highlight_gradient: noticeHighlightGradient,
+                    highlight_style: noticeHighlightStyle,
+                }
             );
             setSuccessMsg('✅ 게시판에 성공적으로 등록되었습니다!');
             setAnnouncementTitle('');
             setAnnouncementContent('');
             setAnnouncementImage(null);
             setAnnouncementLinkUrl('');
+            setNoticeFontFamily('Pretendard');
+            setNoticeFontSize('md');
+            setNoticeHighlightGradient('purple');
+            setNoticeHighlightStyle('gradient');
             await loadAnnouncements();
             setLoungeView('list');
             setTimeout(() => setSuccessMsg(''), 4000);
@@ -2198,6 +2226,122 @@ const AdminPage = () => {
                                             className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors"
                                         />
                                     </div>
+
+                                    {/* 공지 글 꾸미기 & 타이포그래피 설정 (수정) */}
+                                    <section className="bg-[var(--moca-bg)] p-4 rounded-2xl border border-[var(--moca-border)] space-y-4">
+                                        <h2 className="text-md font-bold text-[var(--moca-text)] flex items-center gap-2 mb-1">
+                                            🎨 공지사항 글 꾸미기 & 타이포그래피
+                                        </h2>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">공지 글꼴</label>
+                                            <select
+                                                value={editFontFamily}
+                                                onChange={(e) => setEditFontFamily(e.target.value)}
+                                                className="w-full bg-white border border-[var(--moca-border)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)]"
+                                            >
+                                                {FONT_OPTIONS.map(opt => (
+                                                    <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">제목 크기</label>
+                                            <div className="grid grid-cols-4 gap-1.5">
+                                                {FONT_SIZE_OPTIONS.map(opt => (
+                                                    <button
+                                                        key={opt.id}
+                                                        type="button"
+                                                        onClick={() => setEditFontSize(opt.id)}
+                                                        className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                                            editFontSize === opt.id
+                                                                ? 'bg-[var(--moca-primary)] text-white border-[var(--moca-primary)] shadow-sm'
+                                                                : 'bg-white text-[var(--moca-text-2)] border-[var(--moca-border)] hover:bg-purple-50'
+                                                        }`}
+                                                    >
+                                                        {opt.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">포인트 컬러 테마</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {GRADIENT_OPTIONS.map(opt => (
+                                                    <button
+                                                        key={opt.id}
+                                                        type="button"
+                                                        onClick={() => setEditHighlightGradient(opt.id)}
+                                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                                                            editHighlightGradient === opt.id
+                                                                ? 'ring-2 ring-[var(--moca-primary)] border-transparent bg-white shadow-sm'
+                                                                : 'bg-white border-[var(--moca-border)] hover:opacity-80'
+                                                        }`}
+                                                    >
+                                                        <span
+                                                            className="w-3.5 h-3.5 rounded-full inline-block shadow-inner"
+                                                            style={{ background: `linear-gradient(135deg, ${opt.from}, ${opt.to})` }}
+                                                        />
+                                                        <span>{opt.name}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">제목 강조 효과</label>
+                                            <div className="grid grid-cols-4 gap-1.5">
+                                                {HIGHLIGHT_STYLE_OPTIONS.map(opt => (
+                                                    <button
+                                                        key={opt.id}
+                                                        type="button"
+                                                        onClick={() => setEditHighlightStyle(opt.id)}
+                                                        className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                                            editHighlightStyle === opt.id
+                                                                ? 'bg-[var(--moca-text)] text-white border-[var(--moca-text)] shadow-sm'
+                                                                : 'bg-white text-[var(--moca-text-2)] border-[var(--moca-border)] hover:bg-purple-50'
+                                                        }`}
+                                                    >
+                                                        {opt.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* 수정 미리보기 */}
+                                    {(() => {
+                                        const curFont = FONT_OPTIONS.find(f => f.id === editFontFamily) || FONT_OPTIONS[0];
+                                        const curSize = FONT_SIZE_OPTIONS.find(s => s.id === editFontSize) || FONT_SIZE_OPTIONS[1];
+                                        const curGrad = GRADIENT_OPTIONS.find(g => g.id === editHighlightGradient) || GRADIENT_OPTIONS[0];
+                                        const getHighlight = () => {
+                                            if (editHighlightStyle === 'solid') return curGrad.text;
+                                            if (editHighlightStyle === 'underline') return `${curGrad.text} underline underline-offset-4 decoration-4`;
+                                            if (editHighlightStyle === 'glow') return `text-transparent bg-clip-text bg-gradient-to-r ${curGrad.style} drop-shadow-[0_2px_10px_rgba(147,51,234,0.4)]`;
+                                            return `text-transparent bg-clip-text bg-gradient-to-r ${curGrad.style}`;
+                                        };
+                                        return (
+                                            <div className="p-4 bg-white border border-[var(--moca-border)] rounded-2xl shadow-sm space-y-2">
+                                                <span className="text-[10px] font-black text-[#9333EA] bg-[#F3E8FF] px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-block">수정 미리보기</span>
+                                                <h3
+                                                    className={`${curSize.heroClass} font-black text-[#1F1235] leading-snug`}
+                                                    style={{ fontFamily: curFont.family }}
+                                                >
+                                                    <span className={`inline-block ${getHighlight()}`}>
+                                                        {editTitle || '공지 제목 미리보기'}
+                                                    </span>
+                                                </h3>
+                                                <p
+                                                    className="text-[#5B4E7A] text-xs leading-relaxed whitespace-pre-wrap font-medium"
+                                                    style={{ fontFamily: curFont.family }}
+                                                >
+                                                    {editContent || '본문 내용 스타일 미리보기'}
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
                                     <div className="flex gap-3">
                                         <button
                                             type="button"
@@ -2272,6 +2416,122 @@ const AdminPage = () => {
                                             className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] placeholder-[var(--moca-text-3)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors"
                                         />
                                     </div>
+
+                                    {/* 공지 글 꾸미기 & 타이포그래피 설정 (작성) */}
+                                    <section className="bg-[var(--moca-bg)] p-4 rounded-2xl border border-[var(--moca-border)] space-y-4">
+                                        <h2 className="text-md font-bold text-[var(--moca-text)] flex items-center gap-2 mb-1">
+                                            🎨 공지사항 글 꾸미기 & 타이포그래피
+                                        </h2>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">공지 글꼴</label>
+                                            <select
+                                                value={noticeFontFamily}
+                                                onChange={(e) => setNoticeFontFamily(e.target.value)}
+                                                className="w-full bg-white border border-[var(--moca-border)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)]"
+                                            >
+                                                {FONT_OPTIONS.map(opt => (
+                                                    <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">제목 크기</label>
+                                            <div className="grid grid-cols-4 gap-1.5">
+                                                {FONT_SIZE_OPTIONS.map(opt => (
+                                                    <button
+                                                        key={opt.id}
+                                                        type="button"
+                                                        onClick={() => setNoticeFontSize(opt.id)}
+                                                        className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                                            noticeFontSize === opt.id
+                                                                ? 'bg-[var(--moca-primary)] text-white border-[var(--moca-primary)] shadow-sm'
+                                                                : 'bg-white text-[var(--moca-text-2)] border-[var(--moca-border)] hover:bg-purple-50'
+                                                        }`}
+                                                    >
+                                                        {opt.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">포인트 컬러 테마</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {GRADIENT_OPTIONS.map(opt => (
+                                                    <button
+                                                        key={opt.id}
+                                                        type="button"
+                                                        onClick={() => setNoticeHighlightGradient(opt.id)}
+                                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                                                            noticeHighlightGradient === opt.id
+                                                                ? 'ring-2 ring-[var(--moca-primary)] border-transparent bg-white shadow-sm'
+                                                                : 'bg-white border-[var(--moca-border)] hover:opacity-80'
+                                                        }`}
+                                                    >
+                                                        <span
+                                                            className="w-3.5 h-3.5 rounded-full inline-block shadow-inner"
+                                                            style={{ background: `linear-gradient(135deg, ${opt.from}, ${opt.to})` }}
+                                                        />
+                                                        <span>{opt.name}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">제목 강조 효과</label>
+                                            <div className="grid grid-cols-4 gap-1.5">
+                                                {HIGHLIGHT_STYLE_OPTIONS.map(opt => (
+                                                    <button
+                                                        key={opt.id}
+                                                        type="button"
+                                                        onClick={() => setNoticeHighlightStyle(opt.id)}
+                                                        className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                                            noticeHighlightStyle === opt.id
+                                                                ? 'bg-[var(--moca-text)] text-white border-[var(--moca-text)] shadow-sm'
+                                                                : 'bg-white text-[var(--moca-text-2)] border-[var(--moca-border)] hover:bg-purple-50'
+                                                        }`}
+                                                    >
+                                                        {opt.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* 작성 미리보기 */}
+                                    {(() => {
+                                        const curFont = FONT_OPTIONS.find(f => f.id === noticeFontFamily) || FONT_OPTIONS[0];
+                                        const curSize = FONT_SIZE_OPTIONS.find(s => s.id === noticeFontSize) || FONT_SIZE_OPTIONS[1];
+                                        const curGrad = GRADIENT_OPTIONS.find(g => g.id === noticeHighlightGradient) || GRADIENT_OPTIONS[0];
+                                        const getHighlight = () => {
+                                            if (noticeHighlightStyle === 'solid') return curGrad.text;
+                                            if (noticeHighlightStyle === 'underline') return `${curGrad.text} underline underline-offset-4 decoration-4`;
+                                            if (noticeHighlightStyle === 'glow') return `text-transparent bg-clip-text bg-gradient-to-r ${curGrad.style} drop-shadow-[0_2px_10px_rgba(147,51,234,0.4)]`;
+                                            return `text-transparent bg-clip-text bg-gradient-to-r ${curGrad.style}`;
+                                        };
+                                        return (
+                                            <div className="p-4 bg-white border border-[var(--moca-border)] rounded-2xl shadow-sm space-y-2">
+                                                <span className="text-[10px] font-black text-[#9333EA] bg-[#F3E8FF] px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-block">작성 미리보기</span>
+                                                <h3
+                                                    className={`${curSize.heroClass} font-black text-[#1F1235] leading-snug`}
+                                                    style={{ fontFamily: curFont.family }}
+                                                >
+                                                    <span className={`inline-block ${getHighlight()}`}>
+                                                        {announcementTitle || '공지 제목 미리보기'}
+                                                    </span>
+                                                </h3>
+                                                <p
+                                                    className="text-[#5B4E7A] text-xs leading-relaxed whitespace-pre-wrap font-medium"
+                                                    style={{ fontFamily: curFont.family }}
+                                                >
+                                                    {announcementContent || '어떤 소식을 전하고 싶으신가요? 글꼴과 테마가 반영되어 표시됩니다.'}
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
 
                                     <button
                                         type="submit"
