@@ -25,6 +25,36 @@ const Field = ({ label, hint, value, onChange, large }) => (
     </div>
 );
 
+export const FONT_OPTIONS = [
+    { id: 'Pretendard', name: '프리텐다드 (기본)', family: "'Pretendard', sans-serif" },
+    { id: 'GmarketSans', name: 'Gmarket Sans (제목강조)', family: "'GmarketSansMedium', 'GmarketSans', sans-serif" },
+    { id: 'SUITE', name: 'SUITE (부드러움)', family: "'SUITE', sans-serif" },
+    { id: 'BlackHanSans', name: '블랙한산 (강렬함)', family: "'Black Han Sans', sans-serif" },
+    { id: 'NotoSansKR', name: 'Noto Sans KR (깔끔함)', family: "'Noto Sans KR', sans-serif" },
+];
+
+export const FONT_SIZE_OPTIONS = [
+    { id: 'sm', label: '작게', heroClass: 'text-xl md:text-2xl' },
+    { id: 'md', label: '보통', heroClass: 'text-2xl md:text-3xl' },
+    { id: 'lg', label: '크게', heroClass: 'text-3xl md:text-4xl' },
+    { id: 'xl', label: '매우 크게', heroClass: 'text-4xl md:text-5xl' },
+];
+
+export const GRADIENT_OPTIONS = [
+    { id: 'purple', name: '퍼플', from: '#9333EA', to: '#C084FC', style: 'from-[#9333EA] to-[#C084FC]', text: 'text-[#9333EA]' },
+    { id: 'blue', name: '블루', from: '#2563EB', to: '#38BDF8', style: 'from-[#2563EB] to-[#38BDF8]', text: 'text-[#2563EB]' },
+    { id: 'sunset', name: '선셋', from: '#EA580C', to: '#FBBF24', style: 'from-[#EA580C] to-[#FBBF24]', text: 'text-[#EA580C]' },
+    { id: 'emerald', name: '에메랄드', from: '#059669', to: '#34D399', style: 'from-[#059669] to-[#34D399]', text: 'text-[#059669]' },
+    { id: 'rose', name: '로즈', from: '#E11D48', to: '#F472B6', style: 'from-[#E11D48] to-[#F472B6]', text: 'text-[#E11D48]' },
+];
+
+export const HIGHLIGHT_STYLE_OPTIONS = [
+    { id: 'gradient', label: '그라데이션' },
+    { id: 'solid', label: '단색' },
+    { id: 'underline', label: '밑줄' },
+    { id: 'glow', label: '네온 글로우' },
+];
+
 const AdminHomepage = ({ setSuccessMsg, setError }) => {
     const [content, setContent] = useState({
         brandPrompt: '',
@@ -34,6 +64,10 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
         heroHighlightWord: '',
         heroSubtitle1: '',
         heroSubtitle2: '',
+        heroFontFamily: 'Pretendard',
+        heroFontSize: 'md',
+        heroHighlightGradient: 'purple',
+        heroHighlightStyle: 'gradient',
         feature1Icon: 'verified',
         feature1Title: '',
         feature1Desc: '',
@@ -152,6 +186,101 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
                             />
                         </section>
 
+                        <section className="bg-[var(--moca-bg)] p-4 rounded-2xl border border-[var(--moca-border)] space-y-4">
+                            <h2 className="text-md font-bold text-[var(--moca-text)] flex items-center gap-2 mb-1">
+                                🎨 타이포그래피 & 폰트 스타일 설정
+                            </h2>
+
+                            {/* 글꼴 선택 */}
+                            <div>
+                                <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">
+                                    메인 타이틀 글꼴
+                                </label>
+                                <select
+                                    value={content.heroFontFamily || 'Pretendard'}
+                                    onChange={(e) => update('heroFontFamily', e.target.value)}
+                                    className="w-full bg-white border border-[var(--moca-border)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)]"
+                                >
+                                    {FONT_OPTIONS.map(opt => (
+                                        <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* 글자 크기 */}
+                            <div>
+                                <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">
+                                    타이틀 크기
+                                </label>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                    {FONT_SIZE_OPTIONS.map(opt => (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => update('heroFontSize', opt.id)}
+                                            className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                                (content.heroFontSize || 'md') === opt.id
+                                                    ? 'bg-[var(--moca-primary)] text-white border-[var(--moca-primary)] shadow-sm'
+                                                    : 'bg-white text-[var(--moca-text-2)] border-[var(--moca-border)] hover:bg-purple-50'
+                                            }`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 강조 테마 색상 */}
+                            <div>
+                                <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">
+                                    강조 키워드 컬러 테마
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {GRADIENT_OPTIONS.map(opt => (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => update('heroHighlightGradient', opt.id)}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                                                (content.heroHighlightGradient || 'purple') === opt.id
+                                                    ? 'ring-2 ring-[var(--moca-primary)] border-transparent bg-white shadow-sm'
+                                                    : 'bg-white border-[var(--moca-border)] hover:opacity-80'
+                                            }`}
+                                        >
+                                            <span
+                                                className="w-3.5 h-3.5 rounded-full inline-block shadow-inner"
+                                                style={{ background: `linear-gradient(135deg, ${opt.from}, ${opt.to})` }}
+                                            />
+                                            <span>{opt.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 강조 스타일 */}
+                            <div>
+                                <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1.5">
+                                    강조 효과 스타일
+                                </label>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                    {HIGHLIGHT_STYLE_OPTIONS.map(opt => (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => update('heroHighlightStyle', opt.id)}
+                                            className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                                (content.heroHighlightStyle || 'gradient') === opt.id
+                                                    ? 'bg-[var(--moca-text)] text-white border-[var(--moca-text)] shadow-sm'
+                                                    : 'bg-white text-[var(--moca-text-2)] border-[var(--moca-border)] hover:bg-purple-50'
+                                            }`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+
                         <section className="bg-[var(--moca-bg)] p-4 rounded-2xl border border-[var(--moca-border)]">
                             <h2 className="text-md font-bold text-[var(--moca-text)] flex items-center gap-2 mb-3">
                                 🃏 주요 기능 카드 설정
@@ -234,34 +363,53 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
                             </nav>
 
                             {/* Hero Section */}
-                            <section className="pt-12 pb-10 px-5 text-center">
-                                <span className="inline-block px-3 py-1 rounded-full bg-[#F3E8FF] text-[#9333EA] text-[10px] font-black tracking-widest mb-3 uppercase">
-                                    {content.heroBadgeGuest}
-                                </span>
-                                <h1 className="text-2xl md:text-3xl font-black text-[#1F1235] leading-tight tracking-tight mb-4">
-                                    {content.heroTitle1?.split('\n').map((line, i) => (
-                                        <React.Fragment key={i}>{line}<br /></React.Fragment>
-                                    ))}
-                                    <span className="text-[#9333EA]">
-                                        {content.heroTitle2?.split('\n').map((line, i) => (
-                                            <React.Fragment key={i}>{line}{i < content.heroTitle2.split('\n').length - 1 ? <br /> : ''}</React.Fragment>
-                                        ))}
-                                    </span>
-                                </h1>
-                                <p className="text-[#5B4E7A] text-xs max-w-lg mx-auto mb-6 leading-relaxed font-medium">
-                                    {content.heroSubtitle1}
-                                    <br />
-                                    {content.heroSubtitle2}
-                                </p>
-                                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                                    <div className="w-full sm:w-auto px-5 py-2 rounded-full bg-[#9333EA] text-white font-black text-xs">
-                                        에이전시 투어 시작하기
-                                    </div>
-                                    <div className="w-full sm:w-auto px-5 py-2 rounded-full bg-white border border-[#E8E0FA] text-[#1F1235] font-black text-xs">
-                                        스마트 프로필 만들기
-                                    </div>
-                                </div>
-                            </section>
+                            {(() => {
+                                const currentFont = FONT_OPTIONS.find(f => f.id === content.heroFontFamily) || FONT_OPTIONS[0];
+                                const currentSize = FONT_SIZE_OPTIONS.find(s => s.id === content.heroFontSize) || FONT_SIZE_OPTIONS[1];
+                                const currentGrad = GRADIENT_OPTIONS.find(g => g.id === content.heroHighlightGradient) || GRADIENT_OPTIONS[0];
+                                const currentStyle = content.heroHighlightStyle || 'gradient';
+
+                                const getHighlightClass = () => {
+                                    if (currentStyle === 'solid') return currentGrad.text;
+                                    if (currentStyle === 'underline') return `${currentGrad.text} underline underline-offset-4 decoration-4`;
+                                    if (currentStyle === 'glow') return `text-transparent bg-clip-text bg-gradient-to-r ${currentGrad.style} drop-shadow-[0_2px_10px_rgba(147,51,234,0.5)]`;
+                                    return `text-transparent bg-clip-text bg-gradient-to-r ${currentGrad.style}`;
+                                };
+
+                                return (
+                                    <section className="pt-12 pb-10 px-5 text-center">
+                                        <span className="inline-block px-3 py-1 rounded-full bg-[#F3E8FF] text-[#9333EA] text-[10px] font-black tracking-widest mb-3 uppercase">
+                                            {content.heroBadgeGuest}
+                                        </span>
+                                        <h1
+                                            className={`${currentSize.heroClass} font-black text-[#1F1235] leading-tight tracking-tight mb-4`}
+                                            style={{ fontFamily: currentFont.family }}
+                                        >
+                                            {content.heroTitle1?.split('\n').map((line, i) => (
+                                                <React.Fragment key={i}>{line}<br /></React.Fragment>
+                                            ))}
+                                            <span className={`inline-block ${getHighlightClass()}`}>
+                                                {content.heroTitle2?.split('\n').map((line, i) => (
+                                                    <React.Fragment key={i}>{line}{i < content.heroTitle2.split('\n').length - 1 ? <br /> : ''}</React.Fragment>
+                                                ))}
+                                            </span>
+                                        </h1>
+                                        <p className="text-[#5B4E7A] text-xs max-w-lg mx-auto mb-6 leading-relaxed font-medium">
+                                            {content.heroSubtitle1}
+                                            <br />
+                                            {content.heroSubtitle2}
+                                        </p>
+                                        <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                                            <div className="w-full sm:w-auto px-5 py-2 rounded-full bg-[#9333EA] text-white font-black text-xs">
+                                                에이전시 투어 시작하기
+                                            </div>
+                                            <div className="w-full sm:w-auto px-5 py-2 rounded-full bg-white border border-[#E8E0FA] text-[#1F1235] font-black text-xs">
+                                                스마트 프로필 만들기
+                                            </div>
+                                        </div>
+                                    </section>
+                                );
+                            })()}
 
                             {/* Features Section */}
                             <section className="py-10 bg-white">

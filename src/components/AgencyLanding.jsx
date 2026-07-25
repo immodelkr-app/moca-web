@@ -10,6 +10,7 @@ import { fetchHomepageSettings } from '../services/settingsService';
 import ProfileEditModal from './ProfileEditModal';
 import TermsModal from './TermsModal';
 import FindAccountModal from './FindAccountModal';
+import { FONT_OPTIONS, FONT_SIZE_OPTIONS, GRADIENT_OPTIONS } from './AdminHomepage';
 
 // ── 약관 내용 ──
 const TERMS_CONTENT = {
@@ -61,6 +62,10 @@ const AgencyLanding = () => {
         heroHighlightWord: '아임모카',
         heroSubtitle1: '중요 이상의 정보를',
         heroSubtitle2: '한눈에 확인하고, 광고모델 전문 프로필을 단 1분만에 완성하여 스마트한 광고모델 활동을 시작해보세요!',
+        heroFontFamily: 'Pretendard',
+        heroFontSize: 'md',
+        heroHighlightGradient: 'purple',
+        heroHighlightStyle: 'gradient',
         feature1Icon: 'apartment',
         feature1Title: '중요 모델 에이전시 리스트',
         feature1Desc: '실시간으로 업데이트되는 {{count}}개 에이전시의 주소와 연락처, 특징을 한눈에.',
@@ -369,16 +374,35 @@ const AgencyLanding = () => {
                     <span className="inline-block px-4 py-1.5 rounded-full bg-[#EDE9FE] text-[#7C3AED] text-xs font-bold tracking-widest mb-4 uppercase">
                         {homeSettings.heroBadgeGuest}
                     </span>
-                    <h1 className="text-3xl md:text-5xl font-black text-[#1F1235] leading-tight tracking-tight mb-6">
-                        {homeSettings.heroTitle1?.split('\n').map((line, i) => (
-                            <React.Fragment key={i}>{line}<br /></React.Fragment>
-                        ))}
-                        <span className="text-[#7C3AED]">
-                            {homeSettings.heroTitle2?.split('\n').map((line, i) => (
-                                <React.Fragment key={i}>{line}{i < homeSettings.heroTitle2.split('\n').length - 1 ? <br /> : ''}</React.Fragment>
-                            ))}
-                        </span>
-                    </h1>
+                    {(() => {
+                        const currentFont = FONT_OPTIONS.find(f => f.id === homeSettings.heroFontFamily) || FONT_OPTIONS[0];
+                        const currentSize = FONT_SIZE_OPTIONS.find(s => s.id === homeSettings.heroFontSize) || FONT_SIZE_OPTIONS[1];
+                        const currentGrad = GRADIENT_OPTIONS.find(g => g.id === homeSettings.heroHighlightGradient) || GRADIENT_OPTIONS[0];
+                        const currentStyle = homeSettings.heroHighlightStyle || 'gradient';
+
+                        const getHighlightClass = () => {
+                            if (currentStyle === 'solid') return currentGrad.text;
+                            if (currentStyle === 'underline') return `${currentGrad.text} underline underline-offset-4 decoration-4`;
+                            if (currentStyle === 'glow') return `text-transparent bg-clip-text bg-gradient-to-r ${currentGrad.style} drop-shadow-[0_2px_14px_rgba(147,51,234,0.4)]`;
+                            return `text-transparent bg-clip-text bg-gradient-to-r ${currentGrad.style}`;
+                        };
+
+                        return (
+                            <h1
+                                className={`${currentSize.heroClass} font-black text-[#1F1235] leading-tight tracking-tight mb-6`}
+                                style={{ fontFamily: currentFont.family }}
+                            >
+                                {homeSettings.heroTitle1?.split('\n').map((line, i) => (
+                                    <React.Fragment key={i}>{line}<br /></React.Fragment>
+                                ))}
+                                <span className={`inline-block ${getHighlightClass()}`}>
+                                    {homeSettings.heroTitle2?.split('\n').map((line, i) => (
+                                        <React.Fragment key={i}>{line}{i < homeSettings.heroTitle2.split('\n').length - 1 ? <br /> : ''}</React.Fragment>
+                                    ))}
+                                </span>
+                            </h1>
+                        );
+                    })()}
                     <p className="text-[#5B4E7A] text-base max-w-lg mx-auto mb-10 leading-relaxed font-medium">
                         {homeSettings.heroSubtitle1.includes('{{count}}') 
                             ? homeSettings.heroSubtitle1.replace('{{count}}', agencyCount)
