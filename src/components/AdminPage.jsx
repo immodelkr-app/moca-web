@@ -3335,7 +3335,7 @@ const AdminPage = () => {
                                 <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                                     <div>
                                         <h3 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2">
-                                            🏆 이달의 Best 인증샷 Top 3
+                                            🏆 MOCA BEST PICK
                                         </h3>
                                         <p className="text-[var(--moca-text-3)] text-xs mt-0.5">{now.getMonth() + 1}월 좋아요 순 자동 집계</p>
                                     </div>
