@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchMessagesList, fetchMessageDetail, fetchComments, postComment } from '../services/messageService';
 import { getUser } from '../services/userService';
 import { FONT_OPTIONS, FONT_SIZE_OPTIONS, GRADIENT_OPTIONS } from './AdminHomepage';
 
 const KimDaepyoMessage = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const noticeIdParam = searchParams.get('id');
+
     const [messages, setMessages] = useState([]);
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [comments, setComments] = useState([]);
@@ -21,10 +24,35 @@ const KimDaepyoMessage = () => {
             setIsLoading(true);
             const data = await fetchMessagesList();
             setMessages(data || []);
+
+            if (noticeIdParam) {
+                const detail = await fetchMessageDetail(noticeIdParam);
+                if (detail) {
+                    setSelectedMessage(detail);
+                    const commentsData = await fetchComments(noticeIdParam);
+                    setComments(commentsData || []);
+                }
+            }
             setIsLoading(false);
         };
         loadMessages();
-    }, []);
+    }, [noticeIdParam]);
+
+    const handleLinkClick = (e, linkUrl) => {
+        if (!linkUrl) return;
+        const trimmed = linkUrl.trim();
+        if (trimmed.startsWith('/') || trimmed.includes('immoca.kr')) {
+            e.preventDefault();
+            let path = trimmed;
+            if (trimmed.includes('immoca.kr')) {
+                try {
+                    const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+                    path = parsed.pathname + parsed.search;
+                } catch { /* ignore */ }
+            }
+            navigate(path);
+        }
+    };
 
     const handleSelectMessage = async (id) => {
         setIsLoading(true);
@@ -128,12 +156,13 @@ const KimDaepyoMessage = () => {
                         );
                     })()}
 
-                    {selectedMessage.link_url && (
+                    {selectedMessage.link_url && selectedMessage.link_url.trim() !== '' && (
                         <div className="mb-8 pb-6 border-b border-[#E8E0FA]">
                             <a
-                                href={selectedMessage.link_url.startsWith('http') ? selectedMessage.link_url : `https://${selectedMessage.link_url}`}
-                                target="_blank"
+                                href={selectedMessage.link_url.startsWith('http') || selectedMessage.link_url.startsWith('/') ? selectedMessage.link_url : `https://${selectedMessage.link_url}`}
+                                target={selectedMessage.link_url.startsWith('/') || selectedMessage.link_url.includes('immoca.kr') ? '_self' : '_blank'}
                                 rel="noopener noreferrer"
+                                onClick={(e) => handleLinkClick(e, selectedMessage.link_url)}
                                 className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-white font-bold text-sm shadow-lg shadow-[#9333EA]/25 hover:opacity-90 transition-opacity"
                             >
                                 <span className="material-symbols-outlined text-[18px]">link</span>
