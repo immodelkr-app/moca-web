@@ -3399,15 +3399,25 @@ const AdminPage = () => {
                                                 'border-slate-400/40 bg-slate-400/10',
                                                 'border-orange-500/40 bg-orange-500/10',
                                             ];
+                                            const imgs = parseImageUrls(post.image_url);
+                                            const imgUrl = imgs.length > 0 ? imgs[0] : null;
+
                                             return (
-                                                <div key={post.id} className={`border rounded-2xl overflow-hidden ${rankColors[idx]}`}>
-                                                    <div className="relative aspect-square">
-                                                        <img src={post.image_url} alt="" className="w-full h-full object-cover" />
-                                                        <div className="absolute top-2 left-2 text-2xl">{medals[idx]}</div>
+                                                <div key={post.id} className={`border rounded-2xl overflow-hidden ${rankColors[idx]} transition-all duration-300 hover:scale-[1.01]`}>
+                                                    <div className="relative aspect-square bg-slate-100/50 flex items-center justify-center overflow-hidden">
+                                                        {imgUrl ? (
+                                                            <img src={imgUrl} alt={post.user_nickname || ''} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="flex flex-col items-center gap-1 text-[var(--moca-text-3)]">
+                                                                <span className="material-symbols-outlined text-3xl">image</span>
+                                                                <span className="text-[10px] font-bold">사진 없음</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute top-2 left-2 text-2xl drop-shadow-md">{medals[idx]}</div>
                                                     </div>
-                                                    <div className="p-3">
-                                                        <p className="text-[var(--moca-text)] font-black text-sm">{post.user_nickname}</p>
-                                                        <p className="text-[var(--moca-text-2)] text-xs">❤️ {post.likes_count} · {post.activity_type}</p>
+                                                    <div className="p-3 bg-white/70 backdrop-blur-xs">
+                                                        <p className="text-[var(--moca-text)] font-black text-sm truncate">{post.user_nickname || '회원'}</p>
+                                                        <p className="text-[var(--moca-text-2)] text-xs font-bold mt-0.5">❤️ {post.likes_count || 0} · {post.activity_type || '인증샷'}</p>
                                                     </div>
                                                 </div>
                                             );
