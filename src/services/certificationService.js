@@ -97,15 +97,28 @@ export const uploadCertImage = async (file) => {
 // ─────────────────────────────────────────────
 export const parseImageUrls = (imageUrlField) => {
     if (!imageUrlField) return [];
-    // JSON 배열 문자열이면 파싱
-    if (typeof imageUrlField === 'string' && imageUrlField.startsWith('[')) {
-        try {
-            const parsed = JSON.parse(imageUrlField);
-            if (Array.isArray(parsed)) return parsed.filter(Boolean);
-        } catch { /* fall through */ }
+
+    // 이미 배열인 경우 (Supabase jsonb 등)
+    if (Array.isArray(imageUrlField)) {
+        return imageUrlField.flat(Infinity).filter(item => typeof item === 'string' && item.trim() !== '');
     }
-    // 일반 URL 문자열이면 배열로 감싸기
-    return [imageUrlField];
+
+    if (typeof imageUrlField === 'string') {
+        const trimmed = imageUrlField.trim();
+        if (!trimmed) return [];
+
+        // JSON 배열 문자열인 경우
+        if (trimmed.startsWith('[')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) {
+                    return parsed.flat(Infinity).filter(item => typeof item === 'string' && item.trim() !== '');
+                }
+            } catch { /* fall through */ }
+        }
+        return [trimmed];
+    }
+    return [];
 };
 
 // ─────────────────────────────────────────────

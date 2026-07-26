@@ -3380,9 +3380,9 @@ const AdminPage = () => {
                                                 setSuccessMsg(`✅ Top 3 모카베스트 PICK 선정 완료! (알림톡 ${sent}명 발송)`);
                                                 setTimeout(() => setSuccessMsg(''), 4000);
                                             }}
-                                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-sm font-black hover:bg-yellow-500/30 transition-all"
+                                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-slate-950 text-xs font-black shadow-md border border-amber-300 transition-all hover:scale-[1.02] shrink-0"
                                         >
-                                            <span className="material-symbols-outlined text-[16px]">send</span>
+                                            <span className="material-symbols-outlined text-[16px] text-slate-950">send</span>
                                             Top 3 전원 모카베스트 PICK + 알림톡 발송
                                         </button>
                                     )}
@@ -3400,19 +3400,31 @@ const AdminPage = () => {
                                                 'border-orange-500/40 bg-orange-500/10',
                                             ];
                                             const imgs = parseImageUrls(post.image_url);
-                                            const imgUrl = imgs.length > 0 ? imgs[0] : null;
+                                            const imgUrl = imgs.length > 0 && typeof imgs[0] === 'string' ? imgs[0] : null;
 
                                             return (
                                                 <div key={post.id} className={`border rounded-2xl overflow-hidden ${rankColors[idx]} transition-all duration-300 hover:scale-[1.01]`}>
                                                     <div className="relative aspect-square bg-slate-100/50 flex items-center justify-center overflow-hidden">
                                                         {imgUrl ? (
-                                                            <img src={imgUrl} alt={post.user_nickname || ''} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="flex flex-col items-center gap-1 text-[var(--moca-text-3)]">
-                                                                <span className="material-symbols-outlined text-3xl">image</span>
-                                                                <span className="text-[10px] font-bold">사진 없음</span>
-                                                            </div>
-                                                        )}
+                                                            <img
+                                                                src={imgUrl}
+                                                                alt={post.user_nickname || ''}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    if (e.currentTarget.nextSibling) {
+                                                                        e.currentTarget.nextSibling.style.display = 'flex';
+                                                                    }
+                                                                }}
+                                                            />
+                                                        ) : null}
+                                                        <div
+                                                            className="flex flex-col items-center gap-1 text-[var(--moca-text-3)]"
+                                                            style={{ display: imgUrl ? 'none' : 'flex' }}
+                                                        >
+                                                            <span className="material-symbols-outlined text-3xl">image</span>
+                                                            <span className="text-[10px] font-bold">사진 없음</span>
+                                                        </div>
                                                         <div className="absolute top-2 left-2 text-2xl drop-shadow-md">{medals[idx]}</div>
                                                     </div>
                                                     <div className="p-3 bg-white/70 backdrop-blur-xs">
