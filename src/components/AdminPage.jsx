@@ -2118,16 +2118,34 @@ const AdminPage = () => {
                                                         <p className="text-[var(--moca-text)] font-bold text-sm truncate">{a.title}</p>
                                                         <p className="text-[var(--moca-text-3)] text-xs mt-0.5">{new Date(a.created_at).toLocaleDateString('ko-KR')}</p>
                                                     </div>
-                                                    <div className="flex gap-1 shrink-0">
+                                                    <div className="flex gap-1.5 shrink-0 items-center">
                                                         <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const shareUrl = `https://immoca.kr/home/message?id=${a.id}`;
+                                                                navigator.clipboard.writeText(shareUrl);
+                                                                setSuccessMsg(`✅ "${a.title}" 팝업 연결 링크가 복사되었습니다!`);
+                                                                setTimeout(() => setSuccessMsg(''), 4000);
+                                                            }}
+                                                            className="px-2.5 py-1.5 rounded-lg bg-[var(--moca-primary-lt)] hover:bg-[var(--moca-primary)]/20 text-[var(--moca-accent)] text-xs font-bold transition-colors flex items-center gap-1 border border-[var(--moca-primary)]/30"
+                                                            title="팝업 연결용 링크 복사"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[14px]">share</span>
+                                                            <span>링크 복사</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
                                                             onClick={() => handleEditStart(a)}
                                                             className="w-8 h-8 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 flex items-center justify-center transition-colors"
+                                                            title="수정"
                                                         >
                                                             <span className="material-symbols-outlined text-blue-400 text-[18px]">edit</span>
                                                         </button>
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleDeleteAnnouncement(a.id, a.title)}
                                                             className="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors"
+                                                            title="삭제"
                                                         >
                                                             <span className="material-symbols-outlined text-red-400 text-[18px]">delete</span>
                                                         </button>
