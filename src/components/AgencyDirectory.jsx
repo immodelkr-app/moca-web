@@ -89,8 +89,8 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
                     <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                         <h3 className="font-bold text-base text-[#1F1235] leading-tight group-hover:text-[#7C3AED] transition-colors">{agency.name}</h3>
                         {(agency.reservation_url || agency.booking_url) && (
-                            <span className="text-[#9333EA] text-[10px] font-black bg-[#F3E8FF] py-0.5 px-2.5 rounded-full border border-[#E8E0FA] whitespace-nowrap flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[13px] text-[#9333EA]">language</span>
+                            <span className="text-[#8B5CF6] text-[10px] font-black bg-[#F5F0FF] py-0.5 px-2.5 rounded-full border border-[#E9D5FF] whitespace-nowrap flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[13px] text-[#8B5CF6]">language</span>
                                 <span>온라인예약</span>
                             </span>
                         )}
@@ -134,7 +134,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
                         target="_blank"
                         rel="noreferrer"
                         onClick={(e) => onAction(e, agency, agency.reservation_url || agency.booking_url)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-full bg-[#9333EA] hover:bg-[#7E22CE] text-white shadow-md shadow-purple-500/20 active:scale-[0.97] transition-all cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white shadow-sm shadow-purple-400/20 active:scale-[0.97] transition-all cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
                     >
                         <span className="material-symbols-outlined text-[15px]">language</span>
                         <span>온라인예약</span>
