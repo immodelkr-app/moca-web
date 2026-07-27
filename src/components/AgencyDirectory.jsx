@@ -86,8 +86,14 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
                     <span className={`material-symbols-outlined text-[20px] ${color.accent}`}>apartment</span>
                 </div>
                 <div>
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                         <h3 className="font-bold text-base text-[#1F1235] leading-tight group-hover:text-[#7C3AED] transition-colors">{agency.name}</h3>
+                        {(agency.reservation_url || agency.booking_url) && (
+                            <span className="text-[#9333EA] text-[10px] font-black bg-[#F3E8FF] py-0.5 px-2.5 rounded-full border border-[#E8E0FA] whitespace-nowrap flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[13px] text-[#9333EA]">language</span>
+                                <span>온라인예약</span>
+                            </span>
+                        )}
                         {timeAgoStr && (
                             <span className="text-[#7C3AED] text-[11px] font-bold bg-[#F3E8FF] py-0.5 px-2 rounded-full border border-[#E8E0FA] whitespace-nowrap">
                                 🕒 {timeAgoStr}
@@ -122,25 +128,37 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
 
             {/* Action buttons */}
             <div className="flex items-center gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+                {(agency.reservation_url || agency.booking_url) && (
+                    <a
+                        href={agency.reservation_url || agency.booking_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => onAction(e, agency, agency.reservation_url || agency.booking_url)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-full bg-[#9333EA] hover:bg-[#7E22CE] text-white shadow-md shadow-purple-500/20 active:scale-[0.97] transition-all cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
+                    >
+                        <span className="material-symbols-outlined text-[15px]">language</span>
+                        <span>온라인예약</span>
+                    </a>
+                )}
                 <a
                     href={naverMapsUrl}
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => onAction(e, agency, naverMapsUrl)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-[#F8F5FF] border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors cursor-pointer"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-full bg-[#F5F0FF] border border-[#E8E0FA] hover:bg-[#EDE5FF] transition-colors cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
                 >
                     <span className="text-[13px] font-black text-[#03C75A]">N</span>
-                    <span className="text-[#5B4E7A] text-[13px] font-bold">네이버 지도</span>
+                    <span className="text-[#5B4E7A]">지도</span>
                 </a>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         onAction(e, agency, null);
                     }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20 active:scale-[0.97] transition-all cursor-pointer font-black text-[13px]"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-full bg-[#10B981] hover:bg-[#059669] text-white shadow-md shadow-emerald-500/20 active:scale-[0.97] transition-all cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
                 >
-                    <span className="material-symbols-outlined text-[18px]">edit_note</span>
-                    투어일지
+                    <span className="material-symbols-outlined text-[15px]">edit_note</span>
+                    <span>투어일지</span>
                 </button>
             </div>
         </div>
