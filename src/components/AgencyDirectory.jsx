@@ -143,20 +143,20 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
             )}
 
             {/* Action buttons */}
-            <div className="flex items-center gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1.5 mt-1" onClick={(e) => e.stopPropagation()}>
                 {(agency.reservation_url || agency.booking_url) && (
                     <a
                         href={agency.reservation_url || agency.booking_url}
                         target="_blank"
                         rel="noreferrer"
                         onClick={(e) => onAction(e, agency, agency.reservation_url || agency.booking_url)}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-full shadow-sm active:scale-[0.97] transition-all cursor-pointer font-black text-[12px] leading-none whitespace-nowrap ${
+                        className={`flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-full shadow-sm active:scale-[0.97] transition-all cursor-pointer font-black text-[12px] leading-none whitespace-nowrap ${
                             (agency.reservation_url || agency.booking_url).includes('kakao')
                                 ? 'bg-[#FEE500] hover:bg-[#FADA0A] text-[#191919] shadow-yellow-400/20'
                                 : 'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white shadow-purple-400/20'
                         }`}
                     >
-                        <span className="material-symbols-outlined text-[15px]">
+                        <span className="material-symbols-outlined text-[14px] shrink-0 -mr-0.5">
                             {(agency.reservation_url || agency.booking_url).includes('kakao') ? 'chat' : 'language'}
                         </span>
                         <span>
@@ -169,9 +169,9 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => onAction(e, agency, naverMapsUrl)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-full bg-[#F5F0FF] border border-[#E8E0FA] hover:bg-[#EDE5FF] transition-colors cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
+                    className="flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-full bg-[#F5F0FF] border border-[#E8E0FA] hover:bg-[#EDE5FF] transition-colors cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
                 >
-                    <span className="text-[13px] font-black text-[#03C75A]">N</span>
+                    <span className="text-[12px] font-black text-[#03C75A] shrink-0">N</span>
                     <span className="text-[#5B4E7A]">지도</span>
                 </a>
                 <button
@@ -179,9 +179,9 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
                         e.stopPropagation();
                         onAction(e, agency, null);
                     }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-full bg-[#10B981] hover:bg-[#059669] text-white shadow-md shadow-emerald-500/20 active:scale-[0.97] transition-all cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
+                    className="flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-full bg-[#10B981] hover:bg-[#059669] text-white shadow-md shadow-emerald-500/20 active:scale-[0.97] transition-all cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
                 >
-                    <span className="material-symbols-outlined text-[15px]">edit_note</span>
+                    <span className="material-symbols-outlined text-[14px] shrink-0 -mr-0.5">edit_note</span>
                     <span>투어일지</span>
                 </button>
             </div>
