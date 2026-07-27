@@ -3398,10 +3398,10 @@ const AdminPage = () => {
                                                 setSuccessMsg(`✅ Top 3 모카베스트 PICK 선정 완료! (알림톡 ${sent}명 발송)`);
                                                 setTimeout(() => setSuccessMsg(''), 4000);
                                             }}
-                                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-slate-950 text-xs font-black shadow-md border border-amber-300 transition-all hover:scale-[1.02] shrink-0"
+                                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-800 via-indigo-800 to-purple-900 text-white text-xs font-black shadow-lg shadow-purple-900/20 border border-purple-400/40 transition-all hover:scale-[1.02] shrink-0"
                                         >
-                                            <span className="material-symbols-outlined text-[16px] text-slate-950">send</span>
-                                            Top 3 전원 모카베스트 PICK + 알림톡 발송
+                                            <span className="material-symbols-outlined text-[16px] text-yellow-300">send</span>
+                                            <span className="text-white font-black">Top 3 전원 모카베스트 PICK + 알림톡 발송</span>
                                         </button>
                                     )}
                                 </div>
