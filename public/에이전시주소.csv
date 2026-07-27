@@ -17,3 +17,4 @@ name,address,lat,lng,category,phone,email,reservation_url
 플로우,서울 강남구 논현로 336 건일빌딩 2층,37.49845,127.03403,Model,메일로연락,flowmodel1@naver.com,
 캐스팅봄나인,서울 서초구 나루터로10길 29,37.516100,127.017200,Model,,,https://open.kakao.com/o/sbfa8uFi
 스테이지3,서울 강남구 논현로 149길 67,37.518100,127.028200,Model,02-511-3333,,
+리더스,"서울시 서초구 강남대로97길48, 1층",37.514500,127.018500,Model,02-6738-5053,,https://ldsagency.co.kr/index.php?mid=reservation&act=dispBoardWrite
