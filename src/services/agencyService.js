@@ -1,12 +1,21 @@
 import Papa from 'papaparse';
 
-const CSV_URL = '/에이전시주소.csv';
+const PRIMARY_CSV_URL = '/agencies.csv';
+const FALLBACK_CSV_URL = '/에이전시주소.csv';
 
 export const fetchAgencies = async () => {
     return new Promise(async (resolve, reject) => {
         try {
-            const cacheBuster = new Date().getTime();
-            const response = await fetch(`${CSV_URL}?t=${cacheBuster}`);
+            const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
+            let response;
+            try {
+                response = await fetch(`${PRIMARY_CSV_URL}?v=${cacheBuster}`, { cache: 'no-store' });
+                if (!response.ok) throw new Error('Primary CSV failed');
+            } catch (err) {
+                console.warn('Primary CSV fetch failed, falling back to legacy Korean CSV URL:', err);
+                response = await fetch(`${FALLBACK_CSV_URL}?v=${cacheBuster}`, { cache: 'no-store' });
+            }
+
             const buffer = await response.arrayBuffer();
 
             let text;
