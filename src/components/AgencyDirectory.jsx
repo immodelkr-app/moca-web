@@ -82,31 +82,41 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
 
             {/* Header */}
             <div className="flex items-start gap-3 pr-8">
-                <div className={`w-10 h-10 rounded-xl ${color.dot}/15 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}>
+                <div className={`w-10 h-10 rounded-xl ${color.dot}/15 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform mt-0.5`}>
                     <span className={`material-symbols-outlined text-[20px] ${color.accent}`}>apartment</span>
                 </div>
-                <div>
-                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                <div className="flex-1 min-w-0">
+                    {/* Line 1: Name + Category Tag */}
+                    <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-bold text-base text-[#1F1235] leading-tight group-hover:text-[#7C3AED] transition-colors">{agency.name}</h3>
-                        {(agency.reservation_url || agency.booking_url) && (
-                            <span className={`text-[10px] font-black py-0.5 px-2.5 rounded-full border whitespace-nowrap flex items-center gap-1 ${
-                                (agency.reservation_url || agency.booking_url).includes('kakao')
-                                    ? 'bg-yellow-100 text-amber-900 border-yellow-300'
-                                    : 'bg-[#F5F0FF] text-[#8B5CF6] border-[#E9D5FF]'
-                            }`}>
-                                <span className="material-symbols-outlined text-[13px]">
-                                    {(agency.reservation_url || agency.booking_url).includes('kakao') ? 'chat' : 'language'}
-                                </span>
-                                <span>{(agency.reservation_url || agency.booking_url).includes('kakao') ? '카카오채널' : '온라인예약'}</span>
-                            </span>
-                        )}
-                        {timeAgoStr && (
-                            <span className="text-[#7C3AED] text-[11px] font-bold bg-[#F3E8FF] py-0.5 px-2 rounded-full border border-[#E8E0FA] whitespace-nowrap">
-                                🕒 {timeAgoStr}
-                            </span>
-                        )}
+                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#F3E8FF] ${color.accent}`}>
+                            {agency.category || 'MODEL'}
+                        </span>
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${color.accent}`}>{agency.category}</span>
+
+                    {/* Line 2: Status Badges Row (Visit record + Online reservation status) */}
+                    {(timeAgoStr || agency.reservation_url || agency.booking_url) && (
+                        <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                            {timeAgoStr && (
+                                <span className="text-[#7C3AED] text-[10px] font-bold bg-[#F3E8FF] py-0.5 px-2.5 rounded-full border border-[#E8E0FA] whitespace-nowrap flex items-center gap-1">
+                                    <span>🕒</span>
+                                    <span>{timeAgoStr}</span>
+                                </span>
+                            )}
+                            {(agency.reservation_url || agency.booking_url) && (
+                                <span className={`text-[10px] font-bold py-0.5 px-2.5 rounded-full border whitespace-nowrap flex items-center gap-1 ${
+                                    (agency.reservation_url || agency.booking_url).includes('kakao')
+                                        ? 'bg-yellow-50 text-amber-900 border-yellow-200'
+                                        : 'bg-[#F5F0FF] text-[#8B5CF6] border-[#E9D5FF]'
+                                }`}>
+                                    <span className="material-symbols-outlined text-[12px]">
+                                        {(agency.reservation_url || agency.booking_url).includes('kakao') ? 'chat' : 'language'}
+                                    </span>
+                                    <span>{(agency.reservation_url || agency.booking_url).includes('kakao') ? '카카오채널' : '온라인예약'}</span>
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
