@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchAgencies } from '../services/agencyService';
 import { getUser, getUserGrade, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
+import { getLocalKey } from '../services/diaryService';
 import { getNaverMapUrl } from '../lib/naverMap';
 
 import { fetchMessagesList } from '../services/messageService';
@@ -37,7 +38,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
     // Read memo date
     let timeAgoStr = '';
     try {
-        const memosRaw = localStorage.getItem(`agency_memo_${agency.name}`);
+        const memosRaw = localStorage.getItem(getLocalKey(agency.name));
         if (memosRaw) {
             const memos = JSON.parse(memosRaw);
             if (memos.length > 0) {

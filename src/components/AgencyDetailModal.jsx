@@ -1,5 +1,6 @@
 import React from 'react';
 import { getUserGrade } from '../services/userService';
+import { getLocalKey } from '../services/diaryService';
 import { getNaverMapUrl } from '../lib/naverMap';
 
 const AgencyDetailModal = ({ agency, onClose, onWriteMemo, onSendProfile, sendInfo }) => {
@@ -11,7 +12,7 @@ const AgencyDetailModal = ({ agency, onClose, onWriteMemo, onSendProfile, sendIn
     // 투어일지 기록 가져오기
     let memos = [];
     try {
-        const memosRaw = localStorage.getItem(`agency_memo_${agency.name}`);
+        const memosRaw = localStorage.getItem(getLocalKey(agency.name));
         if (memosRaw) {
             memos = JSON.parse(memosRaw);
         }

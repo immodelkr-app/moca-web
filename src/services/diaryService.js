@@ -1,7 +1,7 @@
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { getUser } from './userService';
 
-const getLocalKey = (agencyName) => `agency_memo_${agencyName}`;
+export const getLocalKey = (agencyName) => `agency_memo_${agencyName}`;
 
 export const fetchAllDiaries = async () => {
     const user = getUser();
