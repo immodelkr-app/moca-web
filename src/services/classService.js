@@ -3,65 +3,6 @@
  * MOCA 클래스 관리 및 신청 관련 서비스
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
-import { sendAlimtalk } from './solapiService';
-
-// ────────────────────────────────────────────────────────
-// 📣 클래스 신청 완료 알림톡 발송 템플릿
-// 솔라피 심사 버전: 하단 templateCode 를 실제 발급된 코드로 교체하세요
-// ────────────────────────────────────────────────────────
-
-/**
- * 관리자가 입금 확인(승인) 시 해당 신청자에게 클래스 확정 알림톡 발송
- * @param {Object} params
- * @param {string} params.userName   수신자 이름 (name || nickname)
- * @param {string} params.phone      수신자 전화번호 (하이픈 제거)
- * @param {string} params.classTitle 클래스 제목
- * @param {string} params.classDate  클래스 날짜/시간 문자열
- * @param {string} params.location   장소
- */
-export const sendClassApplicationNotification = async ({ userName, phone, classTitle, classDate, location }) => {
-    if (!phone) return;
-
-    // ✅ 카카오 알림톡 실제 발급 정보
-    const TEMPLATE_ID  = 'KA01TP260329111909235Roqjyd7DMUl';
-    const CHANNEL_ID   = 'KA01PF260309085923456gdN56tP4xVG';
-
-    const message =
-`안녕하세요 ${userName}님,
-모두의 캐스팅 매니저, 아임모카(IM MOCA)입니다.
-신청하신 모카 클래스 참가가 아래와 같이 확정되었습니다. 🎉
-■ 클래스명: ${classTitle}
-■ 일시: ${classDate}
-■ 장소: ${location}
-당일 10분 전까지 입실 부탁드립니다.
-`;
-
-    return sendAlimtalk(TEMPLATE_ID, [{
-        phone: phone.replace(/-/g, ''),
-        name: userName,
-        message,
-        templateId: TEMPLATE_ID,
-        pfId: CHANNEL_ID,
-        variables: {
-            '이름':     userName,
-            '클래스명': classTitle,
-            '일시':     classDate,
-            '장소':     location,
-        },
-        button: {
-            button: [
-                {
-                    name: '클래스일정 확인하기',
-                    linkType: 'WL',
-                    linkTypeName: '웹링크',
-                    linkM: 'https://immoca.kr/home/calendar',
-                    linkP: 'https://immoca.kr/home/calendar',
-                }
-            ]
-        }
-    }]);
-};
-
 
 // 클래스 목록 가져오기
 export const fetchClasses = async () => {
@@ -237,26 +178,6 @@ export const fetchAllApplications = async () => {
             users (nickname, name, phone, grade)
         `)
         .order('created_at', { ascending: false });
-    return { data, error };
-};
-
-
-
-// 클래스 신청 (멤버용)
-export const applyForClass = async (applicationData) => {
-    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
-    const { data, error } = await supabase
-        .from('class_applications')
-        .insert([{
-            class_id: applicationData.classId,
-            user_id: applicationData.userId,
-            grade_label: applicationData.userGrade, // record grade label at time of entry
-            applied_price: applicationData.appliedPrice,
-            payment_type: applicationData.paymentType || 'transfer', // 'transfer' | 'card'
-            payment_status: applicationData.paymentType === 'card' ? 'pending_card' : 'pending'
-        }])
-        .select()
-        .single();
     return { data, error };
 };
 

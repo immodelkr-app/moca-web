@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     fetchClasses, createClass, updateClass, deleteClass,
-    fetchApplications, sendClassApplicationNotification,
+    fetchApplications,
     completeClass, reopenClass,
     fetchPaidApplicants, recordThankYouSent,
     fetchClassFeedback, updateFeedbackVisibility, replyToFeedback, deleteFeedback,
