@@ -27,11 +27,11 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
     const naverMapsUrl = getNaverMapUrl(agency);
 
     const colors = [
-        { bg: 'from-[#6C63FF]/10 to-[#A78BFA]/5', border: 'border-[#6C63FF]/20', accent: 'text-[#818CF8]', dot: 'bg-[#6C63FF]' },
-        { bg: 'from-[#EC4899]/10 to-[#F472B6]/5', border: 'border-[#EC4899]/20', accent: 'text-[#F472B6]', dot: 'bg-[#EC4899]' },
-        { bg: 'from-[#14B8A6]/10 to-[#2DD4BF]/5', border: 'border-[#14B8A6]/20', accent: 'text-[#2DD4BF]', dot: 'bg-[#14B8A6]' },
-        { bg: 'from-[#F59E0B]/10 to-[#FCD34D]/5', border: 'border-[#F59E0B]/20', accent: 'text-[#FCD34D]', dot: 'bg-[#F59E0B]' },
-        { bg: 'from-[#3B82F6]/10 to-[#60A5FA]/5', border: 'border-[#3B82F6]/20', accent: 'text-[#60A5FA]', dot: 'bg-[#3B82F6]' },
+        { bg: 'from-[#6C63FF]/10 to-[#A78BFA]/5', border: 'border-[#6C63FF]/20', accent: 'text-[#4F46E5]', dot: 'bg-[#6C63FF]' },
+        { bg: 'from-[#EC4899]/10 to-[#F472B6]/5', border: 'border-[#EC4899]/20', accent: 'text-[#BE185D]', dot: 'bg-[#EC4899]' },
+        { bg: 'from-[#14B8A6]/10 to-[#2DD4BF]/5', border: 'border-[#14B8A6]/20', accent: 'text-[#0F766E]', dot: 'bg-[#14B8A6]' },
+        { bg: 'from-[#F59E0B]/10 to-[#FCD34D]/5', border: 'border-[#F59E0B]/20', accent: 'text-[#B45309]', dot: 'bg-[#F59E0B]' },
+        { bg: 'from-[#3B82F6]/10 to-[#60A5FA]/5', border: 'border-[#3B82F6]/20', accent: 'text-[#1D4ED8]', dot: 'bg-[#3B82F6]' },
     ];
     const color = colors[index % colors.length];
 
