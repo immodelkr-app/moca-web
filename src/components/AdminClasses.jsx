@@ -217,8 +217,13 @@ const AdminClasses = () => {
         setLoading(true);
         const { data, error } = await fetchClasses();
         if (data) setClasses(data);
-        if (error) setError(error.message || String(error));
+        if (error) showError('클래스 목록을 불러오지 못했습니다: ' + (error.message || String(error)));
         setLoading(false);
+    };
+
+    const showError = (message) => {
+        setError(message);
+        setTimeout(() => setError(''), 4000);
     };
 
     const resetForm = () => {
@@ -329,6 +334,7 @@ const AdminClasses = () => {
         setLoading(true);
         const { data, error } = await fetchApplications(cls.id);
         if (data) setApplicants(data);
+        if (error) showError('신청자 목록을 불러오지 못했습니다: ' + (error.message || String(error)));
         setLoading(false);
     };
 
@@ -377,11 +383,13 @@ const AdminClasses = () => {
         setSelectedClass(cls);
         setView('thank_you');
         setLoading(true);
-        const { data } = await fetchPaidApplicants(cls.id);
+        const { data, error } = await fetchPaidApplicants(cls.id);
         setPaidApplicants(data || []);
+        if (error) showError('수강확정 명단을 불러오지 못했습니다: ' + (error.message || String(error)));
 
         // 후기 미작성자 조회
-        const { data: nonReviewers } = await getClassNonReviewers(cls.id);
+        const { data: nonReviewers, error: nrError } = await getClassNonReviewers(cls.id);
+        if (nrError) showError('후기 미작성자 조회 중 오류가 발생했습니다: ' + (nrError.message || String(nrError)));
         const nrIds = (nonReviewers || []).map(nr => nr.user_id);
         setNonReviewerIds(nrIds);
         setNonReviewerCount(nrIds.length);
@@ -425,8 +433,9 @@ const AdminClasses = () => {
         setSelectedClass(cls);
         setView('feedback');
         setFeedbackLoading(true);
-        const { data } = await fetchClassFeedback(cls.id);
+        const { data, error } = await fetchClassFeedback(cls.id);
         setFeedbacks(data || []);
+        if (error) showError('후기 목록을 불러오지 못했습니다: ' + (error.message || String(error)));
         setReplyInputs({});
         setFeedbackLoading(false);
     };
@@ -469,8 +478,9 @@ const AdminClasses = () => {
         setSelectedClass(cls);
         setView('stats');
         setStatsLoading(true);
-        const { data } = await fetchClassStats(cls.id);
+        const { data, error } = await fetchClassStats(cls.id);
         setClassStats(data);
+        if (error) showError('통계를 불러오지 못했습니다: ' + (error.message || String(error)));
         setStatsLoading(false);
     };
 
@@ -638,6 +648,7 @@ const AdminClasses = () => {
 
             {/* Notification Area */}
             {successMsg && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-[var(--moca-text)] text-white px-6 py-3 rounded-2xl font-black text-sm shadow-2xl animate-bounce-short">{successMsg}</div>}
+            {error && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-red-600 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-2xl animate-bounce-short">{error}</div>}
 
             {/* ── 클래스 목록 ── */}
             {view === 'list' && (
