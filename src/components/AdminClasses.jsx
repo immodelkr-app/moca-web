@@ -433,27 +433,35 @@ const AdminClasses = () => {
 
     const handleToggleVisibility = async (fb) => {
         const { error } = await updateFeedbackVisibility(fb.id, !fb.is_visible);
-        if (!error) {
-            setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, is_visible: !f.is_visible } : f));
+        if (error) {
+            alert('노출 상태 변경 중 오류: ' + error.message);
+            return;
         }
+        setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, is_visible: !f.is_visible } : f));
     };
 
     const handleSubmitReply = async (fb) => {
         const reply = replyInputs[fb.id]?.trim();
         if (!reply) return;
         const { error } = await replyToFeedback(fb.id, reply);
-        if (!error) {
-            setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, admin_reply: reply, admin_replied_at: new Date().toISOString() } : f));
-            setReplyInputs(prev => ({ ...prev, [fb.id]: '' }));
-            setSuccessMsg('✅ 답변이 등록되었습니다.');
-            setTimeout(() => setSuccessMsg(''), 2500);
+        if (error) {
+            alert('답변 등록 중 오류: ' + error.message);
+            return;
         }
+        setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, admin_reply: reply, admin_replied_at: new Date().toISOString() } : f));
+        setReplyInputs(prev => ({ ...prev, [fb.id]: '' }));
+        setSuccessMsg('✅ 답변이 등록되었습니다.');
+        setTimeout(() => setSuccessMsg(''), 2500);
     };
 
     const handleDeleteFeedback = async (fb) => {
         if (!window.confirm('이 피드백을 삭제하시겠습니까?')) return;
         const { error } = await deleteFeedback(fb.id);
-        if (!error) setFeedbacks(prev => prev.filter(f => f.id !== fb.id));
+        if (error) {
+            alert('삭제 중 오류: ' + error.message);
+            return;
+        }
+        setFeedbacks(prev => prev.filter(f => f.id !== fb.id));
     };
 
     // ── 통계 보기 ────────────────────────────────────────────────────────
@@ -513,13 +521,19 @@ const AdminClasses = () => {
             const name = app.users?.name || app.users?.nickname || '회원';
             const phone = (app.users?.phone || app.user_phone || '').replace(/-/g, '');
             const classTitle = selectedClass?.title || '클래스';
+            let smsFailed = false;
             if (phone) {
                 const msg = `[아임모델 MOCA] 수강 확정 안내\n\n${name}님 참석 확정이 완료되었습니다.\n${classTitle} 수강이 최종 확정되었습니다.\n\n수업 당일 뵙겠습니다 😊`;
-                await sendBulkMessage([phone], msg, 'sms').catch(console.error);
+                await sendBulkMessage([phone], msg, 'sms').catch((smsErr) => {
+                    console.error(smsErr);
+                    smsFailed = true;
+                });
             }
 
             setApplicants(prev => prev.map(a => a.id === app.id ? { ...a, approval_status: 'paid', payment_status: 'paid' } : a));
-            setSuccessMsg(`✅ ${name}님 참석 확정 완료!`);
+            setSuccessMsg(smsFailed
+                ? `⚠️ ${name}님 참석 확정은 완료됐지만 문자 발송에 실패했습니다.`
+                : `✅ ${name}님 참석 확정 완료!`);
         } catch (err) {
             alert('오류: ' + err.message);
         } finally {
@@ -534,20 +548,24 @@ const AdminClasses = () => {
             .from('class_applications')
             .update({ approval_status: 'cancelled', payment_status: 'cancelled' })
             .eq('id', app.id);
-        if (!error) {
-            setApplicants(prev => prev.map(a => a.id === app.id ? { ...a, approval_status: 'cancelled', payment_status: 'cancelled' } : a));
-            setSuccessMsg('✅ 취소 처리 완료');
-            setTimeout(() => setSuccessMsg(''), 3000);
+        if (error) {
+            alert('취소 처리 중 오류: ' + error.message);
+            return;
         }
+        setApplicants(prev => prev.map(a => a.id === app.id ? { ...a, approval_status: 'cancelled', payment_status: 'cancelled' } : a));
+        setSuccessMsg('✅ 취소 처리 완료');
+        setTimeout(() => setSuccessMsg(''), 3000);
     };
 
     const handleDeleteClass = async (id) => {
         if (!window.confirm('정말 삭제하시겠습니까?')) return;
         const { error } = await deleteClass(id);
-        if (!error) {
-            setClasses(prev => prev.filter(c => c.id !== id));
-            setSuccessMsg('✅ 삭제 완료');
+        if (error) {
+            alert('삭제 중 오류: ' + error.message);
+            return;
         }
+        setClasses(prev => prev.filter(c => c.id !== id));
+        setSuccessMsg('✅ 삭제 완료');
         setTimeout(() => setSuccessMsg(''), 3000);
     };
 
