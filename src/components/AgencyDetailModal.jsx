@@ -136,13 +136,8 @@ const AgencyDetailModal = ({ agency, onClose, onWriteMemo, onSendProfile, sendIn
                                     <div key={idx} className="bg-white p-3.5 rounded-xl border border-gray-200/80 shadow-2xs flex flex-col gap-1">
                                         <div className="flex items-center justify-between text-[11px] text-gray-400">
                                             <span className="font-bold text-[#6C63FF]">{memo.date || '날짜 미상'}</span>
-                                            {memo.status && (
-                                                <span className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] text-gray-600 font-bold">
-                                                    {memo.status}
-                                                </span>
-                                            )}
                                         </div>
-                                        <p className="text-xs text-[#1F1235] font-medium leading-relaxed whitespace-pre-wrap">{memo.text || memo.content}</p>
+                                        <p className="text-xs text-[#1F1235] font-medium leading-relaxed whitespace-pre-wrap">{memo.content}</p>
                                     </div>
                                 ))}
                             </div>

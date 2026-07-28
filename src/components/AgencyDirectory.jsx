@@ -95,7 +95,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
                     </div>
 
                     {/* Line 2: Status Badges Row (Visit record + Online reservation status) */}
-                    {(timeAgoStr || agency.reservation_url || agency.booking_url) && (
+                    {(timeAgoStr || agency.reservation_url) && (
                         <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
                             {timeAgoStr && (
                                 <span className="text-[#7C3AED] text-[10px] font-bold bg-[#F3E8FF] py-0.5 px-2.5 rounded-full border border-[#E8E0FA] whitespace-nowrap flex items-center gap-1">
@@ -103,16 +103,16 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
                                     <span>{timeAgoStr}</span>
                                 </span>
                             )}
-                            {(agency.reservation_url || agency.booking_url) && (
+                            {(agency.reservation_url) && (
                                 <span className={`text-[10px] font-bold py-0.5 px-2.5 rounded-full border whitespace-nowrap flex items-center gap-1 ${
-                                    (agency.reservation_url || agency.booking_url).includes('kakao')
+                                    (agency.reservation_url).includes('kakao')
                                         ? 'bg-yellow-50 text-amber-900 border-yellow-200'
                                         : 'bg-[#F5F0FF] text-[#8B5CF6] border-[#E9D5FF]'
                                 }`}>
                                     <span className="material-symbols-outlined text-[12px]">
-                                        {(agency.reservation_url || agency.booking_url).includes('kakao') ? 'chat' : 'language'}
+                                        {(agency.reservation_url).includes('kakao') ? 'chat' : 'language'}
                                     </span>
-                                    <span>{(agency.reservation_url || agency.booking_url).includes('kakao') ? '카카오채널' : '온라인예약'}</span>
+                                    <span>{(agency.reservation_url).includes('kakao') ? '카카오채널' : '온라인예약'}</span>
                                 </span>
                             )}
                         </div>
@@ -144,23 +144,23 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
 
             {/* Action buttons */}
             <div className="flex items-center gap-1.5 mt-1" onClick={(e) => e.stopPropagation()}>
-                {(agency.reservation_url || agency.booking_url) && (
+                {(agency.reservation_url) && (
                     <a
-                        href={agency.reservation_url || agency.booking_url}
+                        href={agency.reservation_url}
                         target="_blank"
                         rel="noreferrer"
-                        onClick={(e) => onAction(e, agency, agency.reservation_url || agency.booking_url)}
+                        onClick={(e) => onAction(e, agency, agency.reservation_url)}
                         className={`flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-full shadow-sm active:scale-[0.97] transition-all cursor-pointer font-black text-[12px] leading-none whitespace-nowrap ${
-                            (agency.reservation_url || agency.booking_url).includes('kakao')
+                            (agency.reservation_url).includes('kakao')
                                 ? 'bg-[#FEE500] hover:bg-[#FADA0A] text-[#191919] shadow-yellow-400/20'
                                 : 'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white shadow-purple-400/20'
                         }`}
                     >
                         <span className="material-symbols-outlined text-[14px] shrink-0 -mr-0.5">
-                            {(agency.reservation_url || agency.booking_url).includes('kakao') ? 'chat' : 'language'}
+                            {(agency.reservation_url).includes('kakao') ? 'chat' : 'language'}
                         </span>
                         <span>
-                            {(agency.reservation_url || agency.booking_url).includes('kakao') ? '카카오채널' : '온라인예약'}
+                            {(agency.reservation_url).includes('kakao') ? '카카오채널' : '온라인예약'}
                         </span>
                     </a>
                 )}
@@ -171,7 +171,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
                     onClick={(e) => onAction(e, agency, naverMapsUrl)}
                     className="flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-full bg-[#F5F0FF] border border-[#E8E0FA] hover:bg-[#EDE5FF] transition-colors cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
                 >
-                    <span className="text-[12px] font-black text-[#03C75A] shrink-0">N</span>
+                    <span className="text-[14px] font-black text-[#03C75A] shrink-0 -mr-0.5">N</span>
                     <span className="text-[#5B4E7A]">지도</span>
                 </a>
                 <button
