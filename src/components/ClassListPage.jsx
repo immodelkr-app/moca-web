@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchClasses } from '../services/classService';
+import { fetchClasses, fetchActiveApplicationCounts } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
 
 import { getUser, syncUserGrade } from '../services/userService';
@@ -45,6 +45,7 @@ const ClassListPage = () => {
     const navigate = useNavigate();
     const [classes, setClasses] = useState([]);
     const [myApplications, setMyApplications] = useState([]);
+    const [applicantCounts, setApplicantCounts] = useState({});
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
 
@@ -73,6 +74,11 @@ const ClassListPage = () => {
         // 3. 클래스 목록
         const { data } = await fetchClasses();
         if (data) setClasses(data);
+
+        // 4. 클래스별 활성 신청자 수 (정원마감 뱃지용)
+        const { data: counts } = await fetchActiveApplicationCounts();
+        if (counts) setApplicantCounts(counts);
+
         setLoading(false);
     };
 
@@ -113,6 +119,7 @@ const ClassListPage = () => {
                     const ClassCard = ({ cls }) => {
                         const isApplied = myApplications.includes(cls.id);
                         const isCompleted = cls.status === 'completed';
+                        const isFull = !isCompleted && !isApplied && !!cls.capacity && (applicantCounts[cls.id] || 0) >= cls.capacity;
                         return (
                             <div
                                 key={cls.id}
@@ -131,6 +138,13 @@ const ClassListPage = () => {
                                     <div className="absolute top-4 right-4 z-10 bg-green-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black shadow-lg flex items-center gap-1">
                                         <span className="material-symbols-outlined text-[12px]">task_alt</span>
                                         종료됨
+                                    </div>
+                                )}
+                                {/* 정원마감 배지 */}
+                                {isFull && (
+                                    <div className="absolute top-4 right-4 z-10 bg-slate-700 text-white px-3 py-1.5 rounded-full text-[10px] font-black shadow-lg flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[12px]">block</span>
+                                        모집마감
                                     </div>
                                 )}
                                 <div className="aspect-[2/1] w-full bg-[#F8F5FF] relative overflow-hidden">
@@ -189,8 +203,8 @@ const ClassListPage = () => {
                                         </div>
                                     </div>
                                     <div className="border-t border-[#E8E0FA] pt-4 mt-2">
-                                        <div className={`w-full flex items-center justify-center gap-1.5 py-3.5 rounded-xl font-black text-[14px] ${isCompleted ? 'bg-green-50 text-green-600' : 'bg-[#F8F5FF] text-[#7C3AED]'}`}>
-                                            {isCompleted ? '후기 보기' : '클래스 확인하기'}
+                                        <div className={`w-full flex items-center justify-center gap-1.5 py-3.5 rounded-xl font-black text-[14px] ${isCompleted ? 'bg-green-50 text-green-600' : isFull ? 'bg-slate-100 text-slate-400' : 'bg-[#F8F5FF] text-[#7C3AED]'}`}>
+                                            {isCompleted ? '후기 보기' : isFull ? '모집이 마감되었습니다' : '클래스 확인하기'}
                                             <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                                         </div>
                                     </div>

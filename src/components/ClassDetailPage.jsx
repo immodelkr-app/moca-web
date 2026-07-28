@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { saveClassCalendarEvent, fetchPublicFeedback, fetchUserFeedback } from '../services/classService';
+import { saveClassCalendarEvent, fetchPublicFeedback, fetchUserFeedback, fetchActiveApplicationCount } from '../services/classService';
 import { getUser, syncUserGrade } from '../services/userService';
 import ClassApplyModal from './ClassApplyModal';
 import ClassFeedbackModal from './ClassFeedbackModal';
@@ -50,6 +50,7 @@ const ClassDetailPage = () => {
     const [showApplyModal, setShowApplyModal] = useState(false);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [isApplied, setIsApplied] = useState(false);
+    const [applicantCount, setApplicantCount] = useState(0);
     const [shareSuccess, setShareSuccess] = useState(false);
     const [calendarSaved, setCalendarSaved] = useState(false);
 
@@ -103,6 +104,10 @@ const ClassDetailPage = () => {
                 .eq('id', cleanId)
                 .single();
             if (classData) setCls(classData);
+
+            // 정원마감 체크용 활성 신청자 수
+            const { count } = await fetchActiveApplicationCount(cleanId);
+            setApplicantCount(count || 0);
 
             // 피드백 로드
             let userFeedback = null;
@@ -262,6 +267,7 @@ const ClassDetailPage = () => {
     };
 
     const isCompleted = cls?.status === 'completed';
+    const isFull = !isCompleted && !isApplied && !!cls?.capacity && applicantCount >= cls.capacity;
     const avgRating = feedbacks.length > 0
         ? (feedbacks.reduce((s, f) => s + f.rating, 0) / feedbacks.length).toFixed(1)
         : null;
@@ -349,6 +355,7 @@ const ClassDetailPage = () => {
                             </span>
                             {isApplied && <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-black uppercase flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span> 신청완료</span>}
                             {isCompleted && <span className="px-3 py-1 rounded-full bg-green-500 text-white text-[11px] font-black flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">task_alt</span> 완료</span>}
+                            {isFull && <span className="px-3 py-1 rounded-full bg-slate-700 text-white text-[11px] font-black flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">block</span> 모집마감</span>}
                         </div>
                         <h1 className="text-3xl lg:text-4xl font-black mb-4 leading-tight text-[var(--moca-text)] tracking-tight">{cls.title}</h1>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-[var(--moca-text-3)] font-bold text-sm">
@@ -417,7 +424,10 @@ const ClassDetailPage = () => {
                                 <span className="material-symbols-outlined text-indigo-400 mt-0.5">group</span>
                                 <div>
                                     <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">모집 정원</p>
-                                    <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.capacity}명</p>
+                                    <p className="text-[15px] font-black text-[var(--moca-text)]">
+                                        {applicantCount}/{cls.capacity}명
+                                        {isFull && <span className="ml-2 text-[11px] font-black text-red-500">마감</span>}
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">
@@ -517,6 +527,11 @@ const ClassDetailPage = () => {
                             <button disabled className="flex-1 bg-indigo-100 text-indigo-500 border border-indigo-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
                                 <span className="material-symbols-outlined font-black">task_alt</span>
                                 신청 완료
+                            </button>
+                        ) : isFull ? (
+                            <button disabled className="flex-1 bg-slate-100 text-slate-400 border border-slate-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
+                                <span className="material-symbols-outlined font-black">block</span>
+                                모집이 마감되었습니다
                             </button>
                         ) : (
                             <button

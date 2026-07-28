@@ -187,6 +187,31 @@ export const deleteClass = async (classId) => {
     return { error };
 };
 
+// 클래스별 활성 신청자 수 (취소 제외) - 목록 페이지 정원마감 뱃지용
+export const fetchActiveApplicationCounts = async () => {
+    if (!isSupabaseEnabled()) return { data: {}, error: null };
+    const { data, error } = await supabase
+        .from('class_applications')
+        .select('class_id')
+        .neq('approval_status', 'cancelled');
+    if (error) return { data: {}, error };
+
+    const counts = {};
+    (data || []).forEach(a => { counts[a.class_id] = (counts[a.class_id] || 0) + 1; });
+    return { data: counts, error: null };
+};
+
+// 특정 클래스의 활성 신청자 수 (취소 제외) - 상세 페이지 정원마감 체크용
+export const fetchActiveApplicationCount = async (classId) => {
+    if (!isSupabaseEnabled()) return { count: 0, error: null };
+    const { count, error } = await supabase
+        .from('class_applications')
+        .select('id', { count: 'exact', head: true })
+        .eq('class_id', classId)
+        .neq('approval_status', 'cancelled');
+    return { count: count || 0, error };
+};
+
 // 신청자 목록 가져오기 (특정 클래스)
 export const fetchApplications = async (classId) => {
     if (!isSupabaseEnabled()) return { data: [], error: 'Supabase not connected' };
