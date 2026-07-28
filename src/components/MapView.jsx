@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { fetchAgencies } from '../services/agencyService';
+import { getNaverMapUrl } from '../lib/naverMap';
 
 // ─────────────────────────────────────────────
 // ▼ 설정 영역: 필요 시 여기만 수정하세요 ▼
@@ -140,7 +141,7 @@ const MapView = () => {
                     setSelectedAgency(agency);
                     map.panTo(new window.naver.maps.LatLng(lat, lng));
 
-                    const naverUrl = `https://map.naver.com/v5/search/${encodeURIComponent(agency.address || agency.name)}`;
+                    const naverUrl = getNaverMapUrl(agency);
                     infoWindow.setContent(`
                         <div style="padding:12px 14px;min-width:200px;font-family:'Manrope',sans-serif;line-height:1.5;">
                             <p style="font-weight:800;font-size:14px;margin:0 0 2px;color:#1a1a2e;">${agency.name}</p>
@@ -340,7 +341,7 @@ const MapView = () => {
                             </p>
                         </div>
                         <a
-                            href={`https://map.naver.com/v5/search/${encodeURIComponent(selectedAgency.address || selectedAgency.name)}`}
+                            href={getNaverMapUrl(selectedAgency)}
                             target="_blank" rel="noreferrer"
                             style={{
                                 flexShrink: 0, background: '#03C75A', color: '#fff',

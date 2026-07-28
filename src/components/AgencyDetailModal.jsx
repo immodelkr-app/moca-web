@@ -1,11 +1,12 @@
 import React from 'react';
 import { getUserGrade } from '../services/userService';
+import { getNaverMapUrl } from '../lib/naverMap';
 
 const AgencyDetailModal = ({ agency, onClose, onWriteMemo, onSendProfile, sendInfo }) => {
     if (!agency) return null;
 
     const userGrade = getUserGrade();
-    const naverMapsUrl = `https://map.naver.com/v5/search/${encodeURIComponent(agency.address || agency.name)}`;
+    const naverMapsUrl = getNaverMapUrl(agency);
 
     // 투어일지 기록 가져오기
     let memos = [];

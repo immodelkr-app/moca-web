@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchAgencies } from '../services/agencyService';
 import { getUser, getUserGrade, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
+import { getNaverMapUrl } from '../lib/naverMap';
 
 import { fetchMessagesList } from '../services/messageService';
 import {
@@ -22,7 +23,7 @@ import AgencyDetailModal from './AgencyDetailModal';
 
 
 const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => {
-    const naverMapsUrl = `https://map.naver.com/v5/search/${encodeURIComponent(agency.address || agency.name)}`;
+    const naverMapsUrl = getNaverMapUrl(agency);
 
     const colors = [
         { bg: 'from-[#6C63FF]/10 to-[#A78BFA]/5', border: 'border-[#6C63FF]/20', accent: 'text-[#818CF8]', dot: 'bg-[#6C63FF]' },
