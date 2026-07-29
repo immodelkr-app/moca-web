@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { fetchClasses } from '../services/classService';
+import { fetchClasses, fetchActiveApplicationCounts } from '../services/classService';
 import { CARD_TEMPLATES } from '../lib/cardNewsRenderer';
 import {
     CLAUDE_MODELS,
@@ -79,6 +79,7 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
 
     // ── 데이터 인사이트 ──
     const [insightState, setInsightState] = useState({ loading: false, error: '', result: null });
+    const [popularClasses, setPopularClasses] = useState([]);
 
     // ── 글쓰기 도우미 ──
     const [writerForm, setWriterForm] = useState({ topic: '', channel: 'SNS 캡션', tone: '' });
@@ -100,6 +101,19 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
             fetchClasses().then(({ data }) => setClasses(data || []));
         }
     }, [cardTemplate, classes.length]);
+
+    // 인기 클래스(신청자 수 기준) — 데이터 인사이트 소재로 사용
+    useEffect(() => {
+        Promise.all([fetchClasses(), fetchActiveApplicationCounts()]).then(([classesRes, countsRes]) => {
+            const counts = countsRes.data || {};
+            const ranked = (classesRes.data || [])
+                .map((c) => ({ title: c.title, applicantCount: counts[c.id] || 0, capacity: c.capacity, status: c.status }))
+                .filter((c) => c.applicantCount > 0)
+                .sort((a, b) => b.applicantCount - a.applicantCount)
+                .slice(0, 5);
+            setPopularClasses(ranked);
+        });
+    }, []);
 
     const handleApiKeyBlur = () => {
         if (apiKey) saveApiKey(apiKey);
@@ -138,7 +152,7 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
     const runInsight = async () => {
         setInsightState({ loading: true, error: '', result: insightState.result });
         try {
-            const { system, prompt } = buildInsightPrompt(stats);
+            const { system, prompt } = buildInsightPrompt({ ...stats, popularClasses });
             const result = await callClaude({ apiKey, model, system, prompt, maxTokens: 1400 });
             setInsightState({ loading: false, error: '', result });
         } catch (err) {
@@ -337,6 +351,19 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                                 </div>
                             ))}
                         </div>
+                        {popularClasses.length > 0 && (
+                            <div className="mb-5">
+                                <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">🔥 인기 클래스 (신청자 수 기준)</p>
+                                <div className="space-y-1.5">
+                                    {popularClasses.map((c, i) => (
+                                        <div key={c.title + i} className="flex items-center justify-between bg-[var(--moca-surface-2)] rounded-lg px-3 py-2 border border-[var(--moca-border)]">
+                                            <span className="text-xs font-bold text-[var(--moca-text)] truncate">{i + 1}. {c.title}</span>
+                                            <span className="text-xs font-black text-[var(--moca-primary)] shrink-0 ml-2">{c.applicantCount}명{c.capacity ? ` / ${c.capacity}명` : ''}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         <button onClick={runInsight} disabled={insightState.loading} className={primaryBtnClass}>
                             🔍 인사이트 생성
                         </button>

@@ -131,6 +131,7 @@ export function buildInsightPrompt(stats) {
         '방문 많이 한 멤버 TOP5': (stats.top10Users || []).slice(0, 5).map((u) => ({ name: u.name, count: u.count })),
         '최다 방문처 TOP5': stats.top5Places,
         '인기 앱 페이지 TOP5': stats.popularPages,
+        '인기 클래스 TOP5 (활성 신청자 수 기준)': stats.popularClasses || [],
     };
 
     return {
