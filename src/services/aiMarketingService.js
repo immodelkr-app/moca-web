@@ -56,6 +56,9 @@ export async function callClaude({ apiKey, model, system, prompt, maxTokens = 15
             body: JSON.stringify({
                 model,
                 max_tokens: maxTokens,
+                // 이 탭은 짧은 정형 텍스트/카피 생성이 목적이라 깊은 추론이 불필요합니다.
+                // thinking을 켜두면(Opus 5 기본값) 생각 토큰이 max_tokens를 잠식해 답변이 중간에 잘릴 수 있어 꺼둡니다.
+                thinking: { type: 'disabled' },
                 system,
                 messages: [{ role: 'user', content: prompt }],
             }),
@@ -82,7 +85,7 @@ export async function callClaude({ apiKey, model, system, prompt, maxTokens = 15
     }
 
     const data = await res.json();
-    const text = (data.content || [])
+    let text = (data.content || [])
         .filter((b) => b.type === 'text')
         .map((b) => b.text)
         .join('\n')
@@ -91,6 +94,10 @@ export async function callClaude({ apiKey, model, system, prompt, maxTokens = 15
     const pricing = MODEL_PRICING[model] || MODEL_PRICING['claude-opus-5'];
     const estimatedCost =
         ((usage.input_tokens || 0) * pricing.input + (usage.output_tokens || 0) * pricing.output) / 1_000_000;
+
+    if (data.stop_reason === 'max_tokens') {
+        text += '\n\n⚠️ (답변이 토큰 한도로 중간에 잘렸습니다. "다시 생성"을 눌러 재시도해주세요.)';
+    }
 
     return {
         text,
@@ -108,7 +115,8 @@ MOCA는 모델 지망생/현직 모델을 위한 앱으로 다음 기능을 제�
 - 제공되지 않은 수치, 회원 이름, 나이, 경력, 등급, 유입 경로, SNS/게시물 활동, 에이전시명 등은 절대로 지어내지 마세요. 배경 설명에 나온 기능이라도 이번 요청 데이터에 없으면 언급하지 마세요.
 - 숫자는 제공된 값을 그대로 사용하세요. 임의로 반올림하거나 다른 값으로 바꾸지 마세요.
 - 분석에 필요한 정보가 데이터에 없다면 지어내지 말고 "제공된 데이터에는 없음"이라고 명시하세요.
-- 실존 인물처럼 보이는 가상의 이름·경력을 만들어내는 것은 절대 금지입니다.`;
+- 실존 인물처럼 보이는 가상의 이름·경력을 만들어내는 것은 절대 금지입니다.
+- 답변에 내부/시스템용 XML 태그를 포함하지 마세요.`;
 
 export function buildInsightPrompt(stats) {
     const summary = {
