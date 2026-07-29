@@ -6,6 +6,7 @@ import AdminUpgradeRequests from './AdminUpgradeRequests';
 import AdminPopups from './AdminPopups';
 import AdminClasses from './AdminClasses';
 import AdminHomepage, { FONT_OPTIONS, FONT_SIZE_OPTIONS, GRADIENT_OPTIONS, HIGHLIGHT_STYLE_OPTIONS } from './AdminHomepage';
+import AdminAIMarketing from './AdminAIMarketing';
 import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost, parseImageUrls } from '../services/certificationService';
 import { fetchAllCurrentPhotos, updatePhotoStatus, updatePhotoFeedback, deleteCurrentPhoto, addPhotoFeedbackComment, fetchPhotoFeedbackComments } from '../services/currentPhotosService';
@@ -1078,6 +1079,12 @@ const AdminPage = () => {
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'pushhistory' ? 'border-red-500 text-red-700 bg-red-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
                         🔔 알림·메시지 센터
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('ai-marketing')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'ai-marketing' ? 'border-fuchsia-500 text-fuchsia-700 bg-fuchsia-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                    >
+                        🤖 AI 마케팅 분석
                     </button>
 
                 </div>
@@ -4187,6 +4194,20 @@ const AdminPage = () => {
                         </div>
                     );
                 })()}
+
+                {/* ── 🤖 AI 마케팅 분석 탭 ── */}
+                {activeTab === 'ai-marketing' && (
+                    <AdminAIMarketing
+                        stats={{
+                            stats1Day, stats7Days, stats30Days,
+                            totalUsersCount, signupMaleCount, signupFemaleCount,
+                            signupMalePercent, signupFemalePercent, signupAgeGroups,
+                            castingStats, senderStats, top10Users, top5Places, popularPages,
+                        }}
+                        setSuccessMsg={setSuccessMsg}
+                        setError={setError}
+                    />
+                )}
 
                 {selectedUserForDetail && (
                     <AdminUserDetailModal
