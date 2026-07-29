@@ -210,8 +210,75 @@ export async function drawAppPromoCard(canvas, { headline = '', bullets = [], ct
     ctx.fillText('MOCA', CARD_SIZE - 70, CARD_SIZE - 60);
 }
 
+/** 인증샷 하이라이트형: 마케팅 동의한 인증샷(모카그램) 게시물을 소개하는 카드 */
+export async function drawCertHighlightCard(canvas, { headline = '', activityType = '', caption = '', likes = 0, imageUrl = '' }) {
+    const ctx = prepareCanvas(canvas);
+
+    let img = await loadImageSafe(imageUrl);
+    if (img) {
+        try {
+            const scale = Math.max(CARD_SIZE / img.width, CARD_SIZE / img.height);
+            const w = img.width * scale;
+            const h = img.height * scale;
+            ctx.drawImage(img, (CARD_SIZE - w) / 2, (CARD_SIZE - h) / 2, w, h);
+        } catch {
+            img = null;
+        }
+    }
+    if (!img) {
+        const grad = ctx.createLinearGradient(0, 0, CARD_SIZE, CARD_SIZE);
+        grad.addColorStop(0, BRAND.accent);
+        grad.addColorStop(1, BRAND.primary2);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, CARD_SIZE, CARD_SIZE);
+    }
+
+    if (activityType) {
+        ctx.font = `700 28px ${FONT}`;
+        const badgeText = `📸 ${activityType}`;
+        const badgeWidth = ctx.measureText(badgeText).width + 48;
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        fillRoundedRect(ctx, 60, 60, badgeWidth, 56, 28);
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'left';
+        ctx.fillText(badgeText, 84, 98);
+    }
+
+    // 하단 텍스트 가독성을 위한 그라디언트 오버레이
+    const overlay = ctx.createLinearGradient(0, CARD_SIZE * 0.45, 0, CARD_SIZE);
+    overlay.addColorStop(0, 'rgba(31,18,53,0)');
+    overlay.addColorStop(1, 'rgba(31,18,53,0.92)');
+    ctx.fillStyle = overlay;
+    ctx.fillRect(0, CARD_SIZE * 0.45, CARD_SIZE, CARD_SIZE * 0.55);
+
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'left';
+    ctx.font = `900 58px ${FONT}`;
+    const headLines = wrapText(ctx, headline, 940);
+    let y = CARD_SIZE - 300;
+    headLines.forEach((line, i) => ctx.fillText(line, 70, y + i * 70));
+    y += headLines.length * 70 + 24;
+
+    if (caption) {
+        ctx.font = `500 32px ${FONT}`;
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        const capLines = wrapText(ctx, `“${caption}”`, 940).slice(0, 2);
+        capLines.forEach((line, i) => ctx.fillText(line, 70, y + i * 42));
+        y += capLines.length * 42 + 20;
+    }
+
+    ctx.font = `700 30px ${FONT}`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`❤️ ${likes}`, 70, CARD_SIZE - 60);
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillText('MOCA', CARD_SIZE - 70, CARD_SIZE - 60);
+}
+
 export const CARD_TEMPLATES = [
     { id: 'stat', label: '📊 통계강조형', draw: drawStatCard },
     { id: 'class', label: '🎓 클래스홍보형', draw: drawClassPromoCard },
     { id: 'app', label: '📱 MOCA 앱 홍보형', draw: drawAppPromoCard },
+    { id: 'cert', label: '📸 인증샷 하이라이트형', draw: drawCertHighlightCard },
 ];

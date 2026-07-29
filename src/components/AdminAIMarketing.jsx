@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchClasses, fetchActiveApplicationCounts } from '../services/classService';
-import { fetchAllCertPostsForAdmin } from '../services/certificationService';
+import { fetchAllCertPostsForAdmin, parseImageUrls } from '../services/certificationService';
 import { CARD_TEMPLATES } from '../lib/cardNewsRenderer';
 import {
     CLAUDE_MODELS,
@@ -96,6 +96,8 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
     const [cardCopyState, setCardCopyState] = useState({ loading: false, error: '', result: null });
     const [cardFields, setCardFields] = useState({ title: '', subtitle: '', cta: '' });
     const [cardInsightContext, setCardInsightContext] = useState('');
+    const [marketingCertPosts, setMarketingCertPosts] = useState([]);
+    const [selectedCertPostId, setSelectedCertPostId] = useState('');
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -129,10 +131,12 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                 if (p.activity_type) activityTypeBreakdown[p.activity_type] = (activityTypeBreakdown[p.activity_type] || 0) + 1;
             });
 
-            // 마케팅 활용에 동의한 게시물 중 인기순 (개인정보 없이 캡션/태그만)
-            const marketingAgreedTopPosts = list
+            // 마케팅 활용에 동의한 게시물 (카드뉴스 소재로 사용 — 동의 안 한 게시물은 절대 포함하지 않음)
+            const agreedPosts = list
                 .filter((p) => p.is_marketing_agreed)
-                .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
+                .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
+
+            const marketingAgreedTopPosts = agreedPosts
                 .slice(0, 5)
                 .map((p) => ({ activityType: p.activity_type, tag: p.tag_label, caption: p.caption, likes: p.likes_count || 0 }));
 
@@ -142,6 +146,15 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                 activityTypeBreakdown,
                 marketingAgreedTopPosts,
             });
+
+            setMarketingCertPosts(agreedPosts.slice(0, 20).map((p) => ({
+                id: p.id,
+                activityType: p.activity_type,
+                tag: p.tag_label,
+                caption: p.caption,
+                likes: p.likes_count || 0,
+                imageUrl: parseImageUrls(p.image_url)[0] || '',
+            })));
         });
     }, []);
 
@@ -235,6 +248,12 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                 ? { title: cls.title, schedule: cls.class_date || '', priceInfo: cls.price_info || '' }
                 : { title: '', schedule: '', priceInfo: '' };
         }
+        if (cardTemplate === 'cert') {
+            const post = marketingCertPosts.find((p) => String(p.id) === String(selectedCertPostId));
+            return post
+                ? { activityType: post.activityType, tag: post.tag, caption: post.caption, likes: post.likes }
+                : { activityType: '', tag: '', caption: '', likes: 0 };
+        }
         return { highlights: appHighlights.split('\n').filter(Boolean) };
     };
 
@@ -278,6 +297,15 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                 priceInfo: cls?.price_info || '',
                 imageUrl: cls?.image_url || '',
             });
+        } else if (cardTemplate === 'cert') {
+            const post = marketingCertPosts.find((p) => String(p.id) === String(selectedCertPostId));
+            template.draw(canvas, {
+                headline: cardFields.title || 'MOCA와 함께하는 순간',
+                activityType: post?.activityType || '',
+                caption: post?.caption || '',
+                likes: post?.likes || 0,
+                imageUrl: post?.imageUrl || '',
+            });
         } else {
             template.draw(canvas, {
                 headline: cardFields.title || 'MOCA와 함께하세요',
@@ -286,7 +314,7 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cardTemplate, cardFields, selectedStatKey, selectedClassId, classes, appHighlights]);
+    }, [cardTemplate, cardFields, selectedStatKey, selectedClassId, classes, appHighlights, selectedCertPostId, marketingCertPosts]);
 
     useEffect(() => {
         redrawCard();
@@ -507,7 +535,7 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                                 {CARD_TEMPLATES.map((t) => (
                                     <button
                                         key={t.id}
-                                        onClick={() => { setCardTemplate(t.id); setCardFields({ title: '', subtitle: '', cta: '' }); setCardCopyState({ loading: false, error: '', result: null }); }}
+                                        onClick={() => { setCardTemplate(t.id); setCardFields({ title: '', subtitle: '', cta: '' }); setCardCopyState({ loading: false, error: '', result: null }); setSelectedCertPostId(''); }}
                                         className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
                                             cardTemplate === t.id ? 'bg-[var(--moca-primary-lt)] border-[var(--moca-primary)] text-[var(--moca-primary)]' : 'border-[var(--moca-border)] text-[var(--moca-text-2)] hover:bg-gray-50'
                                         }`}
@@ -539,6 +567,21 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                                     ))}
                                 </select>
                                 {classes.length === 0 && <p className="text-[10px] text-[var(--moca-text-3)] mt-1">등록된 클래스가 없습니다.</p>}
+                            </div>
+                        )}
+
+                        {cardTemplate === 'cert' && (
+                            <div>
+                                <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">인증샷 게시물 선택</label>
+                                <select value={selectedCertPostId} onChange={(e) => setSelectedCertPostId(e.target.value)} className={inputClass}>
+                                    <option value="">게시물을 선택하세요</option>
+                                    {marketingCertPosts.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.activityType || '인증샷'} · {(p.caption || '').slice(0, 20)}{p.caption?.length > 20 ? '…' : ''} (❤️{p.likes})
+                                        </option>
+                                    ))}
+                                </select>
+                                {marketingCertPosts.length === 0 && <p className="text-[10px] text-[var(--moca-text-3)] mt-1">마케팅 활용에 동의한 인증샷 게시물이 없습니다.</p>}
                             </div>
                         )}
 
