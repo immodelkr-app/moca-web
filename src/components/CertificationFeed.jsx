@@ -4,10 +4,12 @@ import { getUser } from '../services/userService';
 import {
     fetchCertPosts,
     createCertPost,
+    updateCertPost,
     deleteCertPost,
     fetchMyLikedPostIds,
 } from '../services/certificationService';
 import CertificationUploadModal from './CertificationUploadModal';
+import CertificationEditModal from './CertificationEditModal';
 import CertificationPostCard from './CertificationPostCard';
 
 const FILTER_TABS = ['전체', '에이전시투어', '광고모델수업'];
@@ -28,6 +30,7 @@ const CertificationFeed = () => {
     const [activeFilter, setActiveFilter] = useState('전체');
     const [isLoading, setIsLoading] = useState(true);
     const [showUploadModal, setShowUploadModal] = useState(false);
+    const [editingPost, setEditingPost] = useState(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const loadData = useCallback(async (filter = activeFilter, showSpinner = true) => {
@@ -67,6 +70,16 @@ const CertificationFeed = () => {
         }
         if (post) {
             setPosts(prev => [post, ...prev]);
+        }
+    };
+
+    const handleEditSuccess = async ({ activityType, tagLabel, caption }) => {
+        const { post, error } = await updateCertPost(editingPost.id, { activityType, tagLabel, caption });
+        if (error) {
+            throw error;
+        }
+        if (post) {
+            setPosts(prev => prev.map(p => p.id === post.id ? post : p));
         }
     };
 
@@ -181,6 +194,7 @@ const CertificationFeed = () => {
                             likedPostIds={likedPostIds}
                             onLikeChange={handleLikeChange}
                             onDelete={handleDelete}
+                            onEdit={setEditingPost}
                         />
                     ))
                 )}
@@ -204,6 +218,15 @@ const CertificationFeed = () => {
                 <CertificationUploadModal
                     onClose={() => setShowUploadModal(false)}
                     onSuccess={handleUploadSuccess}
+                />
+            )}
+
+            {/* Edit Modal */}
+            {editingPost && (
+                <CertificationEditModal
+                    post={editingPost}
+                    onClose={() => setEditingPost(null)}
+                    onSuccess={handleEditSuccess}
                 />
             )}
 

@@ -218,6 +218,37 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
     return { post: newPost, error: null };
 };
 
+export const updateCertPost = async (postId, { activityType, tagLabel, caption }) => {
+    const updates = {
+        activity_type: activityType,
+        tag_label: tagLabel || '',
+        caption: caption || '',
+    };
+
+    if (isSupabaseEnabled()) {
+        const { data, error } = await supabase
+            .from('certification_posts')
+            .update(updates)
+            .eq('id', postId)
+            .select()
+            .single();
+        if (!error && data) return { post: data, error: null };
+        console.error('updateCertPost error:', error);
+        return { post: null, error };
+    }
+
+    // localStorage fallback
+    const raw = localStorage.getItem(LOCAL_POSTS_KEY);
+    const posts = raw ? JSON.parse(raw) : [];
+    const idx = posts.findIndex(p => p.id === postId);
+    if (idx > -1) {
+        posts[idx] = { ...posts[idx], ...updates };
+        localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
+        return { post: posts[idx], error: null };
+    }
+    return { post: null, error: new Error('게시물을 찾을 수 없습니다') };
+};
+
 export const deleteCertPost = async (postId) => {
     if (isSupabaseEnabled()) {
         const { error } = await supabase

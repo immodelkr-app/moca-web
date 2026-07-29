@@ -129,7 +129,7 @@ const ImageCarousel = ({ images, alt }) => {
     );
 };
 
-const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, onDelete }) => {
+const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, onDelete, onEdit }) => {
     const [liked, setLiked] = useState(likedPostIds.includes(post.id));
     const [likesCount, setLikesCount] = useState(post.likes_count || 0);
     const [showComments, setShowComments] = useState(false);
@@ -259,14 +259,22 @@ const CertificationPostCard = ({ post, myNickname, likedPostIds, onLikeChange, o
                     )}
                 </div>
 
-                {/* Delete (my post) */}
+                {/* Edit & Delete (my post) */}
                 {isMyPost && (
-                    <button
-                        onClick={() => onDelete?.(post.id)}
-                        className="text-[#E8E0FA] hover:text-red-500 transition-colors"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">delete_outline</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => onEdit?.(post)}
+                            className="text-[#E8E0FA] hover:text-[#7C3AED] transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                        </button>
+                        <button
+                            onClick={() => onDelete?.(post.id)}
+                            className="text-[#E8E0FA] hover:text-red-500 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">delete_outline</span>
+                        </button>
+                    </div>
                 )}
 
             </div>
