@@ -351,6 +351,19 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                                 </div>
                             ))}
                         </div>
+                        {stats.gradeBreakdown && Object.keys(stats.gradeBreakdown).length > 0 && (
+                            <div className="mb-5">
+                                <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">🏅 등급별 회원 분포</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {Object.entries(stats.gradeBreakdown).map(([label, count]) => (
+                                        <div key={label} className="flex items-center justify-between bg-[var(--moca-surface-2)] rounded-lg px-3 py-2 border border-[var(--moca-border)]">
+                                            <span className="text-xs font-bold text-[var(--moca-text)]">{label}</span>
+                                            <span className="text-xs font-black text-[var(--moca-primary)]">{count}명</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {popularClasses.length > 0 && (
                             <div className="mb-5">
                                 <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">🔥 인기 클래스 (신청자 수 기준)</p>

@@ -4203,6 +4203,10 @@ const AdminPage = () => {
                             totalUsersCount, signupMaleCount, signupFemaleCount,
                             signupMalePercent, signupFemalePercent, signupAgeGroups,
                             castingStats, senderStats, top10Users, top5Places, popularPages,
+                            gradeBreakdown: grades.reduce((acc, g) => {
+                                acc[GRADE_INFO[g]?.label || g] = gradeStats[g] || 0;
+                                return acc;
+                            }, {}),
                         }}
                         setSuccessMsg={setSuccessMsg}
                         setError={setError}

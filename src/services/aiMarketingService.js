@@ -124,6 +124,7 @@ export function buildInsightPrompt(stats) {
         '주간 방문': stats.stats7Days,
         '월간 방문': stats.stats30Days,
         '전체 가입자 수': stats.totalUsersCount,
+        '등급별 회원 분포': stats.gradeBreakdown || {},
         '남성 비율(%)': stats.signupMalePercent,
         '여성 비율(%)': stats.signupFemalePercent,
         '연령대 분포': stats.signupAgeGroups,
