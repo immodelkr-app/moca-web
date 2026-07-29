@@ -164,14 +164,14 @@ const CARD_TEMPLATE_GUIDE = {
     app: 'MOCA 앱의 장점/필요성을 알리는 홍보 카드뉴스입니다.',
 };
 
-export function buildCardCopyPrompt({ templateType, data }) {
+export function buildCardCopyPrompt({ templateType, data, context }) {
     return {
         system: BRAND_CONTEXT,
         prompt: `${CARD_TEMPLATE_GUIDE[templateType] || ''}
 
 참고 데이터:
 ${JSON.stringify(data, null, 2)}
-
+${context ? `\n참고할 최신 데이터 인사이트 (이 내용에서 인스타/SNS에 어필할 만한 포인트를 반영하세요):\n${context}\n` : ''}
 다음 정확한 형식으로만 답해주세요 (다른 설명 없이):
 제목: (12자 이내, 임팩트있게)
 부제: (24자 이내)
@@ -191,23 +191,4 @@ export function parseCardCopy(text) {
         };
     }
     return { title: text.trim().slice(0, 30), subtitle: '', cta: '' };
-}
-
-export function buildRepublicPrompt({ stats, idea }) {
-    return {
-        system: BRAND_CONTEXT,
-        prompt: `"아임모델 공화국"은 MOCA와 자매 앱 modelbeauty가 공유하는 통합 포인트 멤버십 시스템입니다.
-
-현재 MOCA 앱 데이터 참고 (이것이 전부이며, 포인트 적립/사용 내역 등 다른 수치는 주어지지 않았습니다):
-- 전체 가입자: ${stats.totalUsersCount}명
-- 최근 30일 방문: ${stats.stats30Days}회
-
-관리자가 생각하는 아이디어: ${idea || '(특별히 없음 - 자유롭게 제안)'}
-
-MOCA와 modelbeauty를 연계한 이번 달 프로모션 제안서를 작성해주세요. 위에 없는 구체적인 통계(포인트 적립량, 실제 회원 이름 등)는 지어내지 말고 일반적인 제안 형태로 작성하세요. 형식:
-1. 프로모션 컨셉 (1줄)
-2. 구체적 내용 (포인트 적립/사용 조건 등)
-3. 기대 효과
-4. 실행 시 주의사항`,
-    };
 }

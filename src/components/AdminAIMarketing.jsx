@@ -14,14 +14,12 @@ import {
     buildCopywriterPrompt,
     buildCardCopyPrompt,
     parseCardCopy,
-    buildRepublicPrompt,
 } from '../services/aiMarketingService';
 
 const SUB_TABS = [
     { key: 'insight', label: '📊 데이터 인사이트', color: 'border-purple-500 text-purple-700 bg-purple-50' },
     { key: 'writer', label: '✨ 글쓰기 도우미', color: 'border-fuchsia-500 text-fuchsia-700 bg-fuchsia-50' },
     { key: 'card', label: '🖼️ 홍보물 & 카드뉴스', color: 'border-violet-500 text-violet-700 bg-violet-50' },
-    { key: 'republic', label: '👑 아임모델 공화국 마케팅', color: 'border-indigo-500 text-indigo-700 bg-indigo-50' },
 ];
 
 const inputClass =
@@ -94,11 +92,8 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
     const [appHighlights, setAppHighlights] = useState('소속 에이전시 정보를 한눈에\n투어일지로 활동 기록 자동 관리\n모델 전용 클래스 신청');
     const [cardCopyState, setCardCopyState] = useState({ loading: false, error: '', result: null });
     const [cardFields, setCardFields] = useState({ title: '', subtitle: '', cta: '' });
+    const [cardInsightContext, setCardInsightContext] = useState('');
     const canvasRef = useRef(null);
-
-    // ── 아임모델 공화국 마케팅 ──
-    const [republicIdea, setRepublicIdea] = useState('');
-    const [republicState, setRepublicState] = useState({ loading: false, error: '', result: null });
 
     useEffect(() => {
         if (cardTemplate === 'class' && classes.length === 0) {
@@ -151,6 +146,23 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
         }
     };
 
+    // ── 인사이트 → 콘텐츠 제작 이어가기 ──
+    const sendInsightToWriter = () => {
+        if (!insightState.result?.text) return;
+        setWriterForm({
+            topic: `아래 데이터 인사이트를 참고해서 인스타그램/SNS에 올릴 홍보 문구를 작성해줘:\n\n${insightState.result.text}`,
+            channel: 'SNS 캡션',
+            tone: '',
+        });
+        setSubTab('writer');
+    };
+
+    const sendInsightToCard = () => {
+        if (!insightState.result?.text) return;
+        setCardInsightContext(insightState.result.text);
+        setSubTab('card');
+    };
+
     // ── 글쓰기 도우미 ──
     const runWriter = async () => {
         if (!writerForm.topic.trim()) {
@@ -185,25 +197,17 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
     const runCardCopy = async () => {
         setCardCopyState({ loading: true, error: '', result: cardCopyState.result });
         try {
-            const { system, prompt } = buildCardCopyPrompt({ templateType: cardTemplate, data: buildCardData() });
-            const result = await callClaude({ apiKey, model, system, prompt, maxTokens: 300 });
+            const { system, prompt } = buildCardCopyPrompt({
+                templateType: cardTemplate,
+                data: buildCardData(),
+                context: cardInsightContext || undefined,
+            });
+            const result = await callClaude({ apiKey, model, system, prompt, maxTokens: 500 });
             const parsed = parseCardCopy(result.text);
             setCardFields(parsed);
             setCardCopyState({ loading: false, error: '', result });
         } catch (err) {
             setCardCopyState({ loading: false, error: err.message, result: null });
-        }
-    };
-
-    // ── 아임모델 공화국 제안서 ──
-    const runRepublic = async () => {
-        setRepublicState({ loading: true, error: '', result: republicState.result });
-        try {
-            const { system, prompt } = buildRepublicPrompt({ stats, idea: republicIdea });
-            const result = await callClaude({ apiKey, model, system, prompt, maxTokens: 1200 });
-            setRepublicState({ loading: false, error: '', result });
-        } catch (err) {
-            setRepublicState({ loading: false, error: err.message, result: null });
         }
     };
 
@@ -345,6 +349,16 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                     />
                 </div>
             )}
+            {subTab === 'insight' && insightState.result?.text && !insightState.loading && (
+                <div className="flex gap-2 mt-4 flex-wrap">
+                    <button onClick={sendInsightToWriter} className="flex-1 min-w-[220px] bg-fuchsia-50 hover:bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200 font-bold text-sm py-3 rounded-xl transition-colors">
+                        ✍️ 이 인사이트로 SNS 문구 만들기
+                    </button>
+                    <button onClick={sendInsightToCard} className="flex-1 min-w-[220px] bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 font-bold text-sm py-3 rounded-xl transition-colors">
+                        🖼️ 이 인사이트로 카드뉴스 만들기
+                    </button>
+                </div>
+            )}
 
             {/* ── 글쓰기 도우미 ── */}
             {subTab === 'writer' && (
@@ -389,6 +403,12 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
             {subTab === 'card' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-6 shadow-sm space-y-4">
+                        {cardInsightContext && (
+                            <div className="flex items-start justify-between gap-2 bg-violet-50 border border-violet-200 rounded-xl px-3 py-2">
+                                <p className="text-[11px] text-violet-700 font-bold leading-relaxed">📊 데이터 인사이트 내용이 참고자료로 연결되어 있습니다. AI 문구 생성 시 반영됩니다.</p>
+                                <button onClick={() => setCardInsightContext('')} className="shrink-0 text-[11px] font-bold text-violet-500 hover:text-violet-700">해제</button>
+                            </div>
+                        )}
                         <div>
                             <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-2">템플릿 선택</label>
                             <div className="flex gap-2 flex-wrap">
@@ -459,36 +479,6 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                             ⬇️ PNG 다운로드
                         </button>
                     </div>
-                </div>
-            )}
-
-            {/* ── 아임모델 공화국 마케팅 ── */}
-            {subTab === 'republic' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-6 shadow-sm space-y-4">
-                        <p className="text-sm text-[var(--moca-text-2)]">
-                            아임모델 공화국(통합 회원)의 데이터를 참고해 modelbeauty 앱과 연계한 프로모션을 제안합니다.
-                        </p>
-                        <div>
-                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">이번 달 프로모션 아이디어 (선택)</label>
-                            <textarea
-                                value={republicIdea}
-                                onChange={(e) => setRepublicIdea(e.target.value)}
-                                rows={4}
-                                placeholder="예: 여름 시즌 뷰티 케어 연계 프로모션"
-                                className={`${inputClass} resize-none`}
-                            />
-                        </div>
-                        <button onClick={runRepublic} disabled={republicState.loading} className={primaryBtnClass}>
-                            📝 마케팅 제안서 작성
-                        </button>
-                    </div>
-                    <ResultPanel
-                        {...republicState}
-                        onCopy={() => copyToClipboard(republicState.result?.text)}
-                        onRegenerate={runRepublic}
-                        canRegenerate
-                    />
                 </div>
             )}
         </div>
