@@ -133,6 +133,7 @@ export function buildInsightPrompt(stats) {
         '최다 방문처 TOP5': stats.top5Places,
         '인기 앱 페이지 TOP5': stats.popularPages,
         '인기 클래스 TOP5 (활성 신청자 수 기준)': stats.popularClasses || [],
+        '인증샷(모카그램) 활동 현황': stats.certActivity || null,
     };
 
     return {

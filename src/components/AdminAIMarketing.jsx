@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchClasses, fetchActiveApplicationCounts } from '../services/classService';
+import { fetchAllCertPostsForAdmin } from '../services/certificationService';
 import { CARD_TEMPLATES } from '../lib/cardNewsRenderer';
 import {
     CLAUDE_MODELS,
@@ -80,6 +81,7 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
     // ── 데이터 인사이트 ──
     const [insightState, setInsightState] = useState({ loading: false, error: '', result: null });
     const [popularClasses, setPopularClasses] = useState([]);
+    const [certActivity, setCertActivity] = useState(null);
 
     // ── 글쓰기 도우미 ──
     const [writerForm, setWriterForm] = useState({ topic: '', channel: 'SNS 캡션', tone: '' });
@@ -112,6 +114,34 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                 .sort((a, b) => b.applicantCount - a.applicantCount)
                 .slice(0, 5);
             setPopularClasses(ranked);
+        });
+    }, []);
+
+    // 인증샷(모카그램) 활동 현황 — 데이터 인사이트 소재로 사용
+    useEffect(() => {
+        fetchAllCertPostsForAdmin(false).then((posts) => {
+            const list = posts || [];
+            const now = new Date();
+            const last30DaysPosts = list.filter((p) => (now - new Date(p.created_at)) <= 30 * 24 * 60 * 60 * 1000).length;
+
+            const activityTypeBreakdown = {};
+            list.forEach((p) => {
+                if (p.activity_type) activityTypeBreakdown[p.activity_type] = (activityTypeBreakdown[p.activity_type] || 0) + 1;
+            });
+
+            // 마케팅 활용에 동의한 게시물 중 인기순 (개인정보 없이 캡션/태그만)
+            const marketingAgreedTopPosts = list
+                .filter((p) => p.is_marketing_agreed)
+                .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
+                .slice(0, 5)
+                .map((p) => ({ activityType: p.activity_type, tag: p.tag_label, caption: p.caption, likes: p.likes_count || 0 }));
+
+            setCertActivity({
+                totalPosts: list.length,
+                last30DaysPosts,
+                activityTypeBreakdown,
+                marketingAgreedTopPosts,
+            });
         });
     }, []);
 
@@ -152,8 +182,8 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
     const runInsight = async () => {
         setInsightState({ loading: true, error: '', result: insightState.result });
         try {
-            const { system, prompt } = buildInsightPrompt({ ...stats, popularClasses });
-            const result = await callClaude({ apiKey, model, system, prompt, maxTokens: 1400 });
+            const { system, prompt } = buildInsightPrompt({ ...stats, popularClasses, certActivity });
+            const result = await callClaude({ apiKey, model, system, prompt, maxTokens: 1800 });
             setInsightState({ loading: false, error: '', result });
         } catch (err) {
             setInsightState({ loading: false, error: err.message, result: null });
@@ -375,6 +405,28 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                                         </div>
                                     ))}
                                 </div>
+                            </div>
+                        )}
+                        {certActivity && certActivity.totalPosts > 0 && (
+                            <div className="mb-5">
+                                <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">📸 인증샷(모카그램) 활동</p>
+                                <div className="grid grid-cols-2 gap-2 mb-2">
+                                    <div className="bg-[var(--moca-surface-2)] rounded-lg px-3 py-2 border border-[var(--moca-border)] text-center">
+                                        <p className="text-[10px] text-[var(--moca-text-3)] font-bold">전체 게시물</p>
+                                        <p className="text-sm font-black text-[var(--moca-text)]">{certActivity.totalPosts}건</p>
+                                    </div>
+                                    <div className="bg-[var(--moca-surface-2)] rounded-lg px-3 py-2 border border-[var(--moca-border)] text-center">
+                                        <p className="text-[10px] text-[var(--moca-text-3)] font-bold">최근 30일</p>
+                                        <p className="text-sm font-black text-[var(--moca-text)]">{certActivity.last30DaysPosts}건</p>
+                                    </div>
+                                </div>
+                                {Object.keys(certActivity.activityTypeBreakdown).length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {Object.entries(certActivity.activityTypeBreakdown).map(([type, count]) => (
+                                            <span key={type} className="text-[10px] font-bold px-2 py-1 rounded-full bg-[var(--moca-primary-lt)] text-[var(--moca-primary)]">{type} {count}건</span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                         <button onClick={runInsight} disabled={insightState.loading} className={primaryBtnClass}>
