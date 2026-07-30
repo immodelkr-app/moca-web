@@ -99,6 +99,7 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
     const [marketingCertPosts, setMarketingCertPosts] = useState([]);
     const [selectedCertPostId, setSelectedCertPostId] = useState('');
     const canvasRef = useRef(null);
+    const redrawGenerationRef = useRef(0);
 
     useEffect(() => {
         if (cardTemplate === 'class' && classes.length === 0) {
@@ -168,7 +169,14 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
         saveModel(e.target.value);
     };
 
+    const handleSaveKey = () => {
+        if (!apiKey) return;
+        saveApiKey(apiKey);
+        setSuccessMsg?.('API 키가 저장되었습니다.');
+    };
+
     const handleClearKey = () => {
+        if (!window.confirm('API 키를 삭제하시겠습니까?')) return;
         setApiKey('');
         clearApiKey();
     };
@@ -217,6 +225,13 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
     const sendInsightToCard = () => {
         if (!insightState.result?.text) return;
         setCardInsightContext(insightState.result.text);
+        setSubTab('card');
+    };
+
+    // ── 글쓰기 도우미 → 카드뉴스 이어가기 ──
+    const sendWriterToCard = () => {
+        if (!writerState.result?.text) return;
+        setCardInsightContext(writerState.result.text);
         setSubTab('card');
     };
 
@@ -275,43 +290,54 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
     };
 
     // ── 카드뉴스 캔버스 렌더링 ──
-    const redrawCard = useCallback(() => {
+    const redrawCard = useCallback(async () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const template = CARD_TEMPLATES.find((t) => t.id === cardTemplate);
         if (!template) return;
 
+        const generation = ++redrawGenerationRef.current;
+
+        let drawArgs;
         if (cardTemplate === 'stat') {
             const stat = statOptions.find((s) => s.key === selectedStatKey) || statOptions[0];
-            template.draw(canvas, {
+            drawArgs = {
                 label: cardFields.title || stat.label,
                 value: stat.value,
                 unit: stat.unit,
                 sublabel: cardFields.subtitle,
-            });
+            };
         } else if (cardTemplate === 'class') {
             const cls = classes.find((c) => String(c.id) === String(selectedClassId));
-            template.draw(canvas, {
+            drawArgs = {
                 title: cardFields.title || cls?.title || '클래스 안내',
                 schedule: cardFields.subtitle || cls?.class_date || '',
                 priceInfo: cls?.price_info || '',
                 imageUrl: cls?.image_url || '',
-            });
+            };
         } else if (cardTemplate === 'cert') {
             const post = marketingCertPosts.find((p) => String(p.id) === String(selectedCertPostId));
-            template.draw(canvas, {
+            drawArgs = {
                 headline: cardFields.title || 'MOCA와 함께하는 순간',
                 activityType: post?.activityType || '',
                 caption: post?.caption || '',
                 likes: post?.likes || 0,
                 imageUrl: post?.imageUrl || '',
-            });
+            };
         } else {
-            template.draw(canvas, {
+            drawArgs = {
                 headline: cardFields.title || 'MOCA와 함께하세요',
                 bullets: appHighlights.split('\n').filter(Boolean),
                 cta: cardFields.cta,
-            });
+            };
+        }
+
+        try {
+            await template.draw(canvas, drawArgs);
+        } catch (err) {
+            if (generation === redrawGenerationRef.current) {
+                console.error('카드뉴스 렌더링 실패:', err);
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cardTemplate, cardFields, selectedStatKey, selectedClassId, classes, appHighlights, selectedCertPostId, marketingCertPosts]);
@@ -352,12 +378,16 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                         <div className="flex gap-2">
                             <input
                                 type="password"
+                                autoComplete="off"
                                 value={apiKey}
                                 onChange={(e) => setApiKey(e.target.value)}
                                 onBlur={handleApiKeyBlur}
                                 placeholder="sk-ant-..."
                                 className={inputClass}
                             />
+                            <button onClick={handleSaveKey} disabled={!apiKey} className="shrink-0 px-3 rounded-xl border border-[var(--moca-border)] text-xs font-bold text-[var(--moca-text-2)] hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                                저장
+                            </button>
                             {apiKey && (
                                 <button onClick={handleClearKey} className="shrink-0 px-3 rounded-xl border border-[var(--moca-border)] text-xs font-bold text-[var(--moca-text-2)] hover:bg-gray-50">
                                     삭제
@@ -516,6 +546,13 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                         onRegenerate={runWriter}
                         canRegenerate
                     />
+                </div>
+            )}
+            {subTab === 'writer' && writerState.result?.text && !writerState.loading && (
+                <div className="flex gap-2 mt-4 flex-wrap">
+                    <button onClick={sendWriterToCard} className="flex-1 min-w-[220px] bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 font-bold text-sm py-3 rounded-xl transition-colors">
+                        🖼️ 이 문구로 카드뉴스 만들기
+                    </button>
                 </div>
             )}
 
