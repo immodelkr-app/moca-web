@@ -135,7 +135,7 @@ const AdminPage = () => {
     // 투어일지 관리 State
     const [diaryFilterAgency, setDiaryFilterAgency] = useState('ALL');
     const [diarySearch, setDiarySearch] = useState('');
-    const [diaryDateFilter, setDiaryDateFilter] = useState('all'); // 'all' | '7d' | '30d'
+    const [diaryPeriodMonths, setDiaryPeriodMonths] = useState(6); // 3 | 6 | 0(전체) - 달력 기준 최근 N개월
     const [diaryExpandedId, setDiaryExpandedId] = useState(null); // 펼쳐본 일지 ID
 
     // Phase 2: 주간 리포트 발송 State
@@ -1096,14 +1096,22 @@ const AdminPage = () => {
                     // 에이전시 목록 추출
                     const agencyList = ['ALL', ...Array.from(new Set(tourDiaries.map(d => d.agency_name).filter(Boolean))).sort()];
 
-                    // 기간 필터 적용
+                    // 기간 필터 적용 (달력 기준 최근 N개월, 이번 달 포함 - 예: 6개월 선택 시 이번 달 + 지난 5개월)
                     const now = new Date();
+                    const periodStart = diaryPeriodMonths === 0 ? null : new Date(now.getFullYear(), now.getMonth() - (diaryPeriodMonths - 1), 1);
                     const filteredByDate = tourDiaries.filter(d => {
-                        if (diaryDateFilter === 'all') return true;
+                        if (!periodStart) return true;
                         const dDate = new Date(d.date || d.timestamp || d.created_at);
-                        if (diaryDateFilter === '7d') return (now - dDate) <= 7 * 24 * 60 * 60 * 1000;
-                        if (diaryDateFilter === '30d') return (now - dDate) <= 30 * 24 * 60 * 60 * 1000;
-                        return true;
+                        return dDate >= periodStart;
+                    });
+
+                    // 검색어 필터 (기간과 무관 - 월별 추이 계산에도 재사용)
+                    const searchFiltered = tourDiaries.filter(d => {
+                        const query = diarySearch.toLowerCase();
+                        return !diarySearch ||
+                            (d.agency_name || '').toLowerCase().includes(query) ||
+                            (d.nickname || '').toLowerCase().includes(query) ||
+                            (d.content || '').toLowerCase().includes(query);
                     });
 
                     // 에이전시 + 검색 필터
@@ -1124,6 +1132,29 @@ const AdminPage = () => {
                         acc[agency].push(d);
                         return acc;
                     }, {});
+
+                    // 에이전시별 월별 추이 (기간 필터와 무관하게 항상 최근 6개월 흐름을 보여줌 - 검색어만 반영)
+                    const trendByAgency = searchFiltered.reduce((acc, d) => {
+                        const agency = d.agency_name || '에이전시 미기재';
+                        if (!acc[agency]) acc[agency] = [];
+                        acc[agency].push(d);
+                        return acc;
+                    }, {});
+                    const buildMonthlyTrend = (diaries) => {
+                        const buckets = [];
+                        for (let i = 5; i >= 0; i--) {
+                            const bd = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                            buckets.push({ key: `${bd.getFullYear()}-${bd.getMonth()}`, label: `${bd.getMonth() + 1}월`, count: 0 });
+                        }
+                        diaries.forEach(d => {
+                            const dDate = new Date(d.date || d.timestamp);
+                            if (isNaN(dDate.getTime())) return;
+                            const key = `${dDate.getFullYear()}-${dDate.getMonth()}`;
+                            const bucket = buckets.find(b => b.key === key);
+                            if (bucket) bucket.count++;
+                        });
+                        return buckets;
+                    };
 
                     // 통계 계산
                     const totalDiaries = filteredDiaries.length;
@@ -1204,16 +1235,18 @@ const AdminPage = () => {
                                         {reportResult.success ? '✅ ' : '❌ '}{reportResult.message || reportResult.error}
                                         {reportResult.success && reportResult.summary && (
                                             <span className="ml-2 text-xs font-normal text-gray-500">
-                                                (총 {reportResult.summary.total}건 · {reportResult.summary.writers}명 · 에이전시 {reportResult.summary.agencies}곳)
+                                                (총 {reportResult.summary.total}건 · {reportResult.summary.writers}명 · 에이전시 {reportResult.summary.agencies}곳
+                                                {typeof reportResult.summary.diff === 'number' && (
+                                                    <> · 지난주 대비{' '}
+                                                        <span className={`font-bold ${reportResult.summary.diff > 0 ? 'text-green-600' : reportResult.summary.diff < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                                                            {reportResult.summary.diff > 0 ? `+${reportResult.summary.diff}` : reportResult.summary.diff}건
+                                                        </span>
+                                                    </>
+                                                )})
                                             </span>
                                         )}
                                     </div>
                                 )}
-                                <div className="mt-3 p-3 bg-white/70 rounded-xl">
-                                    <p className="text-[11px] text-gray-500 font-bold mb-1">⚙️ Supabase Edge Function 배포 필요</p>
-                                    <p className="text-[11px] text-gray-400">Supabase 대시보드 → Edge Functions → <code className="bg-gray-100 px-1 rounded">tour-report</code> 를 배포하고,
-                                    Secrets에 <code className="bg-gray-100 px-1 rounded">SUPABASE_URL</code>, <code className="bg-gray-100 px-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code> 를 등록해주세요.</p>
-                                </div>
                             </div>
 
                             {/* ── AI 분석 모달 ── */}
@@ -1296,12 +1329,12 @@ const AdminPage = () => {
                                     </select>
                                     {/* 기간 필터 */}
                                     <div className="flex gap-1.5 shrink-0">
-                                        {[{v:'all',l:'전체'},{v:'30d',l:'최근 30일'},{v:'7d',l:'최근 7일'}].map(opt => (
+                                        {[{v:3,l:'최근 3개월'},{v:6,l:'최근 6개월'},{v:0,l:'전체'}].map(opt => (
                                             <button
                                                 key={opt.v}
-                                                onClick={() => setDiaryDateFilter(opt.v)}
+                                                onClick={() => setDiaryPeriodMonths(opt.v)}
                                                 className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
-                                                    diaryDateFilter === opt.v
+                                                    diaryPeriodMonths === opt.v
                                                     ? 'bg-purple-500 text-white border-purple-500'
                                                     : 'bg-[var(--moca-surface-2)] text-gray-500 border-[var(--moca-border)] hover:border-purple-300'
                                                 }`}
@@ -1335,6 +1368,9 @@ const AdminPage = () => {
                                                 return cur > max ? cur : max;
                                             }, new Date(0));
                                             const latestDateStr = latestDate.getFullYear() > 2000 ? latestDate.toLocaleDateString('ko-KR') : '-';
+                                            // 최근 6개월 월별 추이 (기간 필터와 무관)
+                                            const monthlyTrend = buildMonthlyTrend(trendByAgency[agencyName] || diaries);
+                                            const maxTrendCount = Math.max(1, ...monthlyTrend.map(b => b.count));
 
                                             return (
                                                 <div key={agencyName} className="bg-white border border-[var(--moca-border)] rounded-2xl overflow-hidden shadow-sm">
@@ -1388,6 +1424,21 @@ const AdminPage = () => {
                                                                 <span className="font-black text-violet-600">⚡ {aiSummaryResult[agencyName].overall}</span>
                                                             </div>
                                                         )}
+                                                        {/* 최근 6개월 월별 방문 추이 */}
+                                                        <div className="flex items-end gap-1.5 mt-3 pt-3 border-t border-purple-100/60">
+                                                            {monthlyTrend.map(b => (
+                                                                <div key={b.key} className="flex-1 flex flex-col items-center gap-1" title={`${b.label}: ${b.count}건`}>
+                                                                    <span className="text-[9px] text-purple-500 font-black leading-none">{b.count > 0 ? b.count : ''}</span>
+                                                                    <div className="w-full h-8 flex items-end bg-white/40 rounded">
+                                                                        <div
+                                                                            className={`w-full rounded-t transition-all ${b.count === 0 ? 'bg-purple-100 h-0.5' : 'bg-purple-400'}`}
+                                                                            style={b.count === 0 ? undefined : { height: `${Math.max(12, (b.count / maxTrendCount) * 100)}%` }}
+                                                                        />
+                                                                    </div>
+                                                                    <span className="text-[9px] text-gray-400 font-bold leading-none">{b.label}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
 
 

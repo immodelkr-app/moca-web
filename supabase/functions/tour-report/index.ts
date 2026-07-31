@@ -50,6 +50,18 @@ serve(async (req) => {
         const diariesList = diaries || [];
         const totalCount = diariesList.length;
 
+        // 지난주(7~14일 전) 대비 증감 계산
+        const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: prevWeekDiaries, error: prevWeekError } = await supabase
+            .from('tour_diaries')
+            .select('id')
+            .gte('timestamp', fourteenDaysAgo)
+            .lt('timestamp', sevenDaysAgo);
+        if (prevWeekError) throw prevWeekError;
+        const prevWeekCount = (prevWeekDiaries || []).length;
+        const diffCount = totalCount - prevWeekCount;
+        const diffLabel = diffCount > 0 ? `+${diffCount}` : `${diffCount}`;
+
         // 에이전시별 그룹
         const groupedByAgency: Record<string, typeof diariesList> = {};
         diariesList.forEach(d => {
@@ -88,7 +100,9 @@ serve(async (req) => {
                     <div><div style="font-size: 12px; color: #64748b;">총 투어일지</div><div style="font-size: 20px; font-weight: bold; color: #0f172a;">${totalCount}건</div></div>
                     <div><div style="font-size: 12px; color: #64748b;">참여 회원</div><div style="font-size: 20px; font-weight: bold; color: #0f172a;">${uniqueWriters}명</div></div>
                     <div><div style="font-size: 12px; color: #64748b;">에이전시 수</div><div style="font-size: 20px; font-weight: bold; color: #0f172a;">${top5.length}개</div></div>
+                    <div><div style="font-size: 12px; color: #64748b;">지난주 대비</div><div style="font-size: 20px; font-weight: bold; color: ${diffCount > 0 ? '#16a34a' : diffCount < 0 ? '#ef4444' : '#0f172a'};">${diffLabel}건</div></div>
                 </div>
+                <p style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: -10px;">지난주(${prevWeekCount}건) 대비 이번주 ${totalCount}건</p>
 
                 <h2 style="font-size: 18px; color: #334155; margin-top: 30px;">🏢 에이전시별 방문 TOP 5</h2>
                 <div style="display: flex; flex-direction: column; gap: 15px;">
@@ -137,7 +151,7 @@ serve(async (req) => {
                 JSON.stringify({
                     success: true,
                     message: `이메일 발송 완료 (${emailTarget})`,
-                    summary: { total: totalCount, writers: uniqueWriters, agencies: top5.length }
+                    summary: { total: totalCount, writers: uniqueWriters, agencies: top5.length, prevWeekTotal: prevWeekCount, diff: diffCount }
                 }),
                 { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
@@ -174,7 +188,7 @@ serve(async (req) => {
                         description: `${weekAgoStr} ~ ${todayStr} 기간의 투어 현황을 요약했습니다.`,
                         color: 0x7C3AED,
                         fields: [
-                            { name: '📊 주간 통계', value: `총 **${totalCount}건**의 투어일지  ·  **${uniqueWriters}명** 참여  ·  **${top5.length}개** 에이전시`, inline: false },
+                            { name: '📊 주간 통계', value: `총 **${totalCount}건**의 투어일지  ·  **${uniqueWriters}명** 참여  ·  **${top5.length}개** 에이전시  ·  지난주 대비 **${diffLabel}건** (지난주 ${prevWeekCount}건)`, inline: false },
                             ...fields,
                         ],
                         footer: { text: '아임모델 어드민 자동 리포트' },
@@ -199,7 +213,7 @@ serve(async (req) => {
                 payload = {
                     blocks: [
                         { type: "header", text: { type: "plain_text", text: "📒 아임모델 주간 투어일지 리포트", emoji: true } },
-                        { type: "section", text: { type: "mrkdwn", text: `*기간*: ${weekAgoStr} ~ ${todayStr}\n*총 투어일지*: \`${totalCount}건\` · *참여 회원*: \`${uniqueWriters}명\` · *에이전시 수*: \`${top5.length}개\`` } },
+                        { type: "section", text: { type: "mrkdwn", text: `*기간*: ${weekAgoStr} ~ ${todayStr}\n*총 투어일지*: \`${totalCount}건\` · *참여 회원*: \`${uniqueWriters}명\` · *에이전시 수*: \`${top5.length}개\` · *지난주 대비*: \`${diffLabel}건\` (지난주 ${prevWeekCount}건)` } },
                         { type: "divider" },
                         { type: "section", text: { type: "mrkdwn", text: "*🏢 에이전시별 방문 TOP 5*" } },
                         ...topAgencyBlocks,
@@ -224,7 +238,7 @@ serve(async (req) => {
                 JSON.stringify({
                     success: true,
                     message: `리포트 발송 완료 (총 ${totalCount}건, TOP ${top5.length}개 에이전시)`,
-                    summary: { total: totalCount, writers: uniqueWriters, agencies: top5.length }
+                    summary: { total: totalCount, writers: uniqueWriters, agencies: top5.length, prevWeekTotal: prevWeekCount, diff: diffCount }
                 }),
                 { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
