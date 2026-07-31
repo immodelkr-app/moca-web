@@ -138,12 +138,6 @@ const AdminPage = () => {
     const [diaryPeriodMonths, setDiaryPeriodMonths] = useState(6); // 3 | 6 | 0(전체) - 달력 기준 최근 N개월
     const [diaryExpandedId, setDiaryExpandedId] = useState(null); // 펼쳐본 일지 ID
 
-    // Phase 2: 주간 리포트 발송 State
-    const [reportWebhookUrl, setReportWebhookUrl] = useState('immodelkr@gmail.com');
-    const [reportWebhookType, setReportWebhookType] = useState('email'); // 'email' | 'slack' | 'discord'
-    const [reportSending, setReportSending] = useState(false);
-    const [reportResult, setReportResult] = useState(null); // { success, message, summary }
-
     // Phase 3: AI 동향 분석 State
     const [aiSummaryAgency, setAiSummaryAgency] = useState(null); // 분석 중인 에이전시명
     const [aiSummaryResult, setAiSummaryResult] = useState({}); // { [agencyName]: { auditioning, tips, atmosphere, preferred, warnings, overall } }
@@ -564,37 +558,6 @@ const AdminPage = () => {
             setError('등록 실패: ' + (err.message || '알 수 없는 오류'));
         } finally {
             setIsPosting(false);
-        }
-    };
-
-    // Phase 2: 주간 리포트 발송
-    const handleSendReport = async () => {
-        const trimmedUrl = reportWebhookUrl.trim();
-        if (!trimmedUrl) {
-            setError(reportWebhookType === 'email' ? '이메일 주소를 입력해주세요.' : 'Slack 또는 Discord Webhook URL을 입력해주세요.');
-            return;
-        }
-        if (reportWebhookType !== 'email' && !trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
-            setError('올바른 Webhook URL을 입력해주세요. (http:// 또는 https:// 로 시작)');
-            return;
-        }
-        if (reportWebhookType === 'email' && !trimmedUrl.includes('@')) {
-            setError('올바른 이메일 주소를 입력해주세요.');
-            return;
-        }
-        setReportSending(true);
-        setReportResult(null);
-        setError('');
-        try {
-            const { data, error: fnErr } = await supabase.functions.invoke('tour-report', {
-                body: { webhookUrl: reportWebhookUrl.trim(), webhookType: reportWebhookType }
-            });
-            if (fnErr) throw fnErr;
-            setReportResult(data);
-        } catch (err) {
-            setError('리포트 발송 실패: ' + err.message);
-        } finally {
-            setReportSending(false);
         }
     };
 
@@ -1173,81 +1136,6 @@ const AdminPage = () => {
                                     <p className="text-red-400 text-sm">{error}</p>
                                 </div>
                             )}
-
-                            {/* ── Phase 2: 주간 리포트 발송 패널 ── */}
-                            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-5 mb-6">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="material-symbols-outlined text-indigo-500">send</span>
-                                    <h3 className="font-black text-[var(--moca-text)] text-[15px]">📨 주간 투어일지 리포트 발송</h3>
-                                    <span className="text-[11px] text-indigo-400 bg-indigo-100 px-2 py-0.5 rounded-full font-bold">Phase 2</span>
-                                </div>
-                                <p className="text-[12px] text-gray-500 mb-4">최근 7일간 투어일지를 이메일, Slack 또는 Discord로 리포트를 보냅니다. 대상 주소는 저장되지 않으니 매번 입력해주세요.</p>
-                                <div className="flex flex-col sm:flex-row gap-2">
-                                    {/* 플랫폼 선택 */}
-                                    <div className="flex gap-1.5 shrink-0">
-                                        {[{v:'email',l:'이메일',icon:'📧'},{v:'slack',l:'Slack',icon:'💬'},{v:'discord',l:'Discord',icon:'🎮'}].map(opt => (
-                                            <button
-                                                key={opt.v}
-                                                onClick={() => {
-                                                    setReportWebhookType(opt.v);
-                                                    if (opt.v === 'email') {
-                                                        setReportWebhookUrl('immodelkr@gmail.com');
-                                                    } else {
-                                                        if (reportWebhookUrl.includes('@')) {
-                                                            setReportWebhookUrl('');
-                                                        }
-                                                    }
-                                                }}
-                                                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
-                                                    reportWebhookType === opt.v
-                                                    ? 'bg-indigo-500 text-white border-indigo-500'
-                                                    : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-300'
-                                                }`}
-                                            >{opt.icon} {opt.l}</button>
-                                        ))}
-                                    </div>
-                                    {/* Webhook URL 입력 */}
-                                    <input
-                                        type="text"
-                                        value={reportWebhookUrl}
-                                        onChange={e => setReportWebhookUrl(e.target.value)}
-                                        placeholder={reportWebhookType === 'email' ? '받으실 이메일 주소 (예: admin@immodel.kr)' : reportWebhookType === 'slack' ? 'https://hooks.slack.com/services/...' : 'https://discord.com/api/webhooks/...'}
-                                        className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-[var(--moca-text)] placeholder-gray-300 focus:outline-none focus:border-indigo-400 transition-colors"
-                                    />
-                                    {/* 발송 버튼 */}
-                                    <button
-                                        onClick={handleSendReport}
-                                        disabled={reportSending}
-                                        className="shrink-0 px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-black transition-all disabled:opacity-50 flex items-center gap-1.5"
-                                    >
-                                        {reportSending ? (
-                                            <><span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> 발송 중...</>
-                                        ) : (
-                                            <><span className="material-symbols-outlined text-[16px]">send</span> 리포트 발송</>
-                                        )}
-                                    </button>
-                                </div>
-                                {/* 발송 결과 */}
-                                {reportResult && (
-                                    <div className={`mt-3 p-3 rounded-xl text-sm font-bold ${
-                                        reportResult.success ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-red-50 text-red-500 border border-red-200'
-                                    }`}>
-                                        {reportResult.success ? '✅ ' : '❌ '}{reportResult.message || reportResult.error}
-                                        {reportResult.success && reportResult.summary && (
-                                            <span className="ml-2 text-xs font-normal text-gray-500">
-                                                (총 {reportResult.summary.total}건 · {reportResult.summary.writers}명 · 에이전시 {reportResult.summary.agencies}곳
-                                                {typeof reportResult.summary.diff === 'number' && (
-                                                    <> · 지난주 대비{' '}
-                                                        <span className={`font-bold ${reportResult.summary.diff > 0 ? 'text-green-600' : reportResult.summary.diff < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                                                            {reportResult.summary.diff > 0 ? `+${reportResult.summary.diff}` : reportResult.summary.diff}건
-                                                        </span>
-                                                    </>
-                                                )})
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
 
                             {/* ── AI 분석 모달 ── */}
                             {aiSummaryAgency && aiSummaryResult[aiSummaryAgency] && (
