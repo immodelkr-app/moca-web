@@ -191,18 +191,20 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, onTrend, sendIn
                 </button>
             </div>
 
-            {/* 동향분석 (GOLD 등급 이상 전용) */}
-            {canViewTrend && (
-                <div onClick={(e) => e.stopPropagation()}>
-                    <button
-                        onClick={() => onTrend(agency)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md shadow-purple-500/20 active:scale-[0.98] transition-all cursor-pointer font-black text-[12px] leading-none"
-                    >
-                        <span className="text-[13px] shrink-0">🤖</span>
-                        <span>AI 동향분석</span>
-                    </button>
-                </div>
-            )}
+            {/* 동향분석 - 전 등급 노출, GOLD 이상만 실제 열람 가능 */}
+            <div onClick={(e) => e.stopPropagation()}>
+                <button
+                    onClick={() => onTrend(agency, canViewTrend)}
+                    className={`w-full flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full active:scale-[0.98] transition-all cursor-pointer font-black text-[12px] leading-none ${
+                        canViewTrend
+                            ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md shadow-purple-500/20'
+                            : 'bg-[#F3F0FA] text-[#9CA3AF] border border-[#E8E0FA]'
+                    }`}
+                >
+                    <span className="text-[13px] shrink-0">{canViewTrend ? '🤖' : '🔒'}</span>
+                    <span>{canViewTrend ? 'AI 동향분석' : 'AI 동향분석 (GOLD~)'}</span>
+                </button>
+            </div>
         </div>
     );
 };
@@ -355,6 +357,15 @@ const AgencyDirectory = () => {
         }
     };
 
+    const handleTrendClick = (agency, allowed) => {
+        if (!allowed) {
+            showToast('AI 동향분석은 GOLD 등급 이상부터 이용 가능합니다.', 'error');
+            setTimeout(() => navigate('/upgrade'), 1800);
+            return;
+        }
+        setTrendModalAgency(agency);
+    };
+
     return (
         <div className="min-h-screen flex flex-col" style={{backgroundColor:'var(--moca-bg)',color:'var(--moca-text)'}}>
 
@@ -471,7 +482,7 @@ const AgencyDirectory = () => {
                                         onAction={handleActionClick}
                                         onSend={handleSend}
                                         onDetail={(agency) => setDetailModalAgency(agency)}
-                                        onTrend={(agency) => setTrendModalAgency(agency)}
+                                        onTrend={handleTrendClick}
                                         sendInfo={getSendInfo(sendHistory, agency.name)}
                                     />
                                 ))}
