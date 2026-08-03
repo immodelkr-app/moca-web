@@ -19,11 +19,12 @@ import ProfileEditModal from './ProfileEditModal';
 import CastingEmailModal from './CastingEmailModal';
 import VisitMemoModal from './VisitMemoModal';
 import AgencyDetailModal from './AgencyDetailModal';
+import AgencyTrendModal from './AgencyTrendModal';
 
 
 
 
-const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => {
+const AgencyCard = ({ agency, index, onAction, onSend, onDetail, onTrend, sendInfo }) => {
     const naverMapsUrl = getNaverMapUrl(agency);
 
     const colors = [
@@ -71,6 +72,8 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
 
     // Define user grade inside the card
     const userGrade = getUserGrade();
+    // 동향분석: GOLD 등급부터 열람 가능 (아임모델/전속모델은 회원별 상세 후기까지 확인)
+    const canViewTrend = userGrade === 'GOLD' || userGrade === 'IMODEL' || userGrade === 'VIP';
 
     return (
         <div
@@ -187,6 +190,19 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, sendInfo }) => 
                     <span>투어일지</span>
                 </button>
             </div>
+
+            {/* 동향분석 (GOLD 등급 이상 전용) */}
+            {canViewTrend && (
+                <div onClick={(e) => e.stopPropagation()}>
+                    <button
+                        onClick={() => onTrend(agency)}
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md shadow-purple-500/20 active:scale-[0.98] transition-all cursor-pointer font-black text-[12px] leading-none"
+                    >
+                        <span className="text-[13px] shrink-0">🤖</span>
+                        <span>AI 동향분석</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
@@ -199,6 +215,7 @@ const AgencyDirectory = () => {
     const [loading, setLoading] = useState(true);
     const [selectedAgency, setSelectedAgency] = useState(null);
     const [detailModalAgency, setDetailModalAgency] = useState(null);
+    const [trendModalAgency, setTrendModalAgency] = useState(null);
     const [memoModalAgency, setMemoModalAgency] = useState(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [sendHistory, setSendHistory] = useState([]);
@@ -454,6 +471,7 @@ const AgencyDirectory = () => {
                                         onAction={handleActionClick}
                                         onSend={handleSend}
                                         onDetail={(agency) => setDetailModalAgency(agency)}
+                                        onTrend={(agency) => setTrendModalAgency(agency)}
                                         sendInfo={getSendInfo(sendHistory, agency.name)}
                                     />
                                 ))}
@@ -530,6 +548,15 @@ const AgencyDirectory = () => {
                     onClose={() => setDetailModalAgency(null)}
                     onWriteMemo={(agency) => setMemoModalAgency(agency)}
                     onSendProfile={(agency) => handleSend(agency)}
+                />
+            )}
+
+            {/* AI 동향분석 모달 (GOLD 등급 이상) */}
+            {trendModalAgency && (
+                <AgencyTrendModal
+                    agency={trendModalAgency}
+                    userGrade={grade}
+                    onClose={() => setTrendModalAgency(null)}
                 />
             )}
 

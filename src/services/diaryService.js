@@ -145,6 +145,24 @@ export const fetchDiariesByAgency = async (agencyName) => {
     return savedMemos ? JSON.parse(savedMemos) : [];
 };
 
+// 해당 에이전시에 대한 '전체 회원' 최근 방문 후기 피드 (동향분석 팝업용 - GOLD 자기글 필터 없이 전체 조회)
+export const fetchAgencyDiaryFeed = async (agencyName, limit = 8) => {
+    if (!isSupabaseEnabled()) return [];
+
+    const { data, error } = await supabase
+        .from('tour_diaries')
+        .select('id, nickname, date, content, timestamp')
+        .eq('agency_name', agencyName)
+        .order('timestamp', { ascending: false })
+        .limit(limit);
+
+    if (error) {
+        console.error('Failed to fetch agency diary feed:', error);
+        return [];
+    }
+    return data || [];
+};
+
 export const addDiaryEntry = async (agencyName, date, content) => {
     const user = getUser();
     const nickname = user?.nickname || 'guest';
