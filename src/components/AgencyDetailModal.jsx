@@ -98,6 +98,22 @@ const AgencyDetailModal = ({ agency, onClose, onWriteMemo, onSendProfile, sendIn
                                 )}
                             </div>
                         ) : null}
+
+                        {/* 온라인 사전예약 / 신청 링크 */}
+                        {agency.booking_url && (
+                            <div className="flex items-center gap-3 pt-2.5 border-t border-gray-200/60">
+                                <span className="material-symbols-outlined text-[18px] text-[#9333EA]">language</span>
+                                <a
+                                    href={agency.booking_url.startsWith('http') ? agency.booking_url : `https://${agency.booking_url}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#9333EA] to-[#A855F7] text-white text-xs font-black hover:opacity-90 transition-all shadow-xs"
+                                >
+                                    <span>🌐 온라인 사전예약 바로가기</span>
+                                    <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                                </a>
+                            </div>
+                        )}
                     </div>
 
                     {/* 내가 남긴 투어일지 기록 */}

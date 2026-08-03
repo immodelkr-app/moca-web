@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 
 const MAX_IMAGES = 5;
-const ACTIVITY_TYPES = ['에이전시투어', '광고모델수업'];
+const ACTIVITY_TYPES = ['에이전시투어', '광고모델수업', '촬영현장', '모델일상'];
 
 const ACTIVITY_COLORS = {
     '에이전시투어': 'from-[#6C63FF] to-[#A78BFA]',
     '광고모델수업': 'from-[#14B8A6] to-[#2DD4BF]',
+    '촬영현장': 'from-[#F59E0B] to-[#FBBF24]',
+    '모델일상': 'from-[#EC4899] to-[#F472B6]',
 };
 
 const CertificationUploadModal = ({ onClose, onSuccess }) => {
@@ -77,6 +79,8 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
     const tagPlaceholders = {
         '에이전시투어': '에이전시명 (예: OO에이전시)',
         '광고모델수업': '수업명 (예: 포트폴리오 클래스)',
+        '촬영현장': '촬영명/작품명 (예: OO광고 촬영)',
+        '모델일상': '태그 (예: 오늘의 룩북, 오디션 팁)',
     };
 
     const canAddMore = imageFiles.length < MAX_IMAGES;
@@ -104,7 +108,7 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
                     >
                         취소
                     </button>
-                    <h2 className="text-[#1F1235] font-black text-[16px]">📸 투어 인증샷</h2>
+                    <h2 className="text-[#1F1235] font-black text-[16px]">📸 모카그램 포스트 작성</h2>
                     <button
                         onClick={handleSubmit}
                         disabled={isUploading || imageFiles.length === 0}
@@ -231,15 +235,15 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
                         />
                     </div>
 
-                    {/* 코멘트 */}
+                    {/* 코멘트 / 내용 */}
                     <div>
-                        <p className="text-[#5B4E7A] text-[11px] font-black uppercase tracking-widest mb-2 px-1">한줄 코멘트</p>
+                        <p className="text-[#5B4E7A] text-[11px] font-black uppercase tracking-widest mb-2 px-1">내용</p>
                         <textarea
                             value={caption}
                             onChange={e => setCaption(e.target.value)}
-                            placeholder="활동 소감을 한 줄로 남겨보세요 😊"
-                            rows={3}
-                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-sm placeholder-[#9CA3AF] outline-none focus:border-[#9333EA]/50 transition-colors resize-none font-medium"
+                            placeholder="에이전시 분위기, 실물 피드백, 촬영 현장 후기, 일상 소식 등을 자유롭게 남겨보세요! 😊 (글자 수 제한 없이 길게 작성 가능)"
+                            rows={4}
+                            className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-4 py-3 text-[#1F1235] text-sm placeholder-[#9CA3AF] outline-none focus:border-[#9333EA]/50 transition-colors resize-y font-medium leading-relaxed"
                         />
                     </div>
 
@@ -258,7 +262,7 @@ const CertificationUploadModal = ({ onClose, onSuccess }) => {
                                 <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
                                 업로드 중... ({imageFiles.length}장)
                             </span>
-                        ) : `투어 인증샷 등록 🚀 (${imageFiles.length}장)`}
+                        ) : `모카그램 포스트 등록 🚀 (${imageFiles.length}장)`}
                     </button>
                 </div>
             </div>

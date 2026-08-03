@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { updateGradeInCore } from '../lib/imCoreAuth';
 
 // --- Partners ---
 export const fetchPartners = async () => {
@@ -143,10 +144,20 @@ export const approveContract = async (contractId, memberPhone) => {
     const formattedPhone = cleanedPhone.replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3');
 
     // Supabase .or() 필터 사용 (전화번호가 01012345678 또는 010-1234-5678 또는 원본과 일치하는 경우)
-    const { error: gradeError } = await supabase
+    const { data: updatedUsers, error: gradeError } = await supabase
         .from('users')
         .update({ grade: 'VIP' })
-        .or(`phone.eq.${cleanedPhone},phone.eq.${formattedPhone},phone.eq.${memberPhone}`);
+        .or(`phone.eq.${cleanedPhone},phone.eq.${formattedPhone},phone.eq.${memberPhone}`)
+        .select('id, master_user_id');
+
+    // VIP로 승급된 회원들을 아임모델 공화국에 실시간 반영
+    if (!gradeError && updatedUsers?.length > 0) {
+        for (const u of updatedUsers) {
+            if (u.master_user_id) {
+                updateGradeInCore({ masterUserId: u.master_user_id, grade: 'VIP' });
+            }
+        }
+    }
 
     return { error: gradeError };
 };

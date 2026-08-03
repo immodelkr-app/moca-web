@@ -128,6 +128,7 @@ export const useAuthSync = () => {
                                 phoneNumber: currentRecord.phone,
                                 localUserId: currentRecord.id,
                                 name: currentRecord.name || currentRecord.nickname,
+                                grade: mergedUser.grade || bestGrade, // 아임모델 공화국에 등급 전달
                             });
                             if (syncResult?.success && syncResult?.masterUserId) {
                                 await supabase.from('users')
@@ -171,6 +172,7 @@ export const useAuthSync = () => {
                                 phoneNumber: phoneForSync,
                                 localUserId: savedUser.id,
                                 name: savedUser.name || savedUser.nickname,
+                                grade: savedUser.grade || bestGrade, // 아임모델 공화국에 등급 전달
                             });
                             if (syncResult?.success && syncResult?.masterUserId) {
                                 await supabase.from('users')

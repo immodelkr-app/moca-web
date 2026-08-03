@@ -32,22 +32,28 @@ const headers = {
  * @param {string} params.phoneNumber  - 휴대폰 번호 (예: '010-1234-5678', 자동 정규화됨)
  * @param {string} params.localUserId  - MOCA 앱 DB의 User ID
  * @param {string} [params.name]       - 사용자 실명 (선택)
+ * @param {string} [params.grade]      - 회원 등급 ('NORMAL'|'SILVER'|'GOLD'|'IMODEL'|'VIP', 선택)
  *
- * @returns {Promise<{ success: boolean, masterUserId: string, integratedPoints: number, isNewUser: boolean }>}
+ * @returns {Promise<{ success: boolean, masterUserId: string, integratedPoints: number, isNewUser: boolean, grade: string, grade_locked: boolean }>}
  */
-export async function syncUserWithCore({ phoneNumber, localUserId, name }) {
+export async function syncUserWithCore({ phoneNumber, localUserId, name, grade }) {
   try {
     const cleanPhone = (phoneNumber || '').replace(/-/g, '').trim();
     const cleanName = (name || '').trim() || '미입력';
+    const body = {
+      phoneNumber: cleanPhone,
+      appName: 'MOCA', // DB 제약 조건상 반드시 대문자 'MOCA'
+      localUserId,
+      name: cleanName,
+    };
+    // grade가 제공된 경우에만 포함 (아임모델 공화국 연동 가이드)
+    if (grade) {
+      body.grade = grade.toUpperCase();
+    }
     const res = await fetch(`${IM_CORE_AUTH_URL}/api/auth/sync`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        phoneNumber: cleanPhone,
-        appName: 'MOCA', // DB 제약 조건상 반드시 대문자 'MOCA'
-        localUserId,
-        name: cleanName,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!res.ok) {
@@ -56,7 +62,7 @@ export async function syncUserWithCore({ phoneNumber, localUserId, name }) {
     }
 
     return res.json();
-    // 응답 예시: { success: true, masterUserId: "...", integratedPoints: 0, isNewUser: true }
+    // 응답 예시: { success: true, masterUserId: "...", integratedPoints: 0, isNewUser: true, grade: "VIP", grade_locked: false }
   } catch (err) {
     console.error('[imCoreAuth] syncUserWithCore 실패:', err);
     throw err;
@@ -219,5 +225,51 @@ export async function deductPoints({ masterUserId, amount, description }) {
   } catch (err) {
     console.error('[imCoreAuth] deductPoints 실패:', err);
     throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 6. 등급 변경 시 실시간 동기화 (아임모델 공화국 연동 가이드 §2)
+// ---------------------------------------------------------------------------
+/**
+ * MOCA 앱 내부에서 회원 등급이 변경될 때 호출하여 아임모델 공화국에 즉시 반영합니다.
+ *
+ * @param {Object} params
+ * @param {string} params.masterUserId  - /api/auth/sync 응답으로 받은 통합 사용자 ID
+ * @param {string} params.grade         - 변경된 등급 ('NORMAL'|'SILVER'|'GOLD'|'IMODEL'|'VIP')
+ *
+ * @returns {Promise<void>}  성공 시 조용히 종료, grade_locked(403)은 조용히 무시
+ */
+export async function updateGradeInCore({ masterUserId, grade }) {
+  if (!masterUserId || !grade) {
+    console.warn('[imCoreAuth] updateGradeInCore: masterUserId 또는 grade 누락, 호출 건너뜀');
+    return;
+  }
+  try {
+    const res = await fetch(`${IM_CORE_AUTH_URL}/api/moca/grade-update`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        masterUserId,
+        grade: grade.toUpperCase(),
+      }),
+    });
+
+    if (res.status === 403) {
+      // GRADE_LOCKED: 어드민이 잠금 처리 → 조용히 무시 (연동 가이드 정책)
+      console.log('[imCoreAuth] updateGradeInCore: GRADE_LOCKED, 조용히 무시');
+      return;
+    }
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log('[imCoreAuth] updateGradeInCore 완료:', data.grade);
+  } catch (err) {
+    // 등급 동기화 실패는 앱 사용에 영향 없으므로 경고만 출력
+    console.warn('[imCoreAuth] updateGradeInCore 실패 (비중단):', err.message);
   }
 }

@@ -22,7 +22,7 @@ const navGroups = [
             { to: '/upgrade', icon: 'workspace_premium', label: '모델활동 신청' }, // 광고모델 활동 핵심
             { to: '/home/calendar', icon: 'calendar_month', label: '투어 캘린더' },
             { to: '/home/diary', icon: 'event_note', label: '투어일지' },
-            { to: '/home/cert', icon: 'photo_camera', label: '투어 인증샷' },
+            { to: '/home/cert', icon: 'photo_camera', label: '모카그램' },
             { to: '/home/class', icon: 'school', label: '모카 클래스' },
         ]
     },
@@ -58,7 +58,7 @@ const bottomTabs = [
 const moreMenuItems = [
     { to: '/upgrade',         icon: 'workspace_premium',    label: '등급 업그레이드' },
     { to: '/home/smart-profile', icon: 'forward_to_inbox',  label: '프로필 관리' },
-    { to: '/home/cert',       icon: 'photo_camera',         label: '투어 인증샷' },
+    { to: '/home/cert',       icon: 'photo_camera',         label: '모카그램' },
     { to: '/home/tv',         icon: 'smart_display',        label: '모카TV' },
     { to: '/home/message',    icon: 'local_post_office',    label: '공지사항' },
     { to: '/home/class',      icon: 'school',               label: '모카 클래스' },

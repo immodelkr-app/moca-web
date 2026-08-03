@@ -2,9 +2,11 @@ import React, { useState, useCallback, useRef } from 'react';
 import { toggleLike, fetchComments, addComment, deleteComment, parseImageUrls } from '../services/certificationService';
 
 const ACTIVITY_CONFIG = {
-    '에이전시투어': { color: 'from-[#6C63FF] to-[#A78BFA]', bg: 'bg-[#6C63FF]/15', text: 'text-[#A78BFA]', border: 'border-[#6C63FF]/30', icon: 'apartment' },
-    '광고모델수업': { color: 'from-[#14B8A6] to-[#2DD4BF]', bg: 'bg-[#14B8A6]/15', text: 'text-[#2DD4BF]', border: 'border-[#14B8A6]/30', icon: 'school' },
-    'BIC시즌이벤트': { color: 'from-[#F59E0B] to-[#FCD34D]', bg: 'bg-[#F59E0B]/15', text: 'text-[#FCD34D]', border: 'border-[#F59E0B]/30', icon: 'local_fire_department' },
+    '에이전시투어': { color: 'from-[#6C63FF] to-[#A78BFA]', bg: 'bg-[#6C63FF]/15', text: 'text-[#9333EA]', border: 'border-[#6C63FF]/30', icon: 'apartment' },
+    '광고모델수업': { color: 'from-[#14B8A6] to-[#2DD4BF]', bg: 'bg-[#14B8A6]/15', text: 'text-[#0D9488]', border: 'border-[#14B8A6]/30', icon: 'school' },
+    '촬영현장': { color: 'from-[#F59E0B] to-[#FBBF24]', bg: 'bg-[#F59E0B]/15', text: 'text-[#D97706]', border: 'border-[#F59E0B]/30', icon: 'movie' },
+    '모델일상': { color: 'from-[#EC4899] to-[#F472B6]', bg: 'bg-[#EC4899]/15', text: 'text-[#DB2777]', border: 'border-[#EC4899]/30', icon: 'auto_awesome' },
+    'BIC시즌이벤트': { color: 'from-[#F59E0B] to-[#FCD34D]', bg: 'bg-[#F59E0B]/15', text: 'text-[#D97706]', border: 'border-[#F59E0B]/30', icon: 'local_fire_department' },
 };
 
 const formatDate = (iso) => {

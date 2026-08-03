@@ -12,12 +12,8 @@ import CertificationUploadModal from './CertificationUploadModal';
 import CertificationEditModal from './CertificationEditModal';
 import CertificationPostCard from './CertificationPostCard';
 
-const FILTER_TABS = ['전체', '에이전시투어', '광고모델수업'];
-
 const EMPTY_MESSAGES = {
-    '전체': '아직 게시물이 없어요!\n첫 번째 투어 인증샷을 올려보세요 📸',
-    '에이전시투어': '에이전시 투어 게시물이 없어요.\n투어 후 인증샷을 올려보세요! 🏢',
-    '광고모델수업': '광고모델 수업 게시물이 없어요.\n수업 후 인증샷을 남겨보세요! 📚',
+    '전체': '아직 모카그램 포스트가 없어요!\n첫 번째 일상이나 활동 후기를 올려보세요 📸',
 };
 
 const CertificationFeed = () => {
@@ -27,17 +23,16 @@ const CertificationFeed = () => {
 
     const [posts, setPosts] = useState([]);
     const [likedPostIds, setLikedPostIds] = useState([]);
-    const [activeFilter, setActiveFilter] = useState('전체');
     const [isLoading, setIsLoading] = useState(true);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const loadData = useCallback(async (filter = activeFilter, showSpinner = true) => {
+    const loadData = useCallback(async (showSpinner = true) => {
         if (showSpinner) setIsLoading(true);
         try {
             const [postsData, likesData] = await Promise.all([
-                fetchCertPosts(filter),
+                fetchCertPosts('전체'),
                 fetchMyLikedPostIds(myNickname),
             ]);
             setPosts(postsData);
@@ -45,16 +40,11 @@ const CertificationFeed = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [activeFilter, myNickname]);
+    }, [myNickname]);
 
     useEffect(() => {
-        loadData(activeFilter);
-    }, [activeFilter]);
-
-    const handleFilterChange = (tab) => {
-        if (tab === activeFilter) return;
-        setActiveFilter(tab);
-    };
+        loadData();
+    }, [loadData]);
 
     const handleUploadSuccess = async ({ activityType, tagLabel, caption, imageFiles, isMarketingAgreed }) => {
         const { post, error } = await createCertPost({
@@ -97,7 +87,7 @@ const CertificationFeed = () => {
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
-        await loadData(activeFilter, false);
+        await loadData(false);
         setIsRefreshing(false);
     };
 
@@ -105,7 +95,7 @@ const CertificationFeed = () => {
         <div className="min-h-screen flex flex-col" style={{backgroundColor:'var(--moca-bg)',color:'var(--moca-text)'}}>
             {/* Header */}
             <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E8E0FA]">
-                <div className="flex items-center justify-between px-4 pt-5 pb-3">
+                <div className="flex items-center justify-between px-4 pt-4 pb-3">
                     <button
                         onClick={() => navigate('/home/dashboard')}
                         className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center border border-[#E8E0FA] hover:bg-[#EDE8FF] transition-colors"
@@ -114,8 +104,8 @@ const CertificationFeed = () => {
                     </button>
 
                     <div className="text-center">
-                        <h1 className="text-[#1F1235] font-black text-[17px] tracking-tight">📸 투어 인증샷</h1>
-                        <p className="text-[#9CA3AF] text-[11px] mt-0.5">활동 인증 & 커뮤니티</p>
+                        <h1 className="text-[#1F1235] font-black text-[17px] tracking-tight">📸 모카그램</h1>
+                        <p className="text-[#9CA3AF] text-[11px] mt-0.5 font-bold">모델들의 일상 & 후기 소통 공간</p>
                     </div>
 
                     <button
@@ -126,22 +116,6 @@ const CertificationFeed = () => {
                             refresh
                         </span>
                     </button>
-                </div>
-
-                {/* Filter Tabs */}
-                <div className="flex gap-2 px-4 pb-3 overflow-x-auto hide-scrollbar">
-                    {FILTER_TABS.map(tab => (
-                        <button
-                            key={tab}
-                            onClick={() => handleFilterChange(tab)}
-                            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-black transition-all ${activeFilter === tab
-                                ? 'bg-gradient-to-r from-[#9333EA] to-[#C084FC] text-white shadow-lg shadow-[#9333EA]/25'
-                                : 'bg-[#F3E8FF] border border-[#E8E0FA] text-[#7C3AED] hover:bg-[#EDE8FF]'
-                                }`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
                 </div>
             </header>
 
@@ -181,7 +155,7 @@ const CertificationFeed = () => {
                             className="mt-2 flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#6C63FF] to-[#A78BFA] text-white font-black text-[14px] shadow-lg shadow-[#6C63FF]/30 active:scale-95 transition-transform"
                         >
                             <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
-                            투어 인증샷 작성
+                            모카그램 포스트 작성
                         </button>
                     </div>
                 ) : (

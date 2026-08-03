@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { GRADE_INFO, GRADE_EMOJI, logoutUser } from '../services/userService';
+import { GRADE_INFO, GRADE_EMOJI, logoutUser, rewardUserPoints } from '../services/userService';
+import { updateGradeInCore } from '../lib/imCoreAuth';
 import AdminUpgradeRequests from './AdminUpgradeRequests';
 import AdminPopups from './AdminPopups';
 import AdminClasses from './AdminClasses';
@@ -17,6 +18,7 @@ import { fetchPushHistory, sendBroadcastPush, fetchUsersWithoutPushToken, fetchA
 import { fetchMessagesList, createAnnouncementMessage, updateMessage, deleteMessage } from '../services/messageService';
 import { getPointsBalance, getPointsHistory, rewardPoints, deductPoints } from '../lib/imCoreAuth';
 import * as XLSX from 'xlsx';
+import AdminAIAnalytics from './AdminAIAnalytics';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
 
@@ -344,6 +346,12 @@ const AdminPage = () => {
             if (updateError) throw updateError;
             setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
             setSuccessMsg('등급이 변경되었습니다!');
+
+            // 아임모델 공화국에 실시간 등급 변경 반영
+            const targetUser = users.find(u => u.id === userId);
+            if (targetUser?.master_user_id) {
+                updateGradeInCore({ masterUserId: targetUser.master_user_id, grade: newGrade });
+            }
 
             // 👉 등급 변경 알림톡 자동 발송 처리
             const userInfo = users.find(u => u.id === userId);
@@ -917,7 +925,13 @@ const AdminPage = () => {
             <div className="max-w-6xl mx-auto px-6 py-8">
 
                 {/* 탭 네비게이션 */}
-                <div className="flex gap-1 mb-8 border-b border-[var(--moca-border)] overflow-x-auto admin-tab-scrollbar whitespace-nowrap">
+                <div className="flex gap-1 mb-8 border-b border-[var(--moca-border)] overflow-x-auto admin-tab-scrollbar whitespace-nowrap pb-0 scroll-smooth">
+                    <button
+                        onClick={() => setActiveTab('ai_analytics')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'ai_analytics' ? 'border-violet-600 text-violet-800 bg-violet-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                    >
+                        🤖 AI 마케팅 분석
+                    </button>
                     <button
                         onClick={() => setActiveTab('users')}
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'users' ? 'border-[var(--moca-primary)] text-[var(--moca-primary)] bg-[var(--moca-primary)]/5' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
@@ -958,7 +972,7 @@ const AdminPage = () => {
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'certifications' ? 'border-pink-500 text-pink-700 bg-pink-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
                     >
-                        📸 인증샷 관리
+                        📸 모카그램 관리
                     </button>
                     <button
                         onClick={() => setActiveTab('popups')}
@@ -2168,7 +2182,7 @@ const AdminPage = () => {
                                             {editingAnnouncement.image_url ? (removeExistingImage ? '새 사진으로 교체하기 (선택)' : '사진 교체하기 (선택)') : '사진 등록하기 (선택)'}
                                         </p>
                                         <input
-                                            type="file"
+                                                                type="file"
                                             accept="image/*"
                                             onChange={(e) => {
                                                 if (e.target.files?.[0]) {
@@ -3405,7 +3419,7 @@ const AdminPage = () => {
                             {/* ── 인증샷 목록 헤더 + 필터 ── */}
                             <div className="flex items-center justify-between gap-4 flex-wrap">
                                 <div>
-                                    <h3 className="text-lg font-black text-[var(--moca-text)]">📸 전체 투어 인증샷 관리</h3>
+                                    <h3 className="text-lg font-black text-[var(--moca-text)]">📸 전체 모카그램 게시물 관리</h3>
                                     <p className="text-[var(--moca-text-3)] text-sm mt-0.5">HOT 배지 부여 · 모카베스트 PICK 선정 · 카페 포스팅 · 삭제</p>
                                 </div>
                                 <div className="flex gap-2">
@@ -4134,22 +4148,8 @@ const AdminPage = () => {
                     );
                 })()}
 
-                {/* ── 🤖 AI 마케팅 분석 탭 ── */}
-                {activeTab === 'ai-marketing' && (
-                    <AdminAIMarketing
-                        stats={{
-                            stats1Day, stats7Days, stats30Days,
-                            totalUsersCount, signupMaleCount, signupFemaleCount,
-                            signupMalePercent, signupFemalePercent, signupAgeGroups,
-                            castingStats, senderStats, top10Users, top5Places, popularPages,
-                            gradeBreakdown: grades.reduce((acc, g) => {
-                                acc[GRADE_INFO[g]?.label || g] = gradeStats[g] || 0;
-                                return acc;
-                            }, {}),
-                        }}
-                        setSuccessMsg={setSuccessMsg}
-                        setError={setError}
-                    />
+                {activeTab === 'ai_analytics' && (
+                    <AdminAIAnalytics />
                 )}
 
                 {selectedUserForDetail && (

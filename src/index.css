@@ -71,19 +71,22 @@
   }
 
   /* Admin tab scrollbar */
-  .admin-tab-scrollbar::-webkit-scrollbar { height: 4px; }
+  .admin-tab-scrollbar::-webkit-scrollbar { height: 5px; }
   .admin-tab-scrollbar::-webkit-scrollbar-track {
-    background: rgba(147, 51, 234, 0.05); border-radius: 4px;
+    background: rgba(147, 51, 234, 0.07); border-radius: 4px;
   }
   .admin-tab-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(147, 51, 234, 0.25); border-radius: 4px;
+    background: rgba(147, 51, 234, 0.35); border-radius: 4px;
   }
   .admin-tab-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(147, 51, 234, 0.45);
+    background: rgba(147, 51, 234, 0.6);
   }
   .admin-tab-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(147, 51, 234, 0.25) rgba(147, 51, 234, 0.05);
+    scrollbar-color: rgba(147, 51, 234, 0.35) rgba(147, 51, 234, 0.07);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    padding-right: 16px; /* 마지막 탭이 잘리지 않도록 여백 */
   }
 
   /* Fixed bottom position for CTA above bottom navigation tab */

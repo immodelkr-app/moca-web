@@ -19,23 +19,28 @@ export const fetchAgencies = async () => {
             const buffer = await response.arrayBuffer();
 
             let text;
-
-            // Try decoding as UTF-8 (strict) first
             try {
                 const decoderUTF8 = new TextDecoder('utf-8', { fatal: true });
                 text = decoderUTF8.decode(buffer);
             } catch (e) {
-                // If invalid UTF-8 (e.g. EUC-KR/CP949), fallback to EUC-KR
-                console.log("UTF-8 decoding failed, falling back to EUC-KR");
                 const decoderKR = new TextDecoder('euc-kr');
                 text = decoderKR.decode(buffer);
+            }
+
+            // Remove BOM if present
+            if (text.startsWith('\ufeff')) {
+                text = text.slice(1);
             }
 
             Papa.parse(text, {
                 header: true,
                 skipEmptyLines: true,
                 complete: (results) => {
-                    resolve(results.data);
+                    const formatted = (results.data || []).map(item => ({
+                        ...item,
+                        booking_url: item.booking_url ? item.booking_url.trim() : ''
+                    }));
+                    resolve(formatted);
                 },
                 error: (error) => {
                     reject(error);

@@ -142,11 +142,21 @@ const AdminHomepage = ({ setSuccessMsg, setError }) => {
                             </h2>
                             <Field
                                 label="AI 브랜딩 프롬프트"
-                                hint="이 앱의 핵심 성격과 톤앤매너를 정의하세요."
+                                hint="이 앱의 핵심 성격과 톤앤매너를 정의하세요. (입력 후 아래 [설정 저장] 버튼을 누르시면 적용됩니다)"
                                 value={content.brandPrompt}
                                 onChange={v => update('brandPrompt', v)}
                                 large
                             />
+                            <div className="flex justify-end mt-2">
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="bg-[#9333EA] text-white font-black py-2 px-4 rounded-xl shadow hover:bg-[#7C3AED] transition-all disabled:opacity-50 flex items-center gap-1.5 text-xs"
+                                >
+                                    <span className="material-symbols-outlined text-[14px]">save</span>
+                                    {isSaving ? '저장 중...' : '프롬프트 저장'}
+                                </button>
+                            </div>
                         </section>
 
                         <section className="bg-[var(--moca-bg)] p-4 rounded-2xl border border-[var(--moca-border)]">

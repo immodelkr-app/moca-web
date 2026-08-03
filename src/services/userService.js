@@ -6,7 +6,8 @@
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { Capacitor } from '@capacitor/core';
-export { syncUserWithCore } from '../lib/imCoreAuth';
+import { syncUserWithCore, updateGradeInCore } from '../lib/imCoreAuth';
+export { syncUserWithCore };
 
 const USER_KEY = 'i_model_user';
 const USERS_LIST_KEY = 'i_model_users_list';
@@ -251,6 +252,10 @@ export const loginUser = async (nickname, password) => {
                 if (!downgradeError) {
                     data.grade = 'SILVER';
                     data.grade_expires_at = null;
+                    // 아임모델 공화국에 실시간 등급 강등 반영
+                    if (data.master_user_id) {
+                        updateGradeInCore({ masterUserId: data.master_user_id, grade: 'SILVER' });
+                    }
                 }
             }
         }
@@ -262,6 +267,7 @@ export const loginUser = async (nickname, password) => {
                     phoneNumber: data.phone,
                     localUserId: data.id,
                     name: data.name || data.nickname,
+                    grade: data.grade, // 아임모델 공화국에 등급 전달
                 });
                 if (syncResult?.success && syncResult?.masterUserId) {
                     await supabase.from('users')
@@ -443,7 +449,13 @@ export const syncUserGrade = async () => {
                         .from('users')
                         .update({ grade: 'SILVER', grade_expires_at: null })
                         .eq('id', data.id);
-                    if (!updateError) currentGrade = 'SILVER';
+                    if (!updateError) {
+                        currentGrade = 'SILVER';
+                        // 아임모델 공화국에 실시간 등급 강등 반영
+                        if (data.master_user_id) {
+                            updateGradeInCore({ masterUserId: data.master_user_id, grade: 'SILVER' });
+                        }
+                    }
                 }
             }
 
@@ -778,5 +790,32 @@ export const checkNicknameDuplicate = async (nickname) => {
         try { usersList = JSON.parse(usersListRaw || '[]'); } catch (e) { }
         const exists = usersList.some(u => u.nickname === nickname);
         return { available: !exists, error: null };
+    }
+};
+
+/**
+ * 사용자 포인트 적립/지급 (아임모델 공화국 포인트 연동용)
+ * @param {string} userNickname
+ * @param {number} points
+ * @param {string} reason
+ */
+export const rewardUserPoints = async (userNickname, points, reason = '모카그램 활동 보상') => {
+    if (!userNickname || !points) return;
+    try {
+        if (isSupabaseEnabled()) {
+            const { data: user } = await supabase
+                .from('users')
+                .select('id, points')
+                .or(`nickname.eq.${userNickname},name.eq.${userNickname}`)
+                .maybeSingle();
+
+            if (user) {
+                const newPoints = (user.points || 0) + points;
+                await supabase.from('users').update({ points: newPoints }).eq('id', user.id);
+                console.log(`[rewardUserPoints] ${userNickname} 님에게 ${points}P 지급 완료 (${reason})`);
+            }
+        }
+    } catch (err) {
+        console.error('[rewardUserPoints] 오류:', err);
     }
 };

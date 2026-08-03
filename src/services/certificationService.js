@@ -1,4 +1,5 @@
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { rewardUserPoints } from './userService';
 
 const LOCAL_POSTS_KEY = 'cert_posts';
 const LOCAL_LIKES_KEY = 'cert_likes';
@@ -206,7 +207,11 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
             .select()
             .single();
 
-        if (!error && data) return { post: data, error: null };
+        if (!error && data) {
+            // 모카그램 포스트 작성 기본 100P 지급 (아임모델 공화국 포인트 연동)
+            rewardUserPoints(userNickname, 100, '모카그램 포스트 작성 기본 보상');
+            return { post: data, error: null };
+        }
         console.error('createCertPost error:', error);
     }
 
@@ -215,6 +220,7 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
     const posts = raw ? JSON.parse(raw) : [];
     posts.unshift(newPost);
     localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
+    rewardUserPoints(userNickname, 100, '모카그램 포스트 작성 기본 보상');
     return { post: newPost, error: null };
 };
 
@@ -438,6 +444,40 @@ export const deleteComment = async (commentId) => {
     if (raw) {
         const comments = JSON.parse(raw).filter(c => c.id !== commentId);
         localStorage.setItem(LOCAL_COMMENTS_KEY, JSON.stringify(comments));
+    }
+};
+
+/**
+ * 김대표 👑 BEST 픽 선정/해제 및 보너스 포인트 연동 (안 B 기본 500P, 유동 수정 가능)
+ * @param {string} postId 
+ * @param {boolean} currentStatus 
+ * @param {string} userNickname 
+ * @param {number} rewardPoint - 기본 500P (유동적 변경 가능)
+ */
+export const toggleBestPick = async (postId, currentStatus, userNickname, rewardPoint = 500) => {
+    const newPickStatus = !currentStatus;
+    if (isSupabaseEnabled()) {
+        const { error } = await supabase
+            .from('certification_posts')
+            .update({ is_best_pick: newPickStatus })
+            .eq('id', postId);
+
+        if (!error && newPickStatus && userNickname) {
+            await rewardUserPoints(userNickname, rewardPoint, '김대표 👑 BEST 픽 선정 보너스');
+        }
+        return { success: !error, isPicked: newPickStatus };
+    } else {
+        const raw = localStorage.getItem(LOCAL_POSTS_KEY);
+        const posts = raw ? JSON.parse(raw) : [];
+        const target = posts.find(p => p.id === postId);
+        if (target) {
+            target.is_best_pick = newPickStatus;
+            localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
+            if (newPickStatus && userNickname) {
+                await rewardUserPoints(userNickname, rewardPoint, '김대표 👑 BEST 픽 선정 보너스');
+            }
+        }
+        return { success: true, isPicked: newPickStatus };
     }
 };
 
