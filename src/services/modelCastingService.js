@@ -189,7 +189,7 @@ export const fetchCastings = async ({ category, excludeClosed } = {}) => {
 
     let query = supabase
         .from('model_castings')
-        .select('*, companies(company_name), model_casting_roles(*)')
+        .select('*, companies(company_name), model_casting_roles(*), model_casting_applications(count)')
         .order('created_at', { ascending: false });
 
     if (category) query = query.eq('category', category);
@@ -207,7 +207,7 @@ export const fetchCastingDetail = async (castingId) => {
     if (!supabase) return { data: null, error: new Error('Supabase not configured') };
     const { data, error } = await supabase
         .from('model_castings')
-        .select('*, companies(company_name, contact_name, verification_status), model_casting_roles(*)')
+        .select('*, companies(company_name, contact_name, verification_status, users(email)), model_casting_roles(*), model_casting_applications(count)')
         .eq('id', castingId)
         .single();
     return { data, error };
@@ -221,7 +221,7 @@ export const fetchCompanyCastings = async (companyId) => {
     if (!supabase) return { data: [], error: new Error('Supabase not configured') };
     const { data, error } = await supabase
         .from('model_castings')
-        .select('*, model_casting_roles(*)')
+        .select('*, model_casting_roles(*), model_casting_applications(count)')
         .eq('company_id', companyId)
         .order('created_at', { ascending: false });
     return { data: data || [], error };
@@ -257,6 +257,60 @@ export const applyToCasting = async ({ roleId, castingId, modelUserId }) => {
         .select()
         .single();
     return { data, error };
+};
+
+/**
+ * 지원 등록 + 업체 이메일 알림 발송 (알림은 best-effort, 실패해도 지원 자체는 성공 처리)
+ * @param {Object} params
+ * @param {string} params.roleId
+ * @param {string} params.castingId
+ * @param {string} params.modelUserId
+ * @param {Object} params.modelData - getUser() 반환값 (프로필 정보)
+ * @param {string} params.castingTitle
+ * @param {string} [params.roleName]
+ * @param {string} params.companyName
+ * @param {string} [params.companyEmail]
+ * @returns {Promise<{data: Object|null, error: Error|null, emailSent: boolean}>}
+ */
+export const applyToCastingWithNotification = async ({
+    roleId,
+    castingId,
+    modelUserId,
+    modelData,
+    castingTitle,
+    roleName,
+    companyName,
+    companyEmail,
+}) => {
+    const { data, error } = await applyToCasting({ roleId, castingId, modelUserId });
+    if (error) return { data: null, error, emailSent: false };
+
+    let emailSent = false;
+    try {
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-casting-application-email', {
+            body: {
+                modelName: modelData.name || modelData.nickname,
+                modelPhone: modelData.phone || '',
+                modelHeight: modelData.height || '',
+                modelWeight: modelData.weight || '',
+                modelAge: modelData.age || '',
+                modelShoeSize: modelData.shoe_size || '',
+                portfolioLink: modelData.portfolio_link,
+                careerAd: modelData.career_ad || '',
+                careerOther: modelData.career_other || '',
+                castingTitle,
+                roleName: roleName || '',
+                companyName,
+                companyEmail: companyEmail || '',
+            },
+        });
+        if (!emailError && emailResult?.success) emailSent = true;
+        else console.warn('[applyToCastingWithNotification] 이메일 발송 실패:', emailError || emailResult?.error);
+    } catch (err) {
+        console.warn('[applyToCastingWithNotification] 이메일 발송 예외:', err);
+    }
+
+    return { data, error: null, emailSent };
 };
 
 /**

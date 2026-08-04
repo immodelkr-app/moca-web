@@ -23,6 +23,8 @@ import CompanyLayout from './components/CompanyLayout';
 import CompanyCastingList from './components/CompanyCastingList';
 import CompanyCastingForm from './components/CompanyCastingForm';
 import CompanyApplicants from './components/CompanyApplicants';
+import ModelCastingBoard from './components/ModelCastingBoard';
+import ModelCastingDetailPage from './components/ModelCastingDetailPage';
 import KimDaepyoMessage from './components/KimDaepyoMessage';
 import GradeCelebrationModal from './components/GradeCelebrationModal';
 import CertificationFeed from './components/CertificationFeed';
@@ -166,6 +168,9 @@ function AppContent() {
 
                         <Route path="class" element={<ClassListPage />} />
                         <Route path="class/:id" element={<ClassDetailPage />} />
+
+                        <Route path="castings" element={<ModelCastingBoard />} />
+                        <Route path="castings/:id" element={<ModelCastingDetailPage />} />
                     </Route>
                 </Route>
 

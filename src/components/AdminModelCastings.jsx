@@ -7,6 +7,8 @@ const STATUS_LABEL = {
     cancelled: { label: '취소됨', className: 'bg-red-100 text-red-600' },
 };
 
+const getApplicantCount = (casting) => casting.model_casting_applications?.[0]?.count ?? 0;
+
 const CastingDetailModal = ({ casting, onClose }) => {
     if (!casting) return null;
     const status = STATUS_LABEL[casting.status] || STATUS_LABEL.open;
@@ -20,6 +22,7 @@ const CastingDetailModal = ({ casting, onClose }) => {
                 <div className="px-6 py-5 border-b border-[var(--moca-border)] flex items-start justify-between gap-3 bg-[var(--moca-surface-2)]">
                     <div>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
+                        <span className="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-[var(--moca-primary)]/10 text-[var(--moca-primary)]">지원자 {getApplicantCount(casting)}명</span>
                         <h3 className="text-lg font-black text-[var(--moca-text)] mt-2">{casting.title}</h3>
                         <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-0.5">{casting.companies?.company_name || '-'} · {casting.category}</p>
                     </div>
@@ -111,6 +114,7 @@ const AdminModelCastings = () => {
                                 <th className="py-2 pr-3">카테고리</th>
                                 <th className="py-2 pr-3">제목</th>
                                 <th className="py-2 pr-3">모집인원</th>
+                                <th className="py-2 pr-3">지원자</th>
                                 <th className="py-2 pr-3">마감일</th>
                                 <th className="py-2 pr-3">등록일</th>
                             </tr>
@@ -132,6 +136,7 @@ const AdminModelCastings = () => {
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{c.category}</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)] max-w-[240px] truncate underline decoration-dotted underline-offset-2">{c.title}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{totalHeadcount}명</td>
+                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{getApplicantCount(c)}명</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{c.deadline}</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(c.created_at).toLocaleDateString('ko-KR')}</td>
                                     </tr>

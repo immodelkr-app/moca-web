@@ -114,6 +114,9 @@ const CompanyCastingList = () => {
                                         <p className="text-[11px] text-[#9CA3AF] font-bold mt-1">
                                             {casting.category} · 모집 {totalHeadcount}명 · 마감 {casting.deadline}
                                         </p>
+                                        <p className="text-[11px] text-[#7C3AED] font-black mt-1">
+                                            지원자 {casting.model_casting_applications?.[0]?.count ?? 0}명
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 mt-3">
