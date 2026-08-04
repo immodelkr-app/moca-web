@@ -26,6 +26,24 @@ export const sendVerificationCode = async (email) => {
 };
 
 /**
+ * 이미 인증된 이메일인지 조회 (코드 발송 없이 상태만 확인)
+ * @param {string} email
+ * @returns {Promise<{success: boolean, verified?: boolean, error?: string}>}
+ */
+export const checkVerificationStatus = async (email) => {
+    if (!isSupabaseEnabled()) return { success: false, error: 'Supabase 환경변수가 설정되지 않았습니다.' };
+    try {
+        const { data, error } = await supabase.functions.invoke('company-email-verification', {
+            body: { action: 'status', email, purpose: PURPOSE },
+        });
+        if (error) return { success: false, error: error.message || '인증 상태 확인 중 오류가 발생했습니다.' };
+        return data;
+    } catch (err) {
+        return { success: false, error: '네트워크 연결 상태를 확인해주세요.' };
+    }
+};
+
+/**
  * 인증번호 확인
  * @param {string} email
  * @param {string} code

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getUser } from '../services/userService';
 import { getCompanyByUserId } from '../services/companyService';
 import { fetchCompanyCastings, closeCasting, MONTHLY_POSTING_LIMIT, getMonthlyPostingCount } from '../services/modelCastingService';
+import { checkVerificationStatus } from '../services/emailVerificationService';
+import CompanyEmailVerifyModal from './CompanyEmailVerifyModal';
 
 const STATUS_LABEL = {
     open: { label: '모집중', className: 'bg-[#EDE9FE] text-[#7C3AED]' },
@@ -28,6 +30,8 @@ const CompanyCastingList = () => {
     const [castings, setCastings] = useState([]);
     const [monthlyCount, setMonthlyCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [emailVerified, setEmailVerified] = useState(null); // null=확인중, true/false
+    const [showVerifyModal, setShowVerifyModal] = useState(false);
 
     useEffect(() => {
         const load = async () => {
@@ -46,6 +50,12 @@ const CompanyCastingList = () => {
             setLoading(false);
         };
         load();
+
+        if (user?.email) {
+            checkVerificationStatus(user.email).then(({ verified }) => setEmailVerified(!!verified));
+        } else {
+            setEmailVerified(false);
+        }
     }, [user?.id]);
 
     const handleClose = async (castingId) => {
@@ -72,6 +82,24 @@ const CompanyCastingList = () => {
                 </div>
             )}
 
+            {emailVerified === false && (
+                <div className="rounded-2xl border border-[#DDD6FE] bg-[#F5F3FF] px-4 py-3 flex items-center justify-between gap-3">
+                    <p className="text-xs font-bold text-[#5B21B6]">
+                        {user?.email
+                            ? '이메일 인증이 필요합니다. 지원자 프로필을 이메일로 받으려면 먼저 인증해 주세요.'
+                            : '등록된 이메일이 없습니다. 지원자 알림을 받으려면 고객센터로 문의해 이메일을 등록해 주세요.'}
+                    </p>
+                    {user?.email && (
+                        <button
+                            onClick={() => setShowVerifyModal(true)}
+                            className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-[#9333EA] text-white font-black text-[11px] hover:opacity-90 transition-all"
+                        >
+                            인증하기
+                        </button>
+                    )}
+                </div>
+            )}
+
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-xl font-black text-[#1F1235]">{company?.company_name || '내 모델캐스팅'}</h1>
@@ -87,7 +115,7 @@ const CompanyCastingList = () => {
                 </div>
                 <button
                     onClick={() => navigate('/company/castings/new')}
-                    disabled={!isVerified || monthlyCount >= MONTHLY_POSTING_LIMIT}
+                    disabled={!isVerified || monthlyCount >= MONTHLY_POSTING_LIMIT || !emailVerified}
                     className="px-4 py-2.5 rounded-2xl bg-[#9333EA] text-white font-black text-sm shadow-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
                 >
                     + 새 게시글
@@ -145,6 +173,17 @@ const CompanyCastingList = () => {
                         );
                     })}
                 </div>
+            )}
+
+            {showVerifyModal && user?.email && (
+                <CompanyEmailVerifyModal
+                    email={user.email}
+                    onClose={() => setShowVerifyModal(false)}
+                    onVerified={() => {
+                        setEmailVerified(true);
+                        setShowVerifyModal(false);
+                    }}
+                />
             )}
         </div>
     );

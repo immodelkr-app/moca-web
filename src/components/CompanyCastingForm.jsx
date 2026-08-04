@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getUser } from '../services/userService';
 import { getCompanyByUserId, uploadCastingAttachment } from '../services/companyService';
 import { createCasting, updateCasting, fetchCastingDetail } from '../services/modelCastingService';
+import { checkVerificationStatus } from '../services/emailVerificationService';
 
 const CATEGORIES = [
     'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
@@ -29,6 +30,7 @@ const CompanyCastingForm = () => {
     const [initLoading, setInitLoading] = useState(isEditMode);
     const [error, setError] = useState('');
     const [existingAttachmentUrl, setExistingAttachmentUrl] = useState(null);
+    const [emailVerified, setEmailVerified] = useState(null);
 
     const [form, setForm] = useState({
         category: CATEGORIES[0],
@@ -45,6 +47,11 @@ const CompanyCastingForm = () => {
 
     useEffect(() => {
         getCompanyByUserId(user.id).then(({ data }) => setCompany(data));
+        if (user?.email) {
+            checkVerificationStatus(user.email).then(({ verified }) => setEmailVerified(!!verified));
+        } else {
+            setEmailVerified(false);
+        }
     }, [user?.id]);
 
     useEffect(() => {
@@ -154,6 +161,18 @@ const CompanyCastingForm = () => {
                 <p className="text-xs text-[#9CA3AF] font-bold">인증은 영업일 기준 1~2일 소요됩니다.</p>
                 <button onClick={() => navigate('/company/castings')} className="mt-2 px-4 py-2 rounded-xl bg-[#F3E8FF] text-[#7C3AED] font-black text-xs">
                     목록으로
+                </button>
+            </div>
+        );
+    }
+
+    if (!isEditMode && emailVerified === false) {
+        return (
+            <div className="py-16 text-center space-y-3">
+                <p className="text-sm font-black text-[#1F1235]">이메일 인증 완료 후 게시글을 등록할 수 있어요.</p>
+                <p className="text-xs text-[#9CA3AF] font-bold">지원자 프로필을 이메일로 받으려면 먼저 이메일 인증이 필요합니다.</p>
+                <button onClick={() => navigate('/company/castings')} className="mt-2 px-4 py-2 rounded-xl bg-[#F3E8FF] text-[#7C3AED] font-black text-xs">
+                    목록에서 인증하기
                 </button>
             </div>
         );

@@ -122,6 +122,19 @@ serve(async (req) => {
             return json({ success: true });
         }
 
+        if (action === "status") {
+            const { data: rows } = await supabase
+                .from("email_verifications")
+                .select("verified")
+                .eq("email", email)
+                .eq("purpose", purpose)
+                .order("created_at", { ascending: false })
+                .limit(1);
+
+            const verified = !!(rows && rows.length > 0 && rows[0].verified);
+            return json({ success: true, verified });
+        }
+
         if (action === "verify") {
             if (!code) return json({ success: false, error: "인증번호를 입력해 주세요." });
 
