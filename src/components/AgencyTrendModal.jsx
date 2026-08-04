@@ -2,16 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { fetchAgencyDiaryFeed } from '../services/diaryService';
-
-// 어드민 'AI 동향 분석'과 동일한 분류 체계 (ai-diary-summary 함수 응답 스키마)
-const CATEGORIES = [
-    { icon: '🎬', label: '진행 오디션/미팅', key: 'auditioning', color: 'bg-purple-50 border-purple-200 text-purple-700' },
-    { icon: '📋', label: '필수 준비물 & 꿀팁', key: 'tips', color: 'bg-blue-50 border-blue-200 text-blue-700' },
-    { icon: '🏢', label: '현장 분위기 & 대기', key: 'atmosphere', color: 'bg-green-50 border-green-200 text-green-700' },
-    { icon: '👗', label: '선호 스타일 & 피드백', key: 'preferred', color: 'bg-pink-50 border-pink-200 text-pink-700' },
-    { icon: '⚠️', label: '주의 및 특이사항', key: 'warnings', color: 'bg-amber-50 border-amber-200 text-amber-700' },
-    { icon: '⚡', label: '한줄 요약', key: 'overall', color: 'bg-orange-50 border-orange-200 text-orange-700' },
-];
+import { AI_TREND_CATEGORIES as CATEGORIES } from '../constants/diaryCategories';
 
 const AgencyTrendModal = ({ agency, userGrade, onClose }) => {
     const navigate = useNavigate();
@@ -72,7 +63,7 @@ const AgencyTrendModal = ({ agency, userGrade, onClose }) => {
                             <span className="text-2xl">🤖</span>
                         </div>
                         <div>
-                            <h2 className="text-lg font-black text-[#1F1235] leading-tight">AI 동향분석</h2>
+                            <h2 className="text-lg font-black text-[#1F1235] leading-tight">AI 에이전시 동향분석</h2>
                             <p className="text-[12px] text-violet-500 font-bold mt-0.5">{agency.name}</p>
                         </div>
                     </div>

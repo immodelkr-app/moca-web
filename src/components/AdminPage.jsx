@@ -13,6 +13,7 @@ import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPo
 import { fetchAllCurrentPhotos, updatePhotoStatus, updatePhotoFeedback, deleteCurrentPhoto, addPhotoFeedbackComment, fetchPhotoFeedbackComments } from '../services/currentPhotosService';
 import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
 import { fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
+import { AI_TREND_CATEGORIES } from '../constants/diaryCategories';
 import { sendAlimtalk, sendBulkMessage, sendFriendtalk } from '../services/solapiService';
 import { fetchPushHistory, sendBroadcastPush, fetchUsersWithoutPushToken, fetchAllUsersWithPhone } from '../services/pushNotificationService';
 import { fetchMessagesList, createAnnouncementMessage, updateMessage, deleteMessage } from '../services/messageService';
@@ -140,9 +141,9 @@ const AdminPage = () => {
     const [diaryPeriodMonths, setDiaryPeriodMonths] = useState(6); // 3 | 6 | 0(전체) - 달력 기준 최근 N개월
     const [diaryExpandedId, setDiaryExpandedId] = useState(null); // 펼쳐본 일지 ID
 
-    // Phase 3: AI 동향 분석 State
+    // Phase 3: AI 에이전시 동향분석 State
     const [aiSummaryAgency, setAiSummaryAgency] = useState(null); // 분석 중인 에이전시명
-    const [aiSummaryResult, setAiSummaryResult] = useState({}); // { [agencyName]: { auditioning, tips, atmosphere, preferred, warnings, overall } }
+    const [aiSummaryResult, setAiSummaryResult] = useState({}); // { [agencyName]: { auditioning, tips, atmosphere, memo, overall } }
     const [aiSummaryLoading, setAiSummaryLoading] = useState({}); // { [agencyName]: boolean }
 
     // 회원별 모카클래스 수강 신청 건수 맵 { [user_id]: count }
@@ -1159,7 +1160,7 @@ const AdminPage = () => {
                                             <div className="flex items-center gap-2">
                                                 <span className="text-2xl">🤖</span>
                                                 <div>
-                                                    <h3 className="font-black text-[var(--moca-text)] text-[15px]">AI 동향 분석</h3>
+                                                    <h3 className="font-black text-[var(--moca-text)] text-[15px]">AI 에이전시 동향분석</h3>
                                                     <p className="text-[12px] text-purple-500 font-bold">{aiSummaryAgency}</p>
                                                 </div>
                                             </div>
@@ -1168,14 +1169,7 @@ const AdminPage = () => {
                                             </button>
                                         </div>
                                         <div className="space-y-3">
-                                            {[
-                                                { icon: '🎬', label: '진행 오디션/미팅', key: 'auditioning', color: 'bg-purple-50 border-purple-200 text-purple-700' },
-                                                { icon: '📋', label: '필수 준비물 & 꿀팁', key: 'tips', color: 'bg-blue-50 border-blue-200 text-blue-700' },
-                                                { icon: '🏢', label: '현장 분위기 & 대기', key: 'atmosphere', color: 'bg-green-50 border-green-200 text-green-700' },
-                                                { icon: '👗', label: '선호 스타일 & 피드백', key: 'preferred', color: 'bg-pink-50 border-pink-200 text-pink-700' },
-                                                { icon: '⚠️', label: '주의 및 특이사항', key: 'warnings', color: 'bg-amber-50 border-amber-200 text-amber-700' },
-                                                { icon: '⚡', label: '한줄 요약', key: 'overall', color: 'bg-orange-50 border-orange-200 text-orange-700' },
-                                            ].map(item => (
+                                            {AI_TREND_CATEGORIES.map(item => (
                                                 <div key={item.key} className={`p-3 rounded-xl border ${item.color}`}>
                                                     <p className="text-[11px] font-black mb-1">{item.icon} {item.label}</p>
                                                     <p className="text-[13px] leading-relaxed">{aiSummaryResult[aiSummaryAgency][item.key] || '정보 없음'}</p>
@@ -1293,7 +1287,7 @@ const AdminPage = () => {
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-2">
-                                                                {/* AI 동향 분석 버튼 (Phase 3) */}
+                                                                {/* AI 에이전시 동향분석 버튼 (Phase 3) */}
                                                                 <button
                                                                     onClick={() => handleAiSummary(agencyName)}
                                                                     disabled={aiSummaryLoading[agencyName]}
@@ -1305,7 +1299,7 @@ const AdminPage = () => {
                                                                     ) : aiSummaryResult[agencyName] ? (
                                                                         <><span className="text-[12px]">🤖</span> AI 재분석</>
                                                                     ) : (
-                                                                        <><span className="text-[12px]">🤖</span> AI 동향 분석</>
+                                                                        <><span className="text-[12px]">🤖</span> AI 에이전시 동향분석</>
                                                                     )}
                                                                 </button>
                                                                 {/* AI 결과 보기 버튼 */}

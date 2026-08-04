@@ -2,60 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { fetchAgencies } from '../services/agencyService';
 import { addDiaryEntry } from '../services/diaryService';
-
-// 가이드 템플릿 6개 카테고리 정의
-const GUIDE_FIELDS = [
-    {
-        key: 'shooting',
-        icon: '📸',
-        label: '촬영 순서·내용',
-        placeholder: '예) 자기소개(이름+키) → 상반신 좌우 정면 → 전신 포즈 → 클로즈업 표정...',
-        rows: 3,
-    },
-    {
-        key: 'acting',
-        icon: '🎭',
-        label: '연기 여부·종류',
-        placeholder: '예) 자유연기 있음 (치킨 대사) / 연기 없음 / 짧은 자기소개만',
-        rows: 2,
-    },
-    {
-        key: 'outfit',
-        icon: '👗',
-        label: '당일 의상',
-        placeholder: '예) 노란색 가디건, 그레이 바지, 검정 로퍼',
-        rows: 2,
-    },
-    {
-        key: 'atmosphere',
-        icon: '🏢',
-        label: '현장 분위기',
-        placeholder: '예) 촬영감독님 직접 진행, 대기실 넓고 쾌적, 파우더룸 있음, 친절한 편...',
-        rows: 2,
-    },
-    {
-        key: 'tip',
-        icon: '💡',
-        label: '특이사항·꿀팁',
-        placeholder: '예) QR코드로 접수, 예약 없이 가능, 위치 자주 바뀜, 1년 1회 제한...',
-        rows: 2,
-    },
-    {
-        key: 'memo',
-        icon: '📝',
-        label: '기타 메모',
-        placeholder: '자유롭게 기록하세요.',
-        rows: 2,
-    },
-];
-
-// 가이드 필드들을 하나의 텍스트로 합산
-const buildContentFromGuide = (fields) => {
-    return GUIDE_FIELDS
-        .filter(f => fields[f.key]?.trim())
-        .map(f => `${f.icon} ${f.label}\n${fields[f.key].trim()}`)
-        .join('\n\n');
-};
+import { DIARY_GUIDE_FIELDS as GUIDE_FIELDS, buildContentFromGuide, emptyGuideFields } from '../constants/diaryCategories';
 
 const QuickAddMemoModal = ({ onClose, onSuccess }) => {
     const [agencies, setAgencies] = useState([]);
@@ -69,9 +16,7 @@ const QuickAddMemoModal = ({ onClose, onSuccess }) => {
     // 탭: 'free' | 'guide'
     const [mode, setMode] = useState('guide');
     // 가이드 모드 필드값
-    const [guideFields, setGuideFields] = useState({
-        shooting: '', acting: '', outfit: '', atmosphere: '', tip: '', memo: ''
-    });
+    const [guideFields, setGuideFields] = useState(emptyGuideFields());
 
     useEffect(() => {
         fetchAgencies().then(data => {

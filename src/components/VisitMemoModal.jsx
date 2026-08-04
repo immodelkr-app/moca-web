@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { fetchDiariesByAgency, addDiaryEntry, deleteDiaryEntry } from '../services/diaryService';
+import { DIARY_GUIDE_FIELDS, buildContentFromGuide, emptyGuideFields } from '../constants/diaryCategories';
 
 const VisitMemoModal = ({ agency, onClose }) => {
     const [memos, setMemos] = useState([]);
     const [date, setDate] = useState('');
-    const [content, setContent] = useState('');
+    const [guideFields, setGuideFields] = useState(emptyGuideFields());
     const [isLoading, setIsLoading] = useState(false);
+
+    const handleGuideChange = (key, value) => {
+        setGuideFields(prev => ({ ...prev, [key]: value }));
+    };
+
+    const isGuideValid = DIARY_GUIDE_FIELDS.some(f => guideFields[f.key]?.trim());
 
     useEffect(() => {
         // Load memos for this specific agency
@@ -21,13 +28,14 @@ const VisitMemoModal = ({ agency, onClose }) => {
     }, [agency.name]);
 
     const handleSave = async () => {
-        if (!content.trim()) return;
+        if (!isGuideValid) return;
 
         setIsLoading(true);
         try {
+            const content = buildContentFromGuide(guideFields);
             const newMemo = await addDiaryEntry(agency.name, date, content);
             setMemos(prev => [newMemo, ...prev]);
-            setContent('');
+            setGuideFields(emptyGuideFields());
         } catch (error) {
             console.error("Failed to save:", error);
         } finally {
@@ -111,16 +119,25 @@ const VisitMemoModal = ({ agency, onClose }) => {
                             onChange={(e) => setDate(e.target.value)}
                             className="w-full bg-white border border-[#E8E0FA] rounded-lg px-3 py-2 text-sm text-[#1F1235] focus:outline-none focus:border-[#9333EA]/50"
                         />
-                        <textarea
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            placeholder="방문 내용, 특이사항, 미팅 결과 등을 기록하세요..."
-                            className="w-full h-24 bg-white border border-[#E8E0FA] rounded-lg px-3 py-2 text-sm text-[#1F1235] resize-none focus:outline-none focus:border-[#9333EA]/50 placeholder-[#9CA3AF]"
-                        />
+                        {DIARY_GUIDE_FIELDS.map(field => (
+                            <div key={field.key} className="space-y-1">
+                                <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#5B4E7A]">
+                                    <span>{field.icon}</span>
+                                    {field.label}
+                                </label>
+                                <textarea
+                                    value={guideFields[field.key]}
+                                    onChange={(e) => handleGuideChange(field.key, e.target.value)}
+                                    placeholder={field.placeholder}
+                                    rows={field.rows}
+                                    className="w-full bg-white border border-[#E8E0FA] rounded-lg px-3 py-2 text-sm text-[#1F1235] resize-none focus:outline-none focus:border-[#9333EA]/50 placeholder-[#9CA3AF]"
+                                />
+                            </div>
+                        ))}
                         <div className="flex justify-end">
                             <button
                                 onClick={handleSave}
-                                disabled={!content.trim() || isLoading}
+                                disabled={!isGuideValid || isLoading}
                                 className="px-4 py-2 bg-[#9333EA] hover:bg-[#7C3AED] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
                             >
                                 <span className="material-symbols-outlined text-[16px]">edit_note</span>

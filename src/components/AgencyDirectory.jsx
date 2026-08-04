@@ -202,7 +202,7 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, onTrend, sendIn
                     }`}
                 >
                     <span className="text-[13px] shrink-0">{canViewTrend ? '🤖' : '🔒'}</span>
-                    <span>{canViewTrend ? 'AI 동향분석' : 'AI 동향분석 (GOLD~)'}</span>
+                    <span>{canViewTrend ? 'AI 에이전시 동향분석' : 'AI 에이전시 동향분석 (GOLD~)'}</span>
                 </button>
             </div>
         </div>
@@ -359,7 +359,7 @@ const AgencyDirectory = () => {
 
     const handleTrendClick = (agency, allowed) => {
         if (!allowed) {
-            showToast('AI 동향분석은 GOLD 등급 이상부터 이용 가능합니다.', 'error');
+            showToast('AI 에이전시 동향분석은 GOLD 등급 이상부터 이용 가능합니다.', 'error');
             setTimeout(() => navigate('/upgrade'), 1800);
             return;
         }
@@ -562,7 +562,7 @@ const AgencyDirectory = () => {
                 />
             )}
 
-            {/* AI 동향분석 모달 (GOLD 등급 이상) */}
+            {/* AI 에이전시 동향분석 모달 (GOLD 등급 이상) */}
             {trendModalAgency && (
                 <AgencyTrendModal
                     agency={trendModalAgency}

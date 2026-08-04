@@ -1,89 +1,13 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { updateDiaryEntry } from '../services/diaryService';
-
-// 가이드 템플릿 6개 카테고리 정의 (QuickAddMemoModal과 동일)
-const GUIDE_FIELDS = [
-    {
-        key: 'shooting',
-        icon: '📸',
-        label: '촬영 순서·내용',
-        placeholder: '예) 자기소개(이름+키) → 상반신 좌우 정면 → 전신 포즈 → 클로즈업 표정...',
-        rows: 3,
-    },
-    {
-        key: 'acting',
-        icon: '🎭',
-        label: '연기 여부·종류',
-        placeholder: '예) 자유연기 있음 (치킨 대사) / 연기 없음 / 짧은 자기소개만',
-        rows: 2,
-    },
-    {
-        key: 'outfit',
-        icon: '👗',
-        label: '당일 의상',
-        placeholder: '예) 노란색 가디건, 그레이 바지, 검정 로퍼',
-        rows: 2,
-    },
-    {
-        key: 'atmosphere',
-        icon: '🏢',
-        label: '현장 분위기',
-        placeholder: '예) 촬영감독님 직접 진행, 대기실 넓고 쾌적, 파우더룸 있음, 친절한 편...',
-        rows: 2,
-    },
-    {
-        key: 'tip',
-        icon: '💡',
-        label: '특이사항·꿀팁',
-        placeholder: '예) QR코드로 접수, 예약 없이 가능, 위치 자주 바뀜, 1년 1회 제한...',
-        rows: 2,
-    },
-    {
-        key: 'memo',
-        icon: '📝',
-        label: '기타 메모',
-        placeholder: '자유롭게 기록하세요.',
-        rows: 2,
-    },
-];
-
-const buildContentFromGuide = (fields) => {
-    return GUIDE_FIELDS
-        .filter(f => fields[f.key]?.trim())
-        .map(f => `${f.icon} ${f.label}\n${fields[f.key].trim()}`)
-        .join('\n\n');
-};
-
-// 기존 가이드 형식 텍스트를 파싱해서 필드 복원 시도
-const parseGuideContent = (content) => {
-    const result = { shooting: '', acting: '', outfit: '', atmosphere: '', tip: '', memo: '' };
-    if (!content) return result;
-
-    GUIDE_FIELDS.forEach(field => {
-        const marker = `${field.icon} ${field.label}`;
-        const idx = content.indexOf(marker);
-        if (idx === -1) return;
-        const afterMarker = content.slice(idx + marker.length).trimStart();
-        // 다음 필드 마커가 나오기 전까지의 텍스트 추출
-        let end = afterMarker.length;
-        for (const other of GUIDE_FIELDS) {
-            if (other.key === field.key) continue;
-            const otherMarker = `${other.icon} ${other.label}`;
-            const otherIdx = afterMarker.indexOf(otherMarker);
-            if (otherIdx !== -1 && otherIdx < end) end = otherIdx;
-        }
-        result[field.key] = afterMarker.slice(0, end).trimEnd();
-    });
-
-    return result;
-};
-
-// 기존 content가 가이드 형식인지 판단
-const isGuideFormat = (content) => {
-    if (!content) return false;
-    return GUIDE_FIELDS.some(f => content.includes(`${f.icon} ${f.label}`));
-};
+import {
+    DIARY_GUIDE_FIELDS as GUIDE_FIELDS,
+    buildContentFromGuide,
+    parseGuideContent,
+    isGuideFormat,
+    emptyGuideFields,
+} from '../constants/diaryCategories';
 
 const EditDiaryModal = ({ memo, onClose, onSuccess }) => {
     const existingIsGuide = isGuideFormat(memo.content);
@@ -95,7 +19,7 @@ const EditDiaryModal = ({ memo, onClose, onSuccess }) => {
     // 기존 일지가 가이드 형식이면 가이드 탭으로 시작
     const [mode, setMode] = useState(existingIsGuide ? 'guide' : 'free');
     const [guideFields, setGuideFields] = useState(
-        existingIsGuide ? parseGuideContent(memo.content) : { shooting: '', acting: '', outfit: '', atmosphere: '', tip: '', memo: '' }
+        existingIsGuide ? parseGuideContent(memo.content) : emptyGuideFields()
     );
 
     const handleGuideChange = (key, value) => {
