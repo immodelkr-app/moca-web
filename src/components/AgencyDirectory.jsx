@@ -195,10 +195,10 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, onTrend, sendIn
             <div onClick={(e) => e.stopPropagation()}>
                 <button
                     onClick={() => onTrend(agency, canViewTrend)}
-                    className={`w-full flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full active:scale-[0.98] transition-all cursor-pointer font-black text-[12px] leading-none ${
+                    className={`w-full flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full active:scale-[0.98] transition-all cursor-pointer font-black text-[12px] leading-none border ${
                         canViewTrend
-                            ? 'bg-gradient-to-r from-violet-400 to-purple-400 text-white shadow-sm shadow-purple-400/10'
-                            : 'bg-[#F3F0FA] text-[#9CA3AF] border border-[#E8E0FA]'
+                            ? 'bg-[#F3E8FF] text-[#7C3AED] border-[#E8E0FA]'
+                            : 'bg-[#F3F0FA] text-[#9CA3AF] border-[#E8E0FA]'
                     }`}
                 >
                     <span className="text-[13px] shrink-0">{canViewTrend ? '🤖' : '🔒'}</span>
