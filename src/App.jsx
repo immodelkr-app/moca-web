@@ -18,6 +18,11 @@ import AdminPage from './components/AdminPage';
 import UpgradePage from './components/UpgradePage';
 import UpgradeApplicationPage from './components/UpgradeApplicationPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import CompanyProtectedRoute from './components/CompanyProtectedRoute';
+import CompanyLayout from './components/CompanyLayout';
+import CompanyCastingList from './components/CompanyCastingList';
+import CompanyCastingForm from './components/CompanyCastingForm';
+import CompanyApplicants from './components/CompanyApplicants';
 import KimDaepyoMessage from './components/KimDaepyoMessage';
 import GradeCelebrationModal from './components/GradeCelebrationModal';
 import CertificationFeed from './components/CertificationFeed';
@@ -131,6 +136,17 @@ function AppContent() {
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/open-app" element={<OpenAppRedirect />} />
                 {/* 보호된 라우트 (로그인 필요) */}
+                {/* 업체(모델캐스팅) 전용 라우트 */}
+                <Route element={<CompanyProtectedRoute />}>
+                    <Route path="/company" element={<CompanyLayout />}>
+                        <Route index element={<Navigate to="/company/castings" replace />} />
+                        <Route path="castings" element={<CompanyCastingList />} />
+                        <Route path="castings/new" element={<CompanyCastingForm />} />
+                        <Route path="castings/:id/edit" element={<CompanyCastingForm />} />
+                        <Route path="castings/:id/applicants" element={<CompanyApplicants />} />
+                    </Route>
+                </Route>
+
                 <Route element={<ProtectedRoute />}>
                     <Route path="/agencies" element={<Layout />}>
                         <Route index element={<AgencyDirectory />} />
@@ -169,7 +185,7 @@ function AppContent() {
                 <Route path="/home/contract" element={<Navigate to="/contract" replace />} />
                 
                 {/* 정의되지 않은 경로 처리 (빈 화면 방지) */}
-                <Route path="*" element={<Navigate to={isLoggedIn() ? "/home/dashboard" : "/"} replace />} />
+                <Route path="*" element={<Navigate to={isLoggedIn() ? (getUser()?.user_type === 'company' ? '/company/castings' : '/home/dashboard') : '/'} replace />} />
 
             </Routes>
         </>

@@ -20,6 +20,8 @@ import { fetchMessagesList, createAnnouncementMessage, updateMessage, deleteMess
 import { getPointsBalance, getPointsHistory, rewardPoints, deductPoints } from '../lib/imCoreAuth';
 import * as XLSX from 'xlsx';
 import AdminAIAnalytics from './AdminAIAnalytics';
+import AdminCompanyVerification from './AdminCompanyVerification';
+import AdminModelCastings from './AdminModelCastings';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
 
@@ -1063,6 +1065,18 @@ const AdminPage = () => {
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'ai-marketing' ? 'border-fuchsia-500 text-fuchsia-700 bg-fuchsia-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
                         🤖 AI 마케팅 분석
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('company-verification')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'company-verification' ? 'border-violet-500 text-violet-700 bg-violet-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                    >
+                        🏢 업체 인증 관리
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('model-castings')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'model-castings' ? 'border-violet-500 text-violet-700 bg-violet-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                    >
+                        📋 모델캐스팅 모니터링
                     </button>
 
                 </div>
@@ -4144,6 +4158,14 @@ const AdminPage = () => {
 
                 {activeTab === 'ai_analytics' && (
                     <AdminAIAnalytics />
+                )}
+
+                {activeTab === 'company-verification' && (
+                    <AdminCompanyVerification />
+                )}
+
+                {activeTab === 'model-castings' && (
+                    <AdminModelCastings />
                 )}
 
                 {selectedUserForDetail && (

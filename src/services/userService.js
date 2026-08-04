@@ -71,11 +71,13 @@ export const saveUserToSupabase = async (userData) => {
             referral_source: userData.referralSource || [],
             grade: userData.grade || 'SILVER',
             gender: userData.gender || null,
+            user_type: userData.user_type || 'model',
         }])
         .select()
         .single();
 
-    if (!error && data && userData.phone) {
+    // 업체 계정은 등급 개념이 없는 별도 계정 유형이므로 im-core-auth(아임모델공화국) SSO 동기화 대상에서 제외
+    if (!error && data && userData.phone && userData.user_type !== 'company') {
         // im-core-auth SSO 동기화 (회원가입 직후)
         try {
             const syncResult = await syncUserWithCore({

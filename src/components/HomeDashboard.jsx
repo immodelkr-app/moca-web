@@ -32,6 +32,7 @@ const HomeDashboard = () => {
     const [noticeIdx, setNoticeIdx] = useState(0);
     const [ticker, setTicker] = useState('');
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [showCastingComingSoon, setShowCastingComingSoon] = useState(false);
 
     useEffect(() => {
         syncUserGrade().then(() => {
@@ -166,6 +167,26 @@ const HomeDashboard = () => {
                 </div>
             </div>
 
+            {/* ── 4-1. 모델캐스팅 배너 ── */}
+            <div className="px-6 mb-8">
+                <button
+                    onClick={() => setShowCastingComingSoon(true)}
+                    className="w-full flex items-center gap-4 p-5 rounded-3xl bg-gradient-to-r from-[#1F1235] to-[#4C1D95] border border-white/10 shadow-md active:scale-95 transition-all text-left"
+                >
+                    <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center flex-shrink-0">
+                        <span className="material-symbols-outlined text-white text-[28px]">campaign</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                            <h3 className="text-base font-black text-white">모델캐스팅</h3>
+                            <span className="px-1.5 py-0.5 rounded-full bg-[#C084FC] text-[#1F1235] text-[9px] font-black">NEW</span>
+                        </div>
+                        <p className="text-[11px] font-bold text-white/70 leading-tight">업체가 직접 올리는 모델 구인 공고 오픈 예정</p>
+                    </div>
+                    <span className="material-symbols-outlined text-white/50 text-[20px] flex-shrink-0">chevron_right</span>
+                </button>
+            </div>
+
             {/* ── 5. 모델 투어 관리 (정갈한 소프트 파스텔 카드) ── */}
             <div className="px-6 mb-6">
                 <h3 className="text-[#1F1235] font-extrabold text-sm mb-3 flex items-center gap-1.5">
@@ -219,6 +240,27 @@ const HomeDashboard = () => {
                         window.location.reload();
                     }}
                 />
+            )}
+
+            {/* 모델캐스팅 오픈 예정 안내 */}
+            {showCastingComingSoon && (
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setShowCastingComingSoon(false)}>
+                    <div className="bg-white rounded-3xl p-7 w-full max-w-xs shadow-moca-lg border border-[#E8E0FA] text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-[#1F1235] to-[#4C1D95] flex items-center justify-center mb-4">
+                            <span className="material-symbols-outlined text-white text-[30px]">campaign</span>
+                        </div>
+                        <h3 className="text-lg font-black text-[#1F1235] mb-1.5">모델캐스팅 오픈 예정입니다</h3>
+                        <p className="text-[12px] text-[#5B4E7A] font-bold leading-relaxed mb-6">
+                            업체가 직접 올리는 모델 구인 공고를<br />모아볼 수 있는 공간을 준비 중이에요.<br />오픈되면 알려드릴게요!
+                        </p>
+                        <button
+                            onClick={() => setShowCastingComingSoon(false)}
+                            className="w-full py-3 rounded-2xl bg-[#9333EA] text-white font-black text-sm shadow-moca hover:opacity-90 transition-all active:scale-95"
+                        >
+                            확인
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

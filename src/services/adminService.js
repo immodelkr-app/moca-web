@@ -263,3 +263,44 @@ export const rejectUpgradeRequest = async (requestId) => {
         .eq('id', requestId);
     return { error };
 };
+
+// --- 모델캐스팅 업체 인증 (사업자등록증 심사) ---
+
+/**
+ * 인증 대기중인 업체 목록을 조회합니다.
+ * @param {'pending'|'verified'|'rejected'} [status]
+ */
+export const fetchCompanies = async (status) => {
+    if (!supabase) return { data: [], error: new Error('Supabase not configured') };
+    let query = supabase
+        .from('companies')
+        .select('*, users(email, nickname)')
+        .order('created_at', { ascending: false });
+    if (status) query = query.eq('verification_status', status);
+    const { data, error } = await query;
+    return { data: data || [], error };
+};
+
+/**
+ * 업체 사업자 인증을 승인합니다 ("모카 인증업체" 배지 부여).
+ */
+export const approveCompany = async (companyId) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+    const { error } = await supabase
+        .from('companies')
+        .update({ verification_status: 'verified', verified_at: new Date().toISOString() })
+        .eq('id', companyId);
+    return { error };
+};
+
+/**
+ * 업체 사업자 인증을 반려합니다.
+ */
+export const rejectCompany = async (companyId, reason) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+    const { error } = await supabase
+        .from('companies')
+        .update({ verification_status: 'rejected', rejected_reason: reason || null })
+        .eq('id', companyId);
+    return { error };
+};

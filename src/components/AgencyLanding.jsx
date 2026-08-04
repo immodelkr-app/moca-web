@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import DaumPostcode from 'react-daum-postcode';
 import { fetchAgencies } from '../services/agencyService';
 import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser, checkNicknameDuplicate, signInWithSocial, syncUserWithCore, updateMasterUserIdInSupabase } from '../services/userService';
+import { registerCompany, uploadBusinessCert } from '../services/companyService';
 import { isPasskeySupported, loginWithPasskey } from '../services/passkeyService';
 import { fetchHomepageSettings } from '../services/settingsService';
 
@@ -99,6 +100,7 @@ const AgencyLanding = () => {
     const [showSignup, setShowSignup] = useState(false);
     const [signupLoading, setSignupLoading] = useState(false);
     const [signupError, setSignupError] = useState('');
+    const [accountType, setAccountType] = useState('model'); // 'model' | 'company'
     const [signupForm, setSignupForm] = useState({
         nickname: '',
         password: '',
@@ -111,6 +113,14 @@ const AgencyLanding = () => {
         referralSource: [],
         gender: null,
         agreed: { service: false, privacy: false, marketing: false },
+    });
+    // 업체 가입 전용 필드 (accountType === 'company' 일 때만 사용)
+    const [companyForm, setCompanyForm] = useState({
+        companyName: '',
+        businessNumber: '',
+        companyPhone: '',
+        businessCertFile: null,
+        noBusinessNumber: false, // 방송작가 등 프리랜서 - 사업자등록번호 없음
     });
 
     const [showPostcode, setShowPostcode] = useState(false);
@@ -186,6 +196,8 @@ const AgencyLanding = () => {
         if (redirectTo) {
             sessionStorage.removeItem('redirect_to');
             navigate(redirectTo, { replace: true });
+        } else if (user?.user_type === 'company') {
+            navigate('/company/castings');
         } else {
             navigate('/home/dashboard');
         }
@@ -272,7 +284,25 @@ const AgencyLanding = () => {
             return;
         }
 
+        if (!signupForm.address) {
+            setSignupError('주소를 입력해 주세요.');
+            return;
+        }
 
+        if (accountType === 'company') {
+            if (!companyForm.companyName || !companyForm.companyPhone) {
+                setSignupError('업체 정보를 모두 입력해 주세요.');
+                return;
+            }
+            if (!companyForm.noBusinessNumber && !companyForm.businessNumber) {
+                setSignupError('사업자등록번호를 입력하거나, 사업자등록번호가 없는 경우 아래 체크박스를 선택해 주세요.');
+                return;
+            }
+            if (!companyForm.businessCertFile) {
+                setSignupError(companyForm.noBusinessNumber ? '소속확인서류를 첨부해 주세요.' : '사업자등록증을 첨부해 주세요.');
+                return;
+            }
+        }
 
         setSignupLoading(true);
         setSignupError('');
@@ -281,6 +311,7 @@ const AgencyLanding = () => {
                 ...signupForm,
                 address_detail: signupForm.detailAddress || '',
                 grade: 'SILVER',
+                user_type: accountType,
                 terms_consent: signupForm.agreed.service && signupForm.agreed.privacy,
                 created_at: new Date().toISOString(),
             };
@@ -288,9 +319,35 @@ const AgencyLanding = () => {
             if (signupErr) throw signupErr;
 
             const finalUser = data || newUser;
+
+            if (accountType === 'company') {
+                // 업체 계정: im-core-auth(아임모델공화국) 등급 동기화 대상 아님 → 스킵
+                const { url: certUrl, error: certErr } = await uploadBusinessCert(companyForm.businessCertFile, finalUser.id);
+                if (certErr) throw certErr;
+
+                const { error: companyErr } = await registerCompany({
+                    userId: finalUser.id,
+                    companyName: companyForm.companyName,
+                    businessNumber: companyForm.noBusinessNumber ? null : companyForm.businessNumber,
+                    verificationType: companyForm.noBusinessNumber ? 'affiliation' : 'business',
+                    companyAddress: signupForm.address,
+                    companyAddressDetail: signupForm.detailAddress,
+                    companyPhone: companyForm.companyPhone,
+                    contactName: signupForm.name,
+                    contactPhone: signupForm.phone,
+                    businessCertUrl: certUrl,
+                });
+                if (companyErr) throw companyErr;
+
+                setShowSignup(false);
+                alert('업체 가입이 완료되었습니다.\n사업자 인증 완료 후 모델캐스팅 등록이 가능합니다. (영업일 기준 1~2일 소요)');
+                setShowLogin(true);
+                return;
+            }
+
             saveUser(finalUser);
 
-            // ── im-core-auth 동기화 ──────────────────────────────────────────
+            // ── im-core-auth 동기화 (모델 계정만 해당) ────────────────────────
             try {
                 const syncResult = await syncUserWithCore({
                     phone: signupForm.phone,
@@ -590,8 +647,30 @@ const AgencyLanding = () => {
                         <button onClick={() => setShowSignup(false)} className="absolute top-6 right-6 text-[#9CA3AF] hover:text-[#1F1235]">
                             <span className="material-symbols-outlined">close</span>
                         </button>
-                        <h2 className="text-2xl font-black text-[#1F1235] mb-8 text-center">회원가입</h2>
+                        <h2 className="text-2xl font-black text-[#1F1235] mb-6 text-center">회원가입</h2>
                         <form onSubmit={handleSignupSubmit} className="space-y-5">
+                            {/* 가입 유형 선택 */}
+                            <div className="grid grid-cols-2 gap-2 p-1 bg-[#F3E8FF] rounded-2xl mb-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setAccountType('model')}
+                                    className={`py-2.5 rounded-xl font-black text-sm transition-all ${
+                                        accountType === 'model' ? 'bg-white text-[#9333EA] shadow-sm' : 'text-[#9333EA]/50'
+                                    }`}
+                                >
+                                    모델로 가입
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setAccountType('company')}
+                                    className={`py-2.5 rounded-xl font-black text-sm transition-all ${
+                                        accountType === 'company' ? 'bg-white text-[#9333EA] shadow-sm' : 'text-[#9333EA]/50'
+                                    }`}
+                                >
+                                    업체로 가입
+                                </button>
+                            </div>
+
                             {/* 아이디 (닉네임) */}
                             <div className="space-y-1.5">
                                 <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">아이디 (닉네임)</label>
@@ -626,12 +705,14 @@ const AgencyLanding = () => {
                                 )}
                             </div>
 
-                            {/* 성함 (실명) */}
+                            {/* 성함 (실명) / 담당자명 */}
                             <div className="space-y-1.5">
-                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">성함 (실명)</label>
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">
+                                    {accountType === 'company' ? '담당자명' : '성함 (실명)'}
+                                </label>
                                 <input
                                     type="text"
-                                    placeholder="실명을 입력해 주세요"
+                                    placeholder={accountType === 'company' ? '담당자 실명을 입력해 주세요' : '실명을 입력해 주세요'}
                                     value={signupForm.name}
                                     onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
                                     className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
@@ -665,9 +746,11 @@ const AgencyLanding = () => {
                                 />
                             </div>
 
-                            {/* 휴대폰 번호 */}
+                            {/* 휴대폰 번호 / 담당자 연락처 */}
                             <div className="space-y-1.5">
-                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">휴대폰 번호</label>
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">
+                                    {accountType === 'company' ? '담당자 연락처' : '휴대폰 번호'}
+                                </label>
                                 <input
                                     type="tel"
                                     placeholder="휴대폰 번호 입력 (- 제외)"
@@ -678,15 +761,91 @@ const AgencyLanding = () => {
                                 />
                             </div>
 
-                            {/* 집 주소 */}
+                            {/* 업체 전용: 사업자 정보 */}
+                            {accountType === 'company' && (
+                                <div className="space-y-5 p-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA]">
+                                    <p className="text-xs font-black text-[#9333EA] -mb-1">사업자 정보</p>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">
+                                            {companyForm.noBusinessNumber ? '소속 (방송사/제작사/작가팀명)' : '회사명'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder={companyForm.noBusinessNumber ? '예) MBC <건강한 저녁> 작가팀' : '회사명(상호)을 입력해 주세요'}
+                                            value={companyForm.companyName}
+                                            onChange={(e) => setCompanyForm({ ...companyForm, companyName: e.target.value })}
+                                            className="w-full px-4 py-3 rounded-2xl bg-white border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">사업자등록번호</label>
+                                        <input
+                                            type="text"
+                                            placeholder="000-00-00000"
+                                            value={companyForm.businessNumber}
+                                            onChange={(e) => setCompanyForm({ ...companyForm, businessNumber: e.target.value })}
+                                            disabled={companyForm.noBusinessNumber}
+                                            className="w-full px-4 py-3 rounded-2xl bg-white border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner disabled:opacity-40 disabled:cursor-not-allowed"
+                                            required={!companyForm.noBusinessNumber}
+                                        />
+                                        <label className="flex items-center gap-2 ml-1 mt-1.5 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={companyForm.noBusinessNumber}
+                                                onChange={(e) => setCompanyForm({ ...companyForm, noBusinessNumber: e.target.checked, businessNumber: '' })}
+                                                className="w-3.5 h-3.5 accent-[#9333EA]"
+                                            />
+                                            <span className="text-[10px] text-[#9CA3AF] font-bold">사업자등록번호가 없어요 (방송작가 등 프리랜서)</span>
+                                        </label>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">회사 대표번호</label>
+                                        <input
+                                            type="tel"
+                                            placeholder="회사 대표 전화번호"
+                                            value={companyForm.companyPhone}
+                                            onChange={(e) => setCompanyForm({ ...companyForm, companyPhone: e.target.value })}
+                                            className="w-full px-4 py-3 rounded-2xl bg-white border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">
+                                            {companyForm.noBusinessNumber ? '소속확인서류 첨부' : '사업자등록증 첨부'}
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept="image/*,.pdf"
+                                            onChange={(e) => setCompanyForm({ ...companyForm, businessCertFile: e.target.files?.[0] || null })}
+                                            className="w-full px-4 py-3 rounded-2xl bg-white border border-[#E8E0FA] font-bold text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[#F3E8FF] file:text-[#9333EA] file:font-bold focus:outline-none"
+                                            required
+                                        />
+                                        <p className="text-[10px] text-[#9CA3AF] font-bold ml-2">
+                                            {companyForm.noBusinessNumber
+                                                ? '※ 재직증명서, 방송작가협회 등록증, 명함 등 소속을 확인할 수 있는 서류를 첨부해 주세요.'
+                                                : "※ 심사 후 '모카 인증업체' 배지가 부여되며, 구인글 등록이 가능해집니다."}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 집 주소 / 회사 주소 */}
                             <div className="space-y-1.5">
-                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">집 주소</label>
+                                <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">
+                                    {accountType === 'company' ? '회사 주소' : '집 주소'}
+                                </label>
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
-                                        placeholder="집 주소 검색"
+                                        placeholder="주소 검색"
                                         value={signupForm.address}
                                         readOnly
+                                        required
                                         className="flex-1 min-w-0 px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm cursor-pointer focus:outline-none focus:border-[#9333EA] shadow-inner"
                                         onClick={() => setShowPostcode(true)}
                                     />
