@@ -4,7 +4,6 @@ import DaumPostcode from 'react-daum-postcode';
 import { fetchAgencies } from '../services/agencyService';
 import { saveUser, getUser, logoutUser, saveUserToSupabase, loginUser, checkNicknameDuplicate, signInWithSocial, syncUserWithCore, updateMasterUserIdInSupabase } from '../services/userService';
 import { registerCompany, uploadBusinessCert } from '../services/companyService';
-import { sendVerificationCode, verifyCode } from '../services/emailVerificationService';
 import { isPasskeySupported, loginWithPasskey } from '../services/passkeyService';
 import { fetchHomepageSettings } from '../services/settingsService';
 
@@ -123,14 +122,6 @@ const AgencyLanding = () => {
         businessCertFile: null,
         noBusinessNumber: false, // 방송작가 등 프리랜서 - 사업자등록번호 없음
     });
-
-    // 업체 가입 전용: 이메일 인증 (accountType === 'company' 일 때만 사용)
-    const [companyEmailVerified, setCompanyEmailVerified] = useState(false);
-    const [verificationSent, setVerificationSent] = useState(false);
-    const [verificationSending, setVerificationSending] = useState(false);
-    const [verificationCodeInput, setVerificationCodeInput] = useState('');
-    const [verificationChecking, setVerificationChecking] = useState(false);
-    const [verificationMessage, setVerificationMessage] = useState('');
 
     const [showPostcode, setShowPostcode] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -276,47 +267,6 @@ const AgencyLanding = () => {
         }
     };
 
-    // ── 업체 가입: 이메일 인증번호 발송/확인 ──
-    const handleSendVerificationCode = async () => {
-        if (!signupForm.email) {
-            setVerificationMessage('이메일 주소를 먼저 입력해 주세요.');
-            return;
-        }
-        setVerificationSending(true);
-        setVerificationMessage('');
-        try {
-            const { success, error } = await sendVerificationCode(signupForm.email);
-            if (success) {
-                setVerificationSent(true);
-                setVerificationMessage('인증번호를 발송했습니다. 메일함을 확인해 주세요.');
-            } else {
-                setVerificationMessage(error || '인증번호 발송에 실패했습니다.');
-            }
-        } finally {
-            setVerificationSending(false);
-        }
-    };
-
-    const handleVerifyCode = async () => {
-        if (!verificationCodeInput) {
-            setVerificationMessage('인증번호를 입력해 주세요.');
-            return;
-        }
-        setVerificationChecking(true);
-        setVerificationMessage('');
-        try {
-            const { success, error } = await verifyCode(signupForm.email, verificationCodeInput);
-            if (success) {
-                setCompanyEmailVerified(true);
-                setVerificationMessage('이메일 인증이 완료되었습니다.');
-            } else {
-                setVerificationMessage(error || '인증번호가 일치하지 않습니다.');
-            }
-        } finally {
-            setVerificationChecking(false);
-        }
-    };
-
     const handleSignupSubmit = async (e) => {
         e.preventDefault();
         if (signupForm.password !== signupForm.confirmPassword) {
@@ -354,10 +304,6 @@ const AgencyLanding = () => {
             }
             if (!signupForm.email) {
                 setSignupError('업체 계정은 이메일 주소가 필수입니다. 지원자 프로필을 이메일로 받기 위해 필요해요.');
-                return;
-            }
-            if (!companyEmailVerified) {
-                setSignupError('이메일 인증을 완료해 주세요.');
                 return;
             }
         }
@@ -932,71 +878,20 @@ const AgencyLanding = () => {
                             {/* 이메일 주소 */}
                             <div className="space-y-1.5">
                                 <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">
-                                    이메일 주소 {accountType === 'company' ? '(필수 · 인증 필요)' : '(선택)'}
+                                    이메일 주소 {accountType === 'company' ? '(필수)' : '(선택)'}
                                 </label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="email"
-                                        placeholder="이메일 주소 입력"
-                                        value={signupForm.email}
-                                        onChange={(e) => {
-                                            setSignupForm({ ...signupForm, email: e.target.value });
-                                            setCompanyEmailVerified(false);
-                                            setVerificationSent(false);
-                                            setVerificationCodeInput('');
-                                            setVerificationMessage('');
-                                        }}
-                                        disabled={accountType === 'company' && companyEmailVerified}
-                                        required={accountType === 'company'}
-                                        className="flex-1 min-w-0 px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner disabled:opacity-60"
-                                    />
-                                    {accountType === 'company' && !companyEmailVerified && (
-                                        <button
-                                            type="button"
-                                            onClick={handleSendVerificationCode}
-                                            disabled={verificationSending}
-                                            className="px-4 py-3 rounded-2xl bg-[#F3E8FF] text-[#9333EA] font-bold text-xs border border-[#E8E0FA] whitespace-nowrap hover:bg-[#E8D5FF] transition-colors disabled:opacity-50"
-                                        >
-                                            {verificationSending ? '발송 중...' : verificationSent ? '재발송' : '인증번호 발송'}
-                                        </button>
-                                    )}
-                                </div>
-
-                                {accountType === 'company' && companyEmailVerified && (
-                                    <p className="text-[11px] text-emerald-600 font-black ml-1 flex items-center gap-1">✓ 이메일 인증 완료</p>
-                                )}
-
-                                {accountType === 'company' && verificationSent && !companyEmailVerified && (
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            inputMode="numeric"
-                                            maxLength={6}
-                                            placeholder="인증번호 6자리"
-                                            value={verificationCodeInput}
-                                            onChange={(e) => setVerificationCodeInput(e.target.value.replace(/[^0-9]/g, ''))}
-                                            className="flex-1 min-w-0 px-4 py-3 rounded-2xl bg-white border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleVerifyCode}
-                                            disabled={verificationChecking}
-                                            className="px-4 py-3 rounded-2xl bg-[#9333EA] text-white font-bold text-xs whitespace-nowrap hover:opacity-90 transition-all disabled:opacity-50"
-                                        >
-                                            {verificationChecking ? '확인 중...' : '확인'}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {verificationMessage && (
-                                    <p className={`text-[10px] font-bold ml-2 ${companyEmailVerified ? 'text-emerald-600' : 'text-[#9CA3AF]'}`}>{verificationMessage}</p>
-                                )}
-
-                                {accountType !== 'company' && (
-                                    <p className="text-[10px] text-[#9CA3AF] font-bold ml-2">※ 프로필 발송 시 확인용 메일이 전송됩니다.</p>
-                                )}
-                                {accountType === 'company' && (
+                                <input
+                                    type="email"
+                                    placeholder="이메일 주소 입력"
+                                    value={signupForm.email}
+                                    onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+                                    required={accountType === 'company'}
+                                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] font-bold text-sm focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-all shadow-inner"
+                                />
+                                {accountType === 'company' ? (
                                     <p className="text-[10px] text-[#9CA3AF] font-bold ml-2">※ 지원자 프로필을 이 이메일로 받게 됩니다. 실제 확인 가능한 주소를 입력해 주세요.</p>
+                                ) : (
+                                    <p className="text-[10px] text-[#9CA3AF] font-bold ml-2">※ 프로필 발송 시 확인용 메일이 전송됩니다.</p>
                                 )}
                             </div>
                             {/* ── 약관 동의 ── */}
