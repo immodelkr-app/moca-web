@@ -930,12 +930,6 @@ const AdminPage = () => {
                 {/* 탭 네비게이션 */}
                 <div className="flex gap-1 mb-8 border-b border-[var(--moca-border)] overflow-x-auto admin-tab-scrollbar whitespace-nowrap pb-0 scroll-smooth">
                     <button
-                        onClick={() => setActiveTab('ai_analytics')}
-                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'ai_analytics' ? 'border-violet-600 text-violet-800 bg-violet-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
-                    >
-                        🤖 AI 마케팅 분석
-                    </button>
-                    <button
                         onClick={() => setActiveTab('users')}
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'users' ? 'border-[var(--moca-primary)] text-[var(--moca-primary)] bg-[var(--moca-primary)]/5' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
                             }`}
@@ -1061,8 +1055,8 @@ const AdminPage = () => {
                         🔔 알림·메시지 센터
                     </button>
                     <button
-                        onClick={() => setActiveTab('ai-marketing')}
-                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'ai-marketing' ? 'border-fuchsia-500 text-fuchsia-700 bg-fuchsia-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                        onClick={() => setActiveTab('ai_analytics')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'ai_analytics' ? 'border-fuchsia-500 text-fuchsia-700 bg-fuchsia-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
                         🤖 AI 마케팅 분석
                     </button>
