@@ -19,7 +19,6 @@ import { fetchPushHistory, sendBroadcastPush, fetchUsersWithoutPushToken, fetchA
 import { fetchMessagesList, createAnnouncementMessage, updateMessage, deleteMessage } from '../services/messageService';
 import { getPointsBalance, getPointsHistory, rewardPoints, deductPoints } from '../lib/imCoreAuth';
 import * as XLSX from 'xlsx';
-import AdminAIAnalytics from './AdminAIAnalytics';
 import AdminCompanyVerification from './AdminCompanyVerification';
 import AdminModelCastings from './AdminModelCastings';
 
@@ -4151,7 +4150,18 @@ const AdminPage = () => {
                 })()}
 
                 {activeTab === 'ai_analytics' && (
-                    <AdminAIAnalytics />
+                    <AdminAIMarketing
+                        stats={{
+                            stats1Day, stats7Days, stats30Days,
+                            totalUsersCount, signupMaleCount, signupFemaleCount,
+                            signupMalePercent, signupFemalePercent,
+                            gradeBreakdown: grades.reduce((acc, g) => {
+                                acc[GRADE_INFO[g]?.label || g] = gradeStats[g] || 0;
+                                return acc;
+                            }, {}),
+                        }}
+                        setSuccessMsg={setSuccessMsg}
+                    />
                 )}
 
                 {activeTab === 'company-verification' && (
