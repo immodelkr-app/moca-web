@@ -683,6 +683,12 @@ const AdminPage = () => {
     const stats7Days = pageViews.filter(v => new Date(v.accessed_at) > sevenDaysAgo).length;
     const stats30Days = pageViews.filter(v => new Date(v.accessed_at) > thirtyDaysAgo).length;
 
+    // 순 방문자(중복 제거, visitor_id 기준) — 페이지뷰와 별개로 집계
+    const countUniqueVisitors = (views) => new Set(views.filter(v => v.visitor_id).map(v => v.visitor_id)).size;
+    const uniqueVisitors1Day = countUniqueVisitors(pageViews.filter(v => new Date(v.accessed_at) > oneDayAgo));
+    const uniqueVisitors7Days = countUniqueVisitors(pageViews.filter(v => new Date(v.accessed_at) > sevenDaysAgo));
+    const uniqueVisitors30Days = countUniqueVisitors(pageViews.filter(v => new Date(v.accessed_at) > thirtyDaysAgo));
+
     // 인기 페이지 랭킹 계산 (최근 30일 기준)
     const recent30DaysViews = pageViews.filter(v => new Date(v.accessed_at) > thirtyDaysAgo);
     const pathCounts = recent30DaysViews.reduce((acc, v) => {
@@ -1425,12 +1431,34 @@ const AdminPage = () => {
 
                 {activeTab === 'stats' && (
                     <div className="animate-fadeIn">
-                        {/* 1일/1주/1달 통계 카드 */}
+                        {/* 순 방문자(중복 제거) 카드 */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                            {[
+                                { label: '오늘 순 방문자 (24h)', value: uniqueVisitors1Day, icon: 'today', color: 'text-blue-500' },
+                                { label: '주간 순 방문자 (7d)', value: uniqueVisitors7Days, icon: 'date_range', color: 'text-purple-500' },
+                                { label: '월간 순 방문자 (30d)', value: uniqueVisitors30Days, icon: 'calendar_month', color: 'text-pink-500' }
+                            ].map((stat, i) => (
+                                <div key={i} className="rounded-2xl border border-[var(--moca-border)] bg-[var(--moca-surface-2)] p-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-10 h-10 rounded-full bg-[var(--moca-surface-2)] flex items-center justify-center">
+                                            <span className={`material-symbols-outlined ${stat.color}`}>{stat.icon}</span>
+                                        </div>
+                                        <h3 className="text-[var(--moca-text-2)] text-sm font-bold tracking-widest">{stat.label}</h3>
+                                    </div>
+                                    <div className="flex items-end gap-2">
+                                        <p className="text-4xl font-black text-[var(--moca-text)]">{stat.value.toLocaleString()}</p>
+                                        <p className="text-[var(--moca-text-3)] text-sm mb-1 pb-0.5">명</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* 1일/1주/1달 페이지뷰(중복 포함) 카드 */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                             {[
-                                { label: '오늘 방문 (24h)', value: stats1Day, icon: 'today', color: 'text-blue-400' },
-                                { label: '주간 방문 (7d)', value: stats7Days, icon: 'date_range', color: 'text-purple-400' },
-                                { label: '월간 방문 (30d)', value: stats30Days, icon: 'calendar_month', color: 'text-pink-400' }
+                                { label: '오늘 페이지뷰 (24h)', value: stats1Day, icon: 'today', color: 'text-blue-400' },
+                                { label: '주간 페이지뷰 (7d)', value: stats7Days, icon: 'date_range', color: 'text-purple-400' },
+                                { label: '월간 페이지뷰 (30d)', value: stats30Days, icon: 'calendar_month', color: 'text-pink-400' }
                             ].map((stat, i) => (
                                 <div key={i} className="rounded-2xl border border-[var(--moca-border)] bg-[var(--moca-surface-2)] p-6">
                                     <div className="flex items-center gap-3 mb-4">
