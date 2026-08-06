@@ -222,12 +222,17 @@ const HomeDashboard = () => {
             {/* ── 4-2. 출석체크 & 참석쿠폰 진행률 ── */}
             <div className="px-6 mb-8">
                 <div className="rounded-3xl bg-gradient-to-br from-[#7C3AED] to-[#4C1D95] p-5 shadow-lg shadow-violet-500/10 border border-white/10">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-white text-[20px]">local_activity</span>
-                            <h3 className="text-white font-black text-sm">출석체크 &amp; 참석쿠폰</h3>
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start gap-2">
+                            <span className="material-symbols-outlined text-white text-[20px] mt-0.5">local_activity</span>
+                            <div>
+                                <h3 className="text-white font-black text-sm leading-none mb-1">출첵 × 모카그램</h3>
+                                <p className="text-white/60 text-[10px] font-bold leading-snug">
+                                    출첵(출석체크+모카그램 업로드) 30일 달성 시<br />원데이클래스 참석쿠폰 획득
+                                </p>
+                            </div>
                         </div>
-                        <span className="text-[10px] font-black text-white/50">누적 {attendance?.validDays ?? 0}일</span>
+                        <span className="text-[10px] font-black text-white/50 flex-shrink-0">누적 {attendance?.validDays ?? 0}일</span>
                     </div>
 
                     {attendanceLoading ? (
