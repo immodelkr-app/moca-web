@@ -194,6 +194,7 @@ const AdminClasses = () => {
         description: '',
         location: '',
         capacity: 20,
+        coupon_capacity: 0,
         image_url: '',
         schedule_type: 'one_time',
         class_date: '',
@@ -227,7 +228,7 @@ const AdminClasses = () => {
     };
 
     const resetForm = () => {
-        setNewClass({ title: '', description: '', location: '', capacity: 20, image_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '' });
+        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '' });
         setFormError('');
         setEditingClassId(null);
         setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -251,6 +252,7 @@ const AdminClasses = () => {
             description: cls.description || '',
             location: cls.location || '',
             capacity: cls.capacity || 20,
+            coupon_capacity: cls.coupon_capacity || 0,
             image_url: cls.image_url || '',
             schedule_type: cls.schedule_type || 'one_time',
             class_date: cls.class_date || '',
@@ -985,6 +987,18 @@ const AdminClasses = () => {
                                             </div>
                                             <input type="range" min="1" max="100" value={newClass.capacity} onChange={e => setNewClass({ ...newClass, capacity: e.target.value })} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-moca-primary" />
                                         </div>
+
+                                        <div className="pt-2">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className="block text-xs font-black text-[#633AE8] uppercase tracking-widest flex items-center gap-1">
+                                                    <span className="material-symbols-outlined text-[14px]">confirmation_number</span>
+                                                    참석쿠폰 전용석 (T/O)
+                                                </label>
+                                                <span className="text-sm font-black text-[#633AE8]">{newClass.coupon_capacity}석</span>
+                                            </div>
+                                            <input type="range" min="0" max={newClass.capacity} value={Math.min(newClass.coupon_capacity, newClass.capacity)} onChange={e => setNewClass({ ...newClass, coupon_capacity: e.target.value })} className="w-full h-1.5 bg-purple-100 rounded-lg appearance-none cursor-pointer accent-[#633AE8]" />
+                                            <p className="text-[10px] text-slate-400 font-bold mt-1.5">출석체크 참석쿠폰 소지자가 우선 확보하는 좌석 수 (수강 정원과 별도 관리)</p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1116,6 +1130,12 @@ const AdminClasses = () => {
                                 <p className="text-[10px] font-black text-red-400/60 mb-1 uppercase tracking-tighter">취소</p>
                                 <p className="text-xl font-black text-red-400">{applicants.filter(a => a.approval_status === 'cancelled').length}명</p>
                             </div>
+                            <div className="bg-purple-400/10 border border-purple-400/20 p-4 rounded-3xl text-center min-w-[90px]">
+                                <p className="text-[10px] font-black text-purple-200 mb-1 uppercase tracking-tighter">쿠폰신청</p>
+                                <p className="text-xl font-black text-purple-200">
+                                    {applicants.filter(a => a.is_coupon_applied && a.approval_status !== 'cancelled').length} / {selectedClass.coupon_capacity || 0}
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -1155,7 +1175,15 @@ const AdminClasses = () => {
                                                             {(app.users?.name || app.users?.nickname || '?')[0]}
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-black text-[var(--moca-text)]">{app.users?.name || app.users?.nickname}</p>
+                                                            <p className="text-sm font-black text-[var(--moca-text)] flex items-center gap-1.5">
+                                                                {app.users?.name || app.users?.nickname}
+                                                                {app.is_coupon_applied && (
+                                                                    <span className="px-1.5 py-0.5 rounded-full bg-[#633AE8]/10 text-[#633AE8] text-[9px] font-black flex items-center gap-0.5">
+                                                                        <span className="material-symbols-outlined text-[10px]">confirmation_number</span>
+                                                                        쿠폰
+                                                                    </span>
+                                                                )}
+                                                            </p>
                                                             <p className="text-[11px] font-bold text-[var(--moca-text-3)]">{app.users?.phone || app.user_phone}</p>
                                                         </div>
                                                     </div>

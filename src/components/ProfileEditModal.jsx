@@ -3,6 +3,7 @@ import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { getUser, updateUserProfile, updateMasterUserIdInSupabase } from '../services/userService';
 import { isPasskeySupported, registerPasskey } from '../services/passkeyService';
 import { getPointsBalance, getPointsHistory, syncUserWithCore } from '../lib/imCoreAuth';
+import { fetchMyCoupons } from '../services/attendanceService';
 
 
 const USER_KEY = 'i_model_user';
@@ -24,6 +25,10 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
     const [pointsHistory, setPointsHistory] = useState([]);
     const [pointsLoading, setPointsLoading] = useState(false);
     const [pointsError, setPointsError] = useState(false);
+
+    // 참석쿠폰 (출석체크 + 모카그램 30일 리워드)
+    const [coupons, setCoupons] = useState([]);
+    const [couponsLoading, setCouponsLoading] = useState(false);
 
     // 폼 상태
     const [formData, setFormData] = useState({
@@ -108,6 +113,14 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                     marketing_consent: currentUser.marketing_consent || false,
                     terms_consent: currentUser.terms_consent || false,
                 });
+
+                // 참석쿠폰 조회
+                if (currentUser.id) {
+                    setCouponsLoading(true);
+                    fetchMyCoupons(currentUser.id)
+                        .then(setCoupons)
+                        .finally(() => setCouponsLoading(false));
+                }
 
                 // 포인트 정보 조회/연동
                 if (currentUser.master_user_id) {
@@ -489,6 +502,49 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                         )}
                                     </div>
                                 </>
+                            )}
+                        </div>
+
+                        {/* ── 🎟️ 참석쿠폰 (출석체크+모카그램 리워드) ── */}
+                        <div className="pt-4 border-t border-[#E8E0FA] mt-2">
+                            <p className="text-[#1F1235] text-[13px] font-black uppercase tracking-wider mb-3 flex items-center gap-1">
+                                🎟️ 원데이클래스 참석쿠폰
+                            </p>
+
+                            {couponsLoading ? (
+                                <div className="h-16 rounded-2xl bg-purple-50/50 animate-pulse" />
+                            ) : coupons.length === 0 ? (
+                                <div className="flex items-center gap-3 py-4 px-4 rounded-2xl bg-gray-50 border border-gray-100">
+                                    <span className="material-symbols-outlined text-[22px] text-gray-300">confirmation_number</span>
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-400">보유한 쿠폰이 없습니다</p>
+                                        <p className="text-[11px] text-gray-300 mt-0.5">출석체크 + 모카그램 업로드로 모아보세요</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {coupons.map(c => (
+                                        <div
+                                            key={c.id}
+                                            className={`flex items-center justify-between p-4 rounded-2xl border ${c.status === 'unused' ? 'bg-[#F3EEFF]/80 border-[#E1D3FD]' : 'bg-gray-50 border-gray-100'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${c.status === 'unused' ? 'bg-[#633AE8]' : 'bg-gray-300'}`}>
+                                                    <span className="material-symbols-outlined text-[18px] text-white">confirmation_number</span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-black text-[#1F1235]">원데이클래스 참석쿠폰</p>
+                                                    <p className="text-[10px] text-[#9CA3AF] font-medium">
+                                                        발급일 {c.issued_at ? new Date(c.issued_at).toLocaleDateString('ko-KR') : '-'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black ${c.status === 'unused' ? 'bg-[#633AE8] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                                {c.status === 'unused' ? '사용가능' : '사용완료'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
 

@@ -29,6 +29,7 @@ export const createClass = async (classData, pricingArray) => {
             description: classData.description,
             location: classData.location,
             capacity: parseInt(classData.capacity, 10) || 20,
+            coupon_capacity: parseInt(classData.coupon_capacity, 10) || 0,
             image_url: classData.image_url || null,
             schedule_type: classData.schedule_type || 'one_time',
             class_date: classData.class_date, // 텍스트 형태 (4월 2일 1:30 등)
@@ -77,6 +78,7 @@ export const updateClass = async (classId, classData, pricingArray) => {
             description: classData.description,
             location: classData.location,
             capacity: parseInt(classData.capacity, 10) || 20,
+            coupon_capacity: parseInt(classData.coupon_capacity, 10) || 0,
             image_url: classData.image_url || null,
             schedule_type: classData.schedule_type || 'one_time',
             class_date: classData.class_date,

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser, getUserGrade, syncUserGrade } from '../services/userService';
 import { fetchMessagesList } from '../services/messageService';
+import { fetchAttendanceProgress, submitAttendanceCheck } from '../services/attendanceService';
 import ProfileEditModal from './ProfileEditModal';
 
 const TOUR_ITEMS = [
@@ -33,6 +34,19 @@ const HomeDashboard = () => {
     const [ticker, setTicker] = useState('');
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
+    // 출석체크 & 참석쿠폰 진행률
+    const [attendance, setAttendance] = useState(null);
+    const [attendanceLoading, setAttendanceLoading] = useState(true);
+    const [checkingIn, setCheckingIn] = useState(false);
+
+    const loadAttendance = async () => {
+        if (!user?.id || !user?.nickname) { setAttendanceLoading(false); return; }
+        setAttendanceLoading(true);
+        const progress = await fetchAttendanceProgress(user.id, user.nickname);
+        setAttendance(progress);
+        setAttendanceLoading(false);
+    };
+
     useEffect(() => {
         syncUserGrade().then(() => {
             setGrade(getUserGrade() || 'SILVER');
@@ -47,7 +61,26 @@ const HomeDashboard = () => {
                 }
             }
         }).catch(() => { });
+
+        loadAttendance();
     }, []);
+
+    const handleAttendanceCheck = async () => {
+        if (!user?.id || checkingIn || attendance?.checkedToday) return;
+        setCheckingIn(true);
+        const { error } = await submitAttendanceCheck(user.id, user.nickname);
+        if (!error) await loadAttendance();
+        setCheckingIn(false);
+    };
+
+    const getEncourageMessage = (p) => {
+        if (!p) return '';
+        if (p.remaining === 0) return '🎉 30일 달성! 곧 담당자가 원데이클래스 참석쿠폰을 발급해드려요.';
+        if (p.checkedToday && !p.uploadedToday) return `오늘 모카그램까지 업로드하면 유효 출석일 1일 추가! (D-${p.remaining})`;
+        if (p.checkedToday && p.uploadedToday) return `오늘 출석 완료! 참석쿠폰까지 D-${p.remaining}`;
+        if (p.remaining <= 5) return `참석쿠폰까지 단 ${p.remaining}일 남았어요! 오늘도 출석체크 잊지 마세요 🔥`;
+        return `출석체크 + 모카그램 업로드하면 원데이클래스 참석쿠폰이 생겨요 (D-${p.remaining})`;
+    };
 
     // 공지 롤링 타이머 (3.5초마다 슬라이딩 전환)
     useEffect(() => {
@@ -184,6 +217,45 @@ const HomeDashboard = () => {
                     </div>
                     <span className="material-symbols-outlined text-white/50 text-[20px] flex-shrink-0">chevron_right</span>
                 </button>
+            </div>
+
+            {/* ── 4-2. 출석체크 & 참석쿠폰 진행률 ── */}
+            <div className="px-6 mb-8">
+                <div className="rounded-3xl bg-gradient-to-br from-[#7C3AED] to-[#4C1D95] p-5 shadow-lg shadow-violet-500/10 border border-white/10">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-white text-[20px]">local_activity</span>
+                            <h3 className="text-white font-black text-sm">출석체크 &amp; 참석쿠폰</h3>
+                        </div>
+                        <span className="text-[10px] font-black text-white/50">누적 {attendance?.validDays ?? 0}일</span>
+                    </div>
+
+                    {attendanceLoading ? (
+                        <div className="h-[72px] rounded-2xl bg-white/10 animate-pulse" />
+                    ) : (
+                        <>
+                            <p className="text-white/80 text-[11px] font-bold mb-3 leading-relaxed">
+                                {getEncourageMessage(attendance)}
+                            </p>
+                            <div className="w-full h-2 rounded-full bg-white/15 overflow-hidden mb-3">
+                                <div
+                                    className="h-full bg-[#C4B5FD] rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.min(100, ((attendance?.progress || 0) / 30) * 100)}%` }}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-white text-xs font-black">{attendance?.progress ?? 0}/30일 · D-{attendance?.remaining ?? 30}</span>
+                                <button
+                                    onClick={handleAttendanceCheck}
+                                    disabled={checkingIn || attendance?.checkedToday}
+                                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all active:scale-95 ${attendance?.checkedToday ? 'bg-white/10 text-white/50' : 'bg-white text-[#6D28D9]'}`}
+                                >
+                                    {attendance?.checkedToday ? '오늘 출석완료 ✓' : (checkingIn ? '처리 중...' : '출석체크')}
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* ── 5. 모델 투어 관리 (정갈한 소프트 파스텔 카드) ── */}

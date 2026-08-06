@@ -21,6 +21,7 @@ import { getPointsBalance, getPointsHistory, rewardPoints, deductPoints } from '
 import * as XLSX from 'xlsx';
 import AdminCompanyVerification from './AdminCompanyVerification';
 import AdminModelCastings from './AdminModelCastings';
+import AdminAttendanceCoupons from './AdminAttendanceCoupons';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
 
@@ -1076,6 +1077,12 @@ const AdminPage = () => {
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'model-castings' ? 'border-violet-500 text-violet-700 bg-violet-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
                         📋 모델캐스팅 모니터링
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('attendance-coupons')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'attendance-coupons' ? 'border-violet-500 text-violet-700 bg-violet-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                    >
+                        🎟️ 출석쿠폰 관리
                     </button>
 
                 </div>
@@ -4198,6 +4205,10 @@ const AdminPage = () => {
 
                 {activeTab === 'model-castings' && (
                     <AdminModelCastings />
+                )}
+
+                {activeTab === 'attendance-coupons' && (
+                    <AdminAttendanceCoupons />
                 )}
 
                 {selectedUserForDetail && (

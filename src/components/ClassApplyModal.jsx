@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
+import { fetchMyUnusedCoupons, fetchClassCouponUsageCount, markCouponUsed } from '../services/attendanceService';
 
 const GRADE_EMOJI = {
     GUEST: '👤', MEMBER: '👤', SILVER: '🤍', GOLD: '👑', IMODEL: '🌸', VIP: '💎', 전속모델: '💎'
@@ -11,12 +12,26 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
     const [submitting, setSubmitting] = useState(false);
     const [done, setDone] = useState(false);
     const [error, setError] = useState('');
+    const [appliedWithCoupon, setAppliedWithCoupon] = useState(false);
+
+    // 참석쿠폰
+    const [myCoupons, setMyCoupons] = useState([]);
+    const [couponUsedCount, setCouponUsedCount] = useState(0);
+    const couponCapacity = cls?.coupon_capacity || 0;
+    const couponSeatAvailable = couponUsedCount < couponCapacity;
+    const hasUnusedCoupon = myCoupons.length > 0;
+
+    useEffect(() => {
+        if (!currentUser?.id || !cls?.id) return;
+        fetchMyUnusedCoupons(currentUser.id).then(setMyCoupons);
+        fetchClassCouponUsageCount(cls.id).then(setCouponUsedCount);
+    }, [currentUser?.id, cls?.id]);
 
     const gradeKey = (currentUser?.grade || 'MEMBER').toUpperCase();
     const gradeEmoji = GRADE_EMOJI[gradeKey] || '👤';
     const gradeDisplay = myPriceInfo?.grade_label || currentUser?.grade || 'MEMBER';
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (useCoupon = false) => {
         if (!agreed1 || !agreed2) {
             setError('아래 두 항목 모두 동의해야 신청이 가능합니다.');
             return;
@@ -25,6 +40,8 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
         setSubmitting(true);
 
         try {
+            const coupon = useCoupon ? myCoupons[0] : null;
+
             // Upsert: 중복 방지 (class_id + user_id unique)
             const { error: insertErr } = await supabase
                 .from('class_applications')
@@ -32,15 +49,22 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                     class_id: cls.id,
                     user_id: currentUser.id,
                     grade_label: gradeDisplay,
-                    applied_price: myPrice,
-                    payment_type: 'pending_confirm',
+                    applied_price: useCoupon ? 0 : myPrice,
+                    payment_type: useCoupon ? 'coupon' : 'pending_confirm',
                     payment_status: 'pending',
                     approval_status: 'pending',
                     user_phone: currentUser.phone || '',
+                    is_coupon_applied: !!useCoupon,
+                    coupon_id: coupon?.id || null,
                 }, { onConflict: 'class_id,user_id', ignoreDuplicates: false });
 
             if (insertErr) throw insertErr;
 
+            if (useCoupon && coupon) {
+                await markCouponUsed(coupon.id, cls.id);
+            }
+
+            setAppliedWithCoupon(!!useCoupon);
             setDone(true);
             if (onSuccess) onSuccess();
         } catch (err) {
@@ -63,7 +87,11 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                         </div>
                         <h3 className="text-2xl font-black text-[var(--moca-text)] mb-3">신청 완료!</h3>
                         <p className="text-[var(--moca-text-3)] text-sm font-bold leading-relaxed mb-8">
-                            수강 신청서가 접수되었습니다.<br />
+                            {appliedWithCoupon ? (
+                                <>참석쿠폰으로 신청서가 접수되었습니다.<br /></>
+                            ) : (
+                                <>수강 신청서가 접수되었습니다.<br /></>
+                            )}
                             담당자 검토 후 <span className="text-indigo-600 font-black">카카오톡 또는 문자</span>로<br />
                             수강 참여 및 승인 안내를 드립니다. (영업일 기준 1일 내)
                         </p>
@@ -166,33 +194,64 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                             </label>
                         </div>
 
+                        {hasUnusedCoupon && (
+                            <div className={`flex items-center gap-3 p-4 rounded-2xl mb-4 border ${couponSeatAvailable ? 'bg-[#F3EEFF] border-[#E1D3FD]' : 'bg-gray-50 border-gray-100'}`}>
+                                <span className="material-symbols-outlined text-[22px] text-[#633AE8]">confirmation_number</span>
+                                <div className="flex-1">
+                                    <p className="text-xs font-black text-[#1F1235]">보유 참석쿠폰 {myCoupons.length}장</p>
+                                    <p className="text-[10px] font-bold text-[#9CA3AF] mt-0.5">
+                                        {couponSeatAvailable
+                                            ? `이 클래스는 쿠폰 전용석 ${couponCapacity - couponUsedCount}석 남았어요`
+                                            : '이 클래스의 쿠폰 전용석이 모두 마감되었습니다'}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {error && (
                             <p className="text-red-500 text-xs font-black text-center mb-4 bg-red-50 p-3 rounded-2xl border border-red-100">
                                 {error}
                             </p>
                         )}
 
-                        <button
-                            onClick={handleSubmit}
-                            disabled={submitting || !agreed1 || !agreed2}
-                            className={`w-full py-4 rounded-[24px] font-black text-base shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2
-                                ${!agreed1 || !agreed2
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-indigo-600 text-white shadow-indigo-500/20 hover:bg-indigo-700'
-                                }`}
-                        >
-                            {submitting ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                                    신청 중...
-                                </>
-                            ) : (
-                                <>
-                                    <span className="material-symbols-outlined text-[20px]">send</span>
-                                    수강 신청서 제출하기
-                                </>
+                        <div className="space-y-2.5">
+                            <button
+                                onClick={() => handleSubmit(false)}
+                                disabled={submitting || !agreed1 || !agreed2}
+                                className={`w-full py-4 rounded-[24px] font-black text-base shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2
+                                    ${!agreed1 || !agreed2
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-indigo-600 text-white shadow-indigo-500/20 hover:bg-indigo-700'
+                                    }`}
+                            >
+                                {submitting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                        신청 중...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-[20px]">send</span>
+                                        일반 신청하기
+                                    </>
+                                )}
+                            </button>
+
+                            {hasUnusedCoupon && (
+                                <button
+                                    onClick={() => handleSubmit(true)}
+                                    disabled={submitting || !agreed1 || !agreed2 || !couponSeatAvailable}
+                                    className={`w-full py-4 rounded-[24px] font-black text-base shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2
+                                        ${!agreed1 || !agreed2 || !couponSeatAvailable
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            : 'bg-[#633AE8] text-white shadow-[#633AE8]/20 hover:bg-[#5327c9]'
+                                        }`}
+                                >
+                                    <span className="material-symbols-outlined text-[20px]">confirmation_number</span>
+                                    {couponSeatAvailable ? '쿠폰으로 신청하기' : '쿠폰석 마감'}
+                                </button>
                             )}
-                        </button>
+                        </div>
 
                         <p className="text-[10px] text-center text-[var(--moca-text-3)] font-medium mt-3 leading-relaxed opacity-60">
                             * 신청 즉시 담당자에게 알림이 전달되며,<br />영업일 기준 1일 내로 확인 및 승인 안내를 드립니다.
