@@ -3387,7 +3387,7 @@ const AdminPage = () => {
                                                             sent++;
                                                         } catch (e) { console.warn('이달의 베스트 알림톡 발송 에러:', e); }
                                                         
-                                                        await setMarketingPick(post.id, true);
+                                                        await setMarketingPick(post.id, true, post.user_nickname);
                                                         setCertPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_marketing_pick: true } : p));
                                                     }
                                                 }
@@ -3528,7 +3528,7 @@ const AdminPage = () => {
                                                         {/* 모카베스트 PICK */}
                                                         <button onClick={async () => {
                                                             const newPick = !post.is_marketing_pick;
-                                                            await setMarketingPick(post.id, newPick);
+                                                            await setMarketingPick(post.id, newPick, post.user_nickname);
                                                             setCertPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_marketing_pick: newPick } : p));
                                                             if (newPick) {
                                                                 const userInfo = users.find(u => u.nickname === post.user_nickname || u.name === post.user_nickname);

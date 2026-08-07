@@ -6,6 +6,7 @@ const LOCAL_POSTS_KEY = 'cert_posts';
 const LOCAL_LIKES_KEY = 'cert_likes';
 const LOCAL_COMMENTS_KEY = 'cert_comments';
 const UPLOAD_POINTS = 100;
+const BEST_PICK_POINTS = 500;
 
 // ─────────────────────────────────────────────
 //  업로드 기본 포인트 하루 1회 상한 체크
@@ -352,19 +353,30 @@ export const setHotStatus = async (postId, isHot) => {
     }
 };
 
-export const setMarketingPick = async (postId, isPick, pickNote = '') => {
+/**
+ * 모카베스트 PICK 지정/해제. 지정 시(isPick=true) 500P 통합 포인트 보너스 지급.
+ */
+export const setMarketingPick = async (postId, isPick, userNickname, pickNote = '') => {
     if (isSupabaseEnabled()) {
         const { error } = await supabase
             .from('certification_posts')
             .update({ is_marketing_pick: isPick, pick_note: pickNote })
             .eq('id', postId);
-        if (error) console.error('setMarketingPick error:', error);
+        if (error) {
+            console.error('setMarketingPick error:', error);
+            return;
+        }
+    } else {
+        // localStorage fallback
+        const raw = localStorage.getItem(LOCAL_POSTS_KEY);
+        if (raw) {
+            const posts = JSON.parse(raw).map(p => p.id === postId ? { ...p, is_marketing_pick: isPick, pick_note: pickNote } : p);
+            localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
+        }
     }
-    // localStorage fallback
-    const raw = localStorage.getItem(LOCAL_POSTS_KEY);
-    if (raw) {
-        const posts = JSON.parse(raw).map(p => p.id === postId ? { ...p, is_marketing_pick: isPick, pick_note: pickNote } : p);
-        localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
+
+    if (isPick && userNickname) {
+        grantIntegratedPoints(userNickname, BEST_PICK_POINTS, '모카베스트 PICK 선정 보너스');
     }
 };
 
@@ -505,40 +517,6 @@ export const deleteComment = async (commentId) => {
     if (raw) {
         const comments = JSON.parse(raw).filter(c => c.id !== commentId);
         localStorage.setItem(LOCAL_COMMENTS_KEY, JSON.stringify(comments));
-    }
-};
-
-/**
- * 김대표 👑 BEST 픽 선정/해제 및 보너스 포인트 연동 (안 B 기본 500P, 유동 수정 가능)
- * @param {string} postId 
- * @param {boolean} currentStatus 
- * @param {string} userNickname 
- * @param {number} rewardPoint - 기본 500P (유동적 변경 가능)
- */
-export const toggleBestPick = async (postId, currentStatus, userNickname, rewardPoint = 500) => {
-    const newPickStatus = !currentStatus;
-    if (isSupabaseEnabled()) {
-        const { error } = await supabase
-            .from('certification_posts')
-            .update({ is_best_pick: newPickStatus })
-            .eq('id', postId);
-
-        if (!error && newPickStatus && userNickname) {
-            await grantIntegratedPoints(userNickname, rewardPoint, '김대표 👑 BEST 픽 선정 보너스');
-        }
-        return { success: !error, isPicked: newPickStatus };
-    } else {
-        const raw = localStorage.getItem(LOCAL_POSTS_KEY);
-        const posts = raw ? JSON.parse(raw) : [];
-        const target = posts.find(p => p.id === postId);
-        if (target) {
-            target.is_best_pick = newPickStatus;
-            localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
-            if (newPickStatus && userNickname) {
-                await grantIntegratedPoints(userNickname, rewardPoint, '김대표 👑 BEST 픽 선정 보너스');
-            }
-        }
-        return { success: true, isPicked: newPickStatus };
     }
 };
 
