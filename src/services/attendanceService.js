@@ -1,9 +1,9 @@
 /**
  * attendanceService.js
- * 출석체크 + 모카그램 업로드 기반 "참석쿠폰" 서비스
+ * 출석체크 + 모카그램 업로드 기반 "참석 프리패스" 서비스
  *
  * 규칙: 하루 출석체크 + 모카그램 업로드를 모두 한 날 = "유효 출석일"
- *       유효 출석일 누적 30일 도달 시 어드민이 확인 후 쿠폰 수동 발급
+ *       유효 출석일 누적 30일 도달 시 어드민이 확인 후 프리패스 수동 발급
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 
@@ -97,8 +97,8 @@ const fetchCertDates = async (userNickname) => {
 /**
  * 유저의 출석 진행 상황 계산
  * validDays: 누적 유효 출석일(전체 기간)
- * progress: 현재 사이클(마지막 쿠폰 발급 이후) 누적 유효 출석일
- * remaining: 다음 쿠폰까지 남은 일수
+ * progress: 현재 사이클(마지막 프리패스 발급 이후) 누적 유효 출석일
+ * remaining: 다음 프리패스까지 남은 일수
  */
 export const fetchAttendanceProgress = async (userId, userNickname) => {
     if (!isSupabaseEnabled() || !userId || !userNickname) {
@@ -133,7 +133,7 @@ export const fetchAttendanceProgress = async (userId, userNickname) => {
 };
 
 // ─────────────────────────────────────────────
-//  내 쿠폰
+//  내 프리패스
 // ─────────────────────────────────────────────
 
 export const fetchMyCoupons = async (userId) => {
@@ -156,11 +156,11 @@ export const fetchMyUnusedCoupons = async (userId) => {
 };
 
 // ─────────────────────────────────────────────
-//  클래스 신청 시 쿠폰 사용
+//  클래스 신청 시 프리패스 사용
 // ─────────────────────────────────────────────
 
 /**
- * 특정 클래스의 쿠폰 신청 인원(취소 제외) 조회 - 쿠폰 T/O 마감 체크용
+ * 특정 클래스의 프리패스 신청 인원(취소 제외) 조회 - 프리패스 T/O 마감 체크용
  */
 export const fetchClassCouponUsageCount = async (classId) => {
     if (!isSupabaseEnabled()) return 0;
@@ -178,21 +178,21 @@ export const fetchClassCouponUsageCount = async (classId) => {
 };
 
 /**
- * 쿠폰 사용 처리 (클래스 신청과 함께 호출)
+ * 프리패스 사용 처리 (클래스 신청과 함께 호출)
  */
 export const markCouponUsed = async (couponId, classId) => {
-    if (!isSupabaseEnabled() || !couponId) return { error: new Error('쿠폰 정보가 없습니다') };
+    if (!isSupabaseEnabled() || !couponId) return { error: new Error('프리패스 정보가 없습니다') };
     const { error } = await supabase
         .from('attendance_coupons')
         .update({ status: 'used', used_at: new Date().toISOString(), used_class_id: classId })
         .eq('id', couponId)
-        .eq('status', 'unused'); // 이미 사용된 쿠폰 재사용 방지
+        .eq('status', 'unused'); // 이미 사용된 프리패스 재사용 방지
     if (error) console.error('[markCouponUsed] error:', error);
     return { error };
 };
 
 // ─────────────────────────────────────────────
-//  어드민: 30일 도달자 조회 및 쿠폰 발급
+//  어드민: 30일 도달자 조회 및 프리패스 발급
 // ─────────────────────────────────────────────
 
 /**
@@ -231,7 +231,7 @@ export const fetchAttendanceCandidates = async () => {
         certsByNickname[r.user_nickname].add(getKSTDateStr(new Date(r.created_at)));
     });
 
-    // 유저별 발급된 쿠폰 수
+    // 유저별 발급된 프리패스 수
     const issuedCountByUser = {};
     (couponsRes.data || []).forEach(r => {
         issuedCountByUser[r.user_id] = (issuedCountByUser[r.user_id] || 0) + 1;
@@ -252,7 +252,7 @@ export const fetchAttendanceCandidates = async () => {
 };
 
 /**
- * 쿠폰 발급 (어드민)
+ * 프리패스 발급 (어드민)
  */
 export const issueCoupon = async (userId, userNickname, issuedBy = '') => {
     if (!isSupabaseEnabled() || !userId) return { error: new Error('유저 정보가 없습니다') };
@@ -266,7 +266,7 @@ export const issueCoupon = async (userId, userNickname, issuedBy = '') => {
 };
 
 /**
- * 전체 쿠폰 발급/사용 이력 (어드민)
+ * 전체 프리패스 발급/사용 이력 (어드민)
  */
 export const fetchAllCoupons = async () => {
     if (!isSupabaseEnabled()) return { data: [], error: null };

@@ -16,7 +16,7 @@ const AdminAttendanceCoupons = () => {
             fetchAllCoupons(),
         ]);
         if (candErr) setError('발급 대상자 조회 중 오류: ' + (candErr.message || String(candErr)));
-        else if (couponErr) setError('쿠폰 이력 조회 중 오류: ' + (couponErr.message || String(couponErr)));
+        else if (couponErr) setError('프리패스 이력 조회 중 오류: ' + (couponErr.message || String(couponErr)));
         setCandidates(candidateData || []);
         setCoupons(couponData || []);
         setLoading(false);
@@ -31,12 +31,12 @@ const AdminAttendanceCoupons = () => {
 
     const handleIssue = async (candidate) => {
         const name = candidate.name || candidate.nickname;
-        if (!window.confirm(`${name}님에게 원데이클래스 참석쿠폰 1장을 발급하시겠습니까?\n(누적 유효출석 ${candidate.progress}일 기준)`)) return;
+        if (!window.confirm(`${name}님에게 원데이클래스 참석 프리패스 1장을 발급하시겠습니까?\n(누적 유효출석 ${candidate.progress}일 기준)`)) return;
         setIssuingId(candidate.id);
         try {
             const { error: issueErr } = await issueCoupon(candidate.id, candidate.nickname, '어드민 수동발급');
             if (issueErr) throw issueErr;
-            showSuccess(`✅ ${name}님에게 쿠폰이 발급되었습니다.`);
+            showSuccess(`✅ ${name}님에게 참석 프리패스가 발급되었습니다.`);
             await loadAll();
         } catch (err) {
             alert('발급 중 오류: ' + (err.message || String(err)));
@@ -54,9 +54,9 @@ const AdminAttendanceCoupons = () => {
                         <span className="material-symbols-outlined text-[#633AE8] text-2xl font-black">confirmation_number</span>
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black text-[var(--moca-text)] tracking-tight">출석체크 참석쿠폰 관리</h2>
+                        <h2 className="text-2xl font-black text-[var(--moca-text)] tracking-tight">출석체크 참석 프리패스 관리</h2>
                         <p className="text-[var(--moca-text-3)] text-xs font-bold leading-none mt-1.5 opacity-70">
-                            출석체크 + 모카그램 업로드 누적 {COUPON_GOAL_DAYS}일 달성자 확인 및 쿠폰 발급
+                            출석체크 + 모카그램 업로드 누적 {COUPON_GOAL_DAYS}일 달성자 확인 및 프리패스 발급
                         </p>
                     </div>
                 </div>
@@ -77,7 +77,7 @@ const AdminAttendanceCoupons = () => {
                 <div className="p-6 border-b border-[var(--moca-border)] flex items-center justify-between">
                     <h3 className="font-black text-[var(--moca-text)] flex items-center gap-2">
                         <span className="material-symbols-outlined text-[#633AE8] text-[18px]">military_tech</span>
-                        쿠폰 발급 대상자 ({candidates.length}명)
+                        프리패스 발급 대상자 ({candidates.length}명)
                     </h3>
                 </div>
                 <div className="p-6 overflow-x-auto">
@@ -130,7 +130,7 @@ const AdminAttendanceCoupons = () => {
                                                 disabled={issuingId === c.id}
                                                 className="px-4 py-2 rounded-xl text-[11px] font-black bg-[#633AE8] text-white hover:bg-[#5327c9] transition-all shadow-lg shadow-[#633AE8]/20 disabled:opacity-50"
                                             >
-                                                {issuingId === c.id ? '처리 중...' : '쿠폰 발급'}
+                                                {issuingId === c.id ? '처리 중...' : '프리패스 발급'}
                                             </button>
                                         </td>
                                     </tr>
@@ -146,7 +146,7 @@ const AdminAttendanceCoupons = () => {
                 <div className="p-6 border-b border-[var(--moca-border)]">
                     <h3 className="font-black text-[var(--moca-text)] flex items-center gap-2">
                         <span className="material-symbols-outlined text-[var(--moca-text-3)] text-[18px]">history</span>
-                        전체 쿠폰 이력 ({coupons.length}건)
+                        전체 프리패스 이력 ({coupons.length}건)
                     </h3>
                 </div>
                 <div className="p-6 overflow-x-auto">
@@ -155,7 +155,7 @@ const AdminAttendanceCoupons = () => {
                     ) : coupons.length === 0 ? (
                         <div className="py-16 text-center">
                             <span className="material-symbols-outlined text-5xl text-gray-200 block mb-3">inbox</span>
-                            <p className="text-[var(--moca-text-3)] font-black">발급된 쿠폰이 없습니다</p>
+                            <p className="text-[var(--moca-text-3)] font-black">발급된 프리패스가 없습니다</p>
                         </div>
                     ) : (
                         <table className="w-full min-w-[700px]">

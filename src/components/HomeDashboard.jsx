@@ -34,7 +34,7 @@ const HomeDashboard = () => {
     const [ticker, setTicker] = useState('');
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-    // 출석체크 & 참석쿠폰 진행률
+    // 출석체크 & 참석 프리패스 진행률
     const [attendance, setAttendance] = useState(null);
     const [attendanceLoading, setAttendanceLoading] = useState(true);
     const [checkingIn, setCheckingIn] = useState(false);
@@ -75,11 +75,11 @@ const HomeDashboard = () => {
 
     const getEncourageMessage = (p) => {
         if (!p) return '';
-        if (p.remaining === 0) return '🎉 30일 달성! 곧 담당자가 원데이클래스 참석쿠폰을 발급해드려요.';
+        if (p.remaining === 0) return '🎉 30일 달성! 곧 담당자가 원데이클래스 참석 프리패스를 발급해드려요.';
         if (p.checkedToday && !p.uploadedToday) return `오늘 모카그램까지 업로드하면 유효 출석일 1일 추가! (D-${p.remaining})`;
-        if (p.checkedToday && p.uploadedToday) return `오늘 출석 완료! 참석쿠폰까지 D-${p.remaining}`;
-        if (p.remaining <= 5) return `참석쿠폰까지 단 ${p.remaining}일 남았어요! 오늘도 출석체크 잊지 마세요 🔥`;
-        return `출석체크 + 모카그램 업로드하면 원데이클래스 참석쿠폰이 생겨요 (D-${p.remaining})`;
+        if (p.checkedToday && p.uploadedToday) return `오늘 출석 완료! 참석 프리패스까지 D-${p.remaining}`;
+        if (p.remaining <= 5) return `참석 프리패스까지 단 ${p.remaining}일 남았어요! 오늘도 출석체크 잊지 마세요 🔥`;
+        return `출석체크 + 모카그램 업로드하면 원데이클래스 참석 프리패스가 생겨요 (D-${p.remaining})`;
     };
 
     // 공지 롤링 타이머 (3.5초마다 슬라이딩 전환)
@@ -219,7 +219,7 @@ const HomeDashboard = () => {
                 </button>
             </div>
 
-            {/* ── 4-2. 출석체크 & 참석쿠폰 진행률 ── */}
+            {/* ── 4-2. 출석체크 & 참석 프리패스 진행률 ── */}
             <div className="px-6 mb-8">
                 <div className="rounded-3xl bg-gradient-to-br from-[#7C3AED] to-[#4C1D95] p-5 shadow-lg shadow-violet-500/10 border border-white/10">
                     <div className="flex items-start justify-between mb-3">
@@ -227,9 +227,6 @@ const HomeDashboard = () => {
                             <span className="material-symbols-outlined text-white text-[20px] mt-0.5">local_activity</span>
                             <div>
                                 <h3 className="text-white font-black text-sm leading-none mb-1">출첵 × 모카그램</h3>
-                                <p className="text-white/60 text-[10px] font-bold leading-snug">
-                                    출첵(출석체크+모카그램 업로드) 30일 달성 시<br />원데이클래스 참석쿠폰 획득
-                                </p>
                             </div>
                         </div>
                         <span className="text-[10px] font-black text-white/50 flex-shrink-0">누적 {attendance?.validDays ?? 0}일</span>

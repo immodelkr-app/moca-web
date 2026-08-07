@@ -992,12 +992,12 @@ const AdminClasses = () => {
                                             <div className="flex justify-between items-center mb-2">
                                                 <label className="block text-xs font-black text-[#633AE8] uppercase tracking-widest flex items-center gap-1">
                                                     <span className="material-symbols-outlined text-[14px]">confirmation_number</span>
-                                                    참석쿠폰 전용석 (T/O)
+                                                    참석 프리패스 전용석 (T/O)
                                                 </label>
                                                 <span className="text-sm font-black text-[#633AE8]">{newClass.coupon_capacity}석</span>
                                             </div>
                                             <input type="range" min="0" max={newClass.capacity} value={Math.min(newClass.coupon_capacity, newClass.capacity)} onChange={e => setNewClass({ ...newClass, coupon_capacity: e.target.value })} className="w-full h-1.5 bg-purple-100 rounded-lg appearance-none cursor-pointer accent-[#633AE8]" />
-                                            <p className="text-[10px] text-slate-400 font-bold mt-1.5">출석체크 참석쿠폰 소지자가 우선 확보하는 좌석 수 (수강 정원과 별도 관리)</p>
+                                            <p className="text-[10px] text-slate-400 font-bold mt-1.5">출석체크 참석 프리패스 소지자가 우선 확보하는 좌석 수 (수강 정원과 별도 관리)</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1131,7 +1131,7 @@ const AdminClasses = () => {
                                 <p className="text-xl font-black text-red-400">{applicants.filter(a => a.approval_status === 'cancelled').length}명</p>
                             </div>
                             <div className="bg-purple-400/10 border border-purple-400/20 p-4 rounded-3xl text-center min-w-[90px]">
-                                <p className="text-[10px] font-black text-purple-200 mb-1 uppercase tracking-tighter">쿠폰신청</p>
+                                <p className="text-[10px] font-black text-purple-200 mb-1 uppercase tracking-tighter">프리패스신청</p>
                                 <p className="text-xl font-black text-purple-200">
                                     {applicants.filter(a => a.is_coupon_applied && a.approval_status !== 'cancelled').length} / {selectedClass.coupon_capacity || 0}
                                 </p>
@@ -1180,7 +1180,7 @@ const AdminClasses = () => {
                                                                 {app.is_coupon_applied && (
                                                                     <span className="px-1.5 py-0.5 rounded-full bg-[#633AE8]/10 text-[#633AE8] text-[9px] font-black flex items-center gap-0.5">
                                                                         <span className="material-symbols-outlined text-[10px]">confirmation_number</span>
-                                                                        쿠폰
+                                                                        프리패스
                                                                     </span>
                                                                 )}
                                                             </p>

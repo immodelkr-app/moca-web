@@ -14,7 +14,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
     const [error, setError] = useState('');
     const [appliedWithCoupon, setAppliedWithCoupon] = useState(false);
 
-    // 참석쿠폰
+    // 참석 프리패스
     const [myCoupons, setMyCoupons] = useState([]);
     const [couponUsedCount, setCouponUsedCount] = useState(0);
     const couponCapacity = cls?.coupon_capacity || 0;
@@ -88,7 +88,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                         <h3 className="text-2xl font-black text-[var(--moca-text)] mb-3">신청 완료!</h3>
                         <p className="text-[var(--moca-text-3)] text-sm font-bold leading-relaxed mb-8">
                             {appliedWithCoupon ? (
-                                <>참석쿠폰으로 신청서가 접수되었습니다.<br /></>
+                                <>참석 프리패스로 신청서가 접수되었습니다.<br /></>
                             ) : (
                                 <>수강 신청서가 접수되었습니다.<br /></>
                             )}
@@ -198,11 +198,11 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                             <div className={`flex items-center gap-3 p-4 rounded-2xl mb-4 border ${couponSeatAvailable ? 'bg-[#F3EEFF] border-[#E1D3FD]' : 'bg-gray-50 border-gray-100'}`}>
                                 <span className="material-symbols-outlined text-[22px] text-[#633AE8]">confirmation_number</span>
                                 <div className="flex-1">
-                                    <p className="text-xs font-black text-[#1F1235]">보유 참석쿠폰 {myCoupons.length}장</p>
+                                    <p className="text-xs font-black text-[#1F1235]">보유 참석 프리패스 {myCoupons.length}장</p>
                                     <p className="text-[10px] font-bold text-[#9CA3AF] mt-0.5">
                                         {couponSeatAvailable
-                                            ? `이 클래스는 쿠폰 전용석 ${couponCapacity - couponUsedCount}석 남았어요`
-                                            : '이 클래스의 쿠폰 전용석이 모두 마감되었습니다'}
+                                            ? `이 클래스는 프리패스 전용석 ${couponCapacity - couponUsedCount}석 남았어요`
+                                            : '이 클래스의 프리패스 전용석이 모두 마감되었습니다'}
                                     </p>
                                 </div>
                             </div>
@@ -248,7 +248,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                         }`}
                                 >
                                     <span className="material-symbols-outlined text-[20px]">confirmation_number</span>
-                                    {couponSeatAvailable ? '쿠폰으로 신청하기' : '쿠폰석 마감'}
+                                    {couponSeatAvailable ? '프리패스로 신청하기' : '프리패스석 마감'}
                                 </button>
                             )}
                         </div>

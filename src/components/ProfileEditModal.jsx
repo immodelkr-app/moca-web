@@ -26,7 +26,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
     const [pointsLoading, setPointsLoading] = useState(false);
     const [pointsError, setPointsError] = useState(false);
 
-    // 참석쿠폰 (출석체크 + 모카그램 30일 리워드)
+    // 참석 프리패스 (출석체크 + 모카그램 30일 리워드)
     const [coupons, setCoupons] = useState([]);
     const [couponsLoading, setCouponsLoading] = useState(false);
 
@@ -114,7 +114,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                     terms_consent: currentUser.terms_consent || false,
                 });
 
-                // 참석쿠폰 조회
+                // 참석 프리패스 조회
                 if (currentUser.id) {
                     setCouponsLoading(true);
                     fetchMyCoupons(currentUser.id)
@@ -505,10 +505,10 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                             )}
                         </div>
 
-                        {/* ── 🎟️ 참석쿠폰 (출석체크+모카그램 리워드) ── */}
+                        {/* ── 🎟️ 참석 프리패스 (출석체크+모카그램 리워드) ── */}
                         <div className="pt-4 border-t border-[#E8E0FA] mt-2">
                             <p className="text-[#1F1235] text-[13px] font-black uppercase tracking-wider mb-3 flex items-center gap-1">
-                                🎟️ 원데이클래스 참석쿠폰
+                                🎟️ 원데이클래스 참석 프리패스
                             </p>
 
                             {couponsLoading ? (
@@ -517,7 +517,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                 <div className="flex items-center gap-3 py-4 px-4 rounded-2xl bg-gray-50 border border-gray-100">
                                     <span className="material-symbols-outlined text-[22px] text-gray-300">confirmation_number</span>
                                     <div>
-                                        <p className="text-sm font-bold text-gray-400">보유한 쿠폰이 없습니다</p>
+                                        <p className="text-sm font-bold text-gray-400">보유한 프리패스가 없습니다</p>
                                         <p className="text-[11px] text-gray-300 mt-0.5">출석체크 + 모카그램 업로드로 모아보세요</p>
                                     </div>
                                 </div>
@@ -533,7 +533,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                                     <span className="material-symbols-outlined text-[18px] text-white">confirmation_number</span>
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-black text-[#1F1235]">원데이클래스 참석쿠폰</p>
+                                                    <p className="text-sm font-black text-[#1F1235]">원데이클래스 참석 프리패스</p>
                                                     <p className="text-[10px] text-[#9CA3AF] font-medium">
                                                         발급일 {c.issued_at ? new Date(c.issued_at).toLocaleDateString('ko-KR') : '-'}
                                                     </p>

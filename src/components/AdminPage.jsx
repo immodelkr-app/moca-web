@@ -1082,7 +1082,7 @@ const AdminPage = () => {
                         onClick={() => setActiveTab('attendance-coupons')}
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'attendance-coupons' ? 'border-violet-500 text-violet-700 bg-violet-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
-                        🎟️ 출석쿠폰 관리
+                        🎟️ 출석 프리패스 관리
                     </button>
 
                 </div>
