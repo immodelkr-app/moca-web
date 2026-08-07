@@ -1,9 +1,40 @@
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { rewardUserPoints } from './userService';
+import { getKSTDateStr } from './attendanceService';
 
 const LOCAL_POSTS_KEY = 'cert_posts';
 const LOCAL_LIKES_KEY = 'cert_likes';
 const LOCAL_COMMENTS_KEY = 'cert_comments';
+const UPLOAD_POINTS = 100;
+
+// ─────────────────────────────────────────────
+//  업로드 기본 포인트 하루 1회 상한 체크
+//  (같은 유저가 같은 날 여러 장 올려도 기본 100P는 최초 1회만 지급)
+// ─────────────────────────────────────────────
+const hasReceivedUploadPointsToday = async (userNickname) => {
+    const todayStr = getKSTDateStr();
+
+    if (isSupabaseEnabled()) {
+        const startUtc = new Date(`${todayStr}T00:00:00+09:00`).toISOString();
+        const endUtc = new Date(`${todayStr}T23:59:59.999+09:00`).toISOString();
+        const { data, error } = await supabase
+            .from('certification_posts')
+            .select('id')
+            .eq('user_nickname', userNickname)
+            .gte('created_at', startUtc)
+            .lte('created_at', endUtc)
+            .limit(1);
+        if (error) {
+            console.error('[hasReceivedUploadPointsToday] error:', error);
+            return false;
+        }
+        return (data || []).length > 0;
+    }
+
+    const raw = localStorage.getItem(LOCAL_POSTS_KEY);
+    const posts = raw ? JSON.parse(raw) : [];
+    return posts.some(p => p.user_nickname === userNickname && getKSTDateStr(new Date(p.created_at)) === todayStr);
+};
 
 // ─────────────────────────────────────────────
 //  이미지 압축 (Canvas 기반, 실패 시 원본 반환)
@@ -192,6 +223,8 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
         created_at: new Date().toISOString(),
     };
 
+    const alreadyRewardedToday = await hasReceivedUploadPointsToday(userNickname);
+
     if (isSupabaseEnabled()) {
         const { data, error } = await supabase
             .from('certification_posts')
@@ -208,8 +241,10 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
             .single();
 
         if (!error && data) {
-            // 모카그램 포스트 작성 기본 100P 지급 (아임모델 공화국 포인트 연동)
-            rewardUserPoints(userNickname, 100, '모카그램 포스트 작성 기본 보상');
+            // 모카그램 포스트 작성 기본 포인트 지급 (아임모델 공화국 포인트 연동, 하루 1회 상한)
+            if (!alreadyRewardedToday) {
+                rewardUserPoints(userNickname, UPLOAD_POINTS, '모카그램 포스트 작성 기본 보상');
+            }
             return { post: data, error: null };
         }
         console.error('createCertPost error:', error);
@@ -220,7 +255,9 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
     const posts = raw ? JSON.parse(raw) : [];
     posts.unshift(newPost);
     localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
-    rewardUserPoints(userNickname, 100, '모카그램 포스트 작성 기본 보상');
+    if (!alreadyRewardedToday) {
+        rewardUserPoints(userNickname, UPLOAD_POINTS, '모카그램 포스트 작성 기본 보상');
+    }
     return { post: newPost, error: null };
 };
 
