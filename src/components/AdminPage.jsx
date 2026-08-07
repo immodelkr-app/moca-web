@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { GRADE_INFO, GRADE_EMOJI, logoutUser, rewardUserPoints } from '../services/userService';
+import { GRADE_INFO, GRADE_EMOJI, logoutUser } from '../services/userService';
 import { updateGradeInCore } from '../lib/imCoreAuth';
 import AdminUpgradeRequests from './AdminUpgradeRequests';
 import AdminPopups from './AdminPopups';

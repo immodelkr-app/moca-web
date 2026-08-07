@@ -794,30 +794,3 @@ export const checkNicknameDuplicate = async (nickname) => {
         return { available: !exists, error: null };
     }
 };
-
-/**
- * 사용자 포인트 적립/지급 (아임모델 공화국 포인트 연동용)
- * @param {string} userNickname
- * @param {number} points
- * @param {string} reason
- */
-export const rewardUserPoints = async (userNickname, points, reason = '모카그램 활동 보상') => {
-    if (!userNickname || !points) return;
-    try {
-        if (isSupabaseEnabled()) {
-            const { data: user } = await supabase
-                .from('users')
-                .select('id, points')
-                .or(`nickname.eq.${userNickname},name.eq.${userNickname}`)
-                .maybeSingle();
-
-            if (user) {
-                const newPoints = (user.points || 0) + points;
-                await supabase.from('users').update({ points: newPoints }).eq('id', user.id);
-                console.log(`[rewardUserPoints] ${userNickname} 님에게 ${points}P 지급 완료 (${reason})`);
-            }
-        }
-    } catch (err) {
-        console.error('[rewardUserPoints] 오류:', err);
-    }
-};

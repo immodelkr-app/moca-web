@@ -1,5 +1,5 @@
 import { supabase, isSupabaseEnabled } from './supabaseClient';
-import { rewardUserPoints } from './userService';
+import { rewardPoints } from '../lib/imCoreAuth';
 import { getKSTDateStr } from './attendanceService';
 
 const LOCAL_POSTS_KEY = 'cert_posts';
@@ -34,6 +34,30 @@ const hasReceivedUploadPointsToday = async (userNickname) => {
     const raw = localStorage.getItem(LOCAL_POSTS_KEY);
     const posts = raw ? JSON.parse(raw) : [];
     return posts.some(p => p.user_nickname === userNickname && getKSTDateStr(new Date(p.created_at)) === todayStr);
+};
+
+// ─────────────────────────────────────────────
+//  통합 포인트(im-core-auth) 지급
+//  MOCA users 테이블은 nickname만 들고 있으므로 master_user_id를 조회해 전달
+// ─────────────────────────────────────────────
+const grantIntegratedPoints = async (userNickname, amount, description) => {
+    if (!isSupabaseEnabled() || !userNickname) return;
+    const { data, error } = await supabase
+        .from('users')
+        .select('master_user_id')
+        .or(`nickname.eq.${userNickname},name.eq.${userNickname}`)
+        .maybeSingle();
+
+    if (error || !data?.master_user_id) {
+        console.warn(`[grantIntegratedPoints] master_user_id 없음, 포인트 지급 건너뜀: ${userNickname}`);
+        return;
+    }
+
+    try {
+        await rewardPoints({ masterUserId: data.master_user_id, amount, description });
+    } catch (err) {
+        console.error('[grantIntegratedPoints] 지급 실패:', err);
+    }
 };
 
 // ─────────────────────────────────────────────
@@ -241,9 +265,9 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
             .single();
 
         if (!error && data) {
-            // 모카그램 포스트 작성 기본 포인트 지급 (아임모델 공화국 포인트 연동, 하루 1회 상한)
+            // 모카그램 포스트 작성 기본 포인트 지급 (아임모델 공화국 통합 포인트 연동, 하루 1회 상한)
             if (!alreadyRewardedToday) {
-                rewardUserPoints(userNickname, UPLOAD_POINTS, '모카그램 포스트 작성 기본 보상');
+                grantIntegratedPoints(userNickname, UPLOAD_POINTS, '모카그램 포스트 작성 기본 보상');
             }
             return { post: data, error: null };
         }
@@ -256,7 +280,7 @@ export const createCertPost = async ({ userNickname, activityType, tagLabel, cap
     posts.unshift(newPost);
     localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
     if (!alreadyRewardedToday) {
-        rewardUserPoints(userNickname, UPLOAD_POINTS, '모카그램 포스트 작성 기본 보상');
+        grantIntegratedPoints(userNickname, UPLOAD_POINTS, '모카그램 포스트 작성 기본 보상');
     }
     return { post: newPost, error: null };
 };
@@ -500,7 +524,7 @@ export const toggleBestPick = async (postId, currentStatus, userNickname, reward
             .eq('id', postId);
 
         if (!error && newPickStatus && userNickname) {
-            await rewardUserPoints(userNickname, rewardPoint, '김대표 👑 BEST 픽 선정 보너스');
+            await grantIntegratedPoints(userNickname, rewardPoint, '김대표 👑 BEST 픽 선정 보너스');
         }
         return { success: !error, isPicked: newPickStatus };
     } else {
@@ -511,7 +535,7 @@ export const toggleBestPick = async (postId, currentStatus, userNickname, reward
             target.is_best_pick = newPickStatus;
             localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
             if (newPickStatus && userNickname) {
-                await rewardUserPoints(userNickname, rewardPoint, '김대표 👑 BEST 픽 선정 보너스');
+                await grantIntegratedPoints(userNickname, rewardPoint, '김대표 👑 BEST 픽 선정 보너스');
             }
         }
         return { success: true, isPicked: newPickStatus };
