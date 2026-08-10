@@ -85,7 +85,7 @@ serve(async (req) => {
 --- 투어일지 목록 (총 ${diariesList.length}건) ---
 ${diaryTexts}`;
 
-        const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+        const models = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-flash-latest"];
         let rawText = '';
         let lastErrorMsg = '';
 
@@ -118,9 +118,9 @@ ${diaryTexts}`;
                                         },
                                         required: ["auditioning", "tips", "atmosphere", "memo", "overall"],
                                     },
-                                    // gemini-2.5 계열은 내부 reasoning("thinking") 토큰이 maxOutputTokens 예산을
+                                    // 최신 flash 모델들은 내부 reasoning("thinking") 토큰이 maxOutputTokens 예산을
                                     // 잠식해 실제 답변이 중간에 잘리는 문제가 있어 이 작업(단순 요약/분류)에는 비활성화
-                                    ...(model.includes('2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+                                    thinkingConfig: { thinkingBudget: 0 },
                                 },
                             }),
                         }
