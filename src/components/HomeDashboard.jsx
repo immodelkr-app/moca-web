@@ -33,6 +33,7 @@ const HomeDashboard = () => {
     const [noticeIdx, setNoticeIdx] = useState(0);
     const [ticker, setTicker] = useState('');
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [showCastingNotice, setShowCastingNotice] = useState(false);
 
     // 출석체크 & 참석 프리패스 진행률
     const [attendance, setAttendance] = useState(null);
@@ -202,7 +203,7 @@ const HomeDashboard = () => {
             {/* ── 4-1. 모델캐스팅 배너 ── */}
             <div className="px-6 mb-8">
                 <button
-                    onClick={() => navigate('/home/castings')}
+                    onClick={() => setShowCastingNotice(true)}
                     className="w-full flex items-center gap-4 p-5 rounded-3xl bg-gradient-to-r from-[#1F1235] to-[#4C1D95] border border-white/10 shadow-md active:scale-95 transition-all text-left"
                 >
                     <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center flex-shrink-0">
@@ -313,6 +314,30 @@ const HomeDashboard = () => {
                         window.location.reload();
                     }}
                 />
+            )}
+
+            {/* 모델캐스팅 오픈 예정 안내 */}
+            {showCastingNotice && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6" onClick={() => setShowCastingNotice(false)}>
+                    <div
+                        className="w-full max-w-sm bg-white rounded-3xl p-6 text-center shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-[#F3E8FF] flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[#8B5CF6] text-[28px]">campaign</span>
+                        </div>
+                        <h3 className="text-lg font-black text-[#1F1235] mb-2">모델캐스팅 오픈 예정</h3>
+                        <p className="text-sm font-medium text-[#6B7280] leading-relaxed mb-6">
+                            업체가 직접 올리는 모델 구인 공고 서비스는<br />현재 준비 중이에요. 곧 만나보실 수 있어요!
+                        </p>
+                        <button
+                            onClick={() => setShowCastingNotice(false)}
+                            className="w-full py-3.5 rounded-2xl bg-[#8B5CF6] text-white font-bold active:scale-95 transition-all"
+                        >
+                            확인
+                        </button>
+                    </div>
+                </div>
             )}
 
         </div>
