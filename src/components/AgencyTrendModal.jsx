@@ -53,7 +53,7 @@ const AgencyTrendModal = ({ agency, userGrade, onClose }) => {
             onClick={onClose}
         >
             <div
-                className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#E8E0FA] flex flex-col max-h-[90vh]"
+                className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#E8E0FA] flex flex-col max-h-[85dvh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -76,7 +76,7 @@ const AgencyTrendModal = ({ agency, userGrade, onClose }) => {
                 </div>
 
                 {/* Body */}
-                <div className="p-6 overflow-y-auto flex-1 flex flex-col gap-5">
+                <div className="p-6 overflow-y-auto flex-1 min-h-0 flex flex-col gap-5">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
                             <span className="material-symbols-outlined text-[32px] text-violet-400 animate-spin">progress_activity</span>
