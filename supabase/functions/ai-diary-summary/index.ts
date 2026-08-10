@@ -107,6 +107,20 @@ ${diaryTexts}`;
                                     temperature: 0.3,
                                     maxOutputTokens: 2048,
                                     responseMimeType: "application/json",
+                                    responseSchema: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            auditioning: { type: "STRING" },
+                                            tips: { type: "STRING" },
+                                            atmosphere: { type: "STRING" },
+                                            memo: { type: "STRING" },
+                                            overall: { type: "STRING" },
+                                        },
+                                        required: ["auditioning", "tips", "atmosphere", "memo", "overall"],
+                                    },
+                                    // gemini-2.5 계열은 내부 reasoning("thinking") 토큰이 maxOutputTokens 예산을
+                                    // 잠식해 실제 답변이 중간에 잘리는 문제가 있어 이 작업(단순 요약/분류)에는 비활성화
+                                    ...(model.includes('2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
                                 },
                             }),
                         }
@@ -156,15 +170,22 @@ ${diaryTexts}`;
         try {
             // 마크다운 코드블록 제거 후 파싱
             const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-            summary = JSON.parse(cleaned);
+            let parsed = JSON.parse(cleaned);
+            // 모델이 단일 객체 대신 배열을 반환한 경우 첫 항목을 사용
+            if (Array.isArray(parsed)) {
+                parsed = parsed[0] ?? {};
+            }
+            if (!parsed || typeof parsed !== 'object') throw new Error('unexpected shape');
+            summary = parsed;
         } catch (_) {
-            // 파싱 실패 시 raw text 반환
+            // 파싱 실패 시 사용자에게는 일반 오류 메시지만 노출 (raw text는 로그로만 남김)
+            console.warn('[ai-diary-summary] JSON 파싱 실패, rawText:', rawText.slice(0, 500));
             summary = {
                 auditioning: '분석 중 오류가 발생했습니다.',
-                tips: '',
-                atmosphere: '',
-                memo: '',
-                overall: rawText.slice(0, 50),
+                tips: '정보 없음',
+                atmosphere: '정보 없음',
+                memo: '없음',
+                overall: '분석에 실패했습니다. 잠시 후 다시 시도해주세요.',
             };
         }
 
