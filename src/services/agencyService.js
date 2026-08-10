@@ -1,7 +1,7 @@
 import Papa from 'papaparse';
 
 const PRIMARY_CSV_URL = '/agencies.csv';
-const FALLBACK_CSV_URL = '/에이전시주소.csv';
+const FALLBACK_CSV_URL = '/agencies-fallback.csv';
 
 export const fetchAgencies = async () => {
     return new Promise(async (resolve, reject) => {
