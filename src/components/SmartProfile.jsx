@@ -713,10 +713,12 @@ const SmartProfile = () => {
                                                 isNeedsMore ? 'border-red-400 ring-2 ring-red-400/40' : 'border-[#E8E0FA]'
                                             }`}
                                         />
-                                        {/* 상태 뱃지 */}
-                                        <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black ${sl.bg} ${sl.color}`}>
-                                            {sl.text}
-                                        </span>
+                                        {/* 상태 뱃지: 승인된 사진만 표시 */}
+                                        {photo.status === 'approved' && (
+                                            <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black ${sl.bg} ${sl.color}`}>
+                                                {sl.text}
+                                            </span>
+                                        )}
                                         {/* GOLD: 피드백 말풍선 아이콘 */}
                                         {!isChatAllowed && hasFeedback && (
                                             <button
@@ -739,9 +741,9 @@ const SmartProfile = () => {
                                         )}
                                         <button
                                             onClick={() => handleDeleteCurrentPhoto(photo)}
-                                            className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-red-500/80 hover:bg-red-600 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
+                                            className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-red-500/80 hover:bg-red-600 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
                                         >
-                                            <span className="material-symbols-outlined text-[16px] text-white">delete</span>
+                                            <span className="material-symbols-outlined text-[11px] text-white">delete</span>
                                         </button>
                                     </div>
                                 );
@@ -810,9 +812,11 @@ const SmartProfile = () => {
                     onClick={() => setSelectedPhoto(null)}
                 >
                     <div className="flex items-center justify-between px-5 pt-10 pb-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-black border ${sl.bg} ${sl.color}`}>
-                            {sl.text}
-                        </span>
+                        {selectedPhoto.status === 'approved' ? (
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-black border ${sl.bg} ${sl.color}`}>
+                                {sl.text}
+                            </span>
+                        ) : <span />}
                         <button
                             onClick={() => setSelectedPhoto(null)}
                             className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
@@ -829,7 +833,11 @@ const SmartProfile = () => {
                         />
                     </div>
 
-                    <div className="px-5 pb-12 pt-4 flex gap-3 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <div
+                        className="px-5 pt-4 flex gap-3 flex-shrink-0"
+                        style={{ paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom, 0px))' }}
+                        onClick={e => e.stopPropagation()}
+                    >
                         <button
                             onClick={() => handleDownload(selectedPhoto.photo_url, `current_photo_${selectedPhoto.id}.jpg`)}
                             className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-blue-500/20 border border-blue-500/40 text-blue-400 font-black text-sm active:scale-95 transition-transform"
