@@ -1,11 +1,19 @@
 import { Capacitor } from '@capacitor/core';
 import { NativeBiometric } from 'capacitor-native-biometric';
 import { supabase, isSupabaseEnabled } from './supabaseClient';
-import { saveUser } from './userService';
+import { saveUser, getUser } from './userService';
 
 /**
  * 지문 인식(Biometric/Passkey) 관련 서비스
+ *
+ * 주의: 이 앱은 Supabase Auth(auth.users)를 쓰지 않고, 자체 users 테이블에
+ * nickname/password_hash로 로그인한다 (userService.loginUser 참고). 세션도
+ * supabase.auth가 아니라 localStorage(getUser/saveUser)에 저장된다. 따라서
+ * 지문 등록/로그인도 supabase.auth.getSession()/refreshSession()이 아니라
+ * 로컬 세션의 nickname + password_hash를 기준으로 동작해야 한다.
  */
+
+const BIOMETRIC_SERVER = 'immoca.kr';
 
 /**
  * 기기 지문 등록 가능 여부 확인
@@ -31,15 +39,15 @@ export const registerPasskey = async () => {
     if (!isSupabaseEnabled()) throw new Error('Supabase 비활성화');
     if (!Capacitor.isNativePlatform()) throw new Error('지문 등록은 앱에서만 지원됩니다.');
 
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error('로그인이 필요합니다.');
+    const user = getUser();
+    if (!user?.nickname || !user?.password_hash) throw new Error('로그인이 필요합니다.');
 
-        // 네이티브 보안 저장소(Keychain/Keystore)에 세션 토큰 저장
+    try {
+        // 네이티브 보안 저장소(Keychain/Keystore)에 nickname + password_hash 저장
         await NativeBiometric.setCredentials({
-            username: session.user.email,
-            password: session.refresh_token,
-            server: "immoca.kr"
+            username: user.nickname,
+            password: user.password_hash,
+            server: BIOMETRIC_SERVER
         });
 
         console.log('[Biometric] Native credentials stored successfully');
@@ -67,49 +75,30 @@ export const loginWithPasskey = async () => {
             description: "기기에 등록된 지문 또는 얼굴을 사용하세요.",
         });
 
-        // 2. 인증 성공 시 보안 저장소에서 토큰 가져오기
+        // 2. 인증 성공 시 보안 저장소에서 nickname/password_hash 가져오기
         const credentials = await NativeBiometric.getCredentials({
-            server: "immoca.kr"
+            server: BIOMETRIC_SERVER
         });
 
-        // 3. 가져온 Refresh Token으로 세션 복구
-        const { data, error } = await supabase.auth.refreshSession({
-            refresh_token: credentials.password,
-        });
+        // 3. users 테이블에서 nickname + password_hash로 계정 조회 (일반 로그인과 동일한 방식)
+        const { data: dbUser, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('nickname', credentials.username)
+            .eq('password_hash', credentials.password)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        if (error) throw error;
+        if (error || !dbUser) throw error || new Error('등록된 계정을 찾을 수 없습니다.');
 
-        console.log('[Biometric] Native login successful:', data);
+        console.log('[Biometric] Native login successful:', dbUser.nickname);
 
-        // 유저 정보 처리
-        return processLoginResult(data);
+        saveUser(dbUser);
+        return { success: true, user: dbUser };
     } catch (err) {
         console.error('[Biometric] Native login failed:', err);
         throw err;
     }
 };
-
-/**
- * 로그인 결과 공통 처리 로직
- */
-async function processLoginResult(data) {
-    const { data: dbUser, error: dbError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', data.user.email)
-        .maybeSingle();
-
-    if (dbError) {
-        console.error('[Auth] DB Profile fetch error:', dbError);
-    }
-
-    const finalUser = dbUser || {
-        nickname: data.user.email?.split('@')[0] || 'moca_user',
-        name: data.user.user_metadata?.full_name || '모카 회원',
-        ...data.user
-    };
-    
-    saveUser(finalUser);
-    return { success: true, user: finalUser };
-}
 
