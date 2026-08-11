@@ -90,7 +90,10 @@ export const deleteCurrentPhoto = async (photoId, storagePath) => {
 
     // 스토리지 삭제
     if (storagePath) {
-        await supabase.storage.from(BUCKET).remove([storagePath]);
+        const { error: storageError } = await supabase.storage.from(BUCKET).remove([storagePath]);
+        if (storageError) {
+            console.warn('[deleteCurrentPhoto] 스토리지 삭제 실패:', storageError.message);
+        }
     }
 
     // DB 삭제

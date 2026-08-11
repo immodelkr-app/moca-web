@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { getUser, updateSmartProfile } from '../services/userService';
 import {
     uploadCurrentPhoto,
@@ -334,21 +337,47 @@ const SmartProfile = () => {
         }
     };
 
+    const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+
     const handleDownload = async (url, filename) => {
+        const safeFilename = filename || `current_photo_${Date.now()}.jpg`;
         try {
             const response = await fetch(url);
+            if (!response.ok) throw new Error(`이미지를 불러오지 못했습니다. (${response.status})`);
             const blob = await response.blob();
-            const blobUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = blobUrl;
-            link.download = filename || 'current_photo.jpg';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(blobUrl);
+
+            if (Capacitor.isNativePlatform()) {
+                // 앱(WebView) 내부에서는 <a download>가 동작하지 않으므로
+                // 파일을 캐시에 쓴 뒤 네이티브 공유 시트로 저장하도록 유도
+                const base64Data = await blobToBase64(blob);
+                const savedFile = await Filesystem.writeFile({
+                    path: safeFilename,
+                    data: base64Data,
+                    directory: Directory.Cache,
+                });
+                await Share.share({
+                    title: '사진 저장',
+                    url: savedFile.uri,
+                    dialogTitle: '사진을 저장할 위치를 선택하세요',
+                });
+            } else {
+                const blobUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = safeFilename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+            }
         } catch (error) {
             console.error('Download failed:', error);
-            alert('다운로드에 실패했습니다. (CORS 제한이 있을 수 있습니다.)');
+            alert('다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.');
         }
     };
 
