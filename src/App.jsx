@@ -5,6 +5,7 @@ import OpenAppRedirect from './components/OpenAppRedirect';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
 import Layout from './components/Layout';
 
 import HomeDashboard from './components/HomeDashboard';
@@ -84,10 +85,18 @@ function AppContent() {
         initializePushNotifications();
 
         // Handle routing from push notifications
+        // 외부 URL(구글플레이 등)은 앱 내부 라우팅 대신 외부 브라우저/스토어 앱으로 연다
+        const goToPushRoute = (route) => {
+            if (/^https?:\/\//i.test(route)) {
+                Browser.open({ url: route });
+            } else {
+                navigate(route);
+            }
+        };
         const handlePushRoute = (e) => {
             if (e.detail) {
                 localStorage.removeItem('pending_push_route');
-                navigate(e.detail);
+                goToPushRoute(e.detail);
             }
         };
         window.addEventListener('pushNotificationRoute', handlePushRoute);
@@ -97,7 +106,7 @@ function AppContent() {
         if (pendingRoute) {
             localStorage.removeItem('pending_push_route');
             setTimeout(() => {
-                navigate(pendingRoute);
+                goToPushRoute(pendingRoute);
             }, 150);
         }
 

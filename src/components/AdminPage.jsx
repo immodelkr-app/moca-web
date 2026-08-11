@@ -2583,6 +2583,7 @@ const AdminPage = () => {
                             class: { title: '🆕 새로운 모카 클래스 오픈!', body: '새 클래스가 오픈되었습니다. 지금 바로 확인해보세요!', route: '/home/class' },
                             notice: { title: '📢 모카 공지사항', body: '중요한 공지사항이 있습니다. 앱에서 확인해주세요.', route: '/home/dashboard' },
                             mocatv: { title: '🎬 모카TV 김대표님 영상 업로드!', body: '모카TV에 김대표님의 새로운 영상이 업로드 되었습니다. 지금 바로 확인해 보세요!', route: '/home/tv' },
+                            update: { title: '🆕 모두의 캐스팅 모카 업데이트!', body: '새 버전이 출시되었습니다. 구글플레이에서 업데이트 후 이용해주세요!', route: 'https://play.google.com/store/apps/details?id=com.immodel.mocapp' },
                         };
                         if (presets[preset]) setPushForm(presets[preset]);
                     };
@@ -2727,6 +2728,7 @@ const AdminPage = () => {
                                                     { key: 'class', label: '🆕 클래스 오픈', color: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' },
                                                     { key: 'notice', label: '📢 공지사항', color: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
                                                     { key: 'mocatv', label: '🎬 모카TV 김대표님 영상', color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' },
+                                                    { key: 'update', label: '🆕 앱 업데이트 안내', color: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' },
                                                 ].map(p => (
                                                     <button key={p.key} onClick={() => applyPushPreset(p.key)} className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${p.color}`}>{p.label}</button>
                                                 ))}
