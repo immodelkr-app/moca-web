@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { logoutUser, getUser, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
+import ProfileEditModal from './ProfileEditModal';
 
 
 
@@ -68,6 +69,7 @@ const moreMenuItems = [
 
 const Layout = () => {
     const [showMoreMenu, setShowMoreMenu] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [userGrade, setUserGrade] = useState(getUser()?.grade || 'BASIC');
     const navigate = useNavigate();
     const location = useLocation();
@@ -174,11 +176,13 @@ const Layout = () => {
                     <span className="text-2xl moca-brand-logo text-[#1F1235] tracking-tight">MOCA</span>
                     <div className="flex items-center gap-2">
                         {userId && (
-                            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F3E8FF] border border-[#E8E0FA]">
-                                <span className="text-[12px]">{gradeEmoji}</span>
-                                <span className={`font-extrabold text-[10px] ${gradeColor}`}>{gradeLabel}</span>
-                                <span className="text-[#1F1235] font-bold text-[10px] truncate max-w-[70px]">{userId}님</span>
-                            </div>
+                            <button
+                                onClick={() => setIsProfileModalOpen(true)}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F3E8FF] border border-[#E8E0FA] active:scale-95 transition-transform"
+                            >
+                                <span className="material-symbols-outlined text-[13px] text-[#7C3AED]">person</span>
+                                <span className="text-[10px] font-bold text-[#7C3AED]">마이페이지</span>
+                            </button>
                         )}
                         <button
                             onClick={handleLogout}
@@ -325,6 +329,17 @@ const Layout = () => {
                             </div>
                         </div>
                     </>
+                )}
+
+                {/* ── 마이페이지(회원정보수정) 모달 ── */}
+                {isProfileModalOpen && (
+                    <ProfileEditModal
+                        onClose={() => setIsProfileModalOpen(false)}
+                        onUpdateSuccess={() => {
+                            setIsProfileModalOpen(false);
+                            window.location.reload();
+                        }}
+                    />
                 )}
             </div>
         </div>

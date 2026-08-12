@@ -296,7 +296,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                             <span className="material-symbols-outlined text-[#9333EA] text-[22px]">person_edit</span>
                         </div>
                         <div>
-                            <h2 className="text-lg font-black text-[#1F1235]">회원 정보 수정</h2>
+                            <h2 className="text-lg font-black text-[#1F1235]">마이페이지</h2>
                             <p className="text-[#9CA3AF] text-[11px] font-bold">{user.nickname}님</p>
                         </div>
                     </div>

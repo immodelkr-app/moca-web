@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser, getUserGrade, syncUserGrade } from '../services/userService';
+import { getUser, getUserGrade, syncUserGrade, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
 import { fetchMessagesList } from '../services/messageService';
 import { fetchAttendanceProgress, submitAttendanceCheck } from '../services/attendanceService';
 import ProfileEditModal from './ProfileEditModal';
@@ -31,7 +31,6 @@ const HomeDashboard = () => {
         '💡 [꿀팁] 에이전시 피드백 채팅을 통한 프로필 합격률 높이기',
     ]);
     const [noticeIdx, setNoticeIdx] = useState(0);
-    const [ticker, setTicker] = useState('');
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [showCastingNotice, setShowCastingNotice] = useState(false);
 
@@ -58,7 +57,6 @@ const HomeDashboard = () => {
                 const titles = data.map(d => d.title || d.content?.slice(0, 45)).filter(Boolean);
                 if (titles.length > 0) {
                     setNoticesList(titles);
-                    setTicker(titles[0]);
                 }
             }
         }).catch(() => { });
@@ -108,27 +106,17 @@ const HomeDashboard = () => {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* 아바타 프로필 버튼 */}
+                    {/* 마이페이지 진입 버튼 (등급+닉네임) */}
                     <button
                         onClick={() => setIsProfileModalOpen(true)}
-                        className="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow-sm flex items-center justify-center bg-[#DDD6FE] text-[#6D28D9] font-bold text-xs active:scale-95 transition-transform"
-                        title="나의 프로필 수정"
+                        className="flex items-center gap-1 px-3 py-2 rounded-full bg-[#F3E8FF] border border-[#E8E0FA] active:scale-95 transition-transform"
+                        title="마이페이지"
                     >
-                        {user?.profile_image ? (
-                            <img src={user.profile_image} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                            <span>{nickname.slice(0, 1)}</span>
-                        )}
-                    </button>
-
-                    {/* 알림 종 버튼 */}
-                    <button
-                        onClick={() => navigate('/home/message')}
-                        className="w-9 h-9 rounded-full bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center active:scale-95 transition-transform relative"
-                        title="공지사항 및 알림"
-                    >
-                        <span className="material-symbols-outlined text-[19px]">notifications</span>
-                        {ticker && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#EF4444]"></span>}
+                        <span className="text-[12px]">{GRADE_EMOJI[grade] || '🤍'}</span>
+                        <span className={`font-black text-[11px] ${(grade === 'GOLD' || grade === 'IMODEL' || grade === 'VIP') ? 'text-[#D97706]' : 'text-[#7C3AED]'}`}>
+                            {GRADE_INFO[grade]?.label || grade}
+                        </span>
+                        <span className="text-[#1F1235] font-bold text-[11px] truncate max-w-[90px]">{nickname}님</span>
                     </button>
                 </div>
             </section>
