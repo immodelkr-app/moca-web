@@ -1,4 +1,4 @@
-name,address,lat,lng,category,phone,email,reservation_url
+﻿name,address,lat,lng,category,phone,email,reservation_url
 에스모델,서울시 서초구 신반포로45길 26 301호,37.511889,127.018741,Model,02-3443-6231,smodel1004@naver.com,
 레디엔터,서울시 강남구 언주로 130길 13 다은빌딩,37.515252,127.036561,Model,02-6900-0947,readay@readyent.com,https://m.booking.naver.com/booking/6/bizes/1377011/items/6624897?entry=pll&lang=ko&theme=place
 플래티늄,서울시 강남구 논현동 73-33,37.517838,127.030695,Model,02-2215-5167,kcasting@platinummgt.co.kr,
