@@ -10,10 +10,11 @@ import {
     getCastingSends,
     saveCastingSend,
     sendCastingEmail,
-    getMonthlyCount,
     getSendInfo,
-    SILVER_MONTHLY_LIMIT,
 } from '../services/castingService';
+
+// 연속 발송 방지 쿨다운 (마지막 발송 후 이 시간 안에는 재발송 불가)
+const SEND_COOLDOWN_MS = 60 * 1000;
 
 import ProfileEditModal from './ProfileEditModal';
 import CastingEmailModal from './CastingEmailModal';
@@ -184,10 +185,24 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, onTrend, sendIn
                         e.stopPropagation();
                         onAction(e, agency, null);
                     }}
-                    className="flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-full bg-[#10B981] hover:bg-[#059669] text-white shadow-md shadow-emerald-500/20 active:scale-[0.97] transition-all cursor-pointer font-black text-[12px] leading-none whitespace-nowrap"
+                    className="flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-full bg-[#F5F0FF] border border-[#E8E0FA] hover:bg-[#EDE5FF] transition-colors cursor-pointer font-black text-[12px] leading-none whitespace-nowrap text-[#5B4E7A]"
                 >
                     <span className="material-symbols-outlined text-[14px] shrink-0 -mr-0.5">edit_note</span>
                     <span>투어일지</span>
+                </button>
+            </div>
+
+            {/* 프로필 발송 */}
+            <div onClick={(e) => e.stopPropagation()}>
+                <button
+                    onClick={() => onSend(agency)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full bg-[#10B981] hover:bg-[#059669] text-white shadow-md shadow-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer font-black text-[12px] leading-none"
+                >
+                    <span className="material-symbols-outlined text-[14px] shrink-0">forward_to_inbox</span>
+                    <span>프로필발송</span>
+                    {sendInfo?.sent && (
+                        <span className="text-[10px] font-bold opacity-80 ml-0.5">· {sendInfo.timeAgo} 발송</span>
+                    )}
                 </button>
             </div>
 
@@ -252,8 +267,6 @@ const AgencyDirectory = () => {
     const handleSend = async (agency) => {
         if (sending) return;
 
-
-
         const currentUser = getUser();
         if (!currentUser?.portfolio_link) {
             showToast('먼저 스마트 프로필을 등록해주세요!', 'info');
@@ -261,15 +274,30 @@ const AgencyDirectory = () => {
             return;
         }
 
-        const monthCount = getMonthlyCount(sendHistory);
-        if (!isUnlimited && monthCount >= SILVER_MONTHLY_LIMIT) {
-            showToast(`이번달 프로필 발송(${SILVER_MONTHLY_LIMIT}회)을 모두 사용했습니다. GOLD 등급으로 무제한 발송!`, 'error');
+        // 프로필 발송은 GOLD 등급 이상만 가능 (실버는 업체 부담 방지를 위해 전면 차단)
+        if (!isUnlimited) {
+            showToast('프로필 발송은 GOLD 등급 이상부터 이용 가능합니다.', 'error');
             setTimeout(() => navigate('/upgrade'), 1800);
             return;
         }
 
-        // 에이전시 이메일 있으면 바로 발송, 없으면 입력 모달
+        // 연속 발송 방지 쿨다운 (무분별한 대량 발송으로 에이전시가 부담을 느끼지 않도록)
+        const lastSentAt = sendHistory.reduce((latest, s) => {
+            const t = new Date(s.sentAt).getTime();
+            return t > latest ? t : latest;
+        }, 0);
+        if (lastSentAt) {
+            const elapsed = Date.now() - lastSentAt;
+            if (elapsed < SEND_COOLDOWN_MS) {
+                const waitSec = Math.ceil((SEND_COOLDOWN_MS - elapsed) / 1000);
+                showToast(`너무 빠르게 연속 발송하고 있어요. ${waitSec}초 후 다시 시도해주세요.`, 'error');
+                return;
+            }
+        }
+
+        // 에이전시 이메일 있으면 확인 후 바로 발송, 없으면 입력 모달
         if (agency.email) {
+            if (!window.confirm('프로필 첨부하셨나요?\n신중하게 보내주세요.')) return;
             await executeSend(agency, agency.email);
         } else {
             setCastingModal({ agency });
@@ -297,20 +325,14 @@ const AgencyDirectory = () => {
 
             // 발송 기록 저장
             const record = await saveCastingSend(userId, agency.name);
-            
+
             // 상태 업데이트 (함수형 업데이트 사용으로 최신 상태 보장)
             setSendHistory(prev => {
                 const filtered = prev.filter(s => s.agencyName !== agency.name);
-                const updated = [...filtered, record];
-                
-                // 남은 횟수 계산 (메시지 표시용)
-                const monthCount = getMonthlyCount(updated);
-                const remaining = isUnlimited ? '무제한' : `${SILVER_MONTHLY_LIMIT - monthCount}회 남음`;
-                
-                showToast(`✅ ${agency.name}에 프로필을 발송했습니다! (이번달 ${remaining})`, 'success');
-                return updated;
+                return [...filtered, record];
             });
 
+            showToast(`✅ ${agency.name}에 프로필을 발송했습니다!`, 'success');
             setCastingModal(null);
         } catch (err) {
             console.error('[프로필발송 예외]', err);

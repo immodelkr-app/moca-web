@@ -172,7 +172,7 @@ const AgencyDetailModal = ({ agency, onClose, onWriteMemo, onSendProfile, sendIn
                             에이전시 상세 정보와 과거 투어 기록을 꼼꼼히 확인하셨나요?  
                             {sendInfo?.sent ? (
                                 <span className="block mt-1 text-emerald-700 font-bold">
-                                    ✓ 최근 발송 완료됨 ({sendInfo.lastSentStr})
+                                    ✓ 최근 발송 완료됨 ({sendInfo.timeAgo})
                                 </span>
                             ) : (
                                 <span className="block mt-1 text-gray-500">
