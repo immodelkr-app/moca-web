@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { getUser, updateUserProfile, updateMasterUserIdInSupabase } from '../services/userService';
-import { isPasskeySupported, registerPasskey } from '../services/passkeyService';
+import { getPasskeyStatus, registerPasskey } from '../services/passkeyService';
 import { getPointsBalance, getPointsHistory, syncUserWithCore } from '../lib/imCoreAuth';
 import { fetchMyCoupons } from '../services/attendanceService';
 
@@ -13,7 +13,8 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [biometricSupported, setBiometricSupported] = useState(false);
+    // 'checking' | 'not-native' | 'unavailable' | 'available'
+    const [biometricStatus, setBiometricStatus] = useState('checking');
 
     // 포인트 전자지갑 관련
     const [hasMasterUserId, setHasMasterUserId] = useState(() => {
@@ -177,7 +178,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
         };
 
         initUser();
-        isPasskeySupported().then(setBiometricSupported);
+        getPasskeyStatus().then(setBiometricStatus);
 
         // Daum Postcode 스크립트 로드
         const scriptId = 'daum-postcode-script';
@@ -579,7 +580,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                             </div>
 
                             {/* 지문/생체로그인 등록하기 */}
-                            {biometricSupported && (
+                            {biometricStatus === 'available' && (
                                 <button
                                     type="button"
                                     onClick={handleRegisterPasskey}
@@ -596,6 +597,17 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                     </div>
                                     <span className="material-symbols-outlined text-[#9CA3AF] text-[18px] group-hover:text-[#9333EA] transition-colors">add_circle</span>
                                 </button>
+                            )}
+                            {biometricStatus === 'unavailable' && (
+                                <div className="w-full flex items-center gap-3 p-4 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] opacity-70">
+                                    <div className="w-10 h-10 rounded-xl bg-[#9CA3AF]/10 flex items-center justify-center shrink-0">
+                                        <span className="material-symbols-outlined text-[#9CA3AF] text-[20px]">fingerprint</span>
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-[#5B4E7A] text-[13px] font-bold">지문 / 생체로그인 사용 불가</p>
+                                        <p className="text-[#9CA3AF] text-[10px] font-medium">이 기기에 등록된 지문/생체정보가 없습니다. 기기 설정 &gt; 생체 인식 및 보안에서 먼저 등록해주세요.</p>
+                                    </div>
+                                </div>
                             )}
                         </div>
 

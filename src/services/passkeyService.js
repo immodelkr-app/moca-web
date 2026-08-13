@@ -32,6 +32,24 @@ export const isPasskeySupported = async () => {
 };
 
 /**
+ * 지문 등록 UI 노출 상태 확인 (마이페이지용 - 왜 안 보이는지 구분 필요)
+ * - 'not-native': 웹 브라우저로 접속함 (Passkey 웹 미구현이라 완전히 숨김)
+ * - 'unavailable': 앱이지만 기기에 등록된 지문/생체정보가 없음 (기기 설정에서 먼저 등록 필요)
+ * - 'available': 등록 가능
+ */
+export const getPasskeyStatus = async () => {
+    if (!Capacitor.isNativePlatform()) return 'not-native';
+
+    try {
+        const result = await NativeBiometric.isAvailable();
+        return result.isAvailable ? 'available' : 'unavailable';
+    } catch (e) {
+        console.error('[Biometric] Availability check failed:', e);
+        return 'unavailable';
+    }
+};
+
+/**
  * 기기 지문 등록 (Enroll)
  * 네이티브 앱에서만 지원 (Native Biometric Keychain 사용)
  */
