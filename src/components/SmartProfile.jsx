@@ -235,8 +235,8 @@ const SmartProfile = () => {
         setErrorMsg('');
     };
 
-    // 등급 체크: GOLD 이상만 현재모습 사진 사용 가능
-    const ALLOWED_GRADES = ['GOLD', 'IMODEL', 'VIP'];
+    // 등급 체크: 아임모델 이상만 현재모습 사진 신규 업로드 가능 (운영자 수작업 검수 부담으로 GOLD 제외)
+    const ALLOWED_GRADES = ['IMODEL', 'VIP'];
     const CHAT_GRADES = ['IMODEL', 'VIP'];   // 아임모델/전속모델 - 1:1 채팅 피드백
     const isPhotoAllowed = ALLOWED_GRADES.includes(user?.grade);
     const isChatAllowed = CHAT_GRADES.includes(user?.grade);
@@ -873,35 +873,28 @@ const SmartProfile = () => {
                     <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 mb-3">
                         <span className="text-amber-600 text-[11px] font-black">🥈 현재 SILVER 등급</span>
                     </div>
-                    <h3 className="text-[#1F1235] font-black text-lg mb-2">GOLD 회원 이상 전용 기능</h3>
+                    <h3 className="text-[#1F1235] font-black text-lg mb-2">아임모델 등급 전용 기능</h3>
                     <p className="text-[#5B4E7A] text-sm leading-relaxed mb-1">
                         <span className="text-amber-600 font-bold">현재모습 사진등록</span>은
                     </p>
                     <p className="text-[#5B4E7A] text-sm leading-relaxed mb-1">
-                        <span className="text-amber-600 font-black">🌟 GOLD 회원 이상</span>부터 사용 가능합니다.
+                        <span className="text-amber-600 font-black">🌟 아임모델 등급 이상</span>부터 사용 가능합니다.
                     </p>
                     <div className="bg-amber-50/80 rounded-2xl p-3 mb-4 mt-2 text-left">
                         <p className="text-[#9CA3AF] text-[11px] leading-relaxed">
-                            ✅ GOLD 등급: 어드민 피드백 수신 가능<br/>
-                            ✅ 아임모델/전속모델: 1:1 피드백 대화 가능
+                            ✅ 운영자가 사진 한 장 한 장을 직접 검수하고<br/>
+                            ✅ 1:1 피드백 대화로 꼼꼼히 챙겨드립니다
                         </p>
                     </div>
 
                     {/* 버튼 영역 */}
                     <div className="flex flex-col gap-2.5">
                         <button
-                            onClick={() => { setShowGradePopup(false); navigate('/upgrade'); }}
+                            onClick={() => { setShowGradePopup(false); window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank'); }}
                             className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] text-black font-black text-sm shadow-lg shadow-[#F59E0B]/25 hover:opacity-90 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
                         >
                             <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
-                            GOLD 회원 신청 안내 보기
-                        </button>
-                        <button
-                            onClick={() => { setShowGradePopup(false); window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank'); }}
-                            className="w-full py-3.5 rounded-2xl bg-[#FEE500]/10 border border-[#FEE500]/20 text-[#FADA0B] font-black text-sm hover:bg-[#FEE500]/18 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
-                        >
-                            <span className="material-symbols-outlined text-[18px]">chat</span>
-                            카카오톡 문의하기
+                            아임모델 등급 문의하기
                         </button>
                         <button
                             onClick={() => setShowGradePopup(false)}
