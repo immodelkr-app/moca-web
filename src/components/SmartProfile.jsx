@@ -393,7 +393,11 @@ const SmartProfile = () => {
     };
 
     const isDriveUrl = (url) => {
-        return url && (url.includes('drive.google.com') || url.includes('docs.google.com'));
+        return url && (
+            url.includes('drive.google.com') ||
+            url.includes('docs.google.com') ||
+            url.includes('mybox.naver.com')
+        );
     };
 
     const hasProfile = formData.portfolio_link && isValidUrl(formData.portfolio_link);
@@ -628,7 +632,7 @@ const SmartProfile = () => {
                                 ) : isDriveUrl(formData.portfolio_link) ? (
                                     <div className="flex items-start gap-1.5 text-xs text-emerald-600 font-black leading-normal">
                                         <span className="material-symbols-outlined text-[16px] mt-0.5 flex-shrink-0">check_circle</span>
-                                        <span>올바른 구글 드라이브 링크 형식입니다.</span>
+                                        <span>올바른 공유 링크 형식입니다.</span>
                                     </div>
                                 ) : (
                                     <div className="flex items-start gap-1.5 text-xs text-amber-600 font-bold leading-normal">
