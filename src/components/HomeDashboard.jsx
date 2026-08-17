@@ -15,7 +15,6 @@ const TOUR_ITEMS = [
 const COMMUNITY_ITEMS = [
     { icon: 'school', label: '모카 클래스', route: '/home/class', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'photo_camera', label: '모카그램', route: '/home/cert', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
-    { icon: 'quiz', label: '김대표퀴즈', route: '/home/quiz', color: 'text-[#C026D3]', bgLight: 'bg-[#FAE8FF]' },
     { icon: 'smart_display', label: '모카TV', route: '/home/tv', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'workspace_premium', label: '등급 신청하기', route: '/upgrade', color: 'text-[#D97706]', bgLight: 'bg-[#FEF3C7]' },
 ];
@@ -189,24 +188,36 @@ const HomeDashboard = () => {
                 </div>
             </div>
 
-            {/* ── 4-1. 모델캐스팅 배너 ── */}
+            {/* ── 4-1. 모델캐스팅 / 김대표퀴즈 2열 카드 ── */}
             <div className="px-6 mb-8">
-                <button
-                    onClick={() => setShowCastingNotice(true)}
-                    className="w-full flex items-center gap-4 p-5 rounded-3xl bg-gradient-to-r from-[#1F1235] to-[#4C1D95] border border-white/10 shadow-md active:scale-95 transition-all text-left"
-                >
-                    <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-white text-[28px]">campaign</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                            <h3 className="text-base font-black text-white">모델캐스팅</h3>
-                            <span className="px-1.5 py-0.5 rounded-full bg-[#C084FC] text-[#1F1235] text-[9px] font-black">NEW</span>
+                <div className="grid grid-cols-2 gap-4">
+
+                    {/* 카드 1: 모델캐스팅 */}
+                    <button
+                        onClick={() => setShowCastingNotice(true)}
+                        className="relative flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#4C1D95] to-[#1F1235] border border-white/10 shadow-md active:scale-95 transition-all text-center group"
+                    >
+                        <span className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#C084FC] text-[#1F1235] text-[9px] font-black">NEW</span>
+                        <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
+                            <span className="material-symbols-outlined text-white text-[34px]">campaign</span>
                         </div>
-                        <p className="text-[11px] font-bold text-white/70 leading-tight">업체가 직접 올리는 모델 구인 공고 보러가기</p>
-                    </div>
-                    <span className="material-symbols-outlined text-white/50 text-[20px] flex-shrink-0">chevron_right</span>
-                </button>
+                        <h3 className="text-lg font-black text-white mb-1">모델캐스팅</h3>
+                        <p className="text-[11px] font-bold text-white/70 leading-tight">업체가 직접 올리는<br />모델 구인 공고</p>
+                    </button>
+
+                    {/* 카드 2: 김대표퀴즈 */}
+                    <button
+                        onClick={() => navigate('/home/quiz')}
+                        className="flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#FCE7F3] via-[#FAE8FF] to-[#F5D0FE] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
+                    >
+                        <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
+                            <span className="material-symbols-outlined text-[#C026D3] text-[34px]">quiz</span>
+                        </div>
+                        <h3 className="text-lg font-black text-[#1F1235] mb-1">김대표퀴즈</h3>
+                        <p className="text-[11px] font-bold text-[#A21CAF]/80 leading-tight">정답 맞추고<br />상품 받아가기</p>
+                    </button>
+
+                </div>
             </div>
 
             {/* ── 4-2. 출석체크 & 참석 프리패스 진행률 ── */}
