@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     fetchAllQuizzesForAdmin, createQuiz, fetchSubmissions,
-    markWinner, closeQuiz, publishResults,
+    markWinner, closeQuiz, publishResults, updateCorrectAnswers,
 } from '../services/quizService';
 import { sendBroadcastPush } from '../services/pushNotificationService';
 
@@ -104,14 +104,14 @@ const QuestionEditor = ({ index, question, onChange, onRemove, canRemove }) => {
             )}
 
             <div>
-                <label className="text-[11px] font-bold text-[var(--moca-text-3)]">정답</label>
+                <label className="text-[11px] font-bold text-[var(--moca-text-3)]">정답 (선택 입력)</label>
                 {question.questionType === 'multiple_choice' ? (
                     <select
                         value={question.correctAnswer}
                         onChange={(e) => updateField({ correctAnswer: e.target.value })}
                         className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm bg-white"
                     >
-                        <option value="">정답 선택</option>
+                        <option value="">아직 미정 — 결과 발표 시 확정</option>
                         {question.choices.filter((c) => c.trim()).map((c, idx) => (
                             <option key={idx} value={c}>{c}</option>
                         ))}
@@ -121,7 +121,7 @@ const QuestionEditor = ({ index, question, onChange, onRemove, canRemove }) => {
                         value={question.correctAnswer}
                         onChange={(e) => updateField({ correctAnswer: e.target.value })}
                         className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
-                        placeholder="선택 입력 — 당첨자는 어차피 수동으로 확인/체크합니다"
+                        placeholder="아직 미정이어도 됩니다 — 결과 발표 시 확정"
                     />
                 )}
             </div>
@@ -157,9 +157,9 @@ const CreateQuizForm = ({ onCreated }) => {
             const cleanedChoices = q.choices.map((c) => c.trim()).filter(Boolean);
 
             if (!q.question.trim()) { setError(`문제 ${i + 1}의 질문을 입력해주세요.`); return; }
-            if (q.questionType === 'multiple_choice') {
-                if (cleanedChoices.length < 2) { setError(`문제 ${i + 1}은 객관식이므로 보기를 2개 이상 입력해주세요.`); return; }
-                if (!q.correctAnswer.trim()) { setError(`문제 ${i + 1}의 정답을 선택해주세요.`); return; }
+            if (q.questionType === 'multiple_choice' && cleanedChoices.length < 2) {
+                setError(`문제 ${i + 1}은 객관식이므로 보기를 2개 이상 입력해주세요.`);
+                return;
             }
 
             preparedQuestions.push({
@@ -257,7 +257,7 @@ const CreateQuizForm = ({ onCreated }) => {
                         {sendingPush ? '발송 중...' : '🔔 새 퀴즈 알림 발송'}
                     </button>
                 </div>
-                <p className="text-[10px] text-[var(--moca-text-3)]">먼저 "퀴즈 등록"으로 게시판에 반영한 뒤, 원하면 "새 퀴즈 알림 발송"을 눌러 전체 회원에게 푸시를 보내세요.</p>
+                <p className="text-[10px] text-[var(--moca-text-3)]">정답은 지금 안 정해도 됩니다 — 제출 목록을 보고 "결과 발표" 시점에 문제별로 확정할 수 있어요. 먼저 "퀴즈 등록"으로 게시판에 반영한 뒤, 원하면 "새 퀴즈 알림 발송"을 눌러 전체 회원에게 푸시를 보내세요.</p>
                 <PushResultBadge result={pushResult} />
             </div>
         </div>
@@ -270,8 +270,17 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
     const [publishing, setPublishing] = useState(false);
     const [pushResult, setPushResult] = useState(null);
     const [sendingPush, setSendingPush] = useState(false);
+    const [answerDrafts, setAnswerDrafts] = useState(() => quiz.correct_answers || {});
 
     const questions = quiz.questions || [];
+
+    useEffect(() => {
+        setAnswerDrafts(quiz.correct_answers || {});
+    }, [quiz.id]);
+
+    const setAnswerDraft = (questionId, value) => {
+        setAnswerDrafts((prev) => ({ ...prev, [questionId]: value }));
+    };
 
     const load = async () => {
         setLoading(true);
@@ -299,13 +308,37 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
     };
 
     const handlePublish = async () => {
+        for (let i = 0; i < questions.length; i += 1) {
+            const q = questions[i];
+            if (!(answerDrafts[q.id] || '').trim()) {
+                alert(`${questions.length > 1 ? `Q${i + 1} ` : ''}"${q.question}"의 정답을 먼저 확정해주세요.`);
+                return;
+            }
+        }
+
         const winnerCount = submissions.filter((s) => s.is_winner).length;
         if (!window.confirm(`정답과 당첨자(${winnerCount}명)가 전체 공개됩니다. 계속하시겠습니까?`)) return;
+
         setPublishing(true);
+        const trimmedAnswers = {};
+        questions.forEach((q) => { trimmedAnswers[q.id] = (answerDrafts[q.id] || '').trim(); });
+
+        const { error: answerError } = await updateCorrectAnswers(quiz.id, trimmedAnswers);
+        if (answerError) {
+            setPublishing(false);
+            alert('정답 저장 중 오류가 발생했습니다: ' + (answerError.message || ''));
+            return;
+        }
+
         const { error } = await publishResults(quiz.id);
         setPublishing(false);
         if (error) { alert('결과 발표 중 오류가 발생했습니다: ' + (error.message || '')); return; }
-        onQuizUpdated({ ...quiz, status: 'announced', winner_nicknames: submissions.filter((s) => s.is_winner).map((s) => s.user_nickname) });
+        onQuizUpdated({
+            ...quiz,
+            status: 'announced',
+            correct_answers: trimmedAnswers,
+            winner_nicknames: submissions.filter((s) => s.is_winner).map((s) => s.user_nickname),
+        });
     };
 
     const handleSendResultPush = async () => {
@@ -337,14 +370,46 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                                 </h3>
                             ))}
                         </div>
-                        <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-1">
-                            🎁 {quiz.prize_description} · 정답: {questions.map((q) => quiz.correct_answers?.[q.id]).join(' / ')}
-                        </p>
+                        <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-1">🎁 {quiz.prize_description}</p>
                     </div>
                     <button onClick={onClose} className="text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-xl leading-none">✕</button>
                 </div>
 
                 <div className="px-6 py-4 overflow-y-auto flex-1">
+                    {quiz.status !== 'announced' && (
+                        <div className="mb-4 p-3 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] space-y-2">
+                            <p className="text-[11px] font-black text-[var(--moca-text-3)]">정답 확정 (결과 발표 시 이 값으로 공개됩니다)</p>
+                            {questions.map((q, idx) => (
+                                <div key={q.id}>
+                                    <label className="text-[11px] font-bold text-[var(--moca-text-3)]">{questions.length > 1 ? `Q${idx + 1}. ` : ''}{q.question}</label>
+                                    {q.questionType === 'multiple_choice' ? (
+                                        <select
+                                            value={answerDrafts[q.id] || ''}
+                                            onChange={(e) => setAnswerDraft(q.id, e.target.value)}
+                                            className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm bg-white"
+                                        >
+                                            <option value="">정답 선택</option>
+                                            {(q.choices || []).map((c, cIdx) => (
+                                                <option key={cIdx} value={c}>{c}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <input
+                                            value={answerDrafts[q.id] || ''}
+                                            onChange={(e) => setAnswerDraft(q.id, e.target.value)}
+                                            className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                                            placeholder="정답 텍스트"
+                                        />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {quiz.status === 'announced' && (
+                        <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">
+                            정답: {questions.map((q) => quiz.correct_answers?.[q.id]).join(' / ')}
+                        </p>
+                    )}
                     <p className="text-[11px] font-bold text-[var(--moca-text-3)] mb-2">
                         당첨자 배송 정보는 회원관리 탭에서 닉네임으로 조회하세요.
                     </p>

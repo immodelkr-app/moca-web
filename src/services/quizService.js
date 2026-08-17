@@ -172,6 +172,19 @@ export const fetchSubmissions = async (quizId) => {
     return data || [];
 };
 
+/** 문제별 정답 확정/수정 ({ [questionId]: 정답텍스트 }) — 보통 결과 발표 직전에 호출 */
+export const updateCorrectAnswers = async (quizId, correctAnswers) => {
+    if (!supabase) return { error: new Error('Supabase 미설정') };
+    const { error } = await supabase
+        .from('quiz_posts')
+        .update({ correct_answers: correctAnswers })
+        .eq('id', quizId);
+    if (error) {
+        console.error('[quizService] updateCorrectAnswers error:', error);
+    }
+    return { error };
+};
+
 /** 특정 제출을 당첨/취소로 표시 */
 export const markWinner = async (submissionId, isWinner) => {
     if (!supabase) return { error: new Error('Supabase 미설정') };
