@@ -125,7 +125,7 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                                     </button>
                                 </div>
                                 <div
-                                    className={`bg-black rounded-2xl overflow-hidden ${isVerticalVideo ? 'aspect-[9/16] h-[80vh] max-h-[80vh] w-auto max-w-[95vw]' : 'w-full aspect-video'}`}
+                                    className={`bg-black rounded-2xl overflow-hidden ${isVerticalVideo ? 'aspect-[9/16] h-[90vh] max-h-[90vh] w-auto max-w-[95vw]' : 'w-full aspect-video'}`}
                                 >
                                     <iframe
                                         src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
