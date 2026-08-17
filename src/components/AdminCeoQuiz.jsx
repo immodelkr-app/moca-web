@@ -11,12 +11,18 @@ const STATUS_LABEL = {
     announced: { label: '발표완료', className: 'bg-gray-100 text-gray-500' },
 };
 
-const EMPTY_FORM = {
+const MAX_QUESTIONS = 2;
+
+const EMPTY_QUESTION = () => ({
     question: '',
     questionType: 'multiple_choice',
     choices: ['', ''],
-    prizeDescription: '',
     correctAnswer: '',
+});
+
+const EMPTY_FORM = {
+    questions: [EMPTY_QUESTION()],
+    prizeDescription: '',
 };
 
 const PushResultBadge = ({ result }) => {
@@ -31,6 +37,98 @@ const PushResultBadge = ({ result }) => {
     );
 };
 
+const QuestionEditor = ({ index, question, onChange, onRemove, canRemove }) => {
+    const updateField = (patch) => onChange(index, { ...question, ...patch });
+
+    const updateChoice = (idx, value) => {
+        const next = [...question.choices];
+        next[idx] = value;
+        updateField({ choices: next });
+    };
+    const addChoice = () => updateField({ choices: [...question.choices, ''] });
+    const removeChoice = (idx) => updateField({ choices: question.choices.filter((_, i) => i !== idx) });
+
+    return (
+        <div className="rounded-xl border border-[var(--moca-border)] p-3 space-y-3">
+            <div className="flex items-center justify-between">
+                <p className="text-[12px] font-black text-[var(--moca-primary)]">문제 {index + 1}</p>
+                {canRemove && (
+                    <button onClick={() => onRemove(index)} className="text-[11px] font-bold text-[var(--moca-text-3)] hover:text-red-500">문제 삭제</button>
+                )}
+            </div>
+
+            <div>
+                <label className="text-[11px] font-bold text-[var(--moca-text-3)]">질문</label>
+                <textarea
+                    value={question.question}
+                    onChange={(e) => updateField({ question: e.target.value })}
+                    rows={2}
+                    className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                    placeholder="예: 김대표가 가장 좋아하는 색깔은?"
+                />
+            </div>
+
+            <div className="flex gap-2">
+                <button
+                    onClick={() => updateField({ questionType: 'multiple_choice' })}
+                    className={`flex-1 py-2 rounded-xl text-[12px] font-black border ${question.questionType === 'multiple_choice' ? 'bg-fuchsia-50 border-fuchsia-400 text-fuchsia-700' : 'border-[var(--moca-border)] text-[var(--moca-text-3)]'}`}
+                >
+                    객관식
+                </button>
+                <button
+                    onClick={() => updateField({ questionType: 'short_answer' })}
+                    className={`flex-1 py-2 rounded-xl text-[12px] font-black border ${question.questionType === 'short_answer' ? 'bg-fuchsia-50 border-fuchsia-400 text-fuchsia-700' : 'border-[var(--moca-border)] text-[var(--moca-text-3)]'}`}
+                >
+                    주관식
+                </button>
+            </div>
+
+            {question.questionType === 'multiple_choice' && (
+                <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-[var(--moca-text-3)]">보기</label>
+                    {question.choices.map((c, idx) => (
+                        <div key={idx} className="flex gap-2">
+                            <input
+                                value={c}
+                                onChange={(e) => updateChoice(idx, e.target.value)}
+                                className="flex-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                                placeholder={`보기 ${idx + 1}`}
+                            />
+                            {question.choices.length > 2 && (
+                                <button onClick={() => removeChoice(idx)} className="px-2 text-[var(--moca-text-3)] hover:text-red-500">✕</button>
+                            )}
+                        </div>
+                    ))}
+                    <button onClick={addChoice} className="text-[12px] font-bold text-[var(--moca-primary)]">+ 보기 추가</button>
+                </div>
+            )}
+
+            <div>
+                <label className="text-[11px] font-bold text-[var(--moca-text-3)]">정답</label>
+                {question.questionType === 'multiple_choice' ? (
+                    <select
+                        value={question.correctAnswer}
+                        onChange={(e) => updateField({ correctAnswer: e.target.value })}
+                        className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm bg-white"
+                    >
+                        <option value="">정답 선택</option>
+                        {question.choices.filter((c) => c.trim()).map((c, idx) => (
+                            <option key={idx} value={c}>{c}</option>
+                        ))}
+                    </select>
+                ) : (
+                    <input
+                        value={question.correctAnswer}
+                        onChange={(e) => updateField({ correctAnswer: e.target.value })}
+                        className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                        placeholder="선택 입력 — 당첨자는 어차피 수동으로 확인/체크합니다"
+                    />
+                )}
+            </div>
+        </div>
+    );
+};
+
 const CreateQuizForm = ({ onCreated }) => {
     const [form, setForm] = useState(EMPTY_FORM);
     const [submitting, setSubmitting] = useState(false);
@@ -38,35 +136,44 @@ const CreateQuizForm = ({ onCreated }) => {
     const [pushResult, setPushResult] = useState(null);
     const [sendingPush, setSendingPush] = useState(false);
 
-    const updateChoice = (idx, value) => {
+    const updateQuestion = (idx, nextQuestion) => {
         setForm((f) => {
-            const next = [...f.choices];
-            next[idx] = value;
-            return { ...f, choices: next };
+            const next = [...f.questions];
+            next[idx] = nextQuestion;
+            return { ...f, questions: next };
         });
     };
-    const addChoice = () => setForm((f) => ({ ...f, choices: [...f.choices, ''] }));
-    const removeChoice = (idx) => setForm((f) => ({ ...f, choices: f.choices.filter((_, i) => i !== idx) }));
+    const addQuestion = () => setForm((f) => ({ ...f, questions: [...f.questions, EMPTY_QUESTION()] }));
+    const removeQuestion = (idx) => setForm((f) => ({ ...f, questions: f.questions.filter((_, i) => i !== idx) }));
 
     const handleSubmit = async () => {
         setError('');
-        const cleanedChoices = form.choices.map((c) => c.trim()).filter(Boolean);
 
-        if (!form.question.trim()) { setError('질문을 입력해주세요.'); return; }
         if (!form.prizeDescription.trim()) { setError('상품 설명을 입력해주세요.'); return; }
-        if (!form.correctAnswer.trim()) { setError('정답을 입력해주세요.'); return; }
-        if (form.questionType === 'multiple_choice' && cleanedChoices.length < 2) {
-            setError('객관식은 보기를 2개 이상 입력해주세요.');
-            return;
+
+        const preparedQuestions = [];
+        for (let i = 0; i < form.questions.length; i += 1) {
+            const q = form.questions[i];
+            const cleanedChoices = q.choices.map((c) => c.trim()).filter(Boolean);
+
+            if (!q.question.trim()) { setError(`문제 ${i + 1}의 질문을 입력해주세요.`); return; }
+            if (q.questionType === 'multiple_choice') {
+                if (cleanedChoices.length < 2) { setError(`문제 ${i + 1}은 객관식이므로 보기를 2개 이상 입력해주세요.`); return; }
+                if (!q.correctAnswer.trim()) { setError(`문제 ${i + 1}의 정답을 선택해주세요.`); return; }
+            }
+
+            preparedQuestions.push({
+                question: q.question.trim(),
+                questionType: q.questionType,
+                choices: cleanedChoices,
+                correctAnswer: q.correctAnswer.trim(),
+            });
         }
 
         setSubmitting(true);
         const { quiz, error: createError } = await createQuiz({
-            question: form.question.trim(),
-            questionType: form.questionType,
-            choices: cleanedChoices,
+            questions: preparedQuestions,
             prizeDescription: form.prizeDescription.trim(),
-            correctAnswer: form.correctAnswer.trim(),
         });
         setSubmitting(false);
 
@@ -81,65 +188,45 @@ const CreateQuizForm = ({ onCreated }) => {
     };
 
     const handleSendOpenPush = async () => {
+        const firstQuestion = form.questions[0]?.question || '';
         setSendingPush(true);
         const result = await sendBroadcastPush({
             title: '🎁 김대표퀴즈 오픈!',
-            body: `${form.question.slice(0, 30)}${form.question.length > 30 ? '...' : ''} · 상품: ${form.prizeDescription}`,
+            body: `${firstQuestion.slice(0, 30)}${firstQuestion.length > 30 ? '...' : ''} · 상품: ${form.prizeDescription}`,
             route: '/home/quiz',
         });
         setPushResult(result);
         setSendingPush(false);
     };
 
+    const canSendPush = !sendingPush && form.questions.every((q) => q.question.trim()) && form.prizeDescription.trim();
+
     return (
         <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-5 mb-6">
-            <p className="text-sm font-black text-[var(--moca-text)] mb-4">🎁 새 퀴즈 등록</p>
+            <div className="flex items-center justify-between mb-4">
+                <p className="text-sm font-black text-[var(--moca-text)]">🎁 새 퀴즈 등록</p>
+                <span className="text-[11px] font-bold text-[var(--moca-text-3)]">문제 {form.questions.length}/{MAX_QUESTIONS}개</span>
+            </div>
 
             <div className="space-y-3">
-                <div>
-                    <label className="text-[11px] font-bold text-[var(--moca-text-3)]">질문</label>
-                    <textarea
-                        value={form.question}
-                        onChange={(e) => setForm((f) => ({ ...f, question: e.target.value }))}
-                        rows={2}
-                        className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
-                        placeholder="예: 김대표가 가장 좋아하는 색깔은?"
+                {form.questions.map((q, idx) => (
+                    <QuestionEditor
+                        key={idx}
+                        index={idx}
+                        question={q}
+                        onChange={updateQuestion}
+                        onRemove={removeQuestion}
+                        canRemove={form.questions.length > 1}
                     />
-                </div>
+                ))}
 
-                <div className="flex gap-2">
+                {form.questions.length < MAX_QUESTIONS && (
                     <button
-                        onClick={() => setForm((f) => ({ ...f, questionType: 'multiple_choice' }))}
-                        className={`flex-1 py-2 rounded-xl text-[12px] font-black border ${form.questionType === 'multiple_choice' ? 'bg-fuchsia-50 border-fuchsia-400 text-fuchsia-700' : 'border-[var(--moca-border)] text-[var(--moca-text-3)]'}`}
+                        onClick={addQuestion}
+                        className="w-full py-2 rounded-xl border border-dashed border-[var(--moca-primary)] text-[12px] font-black text-[var(--moca-primary)]"
                     >
-                        객관식
+                        + 문제 추가 (최대 {MAX_QUESTIONS}개)
                     </button>
-                    <button
-                        onClick={() => setForm((f) => ({ ...f, questionType: 'short_answer' }))}
-                        className={`flex-1 py-2 rounded-xl text-[12px] font-black border ${form.questionType === 'short_answer' ? 'bg-fuchsia-50 border-fuchsia-400 text-fuchsia-700' : 'border-[var(--moca-border)] text-[var(--moca-text-3)]'}`}
-                    >
-                        주관식
-                    </button>
-                </div>
-
-                {form.questionType === 'multiple_choice' && (
-                    <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-[var(--moca-text-3)]">보기</label>
-                        {form.choices.map((c, idx) => (
-                            <div key={idx} className="flex gap-2">
-                                <input
-                                    value={c}
-                                    onChange={(e) => updateChoice(idx, e.target.value)}
-                                    className="flex-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
-                                    placeholder={`보기 ${idx + 1}`}
-                                />
-                                {form.choices.length > 2 && (
-                                    <button onClick={() => removeChoice(idx)} className="px-2 text-[var(--moca-text-3)] hover:text-red-500">✕</button>
-                                )}
-                            </div>
-                        ))}
-                        <button onClick={addChoice} className="text-[12px] font-bold text-[var(--moca-primary)]">+ 보기 추가</button>
-                    </div>
                 )}
 
                 <div>
@@ -150,29 +237,6 @@ const CreateQuizForm = ({ onCreated }) => {
                         className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
                         placeholder="예: 아이패드 4개"
                     />
-                </div>
-
-                <div>
-                    <label className="text-[11px] font-bold text-[var(--moca-text-3)]">정답</label>
-                    {form.questionType === 'multiple_choice' ? (
-                        <select
-                            value={form.correctAnswer}
-                            onChange={(e) => setForm((f) => ({ ...f, correctAnswer: e.target.value }))}
-                            className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm bg-white"
-                        >
-                            <option value="">정답 선택</option>
-                            {form.choices.filter((c) => c.trim()).map((c, idx) => (
-                                <option key={idx} value={c}>{c}</option>
-                            ))}
-                        </select>
-                    ) : (
-                        <input
-                            value={form.correctAnswer}
-                            onChange={(e) => setForm((f) => ({ ...f, correctAnswer: e.target.value }))}
-                            className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
-                            placeholder="정답 텍스트 (참고용 — 당첨자는 수동으로 확인/체크합니다)"
-                        />
-                    )}
                 </div>
 
                 {error && <p className="text-[12px] font-bold text-red-500">{error}</p>}
@@ -187,7 +251,7 @@ const CreateQuizForm = ({ onCreated }) => {
                     </button>
                     <button
                         onClick={handleSendOpenPush}
-                        disabled={sendingPush || !form.question.trim() || !form.prizeDescription.trim()}
+                        disabled={!canSendPush}
                         className="px-4 py-2.5 rounded-xl border border-fuchsia-300 text-fuchsia-700 font-black text-[13px] disabled:opacity-40"
                     >
                         {sendingPush ? '발송 중...' : '🔔 새 퀴즈 알림 발송'}
@@ -206,6 +270,8 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
     const [publishing, setPublishing] = useState(false);
     const [pushResult, setPushResult] = useState(null);
     const [sendingPush, setSendingPush] = useState(false);
+
+    const questions = quiz.questions || [];
 
     const load = async () => {
         setLoading(true);
@@ -264,8 +330,16 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                 <div className="px-6 py-5 border-b border-[var(--moca-border)] bg-[var(--moca-surface-2)] flex items-start justify-between gap-3">
                     <div>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
-                        <h3 className="text-lg font-black text-[var(--moca-text)] mt-2">{quiz.question}</h3>
-                        <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-0.5">🎁 {quiz.prize_description} · 정답: {quiz.correct_answer}</p>
+                        <div className="mt-2 space-y-0.5">
+                            {questions.map((q, idx) => (
+                                <h3 key={q.id} className="text-[15px] font-black text-[var(--moca-text)] leading-snug">
+                                    {questions.length > 1 ? `Q${idx + 1}. ` : ''}{q.question}
+                                </h3>
+                            ))}
+                        </div>
+                        <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-1">
+                            🎁 {quiz.prize_description} · 정답: {questions.map((q) => quiz.correct_answers?.[q.id]).join(' / ')}
+                        </p>
                     </div>
                     <button onClick={onClose} className="text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-xl leading-none">✕</button>
                 </div>
@@ -283,7 +357,9 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                             <thead>
                                 <tr className="text-left text-[11px] text-[var(--moca-text-3)] font-bold border-b border-[var(--moca-border)]">
                                     <th className="py-2 pr-3">닉네임</th>
-                                    <th className="py-2 pr-3">답변</th>
+                                    {questions.map((q, idx) => (
+                                        <th key={q.id} className="py-2 pr-3">{questions.length > 1 ? `답변 Q${idx + 1}` : '답변'}</th>
+                                    ))}
                                     <th className="py-2 pr-3">제출시각</th>
                                     <th className="py-2 pr-3">당첨</th>
                                 </tr>
@@ -292,7 +368,9 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                                 {submissions.map((s) => (
                                     <tr key={s.id} className="border-b border-[var(--moca-border)] last:border-0">
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)]">{s.user_nickname}</td>
-                                        <td className="py-2.5 pr-3 text-[var(--moca-text)]">{s.answer_text}</td>
+                                        {questions.map((q) => (
+                                            <td key={q.id} className="py-2.5 pr-3 text-[var(--moca-text)]">{s.answers?.[q.id]}</td>
+                                        ))}
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(s.created_at).toLocaleString('ko-KR')}</td>
                                         <td className="py-2.5 pr-3">
                                             <input type="checkbox" checked={!!s.is_winner} onChange={() => toggleWinner(s)} className="w-4 h-4" />
@@ -380,7 +458,7 @@ const AdminCeoQuiz = () => {
                             <tr className="text-left text-[11px] text-[var(--moca-text-3)] font-bold border-b border-[var(--moca-border)]">
                                 <th className="py-2 pr-3">상태</th>
                                 <th className="py-2 pr-3">질문</th>
-                                <th className="py-2 pr-3">유형</th>
+                                <th className="py-2 pr-3">문제수</th>
                                 <th className="py-2 pr-3">상품</th>
                                 <th className="py-2 pr-3">등록일</th>
                             </tr>
@@ -388,6 +466,7 @@ const AdminCeoQuiz = () => {
                         <tbody>
                             {quizzes.map((q) => {
                                 const status = STATUS_LABEL[q.status] || STATUS_LABEL.open;
+                                const questions = q.questions || [];
                                 return (
                                     <tr
                                         key={q.id}
@@ -397,8 +476,10 @@ const AdminCeoQuiz = () => {
                                         <td className="py-2.5 pr-3">
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
                                         </td>
-                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)] max-w-[280px] truncate underline decoration-dotted underline-offset-2">{q.question}</td>
-                                        <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{q.question_type === 'multiple_choice' ? '객관식' : '주관식'}</td>
+                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)] max-w-[280px] truncate underline decoration-dotted underline-offset-2">
+                                            {questions.map((qq) => qq.question).join(' / ')}
+                                        </td>
+                                        <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{questions.length}개</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)] max-w-[160px] truncate">{q.prize_description}</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(q.created_at).toLocaleDateString('ko-KR')}</td>
                                     </tr>

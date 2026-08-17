@@ -8,10 +8,11 @@ const STATUS_BADGE = {
 };
 
 const CeoQuizCard = ({ quiz, myNickname }) => {
+    const questions = quiz.questions || [];
+
     const [mySubmission, setMySubmission] = useState(null);
     const [loadingSubmission, setLoadingSubmission] = useState(true);
-    const [selectedChoice, setSelectedChoice] = useState('');
-    const [answerText, setAnswerText] = useState('');
+    const [draftAnswers, setDraftAnswers] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [announcedDetail, setAnnouncedDetail] = useState(null);
@@ -38,15 +39,24 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
         return () => { cancelled = true; };
     }, [quiz.id, quiz.status]);
 
+    const setDraftAnswer = (questionId, value) => {
+        setDraftAnswers((prev) => ({ ...prev, [questionId]: value }));
+    };
+
     const handleSubmit = async () => {
-        const answer = quiz.question_type === 'multiple_choice' ? selectedChoice : answerText.trim();
-        if (!answer) {
-            setError(quiz.question_type === 'multiple_choice' ? '보기를 선택해주세요.' : '답변을 입력해주세요.');
-            return;
+        const answers = {};
+        for (const q of questions) {
+            const raw = draftAnswers[q.id];
+            const value = q.questionType === 'multiple_choice' ? (raw || '') : (raw || '').trim();
+            if (!value) {
+                setError(`"${q.question}"에 ${q.questionType === 'multiple_choice' ? '보기를 선택' : '답변을 입력'}해주세요.`);
+                return;
+            }
+            answers[q.id] = value;
         }
         setError('');
         setSubmitting(true);
-        const { submission, error: submitError } = await submitAnswer(quiz.id, myNickname, answer);
+        const { submission, error: submitError } = await submitAnswer(quiz.id, myNickname, answers);
         setSubmitting(false);
 
         if (submitError) {
@@ -70,16 +80,30 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
         <div className="bg-white border border-[#E8E0FA] rounded-3xl overflow-hidden">
             <div className="px-5 pt-4 pb-3">
                 <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-black ${status.className}`}>{status.label}</span>
-                <h3 className="text-[16px] font-black text-[#1F1235] mt-2.5 leading-snug">{quiz.question}</h3>
+                <div className="mt-2.5 space-y-1">
+                    {questions.map((q, idx) => (
+                        <h3 key={q.id} className="text-[16px] font-black text-[#1F1235] leading-snug">
+                            {questions.length > 1 ? `Q${idx + 1}. ` : ''}{q.question}
+                        </h3>
+                    ))}
+                </div>
                 <p className="text-[13px] font-bold text-[#7C3AED] mt-1.5">🎁 상품: {quiz.prize_description}</p>
             </div>
 
             <div className="px-5 pb-5">
                 {quiz.status === 'announced' ? (
                     <div className="bg-[#F8F5FF] rounded-2xl p-4 space-y-2">
-                        <p className="text-[13px] font-black text-[#1F1235]">
-                            정답: {announcedDetail ? announcedDetail.correct_answer : '불러오는 중...'}
-                        </p>
+                        <div className="space-y-1">
+                            {questions.map((q, idx) => {
+                                const answer = announcedDetail?.correct_answers?.[q.id];
+                                if (announcedDetail && !answer) return null;
+                                return (
+                                    <p key={q.id} className="text-[13px] font-black text-[#1F1235]">
+                                        {questions.length > 1 ? `Q${idx + 1} ` : ''}정답: {announcedDetail ? answer : '불러오는 중...'}
+                                    </p>
+                                );
+                            })}
+                        </div>
                         <div>
                             <p className="text-[12px] font-bold text-[#9CA3AF] mb-1">당첨자</p>
                             {winnerNicknames.length === 0 ? (
@@ -106,32 +130,43 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                 ) : mySubmission ? (
                     <div className="bg-[#F8F5FF] rounded-2xl p-4">
                         <p className="text-[13px] font-bold text-[#5B4E7A]">제출 완료! 결과 발표를 기다려주세요 🤞</p>
-                        <p className="text-[12px] text-[#9CA3AF] font-bold mt-1">내 답변: {mySubmission.answer_text}</p>
+                        {questions.map((q, idx) => (
+                            <p key={q.id} className="text-[12px] text-[#9CA3AF] font-bold mt-1">
+                                {questions.length > 1 ? `Q${idx + 1} ` : ''}내 답변: {mySubmission.answers?.[q.id]}
+                            </p>
+                        ))}
                     </div>
                 ) : quiz.status === 'closed' ? (
                     <p className="text-[13px] text-[#9CA3AF] font-bold py-2">마감된 퀴즈입니다. 결과 발표를 기다려주세요.</p>
                 ) : (
-                    <div className="space-y-3">
-                        {quiz.question_type === 'multiple_choice' ? (
-                            <div className="space-y-2">
-                                {(quiz.choices || []).map((choice, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setSelectedChoice(choice)}
-                                        className={`w-full text-left px-4 py-2.5 rounded-xl border text-[13px] font-bold transition-colors ${selectedChoice === choice ? 'border-[#7C3AED] bg-[#F3E8FF] text-[#7C3AED]' : 'border-[#E8E0FA] text-[#5B4E7A]'}`}
-                                    >
-                                        {choice}
-                                    </button>
-                                ))}
+                    <div className="space-y-4">
+                        {questions.map((q, idx) => (
+                            <div key={q.id} className="space-y-2">
+                                {questions.length > 1 && (
+                                    <p className="text-[12px] font-black text-[#7C3AED]">Q{idx + 1}</p>
+                                )}
+                                {q.questionType === 'multiple_choice' ? (
+                                    <div className="space-y-2">
+                                        {(q.choices || []).map((choice, cIdx) => (
+                                            <button
+                                                key={cIdx}
+                                                onClick={() => setDraftAnswer(q.id, choice)}
+                                                className={`w-full text-left px-4 py-2.5 rounded-xl border text-[13px] font-bold transition-colors ${draftAnswers[q.id] === choice ? 'border-[#7C3AED] bg-[#F3E8FF] text-[#7C3AED]' : 'border-[#E8E0FA] text-[#5B4E7A]'}`}
+                                            >
+                                                {choice}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <input
+                                        value={draftAnswers[q.id] || ''}
+                                        onChange={(e) => setDraftAnswer(q.id, e.target.value)}
+                                        placeholder="정답을 입력하세요"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-[#E8E0FA] text-[13px] font-bold"
+                                    />
+                                )}
                             </div>
-                        ) : (
-                            <input
-                                value={answerText}
-                                onChange={(e) => setAnswerText(e.target.value)}
-                                placeholder="정답을 입력하세요"
-                                className="w-full px-4 py-2.5 rounded-xl border border-[#E8E0FA] text-[13px] font-bold"
-                            />
-                        )}
+                        ))}
                         {error && <p className="text-[12px] font-bold text-red-500">{error}</p>}
                         <button
                             onClick={handleSubmit}
