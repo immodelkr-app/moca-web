@@ -73,6 +73,7 @@ const PrivacyPolicy = () => {
                             <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>서비스 제공: 에이전시 프로필 전송, 스마트 캐스팅</li>
                             <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>Google Drive 연동: 사용자의 Google Drive에서 포트폴리오 파일을 선택하기 위한 읽기 전용 접근</li>
                             <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>마케팅 및 이벤트 안내 (선택 동의 시)</li>
+                            <li className="flex gap-3 leading-relaxed"><span className="text-[#9333EA] font-black">•</span>이벤트/퀴즈 경품 발송: 당첨자에게 경품을 발송하기 위한 이름·연락처·주소 활용</li>
                         </ul>
                     </div>
                 </section>

@@ -29,6 +29,7 @@ import ModelCastingDetailPage from './components/ModelCastingDetailPage';
 import KimDaepyoMessage from './components/KimDaepyoMessage';
 import GradeCelebrationModal from './components/GradeCelebrationModal';
 import CertificationFeed from './components/CertificationFeed';
+import CeoQuizBoard from './components/CeoQuizBoard';
 import SmartProfile from './components/SmartProfile';
 import QnABoard from './components/QnABoard';
 import ExclusiveContractPage from './components/ExclusiveContractPage';
@@ -172,6 +173,7 @@ function AppContent() {
                         <Route path="tv" element={<KimDaepyoTV />} />
                         <Route path="message" element={<KimDaepyoMessage />} />
                         <Route path="cert" element={<CertificationFeed />} />
+                        <Route path="quiz" element={<CeoQuizBoard />} />
                         <Route path="smart-profile" element={<SmartProfile />} />
                         <Route path="qna" element={<QnABoard />} />
 
