@@ -151,7 +151,7 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                                 </h3>
                             ))}
                         </div>
-                        {quiz.prize_description && (
+                        {quiz.prize_description && !mySubmission && (
                             <p className="text-[13px] font-bold text-[#7C3AED] mt-1.5">🎁 정답자중 추첨을 통해 {quiz.prize_description} 상품을 드리겠습니다.</p>
                         )}
                     </>
@@ -198,7 +198,9 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                 ) : mySubmission ? (
                     <div className="bg-[#F8F5FF] rounded-2xl p-5 text-center">
                         <p className="text-[20px] font-black text-[#1F1235]">제출완료 🎉</p>
-                        <p className="text-[13px] font-bold text-[#9CA3AF] mt-1">정답자중 추첨을 통해 상품을 드립니다</p>
+                        {quiz.prize_description && (
+                            <p className="text-[13px] font-bold text-[#8B7CC7] mt-1.5">🎁 정답자중 추첨을 통해 {quiz.prize_description} 상품을 드리겠습니다.</p>
+                        )}
                     </div>
                 ) : quiz.status === 'closed' ? (
                     <p className="text-[13px] text-[#9CA3AF] font-bold py-2">마감된 퀴즈입니다. 결과 발표를 기다려주세요.</p>
