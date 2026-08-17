@@ -83,6 +83,7 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
     const winnerNicknames = quiz.winner_nicknames || [];
     const iWon = winnerNicknames.includes(myNickname);
     const youtubeId = extractYoutubeId(quiz.video_url);
+    const isVerticalVideo = /shorts\//.test(quiz.video_url || '');
 
     const isAnswerForm = quiz.status === 'open' && !loadingSubmission && !mySubmission;
 
@@ -111,8 +112,11 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                             className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4"
                             onClick={() => setShowVideoModal(false)}
                         >
-                            <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex justify-end mb-2">
+                            <div
+                                className={`flex flex-col ${isVerticalVideo ? 'items-center' : 'w-full max-w-3xl'}`}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className={`flex justify-end mb-2 ${isVerticalVideo ? 'w-full max-w-[95vw]' : 'w-full'}`}>
                                     <button
                                         onClick={() => setShowVideoModal(false)}
                                         className="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center text-lg"
@@ -120,7 +124,9 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                                         ✕
                                     </button>
                                 </div>
-                                <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden">
+                                <div
+                                    className={`bg-black rounded-2xl overflow-hidden ${isVerticalVideo ? 'aspect-[9/16] h-[80vh] max-h-[80vh] w-auto max-w-[95vw]' : 'w-full aspect-video'}`}
+                                >
                                     <iframe
                                         src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
                                         title="퀴즈 영상"
