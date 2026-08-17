@@ -22,6 +22,7 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [announcedDetail, setAnnouncedDetail] = useState(null);
+    const [showVideoModal, setShowVideoModal] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -83,29 +84,70 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
     const iWon = winnerNicknames.includes(myNickname);
     const youtubeId = extractYoutubeId(quiz.video_url);
 
+    const isAnswerForm = quiz.status === 'open' && !loadingSubmission && !mySubmission;
+
     return (
         <div className="bg-white border border-[#E8E0FA] rounded-3xl overflow-hidden">
             {youtubeId && (
-                <div className="w-full aspect-video bg-black">
-                    <iframe
-                        src={`https://www.youtube.com/embed/${youtubeId}`}
-                        title="퀴즈 영상"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full border-none"
-                    />
-                </div>
+                <>
+                    <button
+                        onClick={() => setShowVideoModal(true)}
+                        className="relative w-full aspect-video bg-black block group"
+                    >
+                        <img
+                            src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
+                            alt="퀴즈 영상 미리보기"
+                            className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-active:bg-black/40 transition-colors">
+                            <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                                <span className="material-symbols-outlined text-[#1F1235] text-[32px]">play_arrow</span>
+                            </div>
+                        </div>
+                    </button>
+
+                    {showVideoModal && (
+                        <div
+                            className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4"
+                            onClick={() => setShowVideoModal(false)}
+                        >
+                            <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex justify-end mb-2">
+                                    <button
+                                        onClick={() => setShowVideoModal(false)}
+                                        className="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center text-lg"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                                <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden">
+                                    <iframe
+                                        src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+                                        title="퀴즈 영상"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                        className="w-full h-full border-none"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
             <div className="px-5 pt-4 pb-3">
                 <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-black ${status.className}`}>{status.label}</span>
-                <div className="mt-2.5 space-y-1">
-                    {questions.map((q, idx) => (
-                        <h3 key={q.id} className="text-[16px] font-black text-[#1F1235] leading-snug">
-                            {questions.length > 1 ? `Q${idx + 1}. ` : ''}{q.question}
-                        </h3>
-                    ))}
-                </div>
-                <p className="text-[13px] font-bold text-[#7C3AED] mt-1.5">🎁 상품: {quiz.prize_description}</p>
+                {!isAnswerForm && (
+                    <>
+                        <div className="mt-2.5 space-y-1">
+                            {questions.map((q, idx) => (
+                                <h3 key={q.id} className="text-[16px] font-black text-[#1F1235] leading-snug">
+                                    {questions.length > 1 ? `Q${idx + 1}. ` : ''}{q.question}
+                                </h3>
+                            ))}
+                        </div>
+                        <p className="text-[13px] font-bold text-[#7C3AED] mt-1.5">🎁 상품: {quiz.prize_description}</p>
+                    </>
+                )}
             </div>
 
             <div className="px-5 pb-5">
@@ -157,12 +199,12 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                 ) : quiz.status === 'closed' ? (
                     <p className="text-[13px] text-[#9CA3AF] font-bold py-2">마감된 퀴즈입니다. 결과 발표를 기다려주세요.</p>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                         {questions.map((q, idx) => (
                             <div key={q.id} className="space-y-2">
-                                {questions.length > 1 && (
-                                    <p className="text-[12px] font-black text-[#7C3AED]">Q{idx + 1}</p>
-                                )}
+                                <h3 className="text-[15px] font-black text-[#1F1235] leading-snug">
+                                    {questions.length > 1 ? `Q${idx + 1}. ` : ''}{q.question}
+                                </h3>
                                 {q.questionType === 'multiple_choice' ? (
                                     <div className="space-y-2">
                                         {(q.choices || []).map((choice, cIdx) => (
@@ -186,6 +228,7 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                             </div>
                         ))}
                         {error && <p className="text-[12px] font-bold text-red-500">{error}</p>}
+                        <p className="text-[13px] font-bold text-[#7C3AED]">🎁 상품: {quiz.prize_description}</p>
                         <button
                             onClick={handleSubmit}
                             disabled={submitting}
