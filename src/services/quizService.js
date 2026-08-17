@@ -17,6 +17,7 @@
  * (알려진 한계: 서버가 아니라 클라이언트 쿼리 수준의 방어이며, 완전한 보안은 아님)
  */
 import { supabase } from './supabaseClient';
+import { rewardPoints } from '../lib/imCoreAuth';
 
 const SAFE_QUIZ_COLUMNS =
     'id, questions, prize_description, video_url, status, winner_nicknames, created_at, closed_at, announced_at';
@@ -276,4 +277,32 @@ export const publishResults = async (quizId) => {
         console.error('[quizService] publishResults error:', error);
     }
     return { error };
+};
+
+/**
+ * 당첨자 전원에게 통합 포인트(아임모델 공화국, im-core-auth) 일괄 지급.
+ * MOCA users 테이블은 nickname만 들고 있으므로 master_user_id를 조회해 전달한다.
+ */
+export const grantWinnerPoints = async (winnerNicknames, amount, description) => {
+    const results = [];
+    for (const nickname of winnerNicknames) {
+        const { data, error } = await supabase
+            .from('users')
+            .select('master_user_id')
+            .or(`nickname.eq.${nickname},name.eq.${nickname}`)
+            .maybeSingle();
+
+        if (error || !data?.master_user_id) {
+            results.push({ nickname, success: false, error: '회원 정보를 찾을 수 없습니다.' });
+            continue;
+        }
+
+        try {
+            await rewardPoints({ masterUserId: data.master_user_id, amount, description });
+            results.push({ nickname, success: true });
+        } catch (err) {
+            results.push({ nickname, success: false, error: err.message || '지급 실패' });
+        }
+    }
+    return results;
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     fetchAllQuizzesForAdmin, createQuiz, fetchSubmissions, fetchSubmissionCounts,
-    markWinner, closeQuiz, publishResults, updateCorrectAnswers, updateQuiz,
+    markWinner, closeQuiz, publishResults, updateCorrectAnswers, updateQuiz, grantWinnerPoints,
 } from '../services/quizService';
 import { sendBroadcastPush } from '../services/pushNotificationService';
 
@@ -35,6 +35,24 @@ const PushResultBadge = ({ result }) => {
         <p className="text-[11px] font-bold text-emerald-600 mt-1.5">
             발송 완료 · 성공 {result.successCount}건 / 실패 {result.failCount}건
         </p>
+    );
+};
+
+const GrantResultBadge = ({ results }) => {
+    if (!results || results.length === 0) return null;
+    const successList = results.filter((r) => r.success);
+    const failList = results.filter((r) => !r.success);
+    return (
+        <div className="mt-1.5 space-y-0.5">
+            <p className="text-[11px] font-bold text-emerald-600">
+                포인트 지급 완료 · 성공 {successList.length}건 / 실패 {failList.length}건
+            </p>
+            {failList.length > 0 && (
+                <p className="text-[11px] font-bold text-red-500">
+                    실패: {failList.map((r) => `${r.nickname}(${r.error})`).join(', ')}
+                </p>
+            )}
+        </div>
     );
 };
 
@@ -427,11 +445,16 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
     const [pushResult, setPushResult] = useState(null);
     const [sendingPush, setSendingPush] = useState(false);
     const [answerDrafts, setAnswerDrafts] = useState(() => quiz.correct_answers || {});
+    const [pointAmount, setPointAmount] = useState('');
+    const [pointDescription, setPointDescription] = useState('');
+    const [grantResults, setGrantResults] = useState(null);
 
     const questions = quiz.questions || [];
 
     useEffect(() => {
         setAnswerDrafts(quiz.correct_answers || {});
+        setPointDescription(`김대표퀴즈 당첨${quiz.prize_description ? ` - ${quiz.prize_description}` : ''}`);
+        setGrantResults(null);
     }, [quiz.id]);
 
     const setAnswerDraft = (questionId, value) => {
@@ -472,10 +495,15 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
             }
         }
 
-        const winnerCount = submissions.filter((s) => s.is_winner).length;
+        const winners = submissions.filter((s) => s.is_winner);
+        const winnerCount = winners.length;
+        if (winnerCount > 0 && !pointAmount) {
+            if (!window.confirm('지급할 포인트 금액을 입력하지 않았습니다. 포인트 지급 없이 결과만 발표할까요?')) return;
+        }
         if (!window.confirm(`정답과 당첨자(${winnerCount}명)가 전체 공개됩니다. 계속하시겠습니까?`)) return;
 
         setPublishing(true);
+        setGrantResults(null);
         const trimmedAnswers = {};
         questions.forEach((q) => { trimmedAnswers[q.id] = (answerDrafts[q.id] || '').trim(); });
 
@@ -487,13 +515,27 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
         }
 
         const { error } = await publishResults(quiz.id);
+        if (error) {
+            setPublishing(false);
+            alert('결과 발표 중 오류가 발생했습니다: ' + (error.message || ''));
+            return;
+        }
+
+        if (winnerCount > 0 && Number(pointAmount) > 0) {
+            const results = await grantWinnerPoints(
+                winners.map((s) => s.user_nickname),
+                Number(pointAmount),
+                pointDescription.trim() || `김대표퀴즈 당첨${quiz.prize_description ? ` - ${quiz.prize_description}` : ''}`
+            );
+            setGrantResults(results);
+        }
+
         setPublishing(false);
-        if (error) { alert('결과 발표 중 오류가 발생했습니다: ' + (error.message || '')); return; }
         onQuizUpdated({
             ...quiz,
             status: 'announced',
             correct_answers: trimmedAnswers,
-            winner_nicknames: submissions.filter((s) => s.is_winner).map((s) => s.user_nickname),
+            winner_nicknames: winners.map((s) => s.user_nickname),
         });
     };
 
@@ -622,6 +664,28 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                 </div>
 
                 <div className="px-6 py-4 border-t border-[var(--moca-border)] bg-[var(--moca-surface-2)] space-y-2">
+                    {quiz.status !== 'announced' && (
+                        <div className="p-3 rounded-xl bg-white border border-[var(--moca-border)] space-y-2">
+                            <p className="text-[11px] font-black text-[var(--moca-text-3)]">
+                                🎁 당첨자 포인트 지급 (아임모델 공화국으로 즉시 전송, 비워두면 발표만 하고 포인트는 지급하지 않습니다)
+                            </p>
+                            <div className="flex gap-2">
+                                <input
+                                    type="number"
+                                    value={pointAmount}
+                                    onChange={(e) => setPointAmount(e.target.value)}
+                                    placeholder="1인당 포인트 (예: 500)"
+                                    className="w-40 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                                />
+                                <input
+                                    value={pointDescription}
+                                    onChange={(e) => setPointDescription(e.target.value)}
+                                    placeholder="지급 사유"
+                                    className="flex-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                                />
+                            </div>
+                        </div>
+                    )}
                     <div className="flex gap-2">
                         {quiz.status === 'open' && (
                             <button onClick={handleClose} className="px-4 py-2 rounded-xl border border-[var(--moca-border)] text-[13px] font-black text-[var(--moca-text)]">
@@ -657,6 +721,7 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                         )}
                     </div>
                     <PushResultBadge result={pushResult} />
+                    <GrantResultBadge results={grantResults} />
                 </div>
             </div>
         </div>
