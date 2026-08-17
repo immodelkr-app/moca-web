@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-    fetchAllQuizzesForAdmin, createQuiz, fetchSubmissions,
+    fetchAllQuizzesForAdmin, createQuiz, fetchSubmissions, fetchSubmissionCounts,
     markWinner, closeQuiz, publishResults, updateCorrectAnswers, updateQuiz,
 } from '../services/quizService';
 import { sendBroadcastPush } from '../services/pushNotificationService';
@@ -649,15 +649,15 @@ const AdminCeoQuiz = () => {
 
     const load = async () => {
         setLoading(true);
-        const data = await fetchAllQuizzesForAdmin();
-        setQuizzes(data);
+        const [data, counts] = await Promise.all([fetchAllQuizzesForAdmin(), fetchSubmissionCounts()]);
+        setQuizzes(data.map((q) => ({ ...q, submission_count: counts[q.id] || 0 })));
         setLoading(false);
     };
 
     useEffect(() => { load(); }, []);
 
     const handleCreated = (quiz) => {
-        setQuizzes((prev) => [quiz, ...prev]);
+        setQuizzes((prev) => [{ ...quiz, submission_count: 0 }, ...prev]);
     };
 
     const handleQuizUpdated = (updated) => {
@@ -687,6 +687,7 @@ const AdminCeoQuiz = () => {
                                 <th className="py-2 pr-3">질문</th>
                                 <th className="py-2 pr-3">문제수</th>
                                 <th className="py-2 pr-3">상품</th>
+                                <th className="py-2 pr-3">참여</th>
                                 <th className="py-2 pr-3">등록일</th>
                                 <th className="py-2 pr-3"></th>
                             </tr>
@@ -709,6 +710,7 @@ const AdminCeoQuiz = () => {
                                         </td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{questions.length}개</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)] max-w-[160px] truncate">{q.prize_description}</td>
+                                        <td className="py-2.5 pr-3 font-black text-[var(--moca-primary)]">{q.submission_count ?? 0}명</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(q.created_at).toLocaleDateString('ko-KR')}</td>
                                         <td className="py-2.5 pr-3">
                                             <button

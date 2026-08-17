@@ -158,6 +158,21 @@ export const fetchAllQuizzesForAdmin = async () => {
     return data || [];
 };
 
+/** 전체 퀴즈의 제출자 수 ({ [quizId]: 제출건수 }) — 어드민 목록에 참여 인원 표시용 */
+export const fetchSubmissionCounts = async () => {
+    if (!supabase) return {};
+    const { data, error } = await supabase
+        .from('quiz_submissions')
+        .select('quiz_id');
+    if (error) {
+        console.error('[quizService] fetchSubmissionCounts error:', error);
+        return {};
+    }
+    const counts = {};
+    (data || []).forEach((row) => { counts[row.quiz_id] = (counts[row.quiz_id] || 0) + 1; });
+    return counts;
+};
+
 /** 특정 퀴즈의 전체 제출 목록 (문제별 답변 포함) */
 export const fetchSubmissions = async (quizId) => {
     if (!supabase) return [];
