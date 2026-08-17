@@ -194,13 +194,16 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                 ) : loadingSubmission ? (
                     <p className="text-[13px] text-[#9CA3AF] font-bold py-2">불러오는 중...</p>
                 ) : mySubmission ? (
-                    <div className="bg-[#F8F5FF] rounded-2xl p-4">
-                        <p className="text-[13px] font-bold text-[#5B4E7A]">제출 완료! 결과 발표를 기다려주세요 🤞</p>
-                        {questions.map((q, idx) => (
-                            <p key={q.id} className="text-[12px] text-[#9CA3AF] font-bold mt-1">
-                                {questions.length > 1 ? `Q${idx + 1} ` : ''}내 답변: {mySubmission.answers?.[q.id]}
-                            </p>
-                        ))}
+                    <div className="bg-[#F8F5FF] rounded-2xl p-5 text-center">
+                        <p className="text-[20px] font-black text-[#1F1235]">제출완료 🎉</p>
+                        <p className="text-[13px] font-bold text-[#9CA3AF] mt-1">결과 발표를 기다려주세요 🤞</p>
+                        <div className="mt-3 space-y-1">
+                            {questions.map((q, idx) => (
+                                <p key={q.id} className="text-[12px] text-[#9CA3AF] font-bold">
+                                    {questions.length > 1 ? `Q${idx + 1} ` : ''}내 답변: {mySubmission.answers?.[q.id]}
+                                </p>
+                            ))}
+                        </div>
                     </div>
                 ) : quiz.status === 'closed' ? (
                     <p className="text-[13px] text-[#9CA3AF] font-bold py-2">마감된 퀴즈입니다. 결과 발표를 기다려주세요.</p>
