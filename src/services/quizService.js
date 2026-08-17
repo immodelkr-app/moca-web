@@ -173,6 +173,24 @@ export const fetchSubmissions = async (quizId) => {
     return data || [];
 };
 
+/** 퀴즈 문항/상품/영상 링크 수정 (오타 정정용, 문항 id는 그대로 보존되어 기존 제출/정답과의 매핑이 깨지지 않음) */
+export const updateQuiz = async (quizId, { questions, prizeDescription, videoUrl }) => {
+    if (!supabase) return { error: new Error('Supabase 미설정') };
+    const normalized = buildQuestions(questions);
+    const { error } = await supabase
+        .from('quiz_posts')
+        .update({
+            questions: normalized,
+            prize_description: prizeDescription,
+            video_url: videoUrl || null,
+        })
+        .eq('id', quizId);
+    if (error) {
+        console.error('[quizService] updateQuiz error:', error);
+    }
+    return { error };
+};
+
 /** 문제별 정답 확정/수정 ({ [questionId]: 정답텍스트 }) — 보통 결과 발표 직전에 호출 */
 export const updateCorrectAnswers = async (quizId, correctAnswers) => {
     if (!supabase) return { error: new Error('Supabase 미설정') };

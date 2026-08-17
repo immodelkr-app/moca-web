@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     fetchAllQuizzesForAdmin, createQuiz, fetchSubmissions,
-    markWinner, closeQuiz, publishResults, updateCorrectAnswers,
+    markWinner, closeQuiz, publishResults, updateCorrectAnswers, updateQuiz,
 } from '../services/quizService';
 import { sendBroadcastPush } from '../services/pushNotificationService';
 
@@ -38,7 +38,7 @@ const PushResultBadge = ({ result }) => {
     );
 };
 
-const QuestionEditor = ({ index, question, onChange, onRemove, canRemove }) => {
+const QuestionEditor = ({ index, question, onChange, onRemove, canRemove, showCorrectAnswer = true }) => {
     const updateField = (patch) => onChange(index, { ...question, ...patch });
 
     const updateChoice = (idx, value) => {
@@ -104,28 +104,30 @@ const QuestionEditor = ({ index, question, onChange, onRemove, canRemove }) => {
                 </div>
             )}
 
-            <div>
-                <label className="text-[11px] font-bold text-[var(--moca-text-3)]">정답 (선택 입력)</label>
-                {question.questionType === 'multiple_choice' ? (
-                    <select
-                        value={question.correctAnswer}
-                        onChange={(e) => updateField({ correctAnswer: e.target.value })}
-                        className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm bg-white"
-                    >
-                        <option value="">아직 미정 — 결과 발표 시 확정</option>
-                        {question.choices.filter((c) => c.trim()).map((c, idx) => (
-                            <option key={idx} value={c}>{c}</option>
-                        ))}
-                    </select>
-                ) : (
-                    <input
-                        value={question.correctAnswer}
-                        onChange={(e) => updateField({ correctAnswer: e.target.value })}
-                        className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
-                        placeholder="아직 미정이어도 됩니다 — 결과 발표 시 확정"
-                    />
-                )}
-            </div>
+            {showCorrectAnswer && (
+                <div>
+                    <label className="text-[11px] font-bold text-[var(--moca-text-3)]">정답 (선택 입력)</label>
+                    {question.questionType === 'multiple_choice' ? (
+                        <select
+                            value={question.correctAnswer}
+                            onChange={(e) => updateField({ correctAnswer: e.target.value })}
+                            className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm bg-white"
+                        >
+                            <option value="">아직 미정 — 결과 발표 시 확정</option>
+                            {question.choices.filter((c) => c.trim()).map((c, idx) => (
+                                <option key={idx} value={c}>{c}</option>
+                            ))}
+                        </select>
+                    ) : (
+                        <input
+                            value={question.correctAnswer}
+                            onChange={(e) => updateField({ correctAnswer: e.target.value })}
+                            className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                            placeholder="아직 미정이어도 됩니다 — 결과 발표 시 확정"
+                        />
+                    )}
+                </div>
+            )}
         </div>
     );
 };
@@ -272,6 +274,149 @@ const CreateQuizForm = ({ onCreated }) => {
                 </div>
                 <p className="text-[10px] text-[var(--moca-text-3)]">정답은 지금 안 정해도 됩니다 — 제출 목록을 보고 "결과 발표" 시점에 문제별로 확정할 수 있어요. 먼저 "퀴즈 등록"으로 게시판에 반영한 뒤, 원하면 "새 퀴즈 알림 발송"을 눌러 전체 회원에게 푸시를 보내세요.</p>
                 <PushResultBadge result={pushResult} />
+            </div>
+        </div>
+    );
+};
+
+const buildEditFormFromQuiz = (quiz) => ({
+    questions: (quiz.questions || []).map((q) => ({
+        id: q.id,
+        question: q.question,
+        questionType: q.questionType,
+        choices: q.questionType === 'multiple_choice' ? [...(q.choices || ['', ''])] : ['', ''],
+    })),
+    prizeDescription: quiz.prize_description || '',
+    videoUrl: quiz.video_url || '',
+});
+
+const EditQuizModal = ({ quiz, onClose, onUpdated }) => {
+    const [form, setForm] = useState(() => buildEditFormFromQuiz(quiz));
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
+
+    const updateQuestion = (idx, nextQuestion) => {
+        setForm((f) => {
+            const next = [...f.questions];
+            next[idx] = nextQuestion;
+            return { ...f, questions: next };
+        });
+    };
+    const addQuestion = () => setForm((f) => ({ ...f, questions: [...f.questions, { ...EMPTY_QUESTION(), id: undefined }] }));
+    const removeQuestion = (idx) => setForm((f) => ({ ...f, questions: f.questions.filter((_, i) => i !== idx) }));
+
+    const handleSubmit = async () => {
+        setError('');
+        if (!form.prizeDescription.trim()) { setError('상품 설명을 입력해주세요.'); return; }
+
+        const preparedQuestions = [];
+        for (let i = 0; i < form.questions.length; i += 1) {
+            const q = form.questions[i];
+            const cleanedChoices = (q.choices || []).map((c) => c.trim()).filter(Boolean);
+
+            if (!q.question.trim()) { setError(`문제 ${i + 1}의 질문을 입력해주세요.`); return; }
+            if (q.questionType === 'multiple_choice' && cleanedChoices.length < 2) {
+                setError(`문제 ${i + 1}은 객관식이므로 보기를 2개 이상 입력해주세요.`);
+                return;
+            }
+
+            preparedQuestions.push({
+                id: q.id,
+                question: q.question.trim(),
+                questionType: q.questionType,
+                choices: cleanedChoices,
+            });
+        }
+
+        setSubmitting(true);
+        const { error: updateError } = await updateQuiz(quiz.id, {
+            questions: preparedQuestions,
+            prizeDescription: form.prizeDescription.trim(),
+            videoUrl: form.videoUrl.trim(),
+        });
+        setSubmitting(false);
+
+        if (updateError) {
+            setError('수정 중 오류가 발생했습니다: ' + (updateError.message || '다시 시도해주세요.'));
+            return;
+        }
+
+        onUpdated({
+            ...quiz,
+            questions: preparedQuestions,
+            prize_description: form.prizeDescription.trim(),
+            video_url: form.videoUrl.trim() || null,
+        });
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-[#0c0714]/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fadeIn" onClick={onClose}>
+            <div
+                className="bg-white border border-[var(--moca-border)] w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl max-h-[85vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="px-6 py-5 border-b border-[var(--moca-border)] bg-[var(--moca-surface-2)] flex items-center justify-between">
+                    <p className="text-sm font-black text-[var(--moca-text)]">✏️ 퀴즈 수정</p>
+                    <button onClick={onClose} className="text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-xl leading-none">✕</button>
+                </div>
+
+                <div className="px-6 py-4 overflow-y-auto flex-1 space-y-3">
+                    {form.questions.map((q, idx) => (
+                        <QuestionEditor
+                            key={q.id || idx}
+                            index={idx}
+                            question={q}
+                            onChange={updateQuestion}
+                            onRemove={removeQuestion}
+                            canRemove={form.questions.length > 1}
+                            showCorrectAnswer={false}
+                        />
+                    ))}
+
+                    {form.questions.length < MAX_QUESTIONS && (
+                        <button
+                            onClick={addQuestion}
+                            className="w-full py-2 rounded-xl border border-dashed border-[var(--moca-primary)] text-[12px] font-black text-[var(--moca-primary)]"
+                        >
+                            + 문제 추가 (최대 {MAX_QUESTIONS}개)
+                        </button>
+                    )}
+
+                    <div>
+                        <label className="text-[11px] font-bold text-[var(--moca-text-3)]">유튜브 영상 링크 (선택)</label>
+                        <input
+                            value={form.videoUrl}
+                            onChange={(e) => setForm((f) => ({ ...f, videoUrl: e.target.value }))}
+                            className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                            placeholder="예: https://www.youtube.com/watch?v=xxxxxxxx"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-[11px] font-bold text-[var(--moca-text-3)]">상품 설명</label>
+                        <input
+                            value={form.prizeDescription}
+                            onChange={(e) => setForm((f) => ({ ...f, prizeDescription: e.target.value }))}
+                            className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                            placeholder="예: 아이패드 4개"
+                        />
+                    </div>
+
+                    <p className="text-[10px] text-[var(--moca-text-3)]">정답 확정/재확정은 퀴즈 목록에서 열리는 제출 현황 화면에서 진행하세요. 여기서는 문항·보기·상품·영상 링크만 정정할 수 있습니다.</p>
+
+                    {error && <p className="text-[12px] font-bold text-red-500">{error}</p>}
+                </div>
+
+                <div className="px-6 py-4 border-t border-[var(--moca-border)] bg-[var(--moca-surface-2)]">
+                    <button
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                        className="w-full py-2.5 rounded-xl bg-[var(--moca-primary)] text-white font-black text-[13px] disabled:opacity-50"
+                    >
+                        {submitting ? '저장 중...' : '수정 저장'}
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -500,6 +645,7 @@ const AdminCeoQuiz = () => {
     const [quizzes, setQuizzes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedQuiz, setSelectedQuiz] = useState(null);
+    const [editingQuiz, setEditingQuiz] = useState(null);
 
     const load = async () => {
         setLoading(true);
@@ -542,6 +688,7 @@ const AdminCeoQuiz = () => {
                                 <th className="py-2 pr-3">문제수</th>
                                 <th className="py-2 pr-3">상품</th>
                                 <th className="py-2 pr-3">등록일</th>
+                                <th className="py-2 pr-3"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -563,6 +710,14 @@ const AdminCeoQuiz = () => {
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{questions.length}개</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)] max-w-[160px] truncate">{q.prize_description}</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(q.created_at).toLocaleDateString('ko-KR')}</td>
+                                        <td className="py-2.5 pr-3">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setEditingQuiz(q); }}
+                                                className="text-[11px] font-black text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]"
+                                            >
+                                                ✏️ 수정
+                                            </button>
+                                        </td>
                                     </tr>
                                 );
                             })}
@@ -576,6 +731,14 @@ const AdminCeoQuiz = () => {
                     quiz={selectedQuiz}
                     onClose={() => setSelectedQuiz(null)}
                     onQuizUpdated={handleQuizUpdated}
+                />
+            )}
+
+            {editingQuiz && (
+                <EditQuizModal
+                    quiz={editingQuiz}
+                    onClose={() => setEditingQuiz(null)}
+                    onUpdated={handleQuizUpdated}
                 />
             )}
         </div>
