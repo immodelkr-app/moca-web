@@ -19,7 +19,7 @@
 import { supabase } from './supabaseClient';
 
 const SAFE_QUIZ_COLUMNS =
-    'id, questions, prize_description, status, winner_nicknames, created_at, closed_at, announced_at';
+    'id, questions, prize_description, video_url, status, winner_nicknames, created_at, closed_at, announced_at';
 
 /** 문제 배열 정규화: question/questionType/choices만 남기고 각 문제에 id 부여 */
 export const buildQuestions = (rawQuestions) =>
@@ -117,8 +117,8 @@ export const fetchAnnouncedQuizDetail = async (quizId) => {
 //  관리자 전용 (AdminPage 비밀번호 게이트 뒤에서만 호출)
 // ─────────────────────────────────────────────
 
-/** 퀴즈 생성 (문제 1~N개) */
-export const createQuiz = async ({ questions, prizeDescription }) => {
+/** 퀴즈 생성 (문제 1~N개, 유튜브 영상 링크는 선택) */
+export const createQuiz = async ({ questions, prizeDescription, videoUrl }) => {
     if (!supabase) return { quiz: null, error: new Error('Supabase 미설정') };
     const normalized = buildQuestions(questions);
     const correctAnswers = {};
@@ -132,6 +132,7 @@ export const createQuiz = async ({ questions, prizeDescription }) => {
             questions: normalized,
             correct_answers: correctAnswers,
             prize_description: prizeDescription,
+            video_url: videoUrl || null,
             status: 'open',
         }])
         .select()

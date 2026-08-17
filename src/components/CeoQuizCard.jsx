@@ -7,6 +7,12 @@ const STATUS_BADGE = {
     announced: { label: '발표완료', className: 'bg-gray-100 text-gray-500' },
 };
 
+const extractYoutubeId = (url) => {
+    if (!url) return null;
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([\w-]{11})/);
+    return match ? match[1] : null;
+};
+
 const CeoQuizCard = ({ quiz, myNickname }) => {
     const questions = quiz.questions || [];
 
@@ -75,9 +81,21 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
     const status = STATUS_BADGE[quiz.status] || STATUS_BADGE.open;
     const winnerNicknames = quiz.winner_nicknames || [];
     const iWon = winnerNicknames.includes(myNickname);
+    const youtubeId = extractYoutubeId(quiz.video_url);
 
     return (
         <div className="bg-white border border-[#E8E0FA] rounded-3xl overflow-hidden">
+            {youtubeId && (
+                <div className="w-full aspect-video bg-black">
+                    <iframe
+                        src={`https://www.youtube.com/embed/${youtubeId}`}
+                        title="퀴즈 영상"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full border-none"
+                    />
+                </div>
+            )}
             <div className="px-5 pt-4 pb-3">
                 <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-black ${status.className}`}>{status.label}</span>
                 <div className="mt-2.5 space-y-1">

@@ -23,6 +23,7 @@ const EMPTY_QUESTION = () => ({
 const EMPTY_FORM = {
     questions: [EMPTY_QUESTION()],
     prizeDescription: '',
+    videoUrl: '',
 };
 
 const PushResultBadge = ({ result }) => {
@@ -174,6 +175,7 @@ const CreateQuizForm = ({ onCreated }) => {
         const { quiz, error: createError } = await createQuiz({
             questions: preparedQuestions,
             prizeDescription: form.prizeDescription.trim(),
+            videoUrl: form.videoUrl.trim(),
         });
         setSubmitting(false);
 
@@ -228,6 +230,17 @@ const CreateQuizForm = ({ onCreated }) => {
                         + 문제 추가 (최대 {MAX_QUESTIONS}개)
                     </button>
                 )}
+
+                <div>
+                    <label className="text-[11px] font-bold text-[var(--moca-text-3)]">유튜브 영상 링크 (선택)</label>
+                    <input
+                        value={form.videoUrl}
+                        onChange={(e) => setForm((f) => ({ ...f, videoUrl: e.target.value }))}
+                        className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                        placeholder="예: https://www.youtube.com/watch?v=xxxxxxxx"
+                    />
+                    <p className="text-[10px] text-[var(--moca-text-3)] mt-1">넣으면 사용자 화면에 영상이 먼저 보이고, 영상을 보고 퀴즈를 맞히는 형태가 됩니다.</p>
+                </div>
 
                 <div>
                     <label className="text-[11px] font-bold text-[var(--moca-text-3)]">상품 설명</label>
@@ -371,6 +384,9 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                             ))}
                         </div>
                         <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-1">🎁 {quiz.prize_description}</p>
+                        {quiz.video_url && (
+                            <a href={quiz.video_url} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-[var(--moca-primary)] underline mt-0.5 inline-block">🎬 등록된 영상 보기</a>
+                        )}
                     </div>
                     <button onClick={onClose} className="text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-xl leading-none">✕</button>
                 </div>
