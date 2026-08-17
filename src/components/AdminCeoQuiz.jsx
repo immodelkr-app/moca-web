@@ -499,6 +499,18 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
         });
     };
 
+    const handleSendOpenReminderPush = async () => {
+        const firstQuestion = questions[0]?.question || '';
+        setSendingPush(true);
+        const result = await sendBroadcastPush({
+            title: '🎁 김대표퀴즈 참여하기',
+            body: `${firstQuestion.slice(0, 30)}${firstQuestion.length > 30 ? '...' : ''} · 상품: ${quiz.prize_description}`,
+            route: '/home/quiz',
+        });
+        setPushResult(result);
+        setSendingPush(false);
+    };
+
     const handleSendResultPush = async () => {
         setSendingPush(true);
         const result = await sendBroadcastPush({
@@ -613,6 +625,15 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                         {quiz.status === 'open' && (
                             <button onClick={handleClose} className="px-4 py-2 rounded-xl border border-[var(--moca-border)] text-[13px] font-black text-[var(--moca-text)]">
                                 마감
+                            </button>
+                        )}
+                        {quiz.status === 'open' && (
+                            <button
+                                onClick={handleSendOpenReminderPush}
+                                disabled={sendingPush}
+                                className="px-4 py-2 rounded-xl border border-fuchsia-300 text-fuchsia-700 font-black text-[13px] disabled:opacity-40"
+                            >
+                                {sendingPush ? '발송 중...' : '🔔 참여 독려 알림'}
                             </button>
                         )}
                         {quiz.status !== 'announced' && (
