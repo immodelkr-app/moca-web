@@ -152,8 +152,6 @@ const CreateQuizForm = ({ onCreated }) => {
     const handleSubmit = async () => {
         setError('');
 
-        if (!form.prizeDescription.trim()) { setError('상품 설명을 입력해주세요.'); return; }
-
         const preparedQuestions = [];
         for (let i = 0; i < form.questions.length; i += 1) {
             const q = form.questions[i];
@@ -194,16 +192,17 @@ const CreateQuizForm = ({ onCreated }) => {
     const handleSendOpenPush = async () => {
         const firstQuestion = form.questions[0]?.question || '';
         setSendingPush(true);
+        const prizeSuffix = form.prizeDescription.trim() ? ` · 상품: ${form.prizeDescription.trim()}` : '';
         const result = await sendBroadcastPush({
             title: '🎁 김대표퀴즈 오픈!',
-            body: `${firstQuestion.slice(0, 30)}${firstQuestion.length > 30 ? '...' : ''} · 상품: ${form.prizeDescription}`,
+            body: `${firstQuestion.slice(0, 30)}${firstQuestion.length > 30 ? '...' : ''}${prizeSuffix}`,
             route: '/home/quiz',
         });
         setPushResult(result);
         setSendingPush(false);
     };
 
-    const canSendPush = !sendingPush && form.questions.every((q) => q.question.trim()) && form.prizeDescription.trim();
+    const canSendPush = !sendingPush && form.questions.every((q) => q.question.trim());
 
     return (
         <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-5 mb-6">
@@ -245,12 +244,12 @@ const CreateQuizForm = ({ onCreated }) => {
                 </div>
 
                 <div>
-                    <label className="text-[11px] font-bold text-[var(--moca-text-3)]">상품 설명</label>
+                    <label className="text-[11px] font-bold text-[var(--moca-text-3)]">상품 설명 (선택)</label>
                     <input
                         value={form.prizeDescription}
                         onChange={(e) => setForm((f) => ({ ...f, prizeDescription: e.target.value }))}
                         className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
-                        placeholder="예: 아이패드 4개"
+                        placeholder="예: 아이패드 4개 (비워두면 사용자 화면에 상품 안내가 표시되지 않습니다)"
                     />
                 </div>
 
@@ -307,7 +306,6 @@ const EditQuizModal = ({ quiz, onClose, onUpdated }) => {
 
     const handleSubmit = async () => {
         setError('');
-        if (!form.prizeDescription.trim()) { setError('상품 설명을 입력해주세요.'); return; }
 
         const preparedQuestions = [];
         for (let i = 0; i < form.questions.length; i += 1) {
@@ -394,12 +392,12 @@ const EditQuizModal = ({ quiz, onClose, onUpdated }) => {
                     </div>
 
                     <div>
-                        <label className="text-[11px] font-bold text-[var(--moca-text-3)]">상품 설명</label>
+                        <label className="text-[11px] font-bold text-[var(--moca-text-3)]">상품 설명 (선택)</label>
                         <input
                             value={form.prizeDescription}
                             onChange={(e) => setForm((f) => ({ ...f, prizeDescription: e.target.value }))}
                             className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
-                            placeholder="예: 아이패드 4개"
+                            placeholder="예: 아이패드 4개 (비워두면 사용자 화면에 상품 안내가 표시되지 않습니다)"
                         />
                     </div>
 
@@ -501,10 +499,11 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
 
     const handleSendOpenReminderPush = async () => {
         const firstQuestion = questions[0]?.question || '';
+        const prizeSuffix = quiz.prize_description ? ` · 상품: ${quiz.prize_description}` : '';
         setSendingPush(true);
         const result = await sendBroadcastPush({
             title: '🎁 김대표퀴즈 참여하기',
-            body: `${firstQuestion.slice(0, 30)}${firstQuestion.length > 30 ? '...' : ''} · 상품: ${quiz.prize_description}`,
+            body: `${firstQuestion.slice(0, 30)}${firstQuestion.length > 30 ? '...' : ''}${prizeSuffix}`,
             route: '/home/quiz',
         });
         setPushResult(result);
@@ -540,7 +539,9 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                                 </h3>
                             ))}
                         </div>
-                        <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-1">🎁 {quiz.prize_description}</p>
+                        {quiz.prize_description && (
+                            <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-1">🎁 {quiz.prize_description}</p>
+                        )}
                         {quiz.video_url && (
                             <a href={quiz.video_url} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-[var(--moca-primary)] underline mt-0.5 inline-block">🎬 등록된 영상 보기</a>
                         )}

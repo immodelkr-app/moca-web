@@ -151,7 +151,9 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                                 </h3>
                             ))}
                         </div>
-                        <p className="text-[13px] font-bold text-[#7C3AED] mt-1.5">🎁 상품: {quiz.prize_description}</p>
+                        {quiz.prize_description && (
+                            <p className="text-[13px] font-bold text-[#7C3AED] mt-1.5">🎁 정답자중 추첨을 통해 {quiz.prize_description} 상품을 드리겠습니다.</p>
+                        )}
                     </>
                 )}
             </div>
@@ -230,7 +232,9 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                             </div>
                         ))}
                         {error && <p className="text-[12px] font-bold text-red-500">{error}</p>}
-                        <p className="text-[13px] font-bold text-[#7C3AED]">🎁 상품: {quiz.prize_description}</p>
+                        {quiz.prize_description && (
+                            <p className="text-[13px] font-bold text-[#7C3AED]">🎁 정답자중 추첨을 통해 {quiz.prize_description} 상품을 드리겠습니다.</p>
+                        )}
                         <button
                             onClick={handleSubmit}
                             disabled={submitting}
