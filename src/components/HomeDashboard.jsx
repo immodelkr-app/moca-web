@@ -195,26 +195,26 @@ const HomeDashboard = () => {
                     {/* 카드 1: 모델캐스팅 */}
                     <button
                         onClick={() => setShowCastingNotice(true)}
-                        className="relative flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#4C1D95] to-[#1F1235] border border-white/10 shadow-md active:scale-95 transition-all text-center group"
+                        className="relative flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#7C3AED] to-[#5B21B6] border border-white/10 shadow-md active:scale-95 transition-all text-center group"
                     >
-                        <span className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#C084FC] text-[#1F1235] text-[9px] font-black">NEW</span>
-                        <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
+                        <span className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#F5D0FE] text-[#86198F] text-[9px] font-black">NEW</span>
+                        <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
                             <span className="material-symbols-outlined text-white text-[34px]">campaign</span>
                         </div>
                         <h3 className="text-lg font-black text-white mb-1">모델캐스팅</h3>
-                        <p className="text-[11px] font-bold text-white/70 leading-tight">업체가 직접 올리는<br />모델 구인 공고</p>
+                        <p className="text-[11px] font-bold text-white/75 leading-tight">업체가 직접 올리는<br />모델 구인 공고</p>
                     </button>
 
                     {/* 카드 2: 김대표퀴즈 */}
                     <button
                         onClick={() => navigate('/home/quiz')}
-                        className="flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#FCE7F3] via-[#FAE8FF] to-[#F5D0FE] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
+                        className="flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#D946EF] to-[#A21CAF] border border-white/10 shadow-md active:scale-95 transition-all text-center group"
                     >
-                        <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
-                            <span className="material-symbols-outlined text-[#C026D3] text-[34px]">quiz</span>
+                        <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
+                            <span className="material-symbols-outlined text-white text-[34px]">quiz</span>
                         </div>
-                        <h3 className="text-lg font-black text-[#1F1235] mb-1">김대표퀴즈</h3>
-                        <p className="text-[11px] font-bold text-[#A21CAF]/80 leading-tight">정답 맞추고<br />상품 받아가기</p>
+                        <h3 className="text-lg font-black text-white mb-1">김대표퀴즈</h3>
+                        <p className="text-[11px] font-bold text-white/75 leading-tight">정답 맞추고<br />상품 받아가기</p>
                     </button>
 
                 </div>
@@ -227,7 +227,7 @@ const HomeDashboard = () => {
                         <div className="flex items-start gap-2">
                             <span className="material-symbols-outlined text-white text-[20px] mt-0.5">local_activity</span>
                             <div>
-                                <h3 className="text-white font-black text-sm leading-none mb-1">출첵 × 모카그램</h3>
+                                <h3 className="text-white font-black text-sm leading-none mb-1">출첵하고 혜택받자!</h3>
                             </div>
                         </div>
                         <span className="text-[10px] font-black text-white/50 flex-shrink-0">누적 {attendance?.validDays ?? 0}일</span>
