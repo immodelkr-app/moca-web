@@ -96,6 +96,24 @@ export const submitAnswer = async (quizId, userNickname, answers) => {
 };
 
 /**
+ * 발표된(status='announced') 퀴즈 전체를 correct_answers 포함 최신순으로 조회.
+ * 지난 결과(당첨 히스토리) 탭용 — status 조건을 서버 쿼리에 넣어 발표 전 정답이 새지 않도록 이중 방어.
+ */
+export const fetchAnnouncedQuizzes = async () => {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+        .from('quiz_posts')
+        .select(`${SAFE_QUIZ_COLUMNS}, correct_answers`)
+        .eq('status', 'announced')
+        .order('announced_at', { ascending: false });
+    if (error) {
+        console.error('[quizService] fetchAnnouncedQuizzes error:', error);
+        return [];
+    }
+    return data || [];
+};
+
+/**
  * 발표된(status='announced') 퀴즈만 correct_answers 포함 조회.
  * status 조건을 서버 쿼리에 넣어, 발표 전 실수로 호출해도 결과가 비어 정답이 새지 않도록 이중 방어.
  */
