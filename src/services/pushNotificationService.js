@@ -129,6 +129,57 @@ export const sendBroadcastPush = async ({ title, body, route = '/agencies' }) =>
   }
 };
 
+/**
+ * 관리자 전용: 특정 닉네임 목록에게만 푸시 알림 발송 (예: 퀴즈 당첨자 포인트 지급 안내)
+ * @param {Object} param
+ * @param {string} param.title - 푸시 알림 제목
+ * @param {string} param.body  - 푸시 알림 내용
+ * @param {string} param.route - 탭 후 이동할 라우트 (예: '/agencies')
+ * @param {string[]} param.nicknames - 발송 대상 닉네임 목록
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+ */
+export const sendTargetedPush = async ({ title, body, route = '/agencies', nicknames }) => {
+  try {
+    if (!nicknames || nicknames.length === 0) {
+      return { success: false, error: '발송 대상 닉네임이 없습니다.' };
+    }
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return { success: false, error: 'Supabase 환경변수가 설정되지 않았습니다.' };
+    }
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+      },
+      body: JSON.stringify({
+        table: 'targeted',
+        record: { title, body, route, nicknames },
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: data?.error || '푸시 발송에 실패했습니다.' };
+    }
+
+    const results = data?.results || [];
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+
+    return { success: true, data, successCount, failCount };
+  } catch (err) {
+    console.error('[sendTargetedPush] error:', err);
+    return { success: false, error: err.message || '알 수 없는 오류가 발생했습니다.' };
+  }
+};
+
 
 /**
  * 관리자 전용: 푸시 발송 내역 조회

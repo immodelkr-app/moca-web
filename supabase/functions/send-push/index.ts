@@ -130,6 +130,11 @@ serve(async (req) => {
       title = record?.title || "📢 새로운 소식";
       body = record?.body || "앱에서 확인해보세요.";
       actionRoute = record?.route || "/agency";
+    } else if (table === "targeted") {
+      // 특정 닉네임(record.nicknames)에게만 보내는 푸시 메시지 (예: 퀴즈 당첨 안내)
+      title = record?.title || "📢 새로운 소식";
+      body = record?.body || "앱에서 확인해보세요.";
+      actionRoute = record?.route || "/agency";
     } else {
       return new Response(JSON.stringify({ message: "Unsupported table" }), {
         status: 200,
@@ -143,13 +148,22 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Fetch all user push tokens
-    const { data: tokens, error: tokensError } = await supabase
-      .from("user_push_tokens")
-      .select("token");
-      
+    // Fetch push tokens (targeted 발송은 지정된 닉네임의 토큰만 조회)
+    let tokenQuery = supabase.from("user_push_tokens").select("token");
+    if (table === "targeted") {
+      const nicknames: string[] = Array.isArray(record?.nicknames) ? record.nicknames : [];
+      if (nicknames.length === 0) {
+        return new Response(JSON.stringify({ message: "No target nicknames provided" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      tokenQuery = tokenQuery.in("user_nickname", nicknames);
+    }
+    const { data: tokens, error: tokensError } = await tokenQuery;
+
     if (tokensError) throw tokensError;
-    
+
     if (!tokens || tokens.length === 0) {
       return new Response(JSON.stringify({ message: "No push tokens found" }), {
         status: 200,
@@ -208,7 +222,7 @@ serve(async (req) => {
     const failCount = results.filter(r => !r.success).length;
 
     // 발송 내역 DB 저장
-    const senderType = table === "custom" ? "admin_custom" : `system_${table}`;
+    const senderType = table === "custom" ? "admin_custom" : table === "targeted" ? "admin_targeted" : `system_${table}`;
     await supabase.from("push_history").insert({
       title,
       body,

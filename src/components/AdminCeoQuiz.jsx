@@ -3,7 +3,7 @@ import {
     fetchAllQuizzesForAdmin, createQuiz, fetchSubmissions, fetchSubmissionCounts,
     markWinner, closeQuiz, publishResults, updateCorrectAnswers, updateQuiz, grantWinnerPoints,
 } from '../services/quizService';
-import { sendBroadcastPush } from '../services/pushNotificationService';
+import { sendBroadcastPush, sendTargetedPush } from '../services/pushNotificationService';
 
 const STATUS_LABEL = {
     open: { label: '진행중', className: 'bg-emerald-100 text-emerald-700' },
@@ -528,6 +528,16 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                 pointDescription.trim() || `김대표퀴즈 당첨${quiz.prize_description ? ` - ${quiz.prize_description}` : ''}`
             );
             setGrantResults(results);
+
+            const grantedNicknames = results.filter((r) => r.success).map((r) => r.nickname);
+            if (grantedNicknames.length > 0) {
+                await sendTargetedPush({
+                    title: '🎉 김대표퀴즈 당첨을 축하드려요!',
+                    body: `${Number(pointAmount)}P가 지급되었습니다. 지금 확인해보세요.`,
+                    route: '/home/quiz',
+                    nicknames: grantedNicknames,
+                });
+            }
         }
 
         setPublishing(false);
