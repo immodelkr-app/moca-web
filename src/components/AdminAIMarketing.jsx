@@ -4,12 +4,8 @@ import { fetchAllCertPostsForAdmin, parseImageUrls } from '../services/certifica
 import { CARD_TEMPLATES } from '../lib/cardNewsRenderer';
 import {
     CLAUDE_MODELS,
-    getSavedApiKey,
-    saveApiKey,
-    clearApiKey,
     getSavedModel,
     saveModel,
-    maskApiKey,
     callClaude,
     buildInsightPrompt,
     buildCopywriterPrompt,
@@ -74,7 +70,6 @@ const ResultPanel = ({ loading, error, result, onCopy, onRegenerate, canRegenera
 );
 
 const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
-    const [apiKey, setApiKey] = useState(getSavedApiKey());
     const [model, setModel] = useState(getSavedModel());
     const [subTab, setSubTab] = useState('insight');
 
@@ -159,26 +154,9 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
         });
     }, []);
 
-    const handleApiKeyBlur = () => {
-        if (apiKey) saveApiKey(apiKey);
-        else clearApiKey();
-    };
-
     const handleModelChange = (e) => {
         setModel(e.target.value);
         saveModel(e.target.value);
-    };
-
-    const handleSaveKey = () => {
-        if (!apiKey) return;
-        saveApiKey(apiKey);
-        setSuccessMsg?.('API 키가 저장되었습니다.');
-    };
-
-    const handleClearKey = () => {
-        if (!window.confirm('API 키를 삭제하시겠습니까?')) return;
-        setApiKey('');
-        clearApiKey();
     };
 
     const copyToClipboard = async (text) => {
@@ -204,7 +182,7 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
         setInsightState({ loading: true, error: '', result: insightState.result });
         try {
             const { system, prompt } = buildInsightPrompt({ ...stats, popularClasses, certActivity });
-            const result = await callClaude({ apiKey, model, system, prompt, maxTokens: 1800 });
+            const result = await callClaude({ model, system, prompt, maxTokens: 1800 });
             setInsightState({ loading: false, error: '', result });
         } catch (err) {
             setInsightState({ loading: false, error: err.message, result: null });
@@ -244,7 +222,7 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
         setWriterState({ loading: true, error: '', result: writerState.result });
         try {
             const { system, prompt } = buildCopywriterPrompt(writerForm);
-            const result = await callClaude({ apiKey, model, system, prompt, maxTokens: 900 });
+            const result = await callClaude({ model, system, prompt, maxTokens: 900 });
             setWriterState({ loading: false, error: '', result });
         } catch (err) {
             setWriterState({ loading: false, error: err.message, result: null });
@@ -280,7 +258,7 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                 data: buildCardData(),
                 context: cardInsightContext || undefined,
             });
-            const result = await callClaude({ apiKey, model, system, prompt, maxTokens: 500 });
+            const result = await callClaude({ model, system, prompt, maxTokens: 500 });
             const parsed = parseCardCopy(result.text);
             setCardFields(parsed);
             setCardCopyState({ loading: false, error: '', result });
@@ -369,43 +347,16 @@ const AdminAIMarketing = ({ stats, setSuccessMsg }) => {
                     <span className="text-3xl">🤖</span>
                     <div>
                         <h2 className="text-xl font-black text-[var(--moca-text)]">AI 마케팅 & 데이터 분석 센터</h2>
-                        <p className="text-sm text-[var(--moca-text-3)] mt-0.5">관리자 본인의 Claude API 키로 마케팅 문구, 데이터 인사이트, 카드뉴스를 생성합니다.</p>
+                        <p className="text-sm text-[var(--moca-text-3)] mt-0.5">서버에 등록된 Claude API로 마케팅 문구, 데이터 인사이트, 카드뉴스를 생성합니다.</p>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                        <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">Claude API Key</label>
-                        <div className="flex gap-2">
-                            <input
-                                type="password"
-                                autoComplete="off"
-                                value={apiKey}
-                                onChange={(e) => setApiKey(e.target.value)}
-                                onBlur={handleApiKeyBlur}
-                                placeholder="sk-ant-..."
-                                className={inputClass}
-                            />
-                            <button onClick={handleSaveKey} disabled={!apiKey} className="shrink-0 px-3 rounded-xl border border-[var(--moca-border)] text-xs font-bold text-[var(--moca-text-2)] hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                                저장
-                            </button>
-                            {apiKey && (
-                                <button onClick={handleClearKey} className="shrink-0 px-3 rounded-xl border border-[var(--moca-border)] text-xs font-bold text-[var(--moca-text-2)] hover:bg-gray-50">
-                                    삭제
-                                </button>
-                            )}
-                        </div>
-                        <p className="text-[10px] text-[var(--moca-text-3)] mt-1.5">
-                            {apiKey ? `저장된 키: ${maskApiKey(apiKey)} · 이 브라우저에만 저장됩니다.` : 'console.claude.com에서 발급받은 키를 입력하세요. 이 브라우저에만 저장되며 서버로 전송되지 않습니다.'}
-                        </p>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">Model</label>
-                        <select value={model} onChange={handleModelChange} className={inputClass}>
-                            {CLAUDE_MODELS.map((m) => (
-                                <option key={m.id} value={m.id}>{m.label}</option>
-                            ))}
-                        </select>
-                    </div>
+                <div className="max-w-xs">
+                    <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">Model</label>
+                    <select value={model} onChange={handleModelChange} className={inputClass}>
+                        {CLAUDE_MODELS.map((m) => (
+                            <option key={m.id} value={m.id}>{m.label}</option>
+                        ))}
+                    </select>
                 </div>
             </div>
 

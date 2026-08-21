@@ -3,7 +3,6 @@
  * AI 마케팅 분석 탭 - Claude API 연동, 프롬프트 빌더, 로컬 설정 저장
  */
 
-const API_KEY_STORAGE = 'i_model_ai_marketing_api_key';
 const MODEL_STORAGE = 'i_model_ai_marketing_model';
 
 export const CLAUDE_MODELS = [
@@ -19,83 +18,48 @@ const MODEL_PRICING = {
     'claude-haiku-4-5': { input: 1, output: 5 },
 };
 
-export const getSavedApiKey = () => localStorage.getItem(API_KEY_STORAGE) || '';
-export const saveApiKey = (key) => {
-    if (key) localStorage.setItem(API_KEY_STORAGE, key);
-};
-export const clearApiKey = () => localStorage.removeItem(API_KEY_STORAGE);
-
 export const getSavedModel = () => localStorage.getItem(MODEL_STORAGE) || CLAUDE_MODELS[0].id;
 export const saveModel = (model) => localStorage.setItem(MODEL_STORAGE, model);
 
-export const maskApiKey = (key) => {
-    if (!key) return '';
-    if (key.length <= 10) return '••••••••';
-    return `${key.slice(0, 7)}···${key.slice(-4)}`;
-};
+// 어드민 로그인 비밀번호와 동일한 값 — 서버 프록시(/api/claude-marketing)에 요청 출처를 알리는 용도
+const ADMIN_TOKEN = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024';
 
 /**
- * Claude Messages API를 브라우저에서 직접 호출합니다.
- * 관리자 개인 API 키를 사용하며, 서버를 거치지 않습니다.
+ * Claude Messages API를 서버 프록시(/api/claude-marketing)를 통해 호출합니다.
+ * 실제 Claude API 키는 서버 환경변수에만 존재하며 브라우저로 내려오지 않습니다.
  */
-export async function callClaude({ apiKey, model, system, prompt, maxTokens = 1500 }) {
-    if (!apiKey) {
-        throw new Error('Claude API 키를 먼저 입력해주세요.');
-    }
-
+export async function callClaude({ model, system, prompt, maxTokens = 1500 }) {
     let res;
     try {
-        res = await fetch('https://api.anthropic.com/v1/messages', {
+        res = await fetch('/api/claude-marketing', {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true',
+                'x-admin-token': ADMIN_TOKEN,
             },
-            body: JSON.stringify({
-                model,
-                max_tokens: maxTokens,
-                // 이 탭은 짧은 정형 텍스트/카피 생성이 목적이라 깊은 추론이 불필요합니다.
-                // thinking을 켜두면(Opus 5 기본값) 생각 토큰이 max_tokens를 잠식해 답변이 중간에 잘릴 수 있어 꺼둡니다.
-                thinking: { type: 'disabled' },
-                system,
-                messages: [{ role: 'user', content: prompt }],
-            }),
+            body: JSON.stringify({ model, system, prompt, maxTokens }),
         });
     } catch {
         throw new Error('네트워크 오류로 Claude API 호출에 실패했습니다.');
     }
 
+    const data = await res.json().catch(() => ({}));
+
     if (!res.ok) {
-        let message = `요청 실패 (HTTP ${res.status})`;
-        if (res.status === 401) {
-            message = 'API 키가 올바르지 않습니다. 키를 다시 확인해주세요.';
-        } else if (res.status === 429) {
+        let message = data?.error || `요청 실패 (HTTP ${res.status})`;
+        if (res.status === 429) {
             message = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
-        } else {
-            try {
-                const body = await res.json();
-                if (body?.error?.message) message = body.error.message;
-            } catch {
-                // 응답 본문 파싱 실패는 무시하고 기본 메시지 사용
-            }
         }
         throw new Error(message);
     }
 
-    const data = await res.json();
-    let text = (data.content || [])
-        .filter((b) => b.type === 'text')
-        .map((b) => b.text)
-        .join('\n')
-        .trim();
+    let text = data.text || '';
     const usage = data.usage || {};
     const pricing = MODEL_PRICING[model] || MODEL_PRICING['claude-opus-5'];
     const estimatedCost =
         ((usage.input_tokens || 0) * pricing.input + (usage.output_tokens || 0) * pricing.output) / 1_000_000;
 
-    if (data.stop_reason === 'max_tokens') {
+    if (data.stopReason === 'max_tokens') {
         text += '\n\n⚠️ (답변이 토큰 한도로 중간에 잘렸습니다. "다시 생성"을 눌러 재시도해주세요.)';
     }
 
