@@ -76,7 +76,7 @@ const AgencyTrendModal = ({ agency, userGrade, onClose }) => {
                 </div>
 
                 {/* Body */}
-                <div className="p-6 overflow-y-auto flex-1 min-h-0 flex flex-col gap-5">
+                <div className="p-6 pb-10 overflow-y-auto flex-1 min-h-0 flex flex-col gap-5">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
                             <span className="material-symbols-outlined text-[32px] text-violet-400 animate-spin">progress_activity</span>

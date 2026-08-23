@@ -4,6 +4,7 @@ import { getUser, getUserGrade, syncUserGrade, GRADE_INFO, GRADE_EMOJI } from '.
 import { fetchMessagesList } from '../services/messageService';
 import { fetchAttendanceProgress, submitAttendanceCheck } from '../services/attendanceService';
 import ProfileEditModal from './ProfileEditModal';
+import ModelBeautyBanner from './ModelBeautyBanner';
 
 const TOUR_ITEMS = [
     { icon: 'event_note', label: '투어일지', route: '/home/diary', color: 'text-[#8B5CF6]', bgLight: 'bg-[#F3E8FF]' },
@@ -303,6 +304,11 @@ const HomeDashboard = () => {
                         </button>
                     ))}
                 </div>
+            </div>
+
+            {/* ── 7. 모델뷰티 배너 ── */}
+            <div className="px-6 mb-6">
+                <ModelBeautyBanner variant="card" />
             </div>
 
             {/* Profile Edit Modal */}

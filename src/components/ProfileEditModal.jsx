@@ -4,6 +4,7 @@ import { getUser, updateUserProfile, updateMasterUserIdInSupabase } from '../ser
 import { getPasskeyStatus, registerPasskey } from '../services/passkeyService';
 import { getPointsBalance, getPointsHistory, syncUserWithCore } from '../lib/imCoreAuth';
 import { fetchMyCoupons } from '../services/attendanceService';
+import ModelBeautyBanner from './ModelBeautyBanner';
 
 
 const USER_KEY = 'i_model_user';
@@ -458,10 +459,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                             </p>
                                         )}
 
-                                        <div className="w-full py-2.5 px-3 rounded-2xl bg-[#EBE3FC] text-[#633AE8] text-[11px] font-black flex items-center justify-center gap-1 shadow-sm">
-                                            <span>✨</span>
-                                            <span>포인트는 모델뷰티 앱에서 사용 가능합니다</span>
-                                        </div>
+                                        <ModelBeautyBanner variant="inline" />
                                     </div>
 
                                     {/* 최근 포인트 내역 */}
