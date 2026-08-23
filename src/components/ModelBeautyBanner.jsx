@@ -59,7 +59,7 @@ const ModelBeautyBanner = ({ variant = 'card', className = '' }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                         <h3 className="text-white font-black text-base leading-tight">모델뷰티</h3>
-                        <p className="text-white/85 text-xs font-bold mt-0.5">포인트 쓰러가기</p>
+                        <p className="text-white/85 text-xs font-bold mt-0.5">포인트 쓰러가자 GO 🛍️</p>
                     </div>
                     <span className="material-symbols-outlined text-white/80 text-[22px] flex-shrink-0">chevron_right</span>
                 </button>
@@ -69,7 +69,7 @@ const ModelBeautyBanner = ({ variant = 'card', className = '' }) => {
                     className={`w-full py-2.5 px-3 rounded-2xl bg-[#EBE3FC] text-[#633AE8] text-[11px] font-black flex items-center justify-center gap-1 shadow-sm active:scale-[0.98] transition-all ${className}`}
                 >
                     <span>✨</span>
-                    <span>모델뷰티에서 포인트 쓰러가기</span>
+                    <span>모델뷰티에서 포인트 쓰러가자 GO 🛍️</span>
                     <span className="material-symbols-outlined text-[14px]">chevron_right</span>
                 </button>
             )}
