@@ -521,7 +521,7 @@ const SmartProfile = () => {
                     {/* 신체 스펙 */}
                     <div className="grid grid-cols-2 gap-3 mb-5">
                         {[
-                            { name: 'age', label: '출생년도', unit: '년생', placeholder: '1999', type: 'number' },
+                            { name: 'age', label: '활동나이 년도', unit: '년생', placeholder: '1999', type: 'number' },
                             { name: 'height', label: '키', unit: 'cm', placeholder: '170', type: 'number' },
                             { name: 'weight', label: '몸무게', unit: 'kg', placeholder: '55', type: 'number' },
                             { name: 'shoe_size', label: '신발사이즈', unit: 'mm', placeholder: '270', type: 'number' },
