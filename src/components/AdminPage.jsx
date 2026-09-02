@@ -165,6 +165,8 @@ const AdminPage = () => {
     // 앱 설치 독려 메시지
     const DEFAULT_INSTALL_MSG = `[아임모델 모카] 안녕하세요!\n앱을 설치하시면 새 공지·클래스·에이전시 소식을 푸시 알림으로 가장 먼저 받아보실 수 있습니다!\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp\n(구글플레이에서 '모두의 캐스팅' 검색)`;
     const DEFAULT_PERMISSION_MSG = `[아임모델 모카] 안녕하세요!\n앱은 설치하셨으나 푸시 알림 수신이 차단되어 소식을 받지 못하고 계십니다.\n\n👉 알림 켜는 방법:\n1. 모카 앱 열기 > 마이페이지 > 알림 수신 동의 켜기\n2. 스마트폰 설정 > 애플리케이션 > '모두의 캐스팅' > 알림 허용`;
+    const DEFAULT_TRIAL_MSG = `[아임모델 모카] 지금 모델뷰티에서 체험단 모집 중이에요! 🎁\n앱을 설치하고 바로 확인 후 신청해보세요.\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp`;
+    const DEFAULT_LIVE_MSG = `[아임모델 모카] 지금 모델뷰티에서 라이브방송 진행 중이에요! 🔴\n앱을 설치하고 바로 시청해보세요.\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp`;
     const [noPushUsers, setNoPushUsers] = useState([]);
     const [noAppUsers, setNoAppUsers] = useState([]);
     const [noPermissionUsers, setNoPermissionUsers] = useState([]);
@@ -2886,6 +2888,13 @@ const AdminPage = () => {
                                                             msgForm.target === t.key ? `${t.color} text-white border-transparent shadow-sm` : 'bg-[var(--moca-bg)] text-[var(--moca-text-2)] border-[var(--moca-border)] hover:border-gray-400'
                                                         }`}>{t.label}</button>
                                                 ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">⚡ 빠른 문구</p>
+                                            <div className="flex flex-wrap gap-2 mb-4">
+                                                <button onClick={() => setMsgForm(f => ({ ...f, content: DEFAULT_TRIAL_MSG }))} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100 transition-colors">🎁 체험단 모집</button>
+                                                <button onClick={() => setMsgForm(f => ({ ...f, content: DEFAULT_LIVE_MSG }))} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-red-50 text-red-700 border-red-200 hover:bg-red-100 transition-colors">🔴 라이브 시작</button>
                                             </div>
                                         </div>
                                         <div>
