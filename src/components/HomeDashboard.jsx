@@ -6,6 +6,7 @@ import { fetchAttendanceProgress, submitAttendanceCheck } from '../services/atte
 import ProfileEditModal from './ProfileEditModal';
 import ModelBeautyBanner from './ModelBeautyBanner';
 import TrialCampaignBanner from './TrialCampaignBanner';
+import LiveStreamBanner from './LiveStreamBanner';
 
 const TOUR_ITEMS = [
     { icon: 'event_note', label: '투어일지', route: '/home/diary', color: 'text-[#8B5CF6]', bgLight: 'bg-[#F3E8FF]' },
@@ -307,7 +308,10 @@ const HomeDashboard = () => {
                 </div>
             </div>
 
-            {/* ── 7. 체험단 모집중 (모델뷰티 연동) ── */}
+            {/* ── 7. 지금 라이브 중 (모델뷰티 연동) ── */}
+            <LiveStreamBanner />
+
+            {/* ── 7-1. 체험단 모집중 (모델뷰티 연동) ── */}
             <TrialCampaignBanner />
 
             {/* ── 8. 모델뷰티 배너 ── */}
