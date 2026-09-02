@@ -2591,6 +2591,7 @@ const AdminPage = () => {
                             notice: { title: '📢 모카 공지사항', body: '중요한 공지사항이 있습니다. 앱에서 확인해주세요.', route: '/home/dashboard' },
                             mocatv: { title: '🎬 모카TV 김대표님 영상 업로드!', body: '모카TV에 김대표님의 새로운 영상이 업로드 되었습니다. 지금 바로 확인해 보세요!', route: '/home/tv' },
                             update: { title: '🆕 모두의 캐스팅 모카 업데이트!', body: '새 버전이 출시되었습니다. 구글플레이에서 업데이트 후 이용해주세요!', route: 'https://play.google.com/store/apps/details?id=com.immodel.mocapp' },
+                            trial: { title: '🎁 새 체험단이 떴어요!', body: '모델뷰티에서 체험단 모집이 시작됐어요. 지금 확인하고 신청해보세요!', route: '/home/dashboard' },
                         };
                         if (presets[preset]) setPushForm(presets[preset]);
                     };
@@ -2736,6 +2737,7 @@ const AdminPage = () => {
                                                     { key: 'notice', label: '📢 공지사항', color: 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' },
                                                     { key: 'mocatv', label: '🎬 모카TV 김대표님 영상', color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' },
                                                     { key: 'update', label: '🆕 앱 업데이트 안내', color: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' },
+                                                    { key: 'trial', label: '🎁 체험단 모집', color: 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100' },
                                                 ].map(p => (
                                                     <button key={p.key} onClick={() => applyPushPreset(p.key)} className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${p.color}`}>{p.label}</button>
                                                 ))}
@@ -3346,10 +3348,6 @@ const AdminPage = () => {
                         .sort((a, b) => b[1] - a[1])
                         .slice(0, 5);
 
-                    // Naver Cafe 포스팅 텍스트 생성
-                    const buildNaverText = (post) =>
-                        `[아임모델 인증샷 🌟]\n\n📸 #${post.tag_label || post.activity_type} #${post.activity_type}\n${post.caption || ''}\n\n✅ 이미지: ${post.image_url}\n\n#아임모델 #모카MOCA #광고모델 #${post.tag_label || '인증샷'}`;
-
                     return (
                         <div className="animate-fadeIn space-y-8">
 
@@ -3465,7 +3463,7 @@ const AdminPage = () => {
                             <div className="flex items-center justify-between gap-4 flex-wrap">
                                 <div>
                                     <h3 className="text-lg font-black text-[var(--moca-text)]">📸 전체 모카그램 게시물 관리</h3>
-                                    <p className="text-[var(--moca-text-3)] text-sm mt-0.5">HOT 배지 부여 · 모카베스트 PICK 선정 · 카페 포스팅 · 삭제</p>
+                                    <p className="text-[var(--moca-text-3)] text-sm mt-0.5">HOT 배지 부여 · 모카베스트 PICK 선정 · 삭제</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <button
@@ -3552,18 +3550,6 @@ const AdminPage = () => {
                                                             }
                                                         }} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black transition-all ${post.is_marketing_pick ? 'bg-yellow-500/20 border border-yellow-500/40 text-yellow-400' : 'bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[var(--moca-text-2)] hover:bg-yellow-500/10'}`}>
                                                             👑 {post.is_marketing_pick ? 'PICK 해제' : '모카베스트 PICK'}
-                                                        </button>
-                                                        {/* 📋 네이버 카페 포스팅 */}
-                                                        <button onClick={() => {
-                                                            const text = buildNaverText(post);
-                                                            navigator.clipboard.writeText(text).then(() => {
-                                                                setSuccessMsg('📋 카페 포스팅 텍스트가 복사되었습니다!');
-                                                                setTimeout(() => setSuccessMsg(''), 3000);
-                                                            });
-                                                            window.open('https://cafe.naver.com/ArticleList.nhn?search.clubid=29732750&search.menuid=85&search.boardtype=L', '_blank');
-                                                        }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500/20 transition-all">
-                                                            <span className="material-symbols-outlined text-[12px]">content_copy</span>
-                                                            카페 포스팅
                                                         </button>
                                                         {/* 삭제 */}
                                                         <button onClick={async () => {
