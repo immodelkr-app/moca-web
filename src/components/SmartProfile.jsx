@@ -655,7 +655,24 @@ const SmartProfile = () => {
 
 
                 {/* ── 현재모습 사진저장 ── */}
-                <div className="bg-white border border-[#E8E0FA] rounded-2xl p-5 shadow-sm">
+                <div className="relative bg-white border border-[#E8E0FA] rounded-2xl p-5 shadow-sm overflow-hidden">
+                    {!isPhotoAllowed && (
+                        <button
+                            onClick={() => setShowGradePopup(true)}
+                            className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 bg-white/80 backdrop-blur-[2px] active:bg-white/90 transition-colors"
+                        >
+                            <div className="w-11 h-11 bg-[#F59E0B]/15 rounded-full flex items-center justify-center mb-2">
+                                <span className="material-symbols-outlined text-[22px] text-[#F59E0B]">lock</span>
+                            </div>
+                            <p className="text-[#1F1235] font-black text-sm mb-1">
+                                🌟 아임모델 등급부터 이용 가능
+                            </p>
+                            <p className="text-[#9CA3AF] text-[11px] font-bold leading-relaxed">
+                                프로필발송과는 무관한 별도 기능이에요<br/>
+                                (프로필발송은 계속 이용 가능해요)
+                            </p>
+                        </button>
+                    )}
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
                             <span className="material-symbols-outlined text-[15px] text-emerald-600">photo_library</span>
