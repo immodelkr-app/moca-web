@@ -593,18 +593,18 @@ const SmartProfile = () => {
 
 
                     <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <label className="text-[#5B4E7A] text-[11px] font-black ml-1">네이버 마이박스 또는 구글 드라이브 공유 링크 입력</label>
-                            {formData.portfolio_link && (
+                        <label className="block text-[#5B4E7A] text-[11px] font-black ml-1">네이버 마이박스 또는 구글 드라이브 공유 링크 입력</label>
+                        {formData.portfolio_link && (
+                            <div className="flex justify-end">
                                 <button
                                     onClick={() => setFormData(prev => ({ ...prev, portfolio_link: '' }))}
-                                    className="text-xs text-red-500 hover:text-red-600 font-bold flex items-center gap-0.5"
+                                    className="text-xs text-red-500 hover:text-red-600 font-bold flex items-center gap-0.5 whitespace-nowrap"
                                 >
                                     <span className="material-symbols-outlined text-[14px]">delete_forever</span>
                                     입력 초기화
                                 </button>
-                            )}
-                        </div>
+                            </div>
+                        )}
                         <input
                             type="url"
                             name="portfolio_link"
