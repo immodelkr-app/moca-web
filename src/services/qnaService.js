@@ -6,7 +6,7 @@ import { supabase } from './supabaseClient';
 
 // 카테고리 상수
 export const QNA_CATEGORIES = [
-    { value: 'app', label: '앱 이용문의', icon: 'phone_in_talk', color: '#3B82F6', bg: '#EFF6FF' },
+    { value: 'app', label: '모카 이용문의', icon: 'phone_in_talk', color: '#3B82F6', bg: '#EFF6FF' },
     { value: 'model_activity', label: '광고모델 활동', icon: 'campaign', color: '#9333EA', bg: '#F3E8FF' },
     { value: 'other', label: '기타문의', icon: 'help', color: '#6B7280', bg: '#F9FAFB' },
 ];

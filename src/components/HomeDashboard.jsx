@@ -12,7 +12,7 @@ const TOUR_ITEMS = [
     { icon: 'event_note', label: '투어일지', route: '/home/diary', color: 'text-[#8B5CF6]', bgLight: 'bg-[#F3E8FF]' },
     { icon: 'manage_accounts', label: '프로필 관리', route: '/home/smart-profile', color: 'text-[#8B5CF6]', bgLight: 'bg-[#F3E8FF]' },
     { icon: 'calendar_month', label: '투어 캘린더', route: '/home/calendar', color: 'text-[#8B5CF6]', bgLight: 'bg-[#F3E8FF]' },
-    { icon: 'forum', label: 'Q&A 게시판', route: '/home/qna', color: 'text-[#8B5CF6]', bgLight: 'bg-[#F3E8FF]' },
+    { icon: 'forum', label: '궁금해요(Q&A)', route: '/home/qna', color: 'text-[#8B5CF6]', bgLight: 'bg-[#F3E8FF]' },
 ];
 
 const COMMUNITY_ITEMS = [
