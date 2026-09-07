@@ -92,16 +92,6 @@ const ClassListPage = () => {
             </div>
 
             <div className="px-5 py-8">
-                {/* Banner */}
-                <div className="bg-gradient-to-br from-[#9333EA] to-[#7C3AED] rounded-3xl p-6 mb-8 text-white shadow-xl shadow-[#9333EA]/20 relative overflow-hidden">
-                    <div className="relative z-10">
-                        <span className="inline-block px-3 py-1 rounded-full bg-white/20 text-[10px] font-black mb-3 uppercase tracking-wider backdrop-blur-md border border-white/20">Education</span>
-                        <h2 className="text-2xl font-black mb-2 tracking-tight">성장을 위한 특권</h2>
-                        <p className="text-indigo-100 text-[13px] font-bold">오직 아임모델 멤버만을 위한 프라이빗 클래스</p>
-                    </div>
-                    <span className="material-symbols-outlined absolute -bottom-4 -right-2 text-[100px] text-white/10 rotate-[-15deg]">school</span>
-                </div>
-
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 text-[var(--moca-text-3)]">
                         <span className="material-symbols-outlined text-4xl animate-spin mb-3">progress_activity</span>
