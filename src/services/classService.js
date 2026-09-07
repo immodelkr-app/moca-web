@@ -136,7 +136,7 @@ export const fetchActiveApplicationCounts = async () => {
     const { data, error } = await supabase
         .from('class_applications')
         .select('class_id')
-        .neq('approval_status', 'cancelled');
+        .in('approval_status', ['pending', 'approved', 'paid']);
     if (error) return { data: {}, error };
 
     const counts = {};
@@ -151,7 +151,7 @@ export const fetchActiveApplicationCount = async (classId) => {
         .from('class_applications')
         .select('id', { count: 'exact', head: true })
         .eq('class_id', classId)
-        .neq('approval_status', 'cancelled');
+        .in('approval_status', ['pending', 'approved', 'paid']);
     return { count: count || 0, error };
 };
 

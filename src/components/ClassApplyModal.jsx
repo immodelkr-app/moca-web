@@ -6,7 +6,7 @@ const GRADE_EMOJI = {
     GUEST: '👤', MEMBER: '👤', SILVER: '🤍', GOLD: '👑', IMODEL: '🌸', VIP: '💎', 전속모델: '💎'
 };
 
-const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSuccess }) => {
+const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSuccess, isWaitlist = false }) => {
     const [agreed1, setAgreed1] = useState(false);
     const [agreed2, setAgreed2] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -50,9 +50,9 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                     user_id: currentUser.id,
                     grade_label: gradeDisplay,
                     applied_price: useCoupon ? 0 : myPrice,
-                    payment_type: useCoupon ? 'coupon' : 'pending_confirm',
+                    payment_type: isWaitlist ? 'waitlist' : (useCoupon ? 'coupon' : 'pending_confirm'),
                     payment_status: 'pending',
-                    approval_status: 'pending',
+                    approval_status: isWaitlist ? 'waitlisted' : 'pending',
                     user_phone: currentUser.phone || '',
                     is_coupon_applied: !!useCoupon,
                     coupon_id: coupon?.id || null,
@@ -85,15 +85,21 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                         <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-indigo-500/30">
                             <span className="material-symbols-outlined text-4xl text-white">task_alt</span>
                         </div>
-                        <h3 className="text-2xl font-black text-[var(--moca-text)] mb-3">신청 완료!</h3>
+                        <h3 className="text-2xl font-black text-[var(--moca-text)] mb-3">{isWaitlist ? '대기 신청 완료!' : '신청 완료!'}</h3>
                         <p className="text-[var(--moca-text-3)] text-sm font-bold leading-relaxed mb-8">
-                            {appliedWithCoupon ? (
+                            {isWaitlist ? (
+                                <>대기 신청서가 접수되었습니다.<br /></>
+                            ) : appliedWithCoupon ? (
                                 <>참석 프리패스로 신청서가 접수되었습니다.<br /></>
                             ) : (
                                 <>수강 신청서가 접수되었습니다.<br /></>
                             )}
-                            담당자 검토 후 <span className="text-indigo-600 font-black">카카오톡 또는 문자</span>로<br />
-                            수강 참여 및 승인 안내를 드립니다. (영업일 기준 1일 내)
+                            {isWaitlist ? (
+                                <>자리가 나면 순서대로 <span className="text-indigo-600 font-black">카카오톡 또는 문자</span>로<br />안내드립니다.</>
+                            ) : (
+                                <>담당자 검토 후 <span className="text-indigo-600 font-black">카카오톡 또는 문자</span>로<br />
+                                수강 참여 및 승인 안내를 드립니다. (영업일 기준 1일 내)</>
+                            )}
                         </p>
                         <button
                             onClick={onClose}
@@ -108,8 +114,9 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                         {/* 헤더 */}
                         <div className="flex items-center justify-between mb-8">
                             <div>
-                                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Class Application</p>
-                                <h3 className="text-xl font-black text-[var(--moca-text)]">수강 참여 신청서</h3>
+                                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">{isWaitlist ? 'Waitlist Application' : 'Class Application'}</p>
+                                <h3 className="text-xl font-black text-[var(--moca-text)]">{isWaitlist ? '대기 신청서' : '수강 참여 신청서'}</h3>
+                                {isWaitlist && <p className="text-[11px] font-bold text-amber-500 mt-1">정원이 마감되어 대기 신청으로 접수됩니다. 자리가 나면 순서대로 안내드립니다.</p>}
                             </div>
                             <button
                                 onClick={onClose}
@@ -194,7 +201,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                             </label>
                         </div>
 
-                        {hasUnusedCoupon && (
+                        {hasUnusedCoupon && !isWaitlist && (
                             <div className={`flex items-center gap-3 p-4 rounded-2xl mb-4 border ${couponSeatAvailable ? 'bg-[#F3EEFF] border-[#E1D3FD]' : 'bg-gray-50 border-gray-100'}`}>
                                 <span className="material-symbols-outlined text-[22px] text-[#633AE8]">confirmation_number</span>
                                 <div className="flex-1">
@@ -231,13 +238,13 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                     </>
                                 ) : (
                                     <>
-                                        <span className="material-symbols-outlined text-[20px]">send</span>
-                                        일반 신청하기
+                                        <span className="material-symbols-outlined text-[20px]">{isWaitlist ? 'hourglass_top' : 'send'}</span>
+                                        {isWaitlist ? '대기 신청하기' : '일반 신청하기'}
                                     </>
                                 )}
                             </button>
 
-                            {hasUnusedCoupon && (
+                            {hasUnusedCoupon && !isWaitlist && (
                                 <button
                                     onClick={() => handleSubmit(true)}
                                     disabled={submitting || !agreed1 || !agreed2 || !couponSeatAvailable}

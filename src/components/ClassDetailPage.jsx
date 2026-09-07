@@ -50,6 +50,8 @@ const ClassDetailPage = () => {
     const [showApplyModal, setShowApplyModal] = useState(false);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [isApplied, setIsApplied] = useState(false);
+    const [myApplicationStatus, setMyApplicationStatus] = useState(null);
+    const [showWaitlistModal, setShowWaitlistModal] = useState(false);
     const [applicantCount, setApplicantCount] = useState(0);
     const [shareSuccess, setShareSuccess] = useState(false);
     const [calendarSaved, setCalendarSaved] = useState(false);
@@ -92,6 +94,7 @@ const ClassDetailPage = () => {
                         .maybeSingle();
                     if (app) {
                         setIsApplied(true);
+                        setMyApplicationStatus(app.approval_status || null);
                         hasApplied = true;
                     }
                 }
@@ -267,6 +270,7 @@ const ClassDetailPage = () => {
     };
 
     const isCompleted = cls?.status === 'completed';
+    const isWaitlisted = myApplicationStatus === 'waitlisted';
     const isFull = !isCompleted && !isApplied && !!cls?.capacity && applicantCount >= cls.capacity;
     const avgRating = feedbacks.length > 0
         ? (feedbacks.reduce((s, f) => s + f.rating, 0) / feedbacks.length).toFixed(1)
@@ -353,7 +357,8 @@ const ClassDetailPage = () => {
                                 {cls.target_grade === 'EXCLUSIVE' ? '신청가능 등급: 전속모델' :
                                  cls.target_grade === 'GOLD' ? '신청가능 등급: 골드멤버' : '신청가능 등급: 전체등급'}
                             </span>
-                            {isApplied && <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-black uppercase flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span> 신청완료</span>}
+                            {isApplied && !isWaitlisted && <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-black uppercase flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span> 신청완료</span>}
+                            {isWaitlisted && <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-[11px] font-black uppercase flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">hourglass_top</span> 대기중</span>}
                             {isCompleted && <span className="px-3 py-1 rounded-full bg-green-500 text-white text-[11px] font-black flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">task_alt</span> 완료</span>}
                             {isFull && <span className="px-3 py-1 rounded-full bg-slate-700 text-white text-[11px] font-black flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">block</span> 모집마감</span>}
                         </div>
@@ -523,15 +528,33 @@ const ClassDetailPage = () => {
 
                     {/* 진행 중 클래스 CTA */}
                     {!isCompleted && (
-                        isApplied ? (
+                        isWaitlisted ? (
+                            <button disabled className="flex-1 bg-amber-100 text-amber-600 border border-amber-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
+                                <span className="material-symbols-outlined font-black">hourglass_top</span>
+                                대기 신청 완료
+                            </button>
+                        ) : isApplied ? (
                             <button disabled className="flex-1 bg-indigo-100 text-indigo-500 border border-indigo-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
                                 <span className="material-symbols-outlined font-black">task_alt</span>
                                 신청 완료
                             </button>
                         ) : isFull ? (
-                            <button disabled className="flex-1 bg-slate-100 text-slate-400 border border-slate-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined font-black">block</span>
-                                모집이 마감되었습니다
+                            <button
+                                onClick={() => {
+                                    if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
+                                    if (cls.target_grade && cls.target_grade !== 'ALL') {
+                                        const myGrade = (currentUser.grade || '').toUpperCase();
+                                        const isExclusive = ['VIP', 'IMODEL', '전속모델', '아임모델', 'EXCLUSIVE'].some(g => myGrade.includes(g));
+                                        const isGold = isExclusive || ['GOLD', '골드'].some(g => myGrade.includes(g));
+                                        if (cls.target_grade === 'EXCLUSIVE' && !isExclusive) { alert('전속모델 등급만 신청 가능한 클래스입니다.'); return; }
+                                        if (cls.target_grade === 'GOLD' && !isGold) { alert('골드회원 이상만 신청 가능한 클래스입니다.'); return; }
+                                    }
+                                    setShowWaitlistModal(true);
+                                }}
+                                className="flex-1 bg-amber-400 text-white py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-amber-400/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined font-black">hourglass_top</span>
+                                대기 신청하기
                             </button>
                         ) : (
                             <button
@@ -578,7 +601,20 @@ const ClassDetailPage = () => {
                     myPriceInfo={myPriceInfo}
                     myPrice={myPrice}
                     onClose={() => setShowApplyModal(false)}
-                    onSuccess={() => setIsApplied(true)}
+                    onSuccess={() => { setIsApplied(true); setMyApplicationStatus('pending'); }}
+                />
+            )}
+
+            {/* Waitlist Modal */}
+            {showWaitlistModal && (
+                <ClassApplyModal
+                    cls={cls}
+                    currentUser={currentUser}
+                    myPriceInfo={myPriceInfo}
+                    myPrice={myPrice}
+                    isWaitlist
+                    onClose={() => setShowWaitlistModal(false)}
+                    onSuccess={() => { setIsApplied(true); setMyApplicationStatus('waitlisted'); }}
                 />
             )}
 

@@ -554,6 +554,40 @@ const AdminClasses = () => {
         }
     };
 
+    const handlePromoteWaitlist = async (app) => {
+        if (!window.confirm(`[${app.users?.name || app.users?.nickname}] 대기 신청을 승급 처리 하시겠습니까? (승인 대기 상태로 전환 + 안내 문자 발송)`)) return;
+        setIsSubmitting(true);
+        try {
+            const { error } = await supabase
+                .from('class_applications')
+                .update({ approval_status: 'pending' })
+                .eq('id', app.id);
+            if (error) throw error;
+
+            const name = app.users?.name || app.users?.nickname || '회원';
+            const phone = (app.users?.phone || app.user_phone || '').replace(/-/g, '');
+            const classTitle = selectedClass?.title || '클래스';
+            let smsFailed = false;
+            if (phone) {
+                const msg = `[아임모델 MOCA] 대기 신청 좌석 안내\n\n${name}님, 신청하신 클래스에 자리가 생겼습니다.\n${classTitle}\n\n곧 담당자가 승인 안내를 드릴 예정입니다 😊`;
+                await sendBulkMessage([phone], msg, 'sms').catch((smsErr) => {
+                    console.error(smsErr);
+                    smsFailed = true;
+                });
+            }
+
+            setApplicants(prev => prev.map(a => a.id === app.id ? { ...a, approval_status: 'pending' } : a));
+            setSuccessMsg(smsFailed
+                ? `⚠️ ${name}님 대기 승급은 완료됐지만 문자 발송에 실패했습니다.`
+                : `✅ ${name}님 대기 승급 완료 + 안내 문자 발송!`);
+        } catch (err) {
+            alert('승급 처리 중 오류: ' + (err.message || JSON.stringify(err)));
+        } finally {
+            setIsSubmitting(false);
+            setTimeout(() => setSuccessMsg(''), 4000);
+        }
+    };
+
     const handleCancelApplication = async (app) => {
         if (!window.confirm(`[${app.users?.name || app.users?.nickname}] 취소 처리하시겠습니까?`)) return;
         const { error } = await supabase
@@ -595,7 +629,7 @@ const AdminClasses = () => {
         const headers = ['번호', '이름', '연락처', '멤버등급', '승인상태'];
         const rows = applicants.map((app, idx) => {
             const status = app.approval_status || (app.payment_status === 'paid' ? 'paid' : 'pending');
-            const statusLabel = status === 'paid' ? '수강확정' : status === 'approved' ? '승인완료' : status === 'cancelled' ? '취소' : '신청대기';
+            const statusLabel = status === 'paid' ? '수강확정' : status === 'approved' ? '승인완료' : status === 'cancelled' ? '취소' : status === 'waitlisted' ? '대기중' : '신청대기';
             return [applicants.length - idx, app.users?.name || app.users?.nickname || '-', app.users?.phone || '-', getApplicantGrade(app), statusLabel];
         });
         const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
@@ -1130,6 +1164,10 @@ const AdminClasses = () => {
                                 <p className="text-[10px] font-black text-red-400/60 mb-1 uppercase tracking-tighter">취소</p>
                                 <p className="text-xl font-black text-red-400">{applicants.filter(a => a.approval_status === 'cancelled').length}명</p>
                             </div>
+                            <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-3xl text-center min-w-[90px]">
+                                <p className="text-[10px] font-black text-orange-300/70 mb-1 uppercase tracking-tighter">대기</p>
+                                <p className="text-xl font-black text-orange-300">{applicants.filter(a => a.approval_status === 'waitlisted').length}명</p>
+                            </div>
                             <div className="bg-purple-400/10 border border-purple-400/20 p-4 rounded-3xl text-center min-w-[90px]">
                                 <p className="text-[10px] font-black text-purple-200 mb-1 uppercase tracking-tighter">프리패스신청</p>
                                 <p className="text-xl font-black text-purple-200">
@@ -1165,7 +1203,8 @@ const AdminClasses = () => {
                                         const isApproved = status === 'approved';
                                         const isPaid = status === 'paid';
                                         const isCancelled = status === 'cancelled';
-                                        const statusBadge = isPaid ? { label: '수강확정', cls: 'bg-green-50 text-green-600 border-green-200' } : isApproved ? { label: '승인완료', cls: 'bg-amber-50 text-amber-600 border-amber-200' } : isCancelled ? { label: '취소', cls: 'bg-red-50 text-red-500 border-red-100' } : { label: '신청대기', cls: 'bg-blue-50 text-blue-500 border-blue-100' };
+                                        const isWaitlisted = status === 'waitlisted';
+                                        const statusBadge = isPaid ? { label: '수강확정', cls: 'bg-green-50 text-green-600 border-green-200' } : isApproved ? { label: '승인완료', cls: 'bg-amber-50 text-amber-600 border-amber-200' } : isCancelled ? { label: '취소', cls: 'bg-red-50 text-red-500 border-red-100' } : isWaitlisted ? { label: '대기중', cls: 'bg-orange-50 text-orange-500 border-orange-100' } : { label: '신청대기', cls: 'bg-blue-50 text-blue-500 border-blue-100' };
                                         return (
                                             <tr key={app.id} className={`transition-colors group ${isCancelled ? 'opacity-40' : 'hover:bg-gray-50/50'}`}>
                                                 <td className="px-4 py-5 text-center text-xs font-bold text-[var(--moca-text-3)]">{applicants.length - idx}</td>
@@ -1196,6 +1235,7 @@ const AdminClasses = () => {
                                                 </td>
                                                 <td className="px-4 py-5">
                                                     <div className="flex justify-center gap-2">
+                                                        {isWaitlisted && <button onClick={() => handlePromoteWaitlist(app)} disabled={isSubmitting} className="px-3 py-2 rounded-xl text-[11px] font-black bg-orange-500 text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50">승급</button>}
                                                         {isPending && <button onClick={() => handleApprove(app)} disabled={isSubmitting} className="px-3 py-2 rounded-xl text-[11px] font-black bg-indigo-500 text-white hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50">승인 + 문자발송</button>}
                                                         {isApproved && <button onClick={() => handleConfirmPayment(app)} disabled={isSubmitting} className="px-3 py-2 rounded-xl text-[11px] font-black bg-green-500 text-white hover:bg-green-600 transition-all shadow-lg shadow-green-500/20 disabled:opacity-50">참석확정</button>}
                                                         {isPaid && <span className="px-3 py-2 rounded-xl text-[11px] font-black bg-gray-100 text-[var(--moca-text-3)]">완료</span>}
