@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { updateGradeInCore } from '../lib/imCoreAuth';
+import { sendTargetedPush } from './pushNotificationService';
 
 // --- Partners ---
 export const fetchPartners = async () => {
@@ -148,7 +149,7 @@ export const approveContract = async (contractId, memberPhone) => {
         .from('users')
         .update({ grade: 'VIP' })
         .or(`phone.eq.${cleanedPhone},phone.eq.${formattedPhone},phone.eq.${memberPhone}`)
-        .select('id, master_user_id');
+        .select('id, master_user_id, nickname');
 
     // VIP로 승급된 회원들을 아임모델 공화국에 실시간 반영
     if (!gradeError && updatedUsers?.length > 0) {
@@ -156,6 +157,17 @@ export const approveContract = async (contractId, memberPhone) => {
             if (u.master_user_id) {
                 updateGradeInCore({ masterUserId: u.master_user_id, grade: 'VIP' });
             }
+        }
+
+        // 등급 승인 안내 푸시 발송 (실패해도 승급 처리 자체는 성공으로 유지)
+        const nicknames = updatedUsers.map(u => u.nickname).filter(Boolean);
+        if (nicknames.length > 0) {
+            sendTargetedPush({
+                title: '👑 VIP 등급 승인 완료!',
+                body: '전속계약이 승인되어 VIP 등급으로 업그레이드되었습니다. 지금 바로 확인해보세요.',
+                route: '/home/smart-profile',
+                nicknames,
+            }).catch(err => console.error('[approveContract] VIP 등급 승인 푸시 발송 실패:', err));
         }
     }
 
@@ -243,11 +255,21 @@ export const approveUpgradeRequest = async (requestId, userNickname, months) => 
     // 3. 사용자 등급 업데이트 (닉네임으로 식별)
     const { error: gradeError } = await supabase
         .from('users')
-        .update({ 
-            grade: 'GOLD', 
-            grade_expires_at: expirationDate.toISOString() 
+        .update({
+            grade: 'GOLD',
+            grade_expires_at: expirationDate.toISOString()
         })
         .eq('nickname', userNickname);
+
+    // 4. 등급 승인 안내 푸시 발송 (실패해도 승급 처리 자체는 성공으로 유지)
+    if (!gradeError) {
+        sendTargetedPush({
+            title: '🎉 GOLD 등급 승인 완료!',
+            body: `${months}개월 GOLD 등급으로 업그레이드되었습니다. 특별한 혜택을 지금 확인해보세요!`,
+            route: '/home/smart-profile',
+            nicknames: [userNickname],
+        }).catch(err => console.error('[approveUpgradeRequest] GOLD 등급 승인 푸시 발송 실패:', err));
+    }
 
     return { error: gradeError };
 };

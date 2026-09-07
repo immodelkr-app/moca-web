@@ -4546,11 +4546,9 @@ const AdminUserDetailModal = ({ user, onClose }) => {
                             </div>
                         )}
                     </div>
-                </div>
 
-            {/* ── 💳 통합 포인트 현황 ── */}
-            <div className="px-6 pb-4">
-                <div className="bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-2xl overflow-hidden">
+                    {/* ── 💳 통합 포인트 현황 ── */}
+                    <div className="bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-2xl overflow-hidden">
                     {/* 헤더 */}
                     <div className="px-5 py-4 flex items-center justify-between border-b border-[var(--moca-border)]">
                         <div className="flex items-center gap-2">
@@ -4694,8 +4692,8 @@ const AdminUserDetailModal = ({ user, onClose }) => {
                             </div>
                         )}
                     </div>
+                    </div>
                 </div>
-            </div>
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-[var(--moca-border)] bg-[var(--moca-surface-2)] flex justify-end">

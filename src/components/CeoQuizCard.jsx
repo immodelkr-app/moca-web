@@ -162,38 +162,38 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                 {quiz.status === 'announced' ? (
                     <div className="relative overflow-hidden bg-gradient-to-br from-[#6C63FF] to-[#A78BFA] rounded-2xl p-6 text-center text-white">
                         <div className="absolute -top-6 -right-6 text-[90px] opacity-15 select-none leading-none">🎉</div>
-                        <p className="text-[13px] font-black tracking-wide opacity-85 mb-3">🎊 정답 발표</p>
-                        <div className="space-y-1.5 mb-5">
-                            {questions.map((q, idx) => {
-                                const answer = announcedDetail?.correct_answers?.[q.id];
-                                if (announcedDetail && !answer) return null;
-                                return (
-                                    <p key={q.id} className="text-[20px] font-black leading-snug">
-                                        {questions.length > 1 ? `Q${idx + 1}. ` : ''}{announcedDetail ? answer : '불러오는 중...'}
-                                    </p>
-                                );
-                            })}
-                        </div>
-                        <div className="pt-4 border-t border-white/25">
-                            <p className="text-[12px] font-bold opacity-80 mb-2">🏆 당첨자</p>
-                            {winnerNicknames.length === 0 ? (
-                                <p className="text-[13px] font-bold opacity-70">아쉽게도 당첨자가 없습니다.</p>
-                            ) : (
-                                <div className="flex flex-wrap justify-center gap-1.5">
-                                    {winnerNicknames.map((nick) => (
-                                        <span
-                                            key={nick}
-                                            className={`px-3 py-1.5 rounded-full text-[13px] font-black ${nick === myNickname ? 'bg-white text-[#7C3AED] shadow-md' : 'bg-white/15 text-white'}`}
-                                        >
-                                            {nick === myNickname ? '🎉 ' : ''}{nick}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        {iWon && (
-                            <p className="text-[14px] font-black mt-4 bg-white/15 rounded-xl py-2.5 px-3">축하합니다! 당첨되셨어요 🎉<br />배송 안내를 기다려주세요.</p>
+                        <p className="text-[13px] font-black tracking-wide opacity-85 mb-3">🏆 당첨자</p>
+                        {winnerNicknames.length === 0 ? (
+                            <p className="text-[14px] font-bold opacity-80">아쉽게도 당첨자가 없습니다.</p>
+                        ) : (
+                            <div className="flex flex-wrap justify-center gap-1.5">
+                                {winnerNicknames.map((nick) => (
+                                    <span
+                                        key={nick}
+                                        className={`px-3 py-1.5 rounded-full text-[14px] font-black ${nick === myNickname ? 'bg-white text-[#7C3AED] shadow-md' : 'bg-white/15 text-white'}`}
+                                    >
+                                        {nick === myNickname ? '🎉 ' : ''}{nick}
+                                    </span>
+                                ))}
+                            </div>
                         )}
+                        {iWon && (
+                            <p className="text-[13px] font-black mt-3 bg-white/15 rounded-xl py-2 px-3">축하합니다! 당첨되셨어요 🎉<br />배송 안내를 기다려주세요.</p>
+                        )}
+                        <div className="mt-4 pt-3 border-t border-white/25">
+                            <p className="text-[11px] font-bold opacity-70 mb-1">🎊 정답 발표</p>
+                            <div className="space-y-0.5">
+                                {questions.map((q, idx) => {
+                                    const answer = announcedDetail?.correct_answers?.[q.id];
+                                    if (announcedDetail && !answer) return null;
+                                    return (
+                                        <p key={q.id} className="text-[13px] font-bold opacity-90 leading-snug">
+                                            {questions.length > 1 ? `Q${idx + 1}. ` : ''}{announcedDetail ? answer : '불러오는 중...'}
+                                        </p>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 ) : loadingSubmission ? (
                     <p className="text-[13px] text-[#9CA3AF] font-bold py-2">불러오는 중...</p>
