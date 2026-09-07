@@ -679,17 +679,20 @@ const AdminPage = () => {
 
     // 조회수 통계 계산
     const now = new Date();
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    // "오늘"은 롤링 24시간이 아니라 한국시간(KST, UTC+9) 자정 기준 캘린더 날짜로 계산
+    const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+    const kstNow = new Date(now.getTime() + KST_OFFSET_MS);
+    const todayStartKst = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate()) - KST_OFFSET_MS);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const stats1Day = pageViews.filter(v => new Date(v.accessed_at) > oneDayAgo).length;
+    const stats1Day = pageViews.filter(v => new Date(v.accessed_at) >= todayStartKst).length;
     const stats7Days = pageViews.filter(v => new Date(v.accessed_at) > sevenDaysAgo).length;
     const stats30Days = pageViews.filter(v => new Date(v.accessed_at) > thirtyDaysAgo).length;
 
     // 순 방문자(중복 제거, visitor_id 기준) — 페이지뷰와 별개로 집계
     const countUniqueVisitors = (views) => new Set(views.filter(v => v.visitor_id).map(v => v.visitor_id)).size;
-    const uniqueVisitors1Day = countUniqueVisitors(pageViews.filter(v => new Date(v.accessed_at) > oneDayAgo));
+    const uniqueVisitors1Day = countUniqueVisitors(pageViews.filter(v => new Date(v.accessed_at) >= todayStartKst));
     const uniqueVisitors7Days = countUniqueVisitors(pageViews.filter(v => new Date(v.accessed_at) > sevenDaysAgo));
     const uniqueVisitors30Days = countUniqueVisitors(pageViews.filter(v => new Date(v.accessed_at) > thirtyDaysAgo));
 
@@ -1450,7 +1453,7 @@ const AdminPage = () => {
                         {/* 순 방문자(중복 제거) 카드 */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                             {[
-                                { label: '오늘 순 방문자 (24h)', value: uniqueVisitors1Day, icon: 'today', color: 'text-blue-500' },
+                                { label: '오늘 순 방문자', value: uniqueVisitors1Day, icon: 'today', color: 'text-blue-500' },
                                 { label: '주간 순 방문자 (7d)', value: uniqueVisitors7Days, icon: 'date_range', color: 'text-purple-500' },
                                 { label: '월간 순 방문자 (30d)', value: uniqueVisitors30Days, icon: 'calendar_month', color: 'text-pink-500' }
                             ].map((stat, i) => (
@@ -1472,7 +1475,7 @@ const AdminPage = () => {
                         {/* 1일/1주/1달 페이지뷰(중복 포함) 카드 */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                             {[
-                                { label: '오늘 페이지뷰 (24h)', value: stats1Day, icon: 'today', color: 'text-blue-400' },
+                                { label: '오늘 페이지뷰', value: stats1Day, icon: 'today', color: 'text-blue-400' },
                                 { label: '주간 페이지뷰 (7d)', value: stats7Days, icon: 'date_range', color: 'text-purple-400' },
                                 { label: '월간 페이지뷰 (30d)', value: stats30Days, icon: 'calendar_month', color: 'text-pink-400' }
                             ].map((stat, i) => (
