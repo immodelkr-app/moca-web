@@ -126,7 +126,10 @@ const WriteModal = ({ onClose, onSuccess, user }) => {
                 </div>
                 
                 {/* 하단 고정 영역 (제출 버튼) */}
-                <div className="p-6 pt-2 sm:pt-4 border-t border-[#E8E0FA] bg-white">
+                <div
+                    className="p-6 pt-2 sm:pt-4 border-t border-[#E8E0FA] bg-white"
+                    style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
+                >
                     <button
                         type="submit"
                         onClick={handleSubmit}
