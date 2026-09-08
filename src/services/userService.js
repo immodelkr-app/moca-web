@@ -39,7 +39,7 @@ export const syncPlatformWithSupabase = async (userId) => {
     try {
         const { error } = await supabase
             .from('users')
-            .update({ last_platform: platformStr })
+            .update({ last_platform: platformStr, last_active_at: new Date().toISOString() })
             .eq('id', userId);
         if (error) console.error('[syncPlatform] Error updating platform:', error);
         else console.log('[syncPlatform] Platform synced:', platformStr);

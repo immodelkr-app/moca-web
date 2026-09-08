@@ -186,6 +186,8 @@ const AdminPage = () => {
     };
     const [filterGrade, setFilterGrade] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState('');
+    const [inactivityFilter, setInactivityFilter] = useState('ALL'); // 'ALL' | 3 | 6 | 12 (개월)
+    const [sortByInactive, setSortByInactive] = useState(false); // 최종방문 오래된순 정렬
     const [activeTab, setActiveTab] = useState('users'); // 'users' or 'stats'
     const [statsMonth, setStatsMonth] = useState(new Date().getMonth() + 1); // Default to current month, 0 means 'All Year'
 
@@ -639,6 +641,14 @@ const AdminPage = () => {
 
     const grades = ['SILVER', 'GOLD', 'IMODEL', 'VIP'];
 
+    // 최종활동일 기준 미방문 개월 수 계산 (활동 기록이 없으면 null)
+    const monthsSinceActive = (user) => {
+        const ref = user.last_active_at || user.created_at;
+        if (!ref) return null;
+        const diffMs = Date.now() - new Date(ref).getTime();
+        return diffMs / (30 * 24 * 60 * 60 * 1000);
+    };
+
     // 모든 유저의 등급을 일관되게 매핑 (BASIC -> SILVER 등)
     const processedUsers = useMemo(() => users.map(u => {
         let currentGrade = u.grade || 'SILVER';
@@ -647,18 +657,32 @@ const AdminPage = () => {
     }), [users]);
 
     // 필터링된 유저 (표에 표시될 데이터)
-    const filteredUsers = useMemo(() => processedUsers.filter(u => {
-        const matchGrade = filterGrade === 'ALL'
-            ? true
-            : filterGrade === 'CLASS'
-                ? (userClassAppCounts[u.id] ?? 0) > 0
-                : u.grade === filterGrade;
-        const matchSearch = !searchQuery ||
-            u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            u.name?.includes(searchQuery) ||
-            u.phone?.includes(searchQuery);
-        return matchGrade && matchSearch;
-    }), [processedUsers, filterGrade, searchQuery, userClassAppCounts]);
+    const filteredUsers = useMemo(() => {
+        const list = processedUsers.filter(u => {
+            const matchGrade = filterGrade === 'ALL'
+                ? true
+                : filterGrade === 'CLASS'
+                    ? (userClassAppCounts[u.id] ?? 0) > 0
+                    : u.grade === filterGrade;
+            const matchSearch = !searchQuery ||
+                u.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                u.name?.includes(searchQuery) ||
+                u.phone?.includes(searchQuery);
+            const matchInactivity = inactivityFilter === 'ALL'
+                ? true
+                : (monthsSinceActive(u) ?? 0) >= inactivityFilter;
+            return matchGrade && matchSearch && matchInactivity;
+        });
+
+        if (sortByInactive) {
+            return [...list].sort((a, b) => {
+                const aRef = a.last_active_at || a.created_at || 0;
+                const bRef = b.last_active_at || b.created_at || 0;
+                return new Date(aRef) - new Date(bRef); // 오래된(방문 안 한 지 오래된) 순
+            });
+        }
+        return list;
+    }, [processedUsers, filterGrade, searchQuery, inactivityFilter, sortByInactive, userClassAppCounts]);
 
     // 등급별 통계 (전체 회원 대상, 검색어가 있다면 검색 결과 대상)
     // 상단 카드는 선택된 '등급 필터'에 영향을 받지 않고 전체 분포를 보여줍니다.
@@ -1886,6 +1910,41 @@ const AdminPage = () => {
                             </button>
                         </div>
 
+                        {/* 활동조회: 최종방문 기준 미방문 회원 필터 + 정렬 */}
+                        <div className="flex flex-wrap items-center gap-2 mb-6 bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-2xl px-4 py-3">
+                            <span className="text-xs font-black text-[var(--moca-text-3)] flex items-center gap-1 mr-1">
+                                <span className="material-symbols-outlined text-[16px]">history_toggle_off</span>
+                                활동조회
+                            </span>
+                            {[
+                                { v: 'ALL', l: '전체' },
+                                { v: 3, l: '3개월+ 미방문' },
+                                { v: 6, l: '6개월+ 미방문' },
+                                { v: 12, l: '12개월+ 미방문' },
+                            ].map(opt => (
+                                <button
+                                    key={opt.v}
+                                    onClick={() => setInactivityFilter(opt.v)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap ${inactivityFilter === opt.v
+                                        ? (opt.v === 'ALL' ? 'bg-[var(--moca-primary)] border-[var(--moca-primary)] text-white' : 'bg-red-500 border-red-500 text-white')
+                                        : 'bg-white border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-[var(--moca-text)] hover:border-red-300'
+                                        }`}
+                                >
+                                    {opt.l}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setSortByInactive(v => !v)}
+                                className={`ml-auto px-3 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-1 ${sortByInactive
+                                    ? 'bg-[var(--moca-primary)] border-[var(--moca-primary)] text-white'
+                                    : 'bg-white border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-[var(--moca-text)]'
+                                    }`}
+                            >
+                                <span className="material-symbols-outlined text-[14px]">sort</span>
+                                최종방문 오래된순
+                            </button>
+                        </div>
+
                         {/* 에러 */}
                         {error && (
                             <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
@@ -1909,9 +1968,9 @@ const AdminPage = () => {
 
                                 {/* 회원 테이블 */}
                                 <div className="bg-white border border-[var(--moca-border)] rounded-2xl overflow-hidden w-full overflow-x-auto">
-                                    <div className="min-w-[900px]">
+                                    <div className="min-w-[1020px]">
                                         {/* Table Header */}
-                                        <div className="grid gap-3 px-5 py-3 border-b border-[var(--moca-border)] text-[var(--moca-text-3)] text-xs font-black uppercase tracking-widest bg-[var(--moca-surface-2)]" style={{gridTemplateColumns:'2fr 1.5fr 0.6fr 1.5fr 0.7fr 1fr 1.5fr 0.8fr'}}>
+                                        <div className="grid gap-3 px-5 py-3 border-b border-[var(--moca-border)] text-[var(--moca-text-3)] text-xs font-black uppercase tracking-widest bg-[var(--moca-surface-2)]" style={{gridTemplateColumns:'2fr 1.5fr 0.6fr 1.5fr 0.7fr 1fr 1.5fr 1.3fr 0.8fr'}}>
                                             <div>닉네임</div>
                                             <div>이름</div>
                                             <div>성별</div>
@@ -1919,6 +1978,7 @@ const AdminPage = () => {
                                             <div>생년</div>
                                             <div>🎓 수강</div>
                                             <div>가입일</div>
+                                            <div>⏱ 최종방문</div>
                                             <div className="text-center">관리</div>
                                         </div>
 
@@ -1938,7 +1998,7 @@ const AdminPage = () => {
                                                     <div
                                                         key={user.id}
                                                         className={`grid gap-3 px-5 py-4 items-center transition-colors hover:bg-[var(--moca-primary-lt)] ${idx !== filteredUsers.length - 1 ? 'border-b border-[var(--moca-border)]' : ''}`}
-                                                        style={{gridTemplateColumns:'2fr 1.5fr 0.6fr 1.5fr 0.7fr 1fr 1.5fr 0.8fr'}}
+                                                        style={{gridTemplateColumns:'2fr 1.5fr 0.6fr 1.5fr 0.7fr 1fr 1.5fr 1.3fr 0.8fr'}}
                                                     >
                                                         {/* 닉네임 */}
                                                         <div
@@ -2028,6 +2088,27 @@ const AdminPage = () => {
                                                         {/* 가입일 */}
                                                         <div className="text-[var(--moca-text-3)] text-xs">
                                                             {new Date(user.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
+                                                        </div>
+
+                                                        {/* 최종방문 (활동조회) */}
+                                                        <div className="text-xs">
+                                                            {(() => {
+                                                                const months = monthsSinceActive(user);
+                                                                const ref = user.last_active_at || user.created_at;
+                                                                if (months === null) {
+                                                                    return <span className="text-gray-300">기록 없음</span>;
+                                                                }
+                                                                const dateLabel = new Date(ref).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' });
+                                                                const isStale = months >= 3;
+                                                                return (
+                                                                    <div className="flex flex-col gap-0.5">
+                                                                        <span className={`font-bold ${isStale ? 'text-red-500' : 'text-[var(--moca-text-2)]'}`}>
+                                                                            {months < 1 ? '이번 달' : `${Math.floor(months)}개월째`}
+                                                                        </span>
+                                                                        <span className="text-[10px] text-[var(--moca-text-3)]">{dateLabel}</span>
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
 
                                                         {/* 관리 (계약초대 + 강퇴 버튼) */}
