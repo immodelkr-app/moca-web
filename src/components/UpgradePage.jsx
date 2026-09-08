@@ -122,6 +122,27 @@ const UpgradePage = () => {
                     </button>
                 )}
 
+                {/* ── 모카클래스 유도 카드 (활동 중인 실버 회원에게 실전 과정 노출) ── */}
+                {!isAlreadyGold && (
+                    <button onClick={() => navigate('/home/class')}
+                        className="w-full relative rounded-2xl overflow-hidden text-left border border-[#E8E0FA] shadow-sm hover:shadow-md transition-all">
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#1F1235] via-[#3B2A5E] to-[#5B3E99]" />
+                        <div className="absolute -right-4 -bottom-4 text-white/10 pointer-events-none">
+                            <span className="material-symbols-outlined text-[100px]">school</span>
+                        </div>
+                        <div className="relative z-10 px-5 py-4 flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                                <span className="text-xl">🎓</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-white font-black text-sm leading-snug">그다음 단계, 아임모델 등급</p>
+                                <p className="text-white/60 text-[11px] mt-1 leading-relaxed">경희대학교 국제캠퍼스 광고전문모델 과정 · 아임모델 당산<br/>광고전문모델 과정을 모카클래스에서 만나보세요</p>
+                            </div>
+                            <span className="material-symbols-outlined text-[18px] text-white/50 flex-shrink-0">chevron_right</span>
+                        </div>
+                    </button>
+                )}
+
                 {/* ── 탭 전환 ── */}
                 <div className="flex gap-2 bg-[#F3E8FF] border border-[#E8E0FA] rounded-2xl p-1">
                     {[

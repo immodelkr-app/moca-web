@@ -192,7 +192,7 @@ function AppContent() {
                 <Route path="/admin" element={<AdminPage />} />
 
                 {/* 업그레이드 (페이월) 페이지 */}
-                <Route path="/upgrade" element={<UpgradeApplicationPage />} />
+                <Route path="/upgrade" element={<UpgradePage />} />
                 <Route path="/upgrade-apply" element={<UpgradeApplicationPage />} />
 
                 {/* 전속계약서 (공개 접근 허용) */}
