@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser } from '../services/userService';
 import { saveUpgradeRequest } from '../services/adminService';
+import { getGoldEligibility } from '../services/goldEligibilityService';
 
 const PLANS = [
     { id: 'gold_3m',  months: 3,  price: 0,  label: '3개월' },
@@ -27,6 +28,19 @@ const UpgradeApplicationPage = () => {
 
     const [isAgreed, setIsAgreed] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    // GOLD 신청 최소 활동 조건 미충족 시 신청서 페이지 직접 접근 방지
+    useEffect(() => {
+        let cancelled = false;
+        getGoldEligibility(user).then((result) => {
+            if (!cancelled && !result.allComplete) {
+                alert('GOLD 신청 조건을 아직 충족하지 못했습니다.\n등급 안내 페이지에서 남은 조건을 확인해주세요.');
+                navigate('/upgrade');
+            }
+        });
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleInput = (e) => {
         const { name, value } = e.target;

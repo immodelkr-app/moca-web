@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser, GRADE_INFO } from '../services/userService';
+import { getGoldEligibility } from '../services/goldEligibilityService';
 
 // 카카오 플러스채널 링크
 const KAKAO_CHANNEL_URL = 'http://pf.kakao.com/_zlMUxj/chat';
@@ -30,9 +31,32 @@ const UpgradePage = () => {
 
     const [selectedPlan, setSelectedPlan] = useState(PLANS[2]); // 6개월 기본 선택
     const [activeTab, setActiveTab] = useState('compare'); // compare | plans
+    const [eligibility, setEligibility] = useState(null);
+    const [eligibilityLoading, setEligibilityLoading] = useState(true);
+
+    // ── GOLD 신청 최소 활동 조건 충족 여부 조회 ──────────────────────────────────
+    useEffect(() => {
+        if (isAlreadyGold) {
+            setEligibilityLoading(false);
+            return;
+        }
+        let cancelled = false;
+        setEligibilityLoading(true);
+        getGoldEligibility(user).then((result) => {
+            if (!cancelled) {
+                setEligibility(result);
+                setEligibilityLoading(false);
+            }
+        });
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const canApply = isAlreadyGold || (!eligibilityLoading && eligibility?.allComplete);
 
     // ── 등업 신청서 페이지로 이동 ────────────────────────────────────────────────
     const handleApply = () => {
+        if (!canApply) return;
         navigate('/upgrade-apply');
     };
 
@@ -211,6 +235,46 @@ const UpgradePage = () => {
                             })}
                         </div>
 
+                        {/* GOLD 신청 최소 활동 조건 체크리스트 */}
+                        {!isAlreadyGold && (
+                            <div className="bg-white border border-[#E8E0FA] rounded-[32px] p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                    <p className="text-[#1F1235] font-black text-sm flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-[16px] text-[#9333EA]">checklist</span>
+                                        GOLD 신청 조건
+                                    </p>
+                                    {!eligibilityLoading && eligibility && (
+                                        <span className="text-[#9333EA] text-xs font-black">
+                                            {[eligibility.profileComplete, eligibility.quizParticipated, eligibility.postComplete, eligibility.commentComplete].filter(Boolean).length}/4 완료
+                                        </span>
+                                    )}
+                                </div>
+
+                                {eligibilityLoading ? (
+                                    <p className="text-[#9CA3AF] text-xs font-bold py-2">확인 중...</p>
+                                ) : (
+                                    <div className="flex flex-col gap-2.5">
+                                        {[
+                                            { done: eligibility?.profileComplete, label: '스마트프로필 필수 항목 작성', hint: '이름·성별·활동나이·키·몸무게·신발사이즈' },
+                                            { done: eligibility?.quizParticipated, label: '김대표퀴즈 1회 이상 참여' },
+                                            { done: eligibility?.postComplete, label: '모카그램 게시글 1개 이상 작성', hint: `${eligibility?.postCount ?? 0}/${eligibility?.requiredPostCount ?? 1}` },
+                                            { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 이상 작성', hint: `${eligibility?.commentCount ?? 0}/${eligibility?.requiredCommentCount ?? 3}` },
+                                        ].map((item) => (
+                                            <div key={item.label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${item.done ? 'bg-[#F3E8FF] border-[#E8E0FA]' : 'bg-[#F8F5FF] border-[#E8E0FA]'}`}>
+                                                <span className={`material-symbols-outlined text-[18px] flex-shrink-0 ${item.done ? 'text-[#9333EA]' : 'text-[#C7BEDD]'}`}>
+                                                    {item.done ? 'check_circle' : 'radio_button_unchecked'}
+                                                </span>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className={`text-xs font-bold ${item.done ? 'text-[#1F1235]' : 'text-[#5B4E7A]'}`}>{item.label}</p>
+                                                    {item.hint && <p className="text-[#9CA3AF] text-[10px] mt-0.5">{item.hint}</p>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* 선택된 등급 요약 + 신청 버튼 */}
                         <div className="bg-white border border-[#E8E0FA] rounded-[32px] p-6 shadow-sm">
                             <div className="flex items-center justify-between mb-3">
@@ -229,10 +293,10 @@ const UpgradePage = () => {
                                 </div>
                             ) : (
                                 <div className="flex flex-col gap-3">
-                                    <button onClick={handleApply}
-                                        className="w-full py-5 rounded-[24px] font-black text-lg shadow-[0_8px_16px_rgba(31,18,53,0.15)] transition-all flex items-center justify-center gap-2.5 active:scale-[0.97] bg-[#1F1235] text-white">
+                                    <button onClick={handleApply} disabled={!canApply}
+                                        className={`w-full py-5 rounded-[24px] font-black text-lg shadow-[0_8px_16px_rgba(31,18,53,0.15)] transition-all flex items-center justify-center gap-2.5 active:scale-[0.97] ${canApply ? 'bg-[#1F1235] text-white' : 'bg-[#E8E0FA] text-[#9CA3AF] cursor-not-allowed shadow-none active:scale-100'}`}>
                                         <span className="text-xl">👑</span>
-                                        등업 신청하기
+                                        {canApply ? '등업 신청하기' : '신청 조건 미달성'}
                                     </button>
                                     <button onClick={() => window.open(KAKAO_CHANNEL_URL, '_blank')}
                                         className="w-full py-4 rounded-[24px] font-black text-sm shadow-sm border border-[#E8E0FA] transition-all flex items-center justify-center gap-2 active:scale-[0.97] bg-[#FEE500] text-[#391B1B]">
