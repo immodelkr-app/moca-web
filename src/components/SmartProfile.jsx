@@ -31,6 +31,7 @@ const SmartProfile = () => {
         age: '',
         shoe_size: '',
         portfolio_link: '',
+        instagram_id: '',
         career_ad: '',       // 광고모델 경력
         career_other: '',    // 그외 경력사항
     });
@@ -70,6 +71,7 @@ const SmartProfile = () => {
             age: user.age || '',
             shoe_size: user.shoe_size || '',
             portfolio_link: user.portfolio_link || '',
+            instagram_id: user.instagram_id || '',
             career_ad: user.career_ad || '',
             career_other: user.career_other || '',
         });
@@ -231,7 +233,10 @@ const SmartProfile = () => {
     };
 
     const handleChange = (e) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name } = e.target;
+        let { value } = e.target;
+        if (name === 'instagram_id') value = value.replace(/^@+/, '');
+        setFormData(prev => ({ ...prev, [name]: value }));
         setErrorMsg('');
     };
 
@@ -588,7 +593,7 @@ const SmartProfile = () => {
                         <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-black">선택</span>
                     </div>
                     <p className="text-[#5B4E7A] text-xs leading-relaxed mb-4">
-                        네이버 마이박스 또는 구글 드라이브의 공유 링크를<br/>아래에 직접 붙여넣어 주세요.
+                        모델님 프로필PPT 파일 링크를 넣어주세요<br/>(마이박스 또는 구글드라이브 링크 가능)
                     </p>
 
 
@@ -649,6 +654,25 @@ const SmartProfile = () => {
                                 <strong>네이버 마이박스</strong>: 파일 선택 → 공유 → '링크 공유'로 설정 후 링크 복사<br/>
                                 <strong>구글 드라이브</strong>: 파일 선택 → 공유 → '링크가 있는 모든 사용자(뷰어)'로 설정 후 링크 복사
                             </p>
+                        </div>
+                    </div>
+
+                    {/* 인스타 아이디 (선택) */}
+                    <div className="mt-5 pt-4 border-t border-[#E8E0FA] space-y-1.5">
+                        <div className="flex items-center gap-1.5 ml-1">
+                            <label className="text-[#5B4E7A] text-[11px] font-black">인스타 아이디</label>
+                            <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-black">선택</span>
+                        </div>
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] text-sm font-bold">@</span>
+                            <input
+                                type="text"
+                                name="instagram_id"
+                                value={formData.instagram_id}
+                                onChange={handleChange}
+                                placeholder="sua.ix"
+                                className="w-full bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl pl-8 pr-4 py-3.5 text-[#1F1235] text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#9333EA] focus:ring-2 focus:ring-[#9333EA]/10 transition-colors"
+                            />
                         </div>
                     </div>
                 </div>

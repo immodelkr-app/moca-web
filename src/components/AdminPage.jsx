@@ -4504,8 +4504,8 @@ const AdminUserDetailModal = ({ user, onClose }) => {
                                 <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.shoe_size ? `${user.shoe_size} mm` : '-'}</p>
                             </div>
                         </div>
-                        <div className="bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)]">
-                            <span className="text-xs text-[var(--moca-text-3)]">포트폴리오 링크</span>
+                        <div className="bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)] mb-4">
+                            <span className="text-xs text-[var(--moca-text-3)]">프로필PPT 링크 (마이박스/구글드라이브)</span>
                             {user.portfolio_link ? (
                                 <a
                                     href={user.portfolio_link}
@@ -4518,6 +4518,22 @@ const AdminUserDetailModal = ({ user, onClose }) => {
                                 </a>
                             ) : (
                                 <p className="text-sm font-bold text-[var(--moca-text-3)] mt-0.5">등록된 링크 없음</p>
+                            )}
+                        </div>
+                        <div className="bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)]">
+                            <span className="text-xs text-[var(--moca-text-3)]">인스타 아이디</span>
+                            {user.instagram_id ? (
+                                <a
+                                    href={`https://www.instagram.com/${user.instagram_id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-sm font-bold text-purple-600 hover:underline mt-0.5 break-all flex items-center gap-1"
+                                >
+                                    @{user.instagram_id}
+                                    <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                                </a>
+                            ) : (
+                                <p className="text-sm font-bold text-[var(--moca-text-3)] mt-0.5">등록된 아이디 없음</p>
                             )}
                         </div>
                     </div>

@@ -466,6 +466,7 @@ export const syncUserGrade = async () => {
                 user.id !== data.id ||
                 user.grade_expires_at !== data.grade_expires_at ||
                 user.portfolio_link !== data.portfolio_link ||
+                user.instagram_id !== data.instagram_id ||
                 user.shoe_size !== data.shoe_size ||
                 user.career_ad !== data.career_ad ||
                 user.career_other !== data.career_other ||
@@ -489,6 +490,7 @@ export const syncUserGrade = async () => {
                     address: data.address || user.address,
                     address_detail: data.address_detail || user.address_detail,
                     portfolio_link: data.portfolio_link || user.portfolio_link,
+                    instagram_id: data.instagram_id || user.instagram_id,
                     shoe_size: data.shoe_size || user.shoe_size,
                     career_ad: data.career_ad || user.career_ad,
                     career_other: data.career_other || user.career_other,
