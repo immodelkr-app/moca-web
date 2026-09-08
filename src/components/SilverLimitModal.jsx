@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 /**
  * SilverLimitModal
- * - 실버 멤버가 하루 8회 한도를 소진했을 때 표시
+ * - 실버 멤버가 하루 5회 한도를 소진했을 때 표시
  * - 골드 회원 업그레이드 안내 + 3일 후 재사용 안내
  */
 const SilverLimitModal = ({ onClose, daysLeft = 3, isAlreadyBlocked = false }) => {

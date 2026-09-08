@@ -75,6 +75,8 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, onTrend, sendIn
     const userGrade = getUserGrade();
     // 동향분석: GOLD 등급부터 열람 가능 (아임모델/전속모델은 회원별 상세 후기까지 확인)
     const canViewTrend = userGrade === 'GOLD' || userGrade === 'IMODEL' || userGrade === 'VIP';
+    // 에이전시 이메일: GOLD 등급부터 실제 열람 가능, 실버는 블러처리로 존재만 노출
+    const canViewEmail = userGrade === 'GOLD' || userGrade === 'IMODEL' || userGrade === 'VIP';
 
     return (
         <div
@@ -140,11 +142,18 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, onTrend, sendIn
                 </div>
             )}
 
-            {/* Email (Gold Members Only) */}
-            {userGrade === 'GOLD' && agency.email && (
+            {/* Email (GOLD 등급부터 실제 열람, 실버는 블러처리) */}
+            {agency.email && (
                 <div className="flex items-center gap-2 text-xs">
                     <span className="material-symbols-outlined text-[15px] text-[#9CA3AF] flex-shrink-0">mail</span>
-                    <span className={`font-bold ${color.accent}`}>{agency.email}</span>
+                    {canViewEmail ? (
+                        <span className={`font-bold ${color.accent}`}>{agency.email}</span>
+                    ) : (
+                        <span className="flex items-center gap-1.5">
+                            <span className={`font-bold ${color.accent} blur-[4px] select-none`}>{agency.email}</span>
+                            <span className="text-[9px] font-black text-[#9CA3AF] bg-[#F3E8FF] px-1.5 py-0.5 rounded-full whitespace-nowrap">GOLD 공개</span>
+                        </span>
+                    )}
                 </div>
             )}
 
