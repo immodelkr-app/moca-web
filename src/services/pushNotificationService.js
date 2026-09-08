@@ -88,9 +88,10 @@ export const clearPushToken = async () => {
  * @param {string} param.title - 푸시 알림 제목
  * @param {string} param.body  - 푸시 알림 내용
  * @param {string} param.route - 탭 후 이동할 라우트 (예: '/agency')
+ * @param {string[]} [param.excludeNicknames] - 발송 대상에서 제외할 닉네임 목록 (예: 이미 참여한 회원 제외)
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
-export const sendBroadcastPush = async ({ title, body, route = '/agencies' }) => {
+export const sendBroadcastPush = async ({ title, body, route = '/agencies', excludeNicknames }) => {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -107,7 +108,7 @@ export const sendBroadcastPush = async ({ title, body, route = '/agencies' }) =>
       },
       body: JSON.stringify({
         table: 'custom',
-        record: { title, body, route },
+        record: { title, body, route, excludeNicknames },
       }),
     });
 

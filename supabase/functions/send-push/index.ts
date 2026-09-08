@@ -149,7 +149,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     // Fetch push tokens (targeted 발송은 지정된 닉네임의 토큰만 조회)
-    let tokenQuery = supabase.from("user_push_tokens").select("token");
+    let tokenQuery = supabase.from("user_push_tokens").select("token, user_nickname");
     if (table === "targeted") {
       const nicknames: string[] = Array.isArray(record?.nicknames) ? record.nicknames : [];
       if (nicknames.length === 0) {
@@ -160,9 +160,16 @@ serve(async (req) => {
       }
       tokenQuery = tokenQuery.in("user_nickname", nicknames);
     }
-    const { data: tokens, error: tokensError } = await tokenQuery;
+    const { data: rawTokens, error: tokensError } = await tokenQuery;
 
     if (tokensError) throw tokensError;
+
+    // excludeNicknames가 지정된 경우 해당 닉네임의 토큰은 발송 대상에서 제외 (예: 퀴즈 기참여자 제외 후 독려 알림)
+    const excludeNicknames: string[] = Array.isArray(record?.excludeNicknames) ? record.excludeNicknames : [];
+    const excludeSet = new Set(excludeNicknames);
+    const tokens = excludeSet.size > 0
+      ? (rawTokens || []).filter((t: { user_nickname?: string }) => !excludeSet.has(t.user_nickname ?? ""))
+      : rawTokens;
 
     if (!tokens || tokens.length === 0) {
       return new Response(JSON.stringify({ message: "No push tokens found" }), {

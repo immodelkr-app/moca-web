@@ -557,6 +557,7 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
             title: '🎁 김대표퀴즈 참여하기',
             body: `${firstQuestion.slice(0, 30)}${firstQuestion.length > 30 ? '...' : ''}${prizeSuffix}`,
             route: '/home/quiz',
+            excludeNicknames: submissions.map((s) => s.user_nickname),
         });
         setPushResult(result);
         setSendingPush(false);
@@ -706,6 +707,7 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                             <button
                                 onClick={handleSendOpenReminderPush}
                                 disabled={sendingPush}
+                                title="이미 참여한 회원은 제외하고 발송됩니다"
                                 className="px-4 py-2 rounded-xl border border-fuchsia-300 text-fuchsia-700 font-black text-[13px] disabled:opacity-40"
                             >
                                 {sendingPush ? '발송 중...' : '🔔 참여 독려 알림'}
@@ -730,6 +732,9 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
                             </button>
                         )}
                     </div>
+                    {quiz.status === 'open' && (
+                        <p className="text-[10px] text-[var(--moca-text-3)]">🔔 참여 독려 알림은 이미 참여한 회원({submissions.length}명)을 제외하고 발송됩니다.</p>
+                    )}
                     <PushResultBadge result={pushResult} />
                     <GrantResultBadge results={grantResults} />
                 </div>
