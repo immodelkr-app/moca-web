@@ -743,6 +743,7 @@ const AdminCeoQuiz = () => {
     const [loading, setLoading] = useState(true);
     const [selectedQuiz, setSelectedQuiz] = useState(null);
     const [editingQuiz, setEditingQuiz] = useState(null);
+    const [activeTab, setActiveTab] = useState('list');
 
     const load = async () => {
         setLoading(true);
@@ -755,6 +756,7 @@ const AdminCeoQuiz = () => {
 
     const handleCreated = (quiz) => {
         setQuizzes((prev) => [{ ...quiz, submission_count: 0 }, ...prev]);
+        setActiveTab('list');
     };
 
     const handleQuizUpdated = (updated) => {
@@ -764,8 +766,25 @@ const AdminCeoQuiz = () => {
 
     return (
         <div className="animate-fadeIn">
-            <CreateQuizForm onCreated={handleCreated} />
+            <div className="flex gap-1 p-1 mb-4 rounded-2xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)]">
+                <button
+                    onClick={() => setActiveTab('list')}
+                    className={`flex-1 py-2.5 rounded-xl text-[13px] font-black transition-colors ${activeTab === 'list' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
+                >
+                    전체 퀴즈 {quizzes.length}건
+                </button>
+                <button
+                    onClick={() => setActiveTab('create')}
+                    className={`flex-1 py-2.5 rounded-xl text-[13px] font-black transition-colors ${activeTab === 'create' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
+                >
+                    🎁 새 퀴즈 등록
+                </button>
+            </div>
 
+            {activeTab === 'create' && <CreateQuizForm onCreated={handleCreated} />}
+
+            {activeTab === 'list' && (
+            <>
             <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-black text-[var(--moca-text)]">전체 퀴즈 <span className="text-[var(--moca-primary)]">{quizzes.length}</span>건</p>
                 <button onClick={load} className="text-xs font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">새로고침</button>
@@ -823,6 +842,8 @@ const AdminCeoQuiz = () => {
                         </tbody>
                     </table>
                 </div>
+            )}
+            </>
             )}
 
             {selectedQuiz && (
