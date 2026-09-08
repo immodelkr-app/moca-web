@@ -53,6 +53,9 @@ const UpgradePage = () => {
     }, []);
 
     const canApply = isAlreadyGold || (!eligibilityLoading && eligibility?.allComplete);
+    const eligibilityCompletedCount = eligibility
+        ? [eligibility.profileComplete, eligibility.quizParticipated, eligibility.postComplete, eligibility.commentComplete].filter(Boolean).length
+        : 0;
 
     // ── 등업 신청서 페이지로 이동 ────────────────────────────────────────────────
     const handleApply = () => {
@@ -93,6 +96,31 @@ const UpgradePage = () => {
                         </p>
                     </div>
                 </div>
+
+                {/* ── GOLD 신청 조건 미니 진행률 (탭 무관 상시 노출) ── */}
+                {!isAlreadyGold && !eligibilityLoading && eligibility && (
+                    <button onClick={() => setActiveTab('plans')}
+                        className="w-full bg-white border border-[#E8E0FA] rounded-2xl p-4 flex items-center gap-3 text-left hover:border-[#9333EA]/40 transition-colors">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1.5">
+                                <p className="text-[#1F1235] text-xs font-black flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[14px] text-[#9333EA]">checklist</span>
+                                    GOLD 신청 조건
+                                </p>
+                                <span className={`text-xs font-black ${eligibility.allComplete ? 'text-[#10B981]' : 'text-[#9333EA]'}`}>
+                                    {eligibility.allComplete ? '신청 가능 🎉' : `${eligibilityCompletedCount}/4 완료`}
+                                </span>
+                            </div>
+                            <div className="h-1.5 w-full rounded-full bg-[#F3E8FF] overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all ${eligibility.allComplete ? 'bg-[#10B981]' : 'bg-gradient-to-r from-[#9333EA] to-[#C084FC]'}`}
+                                    style={{ width: `${(eligibilityCompletedCount / 4) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                        <span className="material-symbols-outlined text-[18px] text-[#C7BEDD] flex-shrink-0">chevron_right</span>
+                    </button>
+                )}
 
                 {/* ── 탭 전환 ── */}
                 <div className="flex gap-2 bg-[#F3E8FF] border border-[#E8E0FA] rounded-2xl p-1">
@@ -245,7 +273,7 @@ const UpgradePage = () => {
                                     </p>
                                     {!eligibilityLoading && eligibility && (
                                         <span className="text-[#9333EA] text-xs font-black">
-                                            {[eligibility.profileComplete, eligibility.quizParticipated, eligibility.postComplete, eligibility.commentComplete].filter(Boolean).length}/4 완료
+                                            {eligibilityCompletedCount}/4 완료
                                         </span>
                                     )}
                                 </div>
