@@ -16,7 +16,7 @@ const TOUR_ITEMS = [
 ];
 
 const COMMUNITY_ITEMS = [
-    { icon: 'school', label: '모카 클래스', route: '/home/class', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
+    { icon: 'campaign', label: '모델캐스팅', route: '__casting_notice__', color: 'text-[#7C3AED]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'photo_camera', label: '모카그램', route: '/home/cert', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'smart_display', label: '모카TV', route: '/home/tv', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'workspace_premium', label: '등급 신청하기', route: '/upgrade', color: 'text-[#D97706]', bgLight: 'bg-[#FEF3C7]' },
@@ -195,17 +195,16 @@ const HomeDashboard = () => {
             <div className="px-6 mb-8">
                 <div className="grid grid-cols-2 gap-4">
 
-                    {/* 카드 1: 모델캐스팅 */}
+                    {/* 카드 1: 모카클래스 */}
                     <button
-                        onClick={() => setShowCastingNotice(true)}
+                        onClick={() => navigate('/home/class')}
                         className="relative flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#7C3AED] to-[#5B21B6] border border-white/10 shadow-md active:scale-95 transition-all text-center group"
                     >
-                        <span className="absolute top-3 right-3 px-1.5 py-0.5 rounded-full bg-[#F5D0FE] text-[#86198F] text-[9px] font-black">NEW</span>
                         <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
-                            <span className="material-symbols-outlined text-white text-[34px]">campaign</span>
+                            <span className="material-symbols-outlined text-white text-[34px]">school</span>
                         </div>
-                        <h3 className="text-lg font-black text-white mb-1">모델캐스팅</h3>
-                        <p className="text-[11px] font-bold text-white/75 leading-tight">업체가 직접 올리는<br />모델 구인 공고</p>
+                        <h3 className="text-lg font-black text-white mb-1">모카 클래스</h3>
+                        <p className="text-[11px] font-bold text-white/75 leading-tight">실전 커리큘럼으로<br />배우는 모델 클래스</p>
                     </button>
 
                     {/* 카드 2: 김대표퀴즈 */}
@@ -296,7 +295,7 @@ const HomeDashboard = () => {
                     {COMMUNITY_ITEMS.map((item) => (
                         <button
                             key={item.label}
-                            onClick={() => navigate(item.route)}
+                            onClick={() => item.route === '__casting_notice__' ? setShowCastingNotice(true) : navigate(item.route)}
                             className="flex items-center gap-3 p-3.5 bg-white border border-[#E8E0FA] rounded-2xl shadow-2xs hover:border-[#8B5CF6]/40 active:scale-95 transition-all text-left"
                         >
                             <div className={`w-10 h-10 rounded-xl ${item.bgLight} flex items-center justify-center flex-shrink-0`}>
