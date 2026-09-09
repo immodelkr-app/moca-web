@@ -29,6 +29,26 @@ export const extractYoutubeVideoId = (input) => {
     return '';
 };
 
+// 커버 이미지 파일(jpg/png 등)을 Storage에 업로드하고 공개 URL 반환
+export const uploadMocaLiveCover = async (file) => {
+    if (!isSupabaseEnabled()) return { url: null, error: new Error('Supabase not connected') };
+    try {
+        const ext = file.name.split('.').pop();
+        const filePath = `moca-live-covers/${Date.now()}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('moca_assets')
+            .upload(filePath, file, { upsert: true, contentType: file.type });
+
+        if (uploadError) return { url: null, error: uploadError };
+
+        const { data } = supabase.storage.from('moca_assets').getPublicUrl(filePath);
+        return { url: data.publicUrl, error: null };
+    } catch (err) {
+        return { url: null, error: err };
+    }
+};
+
 // 홈 대시보드용 - 현재 라이브 중인 방송 1건 조회
 export const fetchActiveMocaLive = async () => {
     if (!isSupabaseEnabled()) return null;
@@ -67,16 +87,19 @@ export const fetchAllMocaLiveStreams = async () => {
 };
 
 // 라이브 방송 등록
-export const createMocaLiveStream = async ({ title, youtubeVideoId, streamerName, coverImageUrl }) => {
+export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade }) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
 
     const { data, error } = await supabase
         .from('moca_live_streams')
         .insert([{
             title,
-            youtube_video_id: youtubeVideoId,
+            stream_type: streamType || 'youtube',
+            youtube_video_id: streamType === 'rtmp' ? null : youtubeVideoId,
+            playback_url: streamType === 'rtmp' ? playbackUrl : null,
             streamer_name: streamerName || '김대표',
             cover_image_url: coverImageUrl || null,
+            target_grade: targetGrade || 'ALL',
         }])
         .select()
         .single();
@@ -85,16 +108,19 @@ export const createMocaLiveStream = async ({ title, youtubeVideoId, streamerName
 };
 
 // 라이브 방송 정보 수정
-export const updateMocaLiveStream = async (id, { title, youtubeVideoId, streamerName, coverImageUrl }) => {
+export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade }) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
 
     const { data, error } = await supabase
         .from('moca_live_streams')
         .update({
             title,
-            youtube_video_id: youtubeVideoId,
+            stream_type: streamType || 'youtube',
+            youtube_video_id: streamType === 'rtmp' ? null : youtubeVideoId,
+            playback_url: streamType === 'rtmp' ? playbackUrl : null,
             streamer_name: streamerName || '김대표',
             cover_image_url: coverImageUrl || null,
+            target_grade: targetGrade || 'ALL',
             updated_at: new Date().toISOString(),
         })
         .eq('id', id)

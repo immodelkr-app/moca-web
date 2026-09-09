@@ -1,15 +1,77 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     fetchAllMocaLiveStreams, createMocaLiveStream, updateMocaLiveStream,
-    deleteMocaLiveStream, goLive, stopLive, extractYoutubeVideoId,
+    deleteMocaLiveStream, goLive, stopLive, extractYoutubeVideoId, uploadMocaLiveCover,
 } from '../services/mocaLiveService';
 import { sendBroadcastPush } from '../services/pushNotificationService';
 
+const MAX_COVER_MB = 10;
+
 const EMPTY_FORM = {
     title: '',
+    streamType: 'youtube', // 'youtube' | 'rtmp'
     youtubeInput: '',
+    playbackUrl: '',
     streamerName: '김대표',
     coverImageUrl: '',
+    targetGrade: 'ALL', // 'ALL' | 'GOLD'
+};
+
+// 커버 썸네일 업로더 - jpg/png 파일을 바로 올리거나, URL을 직접 붙여넣을 수도 있음
+const CoverUploader = ({ value, onChange, onError }) => {
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const handleFile = async (file) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { onError('이미지 파일(jpg, png 등)만 업로드 가능합니다.'); return; }
+        if (file.size > MAX_COVER_MB * 1024 * 1024) { onError(`최대 ${MAX_COVER_MB}MB까지 업로드 가능합니다.`); return; }
+
+        setUploading(true);
+        const { url, error } = await uploadMocaLiveCover(file);
+        setUploading(false);
+        if (error) { onError('업로드 실패: ' + (error.message || '')); return; }
+        onChange(url);
+    };
+
+    return (
+        <div>
+            <label className="text-[11px] font-bold text-[var(--moca-text-3)]">커버 이미지 (선택, 비우면 유튜브 썸네일 사용)</label>
+            <div className="flex gap-2 mt-1 items-start">
+                <div className="relative w-24 h-16 rounded-lg overflow-hidden bg-gray-100 border border-[var(--moca-border)] flex-shrink-0 flex items-center justify-center">
+                    {value ? (
+                        <img src={value} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                        <span className="text-[10px] text-[var(--moca-text-3)]">미리보기</span>
+                    )}
+                    {uploading && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /></div>}
+                </div>
+                <div className="flex-1 space-y-1.5">
+                    <button
+                        type="button"
+                        onClick={() => !uploading && fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="w-full py-2 rounded-xl border border-dashed border-[var(--moca-border)] text-[11px] font-bold text-[var(--moca-text-3)] disabled:opacity-50"
+                    >
+                        {uploading ? '업로드 중...' : '📷 jpg/png 파일 선택'}
+                    </button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => handleFile(e.target.files?.[0])}
+                    />
+                    <input
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-[var(--moca-border)] text-[11px]"
+                        placeholder="또는 이미지 URL 직접 입력"
+                    />
+                </div>
+            </div>
+        </div>
+    );
 };
 
 const PushResultBadge = ({ result }) => {
@@ -52,7 +114,9 @@ const AdminMocaLive = () => {
 
     const openCreate = () => {
         setEditingId(null);
-        setForm(EMPTY_FORM);
+        // RTMP 채널은 재발급 없이 재사용하므로, 마지막에 쓴 재생 URL을 기본값으로 미리 채워준다.
+        const lastPlaybackUrl = window.localStorage.getItem('mocaLive_lastRtmpPlaybackUrl') || '';
+        setForm({ ...EMPTY_FORM, playbackUrl: lastPlaybackUrl });
         setError('');
         setActiveTab('create');
     };
@@ -61,9 +125,12 @@ const AdminMocaLive = () => {
         setEditingId(stream.id);
         setForm({
             title: stream.title,
-            youtubeInput: stream.youtube_video_id,
+            streamType: stream.stream_type || 'youtube',
+            youtubeInput: stream.youtube_video_id || '',
+            playbackUrl: stream.playback_url || '',
             streamerName: stream.streamer_name,
             coverImageUrl: stream.cover_image_url || '',
+            targetGrade: stream.target_grade || 'ALL',
         });
         setError('');
         setActiveTab('create');
@@ -72,15 +139,27 @@ const AdminMocaLive = () => {
     const handleSave = async () => {
         setError('');
         if (!form.title.trim()) { setError('제목을 입력해주세요.'); return; }
-        const videoId = extractYoutubeVideoId(form.youtubeInput);
-        if (!videoId) { setError('유튜브 링크 또는 videoId 형식이 올바르지 않습니다.'); return; }
+
+        let videoId = '';
+        let playbackUrl = '';
+        if (form.streamType === 'rtmp') {
+            playbackUrl = form.playbackUrl.trim();
+            if (!playbackUrl) { setError('RTMP 채널의 재생 URL(HLS)을 입력해주세요.'); return; }
+            window.localStorage.setItem('mocaLive_lastRtmpPlaybackUrl', playbackUrl);
+        } else {
+            videoId = extractYoutubeVideoId(form.youtubeInput);
+            if (!videoId) { setError('유튜브 링크 또는 videoId 형식이 올바르지 않습니다.'); return; }
+        }
 
         setSaving(true);
         const payload = {
             title: form.title.trim(),
+            streamType: form.streamType,
             youtubeVideoId: videoId,
+            playbackUrl,
             streamerName: form.streamerName.trim() || '김대표',
             coverImageUrl: form.coverImageUrl.trim(),
+            targetGrade: form.targetGrade,
         };
         const { error: saveError } = editingId
             ? await updateMocaLiveStream(editingId, payload)
@@ -182,15 +261,52 @@ const AdminMocaLive = () => {
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-bold text-[var(--moca-text-3)]">유튜브 라이브 링크 (미등록/비공개 권장) *</label>
-                            <input
-                                value={form.youtubeInput}
-                                onChange={(e) => setForm((f) => ({ ...f, youtubeInput: e.target.value }))}
-                                className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
-                                placeholder="예: https://www.youtube.com/watch?v=xxxxxxxxxxx"
-                            />
-                            <p className="text-[10px] text-[var(--moca-text-3)] mt-1">유튜브 스튜디오에서 라이브를 "미등록(링크 공개)"으로 켠 뒤 그 링크를 붙여넣으세요. 검색엔 노출되지 않고 모카 앱을 통해서만 시청됩니다.</p>
+                            <label className="text-[11px] font-bold text-[var(--moca-text-3)]">송출 방식 *</label>
+                            <div className="flex gap-1 mt-1 p-1 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)]">
+                                <button
+                                    type="button"
+                                    onClick={() => setForm((f) => ({ ...f, streamType: 'youtube' }))}
+                                    className={`flex-1 py-2 rounded-lg text-[12px] font-black transition-colors ${form.streamType === 'youtube' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
+                                >
+                                    유튜브 링크
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setForm((f) => ({ ...f, streamType: 'rtmp' }))}
+                                    className={`flex-1 py-2 rounded-lg text-[12px] font-black transition-colors ${form.streamType === 'rtmp' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
+                                >
+                                    RTMP (AWS IVS 등)
+                                </button>
+                            </div>
                         </div>
+
+                        {form.streamType === 'youtube' ? (
+                            <div>
+                                <label className="text-[11px] font-bold text-[var(--moca-text-3)]">유튜브 라이브 링크 (미등록/비공개 권장) *</label>
+                                <input
+                                    value={form.youtubeInput}
+                                    onChange={(e) => setForm((f) => ({ ...f, youtubeInput: e.target.value }))}
+                                    className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                                    placeholder="예: https://www.youtube.com/watch?v=xxxxxxxxxxx"
+                                />
+                                <p className="text-[10px] text-[var(--moca-text-3)] mt-1">유튜브 스튜디오에서 라이브를 "미등록(링크 공개)"으로 켠 뒤 그 링크를 붙여넣으세요. 검색엔 노출되지 않고 모카 앱을 통해서만 시청됩니다.</p>
+                            </div>
+                        ) : (
+                            <div>
+                                <label className="text-[11px] font-bold text-[var(--moca-text-3)]">재생 URL (HLS, .m3u8) *</label>
+                                <input
+                                    value={form.playbackUrl}
+                                    onChange={(e) => setForm((f) => ({ ...f, playbackUrl: e.target.value }))}
+                                    className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                                    placeholder="예: https://xxxxxxxxxxxx.us-east-1.playback.live-video.net/.../channel.m3u8"
+                                />
+                                <p className="text-[10px] text-[var(--moca-text-3)] mt-1 leading-relaxed">
+                                    AWS 콘솔 → Amazon IVS에서 채널을 한 번만 만들면 Ingest 서버 주소·스트림키·Playback URL이 발급됩니다.
+                                    채널은 계속 재사용하므로 방송마다 새로 만들 필요는 없고, 여기엔 그 중 <b>Playback URL</b>만 입력하면 됩니다.
+                                    실제 방송 송출은 OBS 등에 Ingest 주소+스트림키를 넣어 별도로 진행하세요 (스트림키는 외부 유출 방지를 위해 이 화면에 저장하지 않습니다).
+                                </p>
+                            </div>
+                        )}
 
                         <div>
                             <label className="text-[11px] font-bold text-[var(--moca-text-3)]">진행자명</label>
@@ -203,14 +319,33 @@ const AdminMocaLive = () => {
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-bold text-[var(--moca-text-3)]">커버 이미지 URL (선택, 비우면 유튜브 썸네일 사용)</label>
-                            <input
-                                value={form.coverImageUrl}
-                                onChange={(e) => setForm((f) => ({ ...f, coverImageUrl: e.target.value }))}
-                                className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
-                                placeholder="https://..."
-                            />
+                            <label className="text-[11px] font-bold text-[var(--moca-text-3)]">노출 대상 등급 *</label>
+                            <div className="flex gap-2 mt-1">
+                                {[{ id: 'ALL', label: '전체등급 공개' }, { id: 'GOLD', label: '골드모카 등급 전용' }].map((opt) => (
+                                    <label
+                                        key={opt.id}
+                                        className={`flex-1 cursor-pointer text-center py-2.5 rounded-xl border-2 text-[12px] font-black transition-colors ${form.targetGrade === opt.id ? 'border-[var(--moca-primary)] bg-[var(--moca-primary)]/5 text-[var(--moca-primary)]' : 'border-[var(--moca-border)] text-[var(--moca-text-3)]'}`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="targetGrade"
+                                            value={opt.id}
+                                            checked={form.targetGrade === opt.id}
+                                            onChange={(e) => setForm((f) => ({ ...f, targetGrade: e.target.value }))}
+                                            className="hidden"
+                                        />
+                                        {opt.label}
+                                    </label>
+                                ))}
+                            </div>
+                            <p className="text-[10px] text-[var(--moca-text-3)] mt-1">골드모카 등급 전용으로 설정하면 GOLD 이상 회원에게만 홈 대시보드에 노출됩니다.</p>
                         </div>
+
+                        <CoverUploader
+                            value={form.coverImageUrl}
+                            onChange={(url) => setForm((f) => ({ ...f, coverImageUrl: url }))}
+                            onError={setError}
+                        />
 
                         {error && <p className="text-[12px] font-bold text-red-500">{error}</p>}
 
@@ -265,7 +400,17 @@ const AdminMocaLive = () => {
                                                     {s.is_live ? '🔴 라이브 중' : '대기'}
                                                 </span>
                                             </td>
-                                            <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)] max-w-[240px] truncate">{s.title}</td>
+                                            <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)] max-w-[240px] truncate">
+                                                <span className="inline-block mr-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-gray-100 text-gray-500 align-middle">
+                                                    {s.stream_type === 'rtmp' ? 'RTMP' : 'YT'}
+                                                </span>
+                                                {s.target_grade === 'GOLD' && (
+                                                    <span className="inline-block mr-1.5 px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-700 align-middle">
+                                                        GOLD
+                                                    </span>
+                                                )}
+                                                {s.title}
+                                            </td>
                                             <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{s.streamer_name}</td>
                                             <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(s.created_at).toLocaleDateString('ko-KR')}</td>
                                             <td className="py-2.5 pr-3">
