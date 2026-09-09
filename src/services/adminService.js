@@ -198,6 +198,36 @@ export const deleteContract = async (contractId) => {
     return { error };
 };
 
+// ── 등급 변경 이력 ─────────────────────────────────────────────────────────────
+// 등업 신청 승인, 회원관리 수동 조절 등 등급이 바뀌는 모든 경로에서 한 줄씩 남긴다.
+
+export const logGradeChange = async ({ userId, userNickname, memberName, fromGrade, toGrade, source, months = null, requestId = null, note = null }) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+    const { error } = await supabase.from('grade_change_history').insert([{
+        user_id: userId || null,
+        user_nickname: userNickname || null,
+        member_name: memberName || null,
+        from_grade: fromGrade || null,
+        to_grade: toGrade,
+        source,
+        months,
+        request_id: requestId,
+        note,
+    }]);
+    if (error) console.error('[logGradeChange] insert error:', error);
+    return { error };
+};
+
+export const fetchGradeHistory = async (userId) => {
+    if (!supabase || !userId) return { data: [], error: null };
+    const { data, error } = await supabase
+        .from('grade_change_history')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+    return { data: data || [], error };
+};
+
 // ── 멤버십 등업 신청 관리 ──────────────────────────────────────────────────────
 
 /**
@@ -252,7 +282,11 @@ export const approveUpgradeRequest = async (requestId, userNickname, months) => 
     const expirationDate = new Date();
     expirationDate.setMonth(expirationDate.getMonth() + parseInt(months));
 
-    // 3. 사용자 등급 업데이트 (닉네임으로 식별)
+    // 3. 변경 전 등급 조회 (이력 기록용)
+    const { data: beforeUser } = await supabase
+        .from('users').select('id, grade, name').eq('nickname', userNickname).maybeSingle();
+
+    // 4. 사용자 등급 업데이트 (닉네임으로 식별)
     const { error: gradeError } = await supabase
         .from('users')
         .update({
@@ -261,7 +295,21 @@ export const approveUpgradeRequest = async (requestId, userNickname, months) => 
         })
         .eq('nickname', userNickname);
 
-    // 4. 등급 승인 안내 푸시 발송 (실패해도 승급 처리 자체는 성공으로 유지)
+    // 5. 등급 변경 이력 기록
+    if (!gradeError) {
+        logGradeChange({
+            userId: beforeUser?.id,
+            userNickname,
+            memberName: beforeUser?.name,
+            fromGrade: beforeUser?.grade,
+            toGrade: 'GOLD',
+            source: 'upgrade_request',
+            months: parseInt(months),
+            requestId,
+        });
+    }
+
+    // 6. 등급 승인 안내 푸시 발송 (실패해도 승급 처리 자체는 성공으로 유지)
     if (!gradeError) {
         sendTargetedPush({
             title: '🎉 GOLD 등급 승인 완료!',

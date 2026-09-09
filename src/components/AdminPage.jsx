@@ -12,7 +12,7 @@ import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost, parseImageUrls } from '../services/certificationService';
 import { fetchAllCurrentPhotos, updatePhotoStatus, updatePhotoFeedback, deleteCurrentPhoto, addPhotoFeedbackComment, fetchPhotoFeedbackComments } from '../services/currentPhotosService';
 import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
-import { fetchContracts, approveContract, rejectContract, deleteContract } from '../services/adminService';
+import { fetchContracts, approveContract, rejectContract, deleteContract, logGradeChange, fetchGradeHistory } from '../services/adminService';
 import { AI_TREND_CATEGORIES } from '../constants/diaryCategories';
 import { sendAlimtalk, sendBulkMessage, sendFriendtalk } from '../services/solapiService';
 import { fetchPushHistory, sendBroadcastPush, fetchUsersWithoutPushToken, fetchAllUsersWithPhone } from '../services/pushNotificationService';
@@ -362,6 +362,17 @@ const AdminPage = () => {
             if (targetUser?.master_user_id) {
                 updateGradeInCore({ masterUserId: targetUser.master_user_id, grade: newGrade });
             }
+
+            // 등급 변경 이력 기록
+            logGradeChange({
+                userId,
+                userNickname: targetUser?.nickname,
+                memberName: targetUser?.name,
+                fromGrade: targetUser?.grade,
+                toGrade: newGrade,
+                source: 'admin_manual',
+                months,
+            });
 
             // 👉 등급 변경 알림톡 자동 발송 처리
             const userInfo = users.find(u => u.id === userId);
@@ -4334,6 +4345,18 @@ const AdminUserDetailModal = ({ user, onClose }) => {
     const [classApplications, setClassApplications] = useState([]);
     const [classAppsLoading, setClassAppsLoading] = useState(true);
 
+    // 등급 변경 이력
+    const [gradeHistory, setGradeHistory] = useState([]);
+    const [gradeHistoryLoading, setGradeHistoryLoading] = useState(true);
+    useEffect(() => {
+        if (!user?.id) return;
+        setGradeHistoryLoading(true);
+        fetchGradeHistory(user.id).then(({ data }) => {
+            setGradeHistory(data || []);
+            setGradeHistoryLoading(false);
+        });
+    }, [user.id]);
+
     // 포인트 전자지갑 state
     const [pointsBalance, setPointsBalance] = useState(null);
     const [pointsHistory, setPointsHistory] = useState([]);
@@ -4495,6 +4518,39 @@ const AdminUserDetailModal = ({ user, onClose }) => {
                                 <span className="text-xs text-[var(--moca-text-3)]">이메일</span>
                                 <p className="text-sm font-bold text-[var(--moca-text)] mt-0.5">{user.email || '-'}</p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* 등급 변경 이력 */}
+                    <div>
+                        <h4 className="text-xs font-black text-[var(--moca-primary)] uppercase tracking-wider mb-3">등급 변경 이력</h4>
+                        <div className="bg-[var(--moca-surface-2)] p-4 rounded-2xl border border-[var(--moca-border)]">
+                            {gradeHistoryLoading ? (
+                                <p className="text-xs text-[var(--moca-text-3)]">불러오는 중...</p>
+                            ) : gradeHistory.length === 0 ? (
+                                <p className="text-xs text-[var(--moca-text-3)]">변경 이력이 없습니다.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {gradeHistory.map((h) => (
+                                        <div key={h.id} className="flex items-center justify-between gap-3 bg-white rounded-xl border border-[var(--moca-border)] px-3 py-2">
+                                            <div className="flex items-center gap-1.5 min-w-0 text-xs font-bold text-[var(--moca-text)]">
+                                                <span>{h.from_grade ? `${GRADE_EMOJI[h.from_grade] || ''} ${GRADE_INFO[h.from_grade]?.label || h.from_grade}` : '(신규)'}</span>
+                                                <span className="material-symbols-outlined text-[13px] text-[var(--moca-text-3)]">arrow_forward</span>
+                                                <span>{GRADE_EMOJI[h.to_grade] || ''} {GRADE_INFO[h.to_grade]?.label || h.to_grade}</span>
+                                                {h.months && <span className="text-[var(--moca-text-3)] font-medium">({h.months}개월)</span>}
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${h.source === 'upgrade_request' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                    {h.source === 'upgrade_request' ? '신청 승인' : '수동 조정'}
+                                                </span>
+                                                <span className="text-[10px] text-[var(--moca-text-3)] whitespace-nowrap">
+                                                    {new Date(h.created_at).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 
