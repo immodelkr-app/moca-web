@@ -5,6 +5,7 @@ import {
     sendLiveHeart, subscribeToLiveHearts,
     fetchVisibleQuiz, subscribeToLiveQuiz, fetchMyQuizAnswer, submitQuizAnswer,
     fetchVisibleNumberGame, subscribeToNumberGame, fetchMyNumberGameEntry, submitNumberGuess,
+    fetchVisibleKeywordEvent, subscribeToKeywordEvent, fetchMyKeywordEntry, subscribeToKeywordEntries,
 } from '../services/mocaLiveEngagementService';
 
 let heartUid = 0;
@@ -31,6 +32,9 @@ const MocaLiveEngagement = ({ liveId }) => {
     const [guessInput, setGuessInput] = useState('');
     const [submittingGuess, setSubmittingGuess] = useState(false);
     const [guessError, setGuessError] = useState('');
+
+    const [keywordEvent, setKeywordEvent] = useState(null);
+    const [myKeywordEntry, setMyKeywordEntry] = useState(null);
 
     // 채팅
     useEffect(() => {
@@ -167,6 +171,35 @@ const MocaLiveEngagement = ({ liveId }) => {
         if (result?.game_closed) setNumberGame((g) => (g ? { ...g, status: 'closed' } : g));
     };
 
+    // 키워드 정답 맞추기 (참여는 채팅 입력 그대로 사용, 별도 제출 UI 없음)
+    useEffect(() => {
+        if (!liveId) return;
+        let mounted = true;
+
+        const load = async () => {
+            const ev = await fetchVisibleKeywordEvent(liveId);
+            if (!mounted) return;
+            setKeywordEvent(ev);
+            if (ev) {
+                const entry = await fetchMyKeywordEntry(ev.id, myNickname);
+                if (mounted) setMyKeywordEntry(entry);
+            }
+        };
+        load();
+
+        const unsubscribeEvent = subscribeToKeywordEvent(liveId, (updated) => {
+            if (!mounted || !updated) return;
+            setKeywordEvent(updated);
+        });
+        const unsubscribeEntries = subscribeToKeywordEntries(liveId, (entry) => {
+            if (!mounted || entry.user_nickname !== myNickname) return;
+            setMyKeywordEntry(entry);
+        });
+
+        return () => { mounted = false; unsubscribeEvent(); unsubscribeEntries(); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [liveId]);
+
     const formatTime = (iso) => {
         if (!iso) return '';
         return new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -174,6 +207,32 @@ const MocaLiveEngagement = ({ liveId }) => {
 
     return (
         <div className="w-full flex flex-col gap-2 mt-2">
+            {/* 키워드 정답 맞추기 카드 - 참여는 채팅 입력 그대로, 별도 제출 UI 없음 */}
+            {keywordEvent && (
+                <div className="rounded-2xl bg-white/95 backdrop-blur px-4 py-3 shadow-lg">
+                    <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[13px]">💬</span>
+                            <p className="text-[12px] font-black text-[#1F1235]">정답 맞추기 이벤트</p>
+                        </div>
+                        <span className="text-[10px] font-bold text-[#9CA3AF]">
+                            {keywordEvent.current_winner_count}/{keywordEvent.winner_count}명 당첨
+                        </span>
+                    </div>
+                    <p className="text-[12.5px] font-bold text-[#5B4E7A] mb-1 leading-snug">
+                        방송에서 나온 정답을 채팅창에 그대로 쳐보세요! 정답이 들어있으면 자동으로 당첨돼요.
+                    </p>
+                    {keywordEvent.prize_label && (
+                        <p className="text-[11px] font-bold text-[#9333EA] mb-1">🎁 {keywordEvent.prize_label}</p>
+                    )}
+                    {myKeywordEntry ? (
+                        <p className="text-[11px] font-black text-emerald-600 mt-1">🎉 정답입니다! ({myKeywordEntry.winner_rank}번째 당첨) 포인트 지급을 기다려주세요.</p>
+                    ) : keywordEvent.status === 'closed' ? (
+                        <p className="text-[11px] font-bold text-[#9CA3AF] mt-1">마감되었습니다. 다음 이벤트를 노려보세요!</p>
+                    ) : null}
+                </div>
+            )}
+
             {/* 숫자 맞추기 카드 */}
             {numberGame && (
                 <div className="rounded-2xl bg-white/95 backdrop-blur px-4 py-3 shadow-lg">

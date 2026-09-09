@@ -9,6 +9,8 @@ import {
     fetchCorrectAnswererNicknames, fetchQuizAnswerStats,
     fetchNumberGamesForLive, createNumberGame, cancelNumberGame, endNumberGameNow,
     fetchNumberGameWinnerNicknames,
+    fetchKeywordEventsForLive, createKeywordEvent, cancelKeywordEvent, endKeywordEventNow,
+    fetchKeywordEventWinnerNicknames,
 } from '../services/mocaLiveEngagementService';
 import { grantWinnerPoints } from '../services/quizService';
 
@@ -536,18 +538,199 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
     );
 };
 
-// 라이브별 게임 관리 진입점 - 퀴즈 / 숫자맞추기 탭으로 구분
+const EMPTY_KEYWORD_EVENT_FORM = { keyword: '', prizeLabel: '', winnerCount: '1' };
+
+// 키워드 정답 맞추기 관리 - 문제/보기 없이 정답 키워드 한 단어만 등록. 방송에서 말로 질문하고,
+// 시청자가 채팅에 그 단어가 들어간 메시지를 치면 (평소 채팅 그대로) 자동으로 당첨 처리됨.
+const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [form, setForm] = useState(EMPTY_KEYWORD_EVENT_FORM);
+    const [saving, setSaving] = useState(false);
+    const [msg, setMsg] = useState('');
+    const [grantingEventId, setGrantingEventId] = useState(null);
+    const [grantAmount, setGrantAmount] = useState('100');
+
+    const load = async () => {
+        setLoading(true);
+        const data = await fetchKeywordEventsForLive(liveId);
+        setEvents(data);
+        setLoading(false);
+    };
+
+    useEffect(() => { load(); }, [liveId]);
+
+    const flash = (text) => { setMsg(text); setTimeout(() => setMsg(''), 3000); };
+
+    const hasOpenEvent = events.some((e) => e.status === 'open');
+
+    const handleStart = async () => {
+        const keyword = form.keyword.trim();
+        const winnerCount = Number(form.winnerCount) || 1;
+        if (!keyword) { flash('정답 키워드를 입력해주세요.'); return; }
+        if (hasOpenEvent) { flash('이미 진행 중인 이벤트가 있습니다. 먼저 마감하거나 취소해주세요.'); return; }
+
+        setSaving(true);
+        const { error } = await createKeywordEvent(liveId, { keyword, prizeLabel: form.prizeLabel.trim(), winnerCount });
+        setSaving(false);
+        if (error) { flash('시작 실패: ' + (error.message || '')); return; }
+
+        setForm(EMPTY_KEYWORD_EVENT_FORM);
+        flash('💬 이벤트가 시작되었습니다. 이제 방송에서 말로 질문하시면, 채팅에 정답을 치는 시청자가 자동으로 당첨돼요.');
+        await load();
+    };
+
+    const handleCancel = async (event) => {
+        if (!window.confirm('진행 중인 이벤트를 취소할까요?')) return;
+        const { error } = await cancelKeywordEvent(event.id);
+        if (error) { flash('취소 실패: ' + (error.message || '')); return; }
+        flash('이벤트가 취소되었습니다.');
+        await load();
+    };
+
+    const handleEndNow = async (event) => {
+        if (!window.confirm('지금 바로 이벤트를 마감할까요? (당첨 인원이 안 찼어도 종료됩니다)')) return;
+        const { error } = await endKeywordEventNow(event.id);
+        if (error) { flash('마감 실패: ' + (error.message || '')); return; }
+        flash('이벤트가 마감되었습니다.');
+        await load();
+    };
+
+    const handleGrantPoints = async (event) => {
+        const amount = Number(grantAmount);
+        if (!amount || amount <= 0) { flash('지급할 포인트 수를 입력해주세요.'); return; }
+
+        const nicknames = await fetchKeywordEventWinnerNicknames(event.id);
+        if (nicknames.length === 0) { flash('당첨자가 없습니다.'); return; }
+        if (!window.confirm(`당첨자 ${nicknames.length}명에게 ${amount}P씩 지급할까요?`)) return;
+
+        setGrantingEventId(event.id);
+        const results = await grantWinnerPoints(nicknames, amount, `모카TV 정답 맞추기 당첨 (정답 ${event.keyword})`);
+        setGrantingEventId(null);
+
+        const successCount = results.filter((r) => r.success).length;
+        flash(`포인트 지급 완료: 성공 ${successCount}건 / 실패 ${results.length - successCount}건`);
+    };
+
+    return (
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
+            <p className="text-[12px] font-black text-[var(--moca-text)] mb-1">💬 정답 맞추기 이벤트 관리</p>
+            <p className="text-[10px] text-[var(--moca-text-3)] mb-3 leading-relaxed">
+                문제/보기를 미리 안 써도 돼요. 정답 키워드만 등록하고 방송에서 말로 질문하면, 시청자가 채팅창에
+                그 단어가 들어간 메시지를 치는 순간 자동으로 당첨 처리됩니다 (선착순, 1인 1회).
+            </p>
+
+            {msg && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                    {msg}
+                </div>
+            )}
+
+            {!hasOpenEvent && (
+                <div className="bg-white rounded-xl p-3 mb-3 space-y-2">
+                    <input
+                        value={form.keyword}
+                        onChange={(e) => setForm((f) => ({ ...f, keyword: e.target.value }))}
+                        placeholder="정답 키워드 (예: 아임모델)"
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                    />
+                    <div className="flex items-center gap-1.5">
+                        <input
+                            value={form.prizeLabel}
+                            onChange={(e) => setForm((f) => ({ ...f, prizeLabel: e.target.value }))}
+                            placeholder="경품 설명 (선택)"
+                            className="flex-1 px-3 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        />
+                        <input
+                            value={form.winnerCount}
+                            onChange={(e) => setForm((f) => ({ ...f, winnerCount: e.target.value }))}
+                            type="number"
+                            min="1"
+                            className="w-14 px-2 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        />
+                        <span className="text-[10px] text-[var(--moca-text-3)]">명 당첨</span>
+                    </div>
+                    <button
+                        onClick={handleStart}
+                        disabled={saving}
+                        className="w-full py-2 rounded-lg bg-[var(--moca-primary)] text-white text-[12px] font-black disabled:opacity-50"
+                    >
+                        {saving ? '시작 중...' : '💬 이벤트 시작'}
+                    </button>
+                </div>
+            )}
+
+            {loading ? (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">불러오는 중...</p>
+            ) : events.length === 0 ? (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">등록된 이벤트가 없습니다.</p>
+            ) : (
+                <div className="space-y-2">
+                    {events.map((e) => (
+                        <div key={e.id} className="bg-white rounded-xl p-3">
+                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                                <p className="text-[12px] font-bold text-[var(--moca-text)]">
+                                    정답: {e.keyword}
+                                    {e.prize_label && <span className="text-[var(--moca-text-3)]"> · {e.prize_label}</span>}
+                                </p>
+                                <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black ${
+                                    e.status === 'open' ? 'bg-red-100 text-red-700'
+                                    : e.status === 'closed' ? 'bg-gray-100 text-gray-500'
+                                    : 'bg-gray-100 text-gray-400'
+                                }`}>
+                                    {e.status === 'open' ? '🔴 진행 중' : e.status === 'closed' ? '마감' : '취소됨'}
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-[var(--moca-text-3)] mb-2">
+                                당첨 {e.current_winner_count}/{e.winner_count}명
+                            </p>
+
+                            <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[var(--moca-border)] mt-1.5">
+                                {e.status === 'open' && (
+                                    <>
+                                        <button onClick={() => handleEndNow(e)} className="text-[11px] font-black text-[var(--moca-primary)]">⏹ 지금 마감</button>
+                                        <button onClick={() => handleCancel(e)} className="text-[11px] font-black text-[var(--moca-text-3)]">🚫 취소</button>
+                                    </>
+                                )}
+                                {e.status === 'closed' && (
+                                    <>
+                                        <input
+                                            value={grantAmount}
+                                            onChange={(ev) => setGrantAmount(ev.target.value)}
+                                            type="number"
+                                            className="w-16 px-2 py-1 rounded-lg border border-[var(--moca-border)] text-[10px]"
+                                        />
+                                        <span className="text-[10px] text-[var(--moca-text-3)]">P씩</span>
+                                        <button
+                                            onClick={() => handleGrantPoints(e)}
+                                            disabled={grantingEventId === e.id}
+                                            className="text-[11px] font-black text-amber-600 disabled:opacity-40"
+                                        >
+                                            {grantingEventId === e.id ? '지급 중...' : '🎁 당첨자 포인트 지급'}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// 라이브별 게임 관리 진입점 - 정답 맞추기(키워드) / 실시간 퀴즈 / 숫자맞추기 탭으로 구분
 const AdminMocaLiveGamesPanel = ({ liveId }) => {
-    const [tab, setTab] = useState('quiz');
+    const [tab, setTab] = useState('keyword');
 
     return (
         <div>
             <div className="flex gap-1 p-1 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] w-fit">
                 <button
-                    onClick={() => setTab('quiz')}
-                    className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors ${tab === 'quiz' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
+                    onClick={() => setTab('keyword')}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors ${tab === 'keyword' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
                 >
-                    🎮 실시간 퀴즈
+                    💬 정답 맞추기
                 </button>
                 <button
                     onClick={() => setTab('number')}
@@ -555,8 +738,16 @@ const AdminMocaLiveGamesPanel = ({ liveId }) => {
                 >
                     🔢 숫자 맞추기
                 </button>
+                <button
+                    onClick={() => setTab('quiz')}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors ${tab === 'quiz' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
+                >
+                    🎮 실시간 퀴즈
+                </button>
             </div>
-            {tab === 'quiz' ? <AdminMocaLiveQuizPanel liveId={liveId} /> : <AdminMocaLiveNumberGamePanel liveId={liveId} />}
+            {tab === 'keyword' && <AdminMocaLiveKeywordEventPanel liveId={liveId} />}
+            {tab === 'number' && <AdminMocaLiveNumberGamePanel liveId={liveId} />}
+            {tab === 'quiz' && <AdminMocaLiveQuizPanel liveId={liveId} />}
         </div>
     );
 };

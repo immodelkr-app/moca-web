@@ -414,3 +414,150 @@ export const fetchNumberGameWinnerNicknames = async (gameId) => {
     }
     return (data || []).map((r) => r.user_nickname);
 };
+
+// --- 키워드 정답 맞추기 (말로 질문 → 채팅에 정답 단어 포함되면 자동 당첨) ---
+
+// keyword 컬럼은 절대 포함하지 않는다 (호스트가 방송에서 말로 알려주는 방식이라 완전 기밀은
+// 아니지만, 미리 읽고 유리하게 시도하는 걸 막기 위해 동일한 안전 컬럼 규칙 적용)
+const SAFE_KEYWORD_EVENT_COLUMNS =
+    'id, live_id, prize_label, winner_count, current_winner_count, status, created_at, opened_at, closed_at';
+
+export const fetchVisibleKeywordEvent = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return null;
+
+    const { data, error } = await supabase
+        .from('moca_live_keyword_event')
+        .select(SAFE_KEYWORD_EVENT_COLUMNS)
+        .eq('live_id', liveId)
+        .in('status', ['open', 'closed'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 키워드 이벤트 조회 실패:', error);
+        return null;
+    }
+    return data;
+};
+
+export const subscribeToKeywordEvent = (liveId, onChange) => {
+    if (!isSupabaseEnabled() || !liveId) return () => {};
+
+    const channel = supabase
+        .channel(`moca_live_keyword_event_${liveId}`)
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'moca_live_keyword_event', filter: `live_id=eq.${liveId}` },
+            (payload) => onChange(payload.new)
+        )
+        .subscribe();
+
+    return () => supabase.removeChannel(channel);
+};
+
+// 채팅에 정답을 쳤을 때 내가 당첨됐는지는 채팅 전송 결과가 아니라 entries 테이블로 확인한다
+// (판정이 채팅 INSERT 트리거 안에서 비동기적으로 처리되기 때문)
+export const fetchMyKeywordEntry = async (eventId, userNickname) => {
+    if (!isSupabaseEnabled() || !eventId || !userNickname) return null;
+
+    const { data } = await supabase
+        .from('moca_live_keyword_entries')
+        .select('winner_rank, created_at')
+        .eq('event_id', eventId)
+        .eq('user_nickname', userNickname)
+        .maybeSingle();
+
+    return data || null;
+};
+
+export const subscribeToKeywordEntries = (liveId, onNewEntry) => {
+    if (!isSupabaseEnabled() || !liveId) return () => {};
+
+    const channel = supabase
+        .channel(`moca_live_keyword_entries_${liveId}`)
+        .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'moca_live_keyword_entries', filter: `live_id=eq.${liveId}` },
+            (payload) => onNewEntry(payload.new)
+        )
+        .subscribe();
+
+    return () => supabase.removeChannel(channel);
+};
+
+// --- 관리자 (키워드 이벤트) ---
+
+export const fetchKeywordEventsForLive = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return [];
+
+    const { data, error } = await supabase
+        .from('moca_live_keyword_event')
+        .select('*')
+        .eq('live_id', liveId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 관리자 키워드 이벤트 목록 조회 실패:', error);
+        return [];
+    }
+    return data || [];
+};
+
+// 등록과 동시에 바로 시작 (숫자맞추기와 동일하게 별도 draft 단계 없음)
+export const createKeywordEvent = async (liveId, { keyword, prizeLabel, winnerCount }) => {
+    if (!isSupabaseEnabled() || !liveId) return { error: new Error('생성 불가') };
+
+    const { data, error } = await supabase
+        .from('moca_live_keyword_event')
+        .insert([{
+            live_id: liveId,
+            keyword: keyword.trim(),
+            prize_label: prizeLabel || null,
+            winner_count: winnerCount || 1,
+        }])
+        .select()
+        .single();
+
+    return { data, error };
+};
+
+export const cancelKeywordEvent = async (eventId) => {
+    if (!isSupabaseEnabled()) return { error: new Error('취소 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_keyword_event')
+        .update({ status: 'cancelled', closed_at: new Date().toISOString() })
+        .eq('id', eventId)
+        .eq('status', 'open');
+
+    return { error };
+};
+
+export const endKeywordEventNow = async (eventId) => {
+    if (!isSupabaseEnabled()) return { error: new Error('마감 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_keyword_event')
+        .update({ status: 'closed', closed_at: new Date().toISOString() })
+        .eq('id', eventId)
+        .eq('status', 'open');
+
+    return { error };
+};
+
+export const fetchKeywordEventWinnerNicknames = async (eventId) => {
+    if (!isSupabaseEnabled() || !eventId) return [];
+
+    const { data, error } = await supabase
+        .from('moca_live_keyword_entries')
+        .select('user_nickname')
+        .eq('event_id', eventId)
+        .order('winner_rank', { ascending: true });
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 키워드 이벤트 당첨자 조회 실패:', error);
+        return [];
+    }
+    return (data || []).map((r) => r.user_nickname);
+};
