@@ -223,9 +223,11 @@ const UpgradePage = () => {
                         {/* 등급 신청 CTA */}
                         {!isAlreadyGold && (
                             <button onClick={() => setActiveTab('plans')}
-                                className="w-full py-5 rounded-3xl bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white font-black text-base shadow-xl shadow-[#9333EA]/20 hover:opacity-95 active:scale-[0.97] transition-all flex items-center justify-center gap-2">
-                                <span className="text-xl">👑</span>
-                                GOLD 등급 신청하기
+                                className={`w-full py-5 rounded-3xl font-black text-base transition-all flex items-center justify-center gap-2 active:scale-[0.97] ${canApply
+                                        ? 'bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white shadow-xl shadow-[#9333EA]/20 hover:opacity-95'
+                                        : 'bg-[#F3E8FF] text-[#9333EA] border border-[#E8E0FA]'}`}>
+                                <span className="text-xl">{canApply ? '👑' : '📋'}</span>
+                                {canApply ? 'GOLD 등급 신청하기' : `GOLD 신청 조건 보기 (${eligibilityCompletedCount}/4)`}
                             </button>
                         )}
                     </div>
