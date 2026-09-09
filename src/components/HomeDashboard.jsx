@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser, getUserGrade, syncUserGrade, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
+import { getGoldEligibility } from '../services/goldEligibilityService';
 import { fetchMessagesList } from '../services/messageService';
 import { fetchAttendanceProgress, submitAttendanceCheck } from '../services/attendanceService';
 import ProfileEditModal from './ProfileEditModal';
@@ -37,6 +38,22 @@ const HomeDashboard = () => {
     const [noticeIdx, setNoticeIdx] = useState(0);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [showCastingNotice, setShowCastingNotice] = useState(false);
+
+    // GOLD 신청 조건 충족 여부 (커뮤니티 메뉴의 "등급 신청하기" 버튼에 남은 미션 수 표시용)
+    const isAlreadyGold = ['GOLD', 'IMODEL', 'VIP'].includes(grade);
+    const [goldEligibility, setGoldEligibility] = useState(null);
+    useEffect(() => {
+        if (isAlreadyGold) return;
+        let cancelled = false;
+        getGoldEligibility(user).then((result) => {
+            if (!cancelled) setGoldEligibility(result);
+        });
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAlreadyGold]);
+    const goldEligibilityRemaining = goldEligibility
+        ? 4 - [goldEligibility.profileComplete, goldEligibility.quizParticipated, goldEligibility.postComplete, goldEligibility.commentComplete].filter(Boolean).length
+        : null;
 
     // 출석체크 & 참석 프리패스 진행률
     const [attendance, setAttendance] = useState(null);
@@ -293,18 +310,29 @@ const HomeDashboard = () => {
                     커뮤니티 &amp; 활동
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                    {COMMUNITY_ITEMS.map((item) => (
-                        <button
-                            key={item.label}
-                            onClick={() => item.route === '__casting_notice__' ? setShowCastingNotice(true) : navigate(item.route)}
-                            className="flex items-center gap-3 p-3.5 bg-white border border-[#E8E0FA] rounded-2xl shadow-2xs hover:border-[#8B5CF6]/40 active:scale-95 transition-all text-left"
-                        >
-                            <div className={`w-10 h-10 rounded-xl ${item.bgLight} flex items-center justify-center flex-shrink-0`}>
-                                <span className={`material-symbols-outlined text-[20px] ${item.color}`}>{item.icon}</span>
-                            </div>
-                            <span className="text-[#1F1235] font-bold text-xs leading-snug">{item.label}</span>
-                        </button>
-                    ))}
+                    {COMMUNITY_ITEMS.map((item) => {
+                        const isGradeItem = item.route === '/upgrade';
+                        const missionsLeft = isGradeItem && !isAlreadyGold ? goldEligibilityRemaining : null;
+                        const showMissionHint = missionsLeft !== null && missionsLeft > 0;
+                        return (
+                            <button
+                                key={item.label}
+                                onClick={() => {
+                                    if (showMissionHint) return; // 조건 미달성이면 페이지 이동 없이 남은 미션 수만 안내
+                                    if (item.route === '__casting_notice__') setShowCastingNotice(true);
+                                    else navigate(item.route);
+                                }}
+                                className="flex items-center gap-3 p-3.5 bg-white border border-[#E8E0FA] rounded-2xl shadow-2xs hover:border-[#8B5CF6]/40 active:scale-95 transition-all text-left"
+                            >
+                                <div className={`w-10 h-10 rounded-xl ${item.bgLight} flex items-center justify-center flex-shrink-0`}>
+                                    <span className={`material-symbols-outlined text-[20px] ${item.color}`}>{item.icon}</span>
+                                </div>
+                                <span className="text-[#1F1235] font-bold text-xs leading-snug">
+                                    {showMissionHint ? `GOLD 미션 ${missionsLeft}개 남음` : item.label}
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
