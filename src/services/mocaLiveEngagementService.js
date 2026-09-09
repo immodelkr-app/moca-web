@@ -1,8 +1,15 @@
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 
 /**
- * 모카TV 라이브 소통 기능 (실시간 채팅 / 하트 / 실시간 퀴즈).
+ * 모카TV 라이브 소통 기능 (실시간 채팅 / 하트 / 실시간 퀴즈 / 숫자 맞추기).
  * chatService.js의 실시간 패턴(Supabase Realtime postgres_changes)을 라이브 방송 단위로 응용한다.
+ *
+ * SECURITY NOTE (숫자 맞추기): moca_live_number_game.answer(정답)는 quiz_posts.correct_answers와
+ * 같은 이유로 RLS로는 숨길 수 없다 (auth.uid() 세션이 없어 관리자/일반 구분 불가).
+ * 그래서 (1) 시청자용 조회 함수는 answer 컬럼을 절대 select하지 않고, (2) 정답 비교 자체를
+ * 클라이언트가 아니라 Postgres 함수(submit_moca_live_number_guess) 안에서 수행해 정답이
+ * 제출자 브라우저로도 새지 않게 한다. fetchVisibleNumberGame·fetchMyNumberGameEntry는
+ * 반드시 이 규칙을 유지할 것.
  */
 
 // --- 채팅 ---
@@ -255,4 +262,155 @@ export const fetchQuizAnswerStats = async (quizId) => {
         byOption[row.selected_option_index] = (byOption[row.selected_option_index] || 0) + 1;
     });
     return { total: data.length, byOption };
+};
+
+// --- 숫자 맞추기 (퀴즈보다 간단한 게임) ---
+
+// answer 컬럼은 절대 포함하지 않는다 (SECURITY NOTE 참고)
+const SAFE_NUMBER_GAME_COLUMNS =
+    'id, live_id, min_value, max_value, prize_label, winner_count, current_winner_count, status, created_at, opened_at, closed_at';
+
+export const fetchVisibleNumberGame = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return null;
+
+    const { data, error } = await supabase
+        .from('moca_live_number_game')
+        .select(SAFE_NUMBER_GAME_COLUMNS)
+        .eq('live_id', liveId)
+        .in('status', ['open', 'closed'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 숫자맞추기 조회 실패:', error);
+        return null;
+    }
+    return data;
+};
+
+export const subscribeToNumberGame = (liveId, onChange) => {
+    if (!isSupabaseEnabled() || !liveId) return () => {};
+
+    const channel = supabase
+        .channel(`moca_live_number_game_${liveId}`)
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'moca_live_number_game', filter: `live_id=eq.${liveId}` },
+            (payload) => onChange(payload.new)
+        )
+        .subscribe();
+
+    return () => supabase.removeChannel(channel);
+};
+
+export const fetchMyNumberGameEntry = async (gameId, userNickname) => {
+    if (!isSupabaseEnabled() || !gameId || !userNickname) return null;
+
+    const { data } = await supabase
+        .from('moca_live_number_game_entries')
+        .select('guess, is_correct, is_winner, winner_rank')
+        .eq('game_id', gameId)
+        .eq('user_nickname', userNickname)
+        .maybeSingle();
+
+    return data || null;
+};
+
+// 정답 판정은 반드시 DB 함수 안에서만 수행 (클라이언트에서 채점 금지)
+export const submitNumberGuess = async (gameId, liveId, userNickname, guess) => {
+    if (!isSupabaseEnabled() || !gameId || !userNickname) return { result: null, error: new Error('제출 불가') };
+
+    const { data, error } = await supabase.rpc('submit_moca_live_number_guess', {
+        p_game_id: gameId,
+        p_live_id: liveId,
+        p_nickname: userNickname,
+        p_guess: guess,
+    });
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 숫자맞추기 제출 실패:', error);
+        return { result: null, error };
+    }
+    return { result: data?.[0] || null, error: null };
+};
+
+// --- 관리자 (숫자 맞추기) ---
+
+export const fetchNumberGamesForLive = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return [];
+
+    const { data, error } = await supabase
+        .from('moca_live_number_game')
+        .select('*')
+        .eq('live_id', liveId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 관리자 숫자맞추기 목록 조회 실패:', error);
+        return [];
+    }
+    return data || [];
+};
+
+// 등록과 동시에 바로 시작 (모델뷰티 방식과 동일하게 별도 draft 단계 없음)
+export const createNumberGame = async (liveId, { minValue, maxValue, answer, prizeLabel, winnerCount }) => {
+    if (!isSupabaseEnabled() || !liveId) return { error: new Error('생성 불가') };
+
+    const { data, error } = await supabase
+        .from('moca_live_number_game')
+        .insert([{
+            live_id: liveId,
+            min_value: minValue,
+            max_value: maxValue,
+            answer,
+            prize_label: prizeLabel || null,
+            winner_count: winnerCount || 1,
+        }])
+        .select()
+        .single();
+
+    return { data, error };
+};
+
+export const cancelNumberGame = async (gameId) => {
+    if (!isSupabaseEnabled()) return { error: new Error('취소 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_number_game')
+        .update({ status: 'cancelled', closed_at: new Date().toISOString() })
+        .eq('id', gameId)
+        .eq('status', 'open');
+
+    return { error };
+};
+
+// 당첨 인원이 다 안 찼어도 진행자가 수동으로 조기 마감
+export const endNumberGameNow = async (gameId) => {
+    if (!isSupabaseEnabled()) return { error: new Error('마감 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_number_game')
+        .update({ status: 'closed', closed_at: new Date().toISOString() })
+        .eq('id', gameId)
+        .eq('status', 'open');
+
+    return { error };
+};
+
+export const fetchNumberGameWinnerNicknames = async (gameId) => {
+    if (!isSupabaseEnabled() || !gameId) return [];
+
+    const { data, error } = await supabase
+        .from('moca_live_number_game_entries')
+        .select('user_nickname')
+        .eq('game_id', gameId)
+        .eq('is_winner', true)
+        .order('winner_rank', { ascending: true });
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 숫자맞추기 당첨자 조회 실패:', error);
+        return [];
+    }
+    return (data || []).map((r) => r.user_nickname);
 };

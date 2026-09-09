@@ -7,6 +7,8 @@ import { sendBroadcastPush } from '../services/pushNotificationService';
 import {
     fetchQuizzesForLive, createLiveQuiz, openLiveQuiz, closeLiveQuiz,
     fetchCorrectAnswererNicknames, fetchQuizAnswerStats,
+    fetchNumberGamesForLive, createNumberGame, cancelNumberGame, endNumberGameNow,
+    fetchNumberGameWinnerNicknames,
 } from '../services/mocaLiveEngagementService';
 import { grantWinnerPoints } from '../services/quizService';
 
@@ -325,6 +327,236 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
                     })}
                 </div>
             )}
+        </div>
+    );
+};
+
+const EMPTY_NUMBER_GAME_FORM = { minValue: '1', maxValue: '100', answer: '', prizeLabel: '', winnerCount: '1' };
+
+// 숫자 맞추기 관리 - 범위/정답/경품/당첨인원을 정해 등록하면 즉시 시청자에게 노출되어 진행됨.
+const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
+    const [games, setGames] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [form, setForm] = useState(EMPTY_NUMBER_GAME_FORM);
+    const [saving, setSaving] = useState(false);
+    const [msg, setMsg] = useState('');
+    const [grantingGameId, setGrantingGameId] = useState(null);
+    const [grantAmount, setGrantAmount] = useState('100');
+
+    const load = async () => {
+        setLoading(true);
+        const data = await fetchNumberGamesForLive(liveId);
+        setGames(data);
+        setLoading(false);
+    };
+
+    useEffect(() => { load(); }, [liveId]);
+
+    const flash = (text) => { setMsg(text); setTimeout(() => setMsg(''), 3000); };
+
+    const hasOpenGame = games.some((g) => g.status === 'open');
+
+    const handleStart = async () => {
+        const minValue = Number(form.minValue);
+        const maxValue = Number(form.maxValue);
+        const answer = Number(form.answer);
+        const winnerCount = Number(form.winnerCount) || 1;
+
+        if (!Number.isInteger(minValue) || !Number.isInteger(maxValue) || minValue >= maxValue) {
+            flash('범위를 올바르게 입력해주세요 (최소 < 최대).'); return;
+        }
+        if (!Number.isInteger(answer) || answer < minValue || answer > maxValue) {
+            flash('정답은 범위 안의 숫자여야 합니다.'); return;
+        }
+        if (hasOpenGame) {
+            flash('이미 진행 중인 게임이 있습니다. 먼저 마감하거나 취소해주세요.'); return;
+        }
+
+        setSaving(true);
+        const { error } = await createNumberGame(liveId, { minValue, maxValue, answer, prizeLabel: form.prizeLabel.trim(), winnerCount });
+        setSaving(false);
+        if (error) { flash('시작 실패: ' + (error.message || '')); return; }
+
+        setForm(EMPTY_NUMBER_GAME_FORM);
+        flash('🔢 게임이 시작되었습니다. 시청자에게 실시간으로 노출됩니다.');
+        await load();
+    };
+
+    const handleCancel = async (game) => {
+        if (!window.confirm('진행 중인 게임을 취소할까요? (정답 공개 없이 종료)')) return;
+        const { error } = await cancelNumberGame(game.id);
+        if (error) { flash('취소 실패: ' + (error.message || '')); return; }
+        flash('게임이 취소되었습니다.');
+        await load();
+    };
+
+    const handleEndNow = async (game) => {
+        if (!window.confirm('지금 바로 게임을 마감할까요? (당첨 인원이 안 찼어도 종료됩니다)')) return;
+        const { error } = await endNumberGameNow(game.id);
+        if (error) { flash('마감 실패: ' + (error.message || '')); return; }
+        flash('게임이 마감되었습니다.');
+        await load();
+    };
+
+    const handleGrantPoints = async (game) => {
+        const amount = Number(grantAmount);
+        if (!amount || amount <= 0) { flash('지급할 포인트 수를 입력해주세요.'); return; }
+
+        const nicknames = await fetchNumberGameWinnerNicknames(game.id);
+        if (nicknames.length === 0) { flash('당첨자가 없습니다.'); return; }
+        if (!window.confirm(`당첨자 ${nicknames.length}명에게 ${amount}P씩 지급할까요?`)) return;
+
+        setGrantingGameId(game.id);
+        const results = await grantWinnerPoints(nicknames, amount, `모카TV 숫자맞추기 당첨 (정답 ${game.answer})`);
+        setGrantingGameId(null);
+
+        const successCount = results.filter((r) => r.success).length;
+        flash(`포인트 지급 완료: 성공 ${successCount}건 / 실패 ${results.length - successCount}건`);
+    };
+
+    return (
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
+            <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">🔢 숫자 맞추기 관리</p>
+
+            {msg && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                    {msg}
+                </div>
+            )}
+
+            {!hasOpenGame && (
+                <div className="bg-white rounded-xl p-3 mb-3 space-y-2">
+                    <div className="flex items-center gap-1.5">
+                        <input
+                            value={form.minValue}
+                            onChange={(e) => setForm((f) => ({ ...f, minValue: e.target.value }))}
+                            type="number"
+                            placeholder="최소"
+                            className="w-16 px-2 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        />
+                        <span className="text-[11px] text-[var(--moca-text-3)]">~</span>
+                        <input
+                            value={form.maxValue}
+                            onChange={(e) => setForm((f) => ({ ...f, maxValue: e.target.value }))}
+                            type="number"
+                            placeholder="최대"
+                            className="w-16 px-2 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        />
+                        <span className="text-[11px] text-[var(--moca-text-3)] ml-2">정답:</span>
+                        <input
+                            value={form.answer}
+                            onChange={(e) => setForm((f) => ({ ...f, answer: e.target.value }))}
+                            type="number"
+                            placeholder="예: 42"
+                            className="w-20 px-2 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <input
+                            value={form.prizeLabel}
+                            onChange={(e) => setForm((f) => ({ ...f, prizeLabel: e.target.value }))}
+                            placeholder="경품 설명 (선택, 예: 스타벅스 기프티콘)"
+                            className="flex-1 px-3 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        />
+                        <input
+                            value={form.winnerCount}
+                            onChange={(e) => setForm((f) => ({ ...f, winnerCount: e.target.value }))}
+                            type="number"
+                            min="1"
+                            className="w-14 px-2 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        />
+                        <span className="text-[10px] text-[var(--moca-text-3)]">명 당첨</span>
+                    </div>
+                    <button
+                        onClick={handleStart}
+                        disabled={saving}
+                        className="w-full py-2 rounded-lg bg-[var(--moca-primary)] text-white text-[12px] font-black disabled:opacity-50"
+                    >
+                        {saving ? '시작 중...' : '🔢 게임 시작'}
+                    </button>
+                </div>
+            )}
+
+            {loading ? (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">불러오는 중...</p>
+            ) : games.length === 0 ? (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">등록된 게임이 없습니다.</p>
+            ) : (
+                <div className="space-y-2">
+                    {games.map((g) => (
+                        <div key={g.id} className="bg-white rounded-xl p-3">
+                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                                <p className="text-[12px] font-bold text-[var(--moca-text)]">
+                                    {g.min_value}~{g.max_value} · 정답 {g.answer}
+                                    {g.prize_label && <span className="text-[var(--moca-text-3)]"> · {g.prize_label}</span>}
+                                </p>
+                                <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black ${
+                                    g.status === 'open' ? 'bg-red-100 text-red-700'
+                                    : g.status === 'closed' ? 'bg-gray-100 text-gray-500'
+                                    : 'bg-gray-100 text-gray-400'
+                                }`}>
+                                    {g.status === 'open' ? '🔴 진행 중' : g.status === 'closed' ? '마감' : '취소됨'}
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-[var(--moca-text-3)] mb-2">
+                                당첨 {g.current_winner_count}/{g.winner_count}명
+                            </p>
+
+                            <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[var(--moca-border)] mt-1.5">
+                                {g.status === 'open' && (
+                                    <>
+                                        <button onClick={() => handleEndNow(g)} className="text-[11px] font-black text-[var(--moca-primary)]">⏹ 지금 마감</button>
+                                        <button onClick={() => handleCancel(g)} className="text-[11px] font-black text-[var(--moca-text-3)]">🚫 취소</button>
+                                    </>
+                                )}
+                                {g.status === 'closed' && (
+                                    <>
+                                        <input
+                                            value={grantAmount}
+                                            onChange={(e) => setGrantAmount(e.target.value)}
+                                            type="number"
+                                            className="w-16 px-2 py-1 rounded-lg border border-[var(--moca-border)] text-[10px]"
+                                        />
+                                        <span className="text-[10px] text-[var(--moca-text-3)]">P씩</span>
+                                        <button
+                                            onClick={() => handleGrantPoints(g)}
+                                            disabled={grantingGameId === g.id}
+                                            className="text-[11px] font-black text-amber-600 disabled:opacity-40"
+                                        >
+                                            {grantingGameId === g.id ? '지급 중...' : '🎁 당첨자 포인트 지급'}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// 라이브별 게임 관리 진입점 - 퀴즈 / 숫자맞추기 탭으로 구분
+const AdminMocaLiveGamesPanel = ({ liveId }) => {
+    const [tab, setTab] = useState('quiz');
+
+    return (
+        <div>
+            <div className="flex gap-1 p-1 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] w-fit">
+                <button
+                    onClick={() => setTab('quiz')}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors ${tab === 'quiz' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
+                >
+                    🎮 실시간 퀴즈
+                </button>
+                <button
+                    onClick={() => setTab('number')}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors ${tab === 'number' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
+                >
+                    🔢 숫자 맞추기
+                </button>
+            </div>
+            {tab === 'quiz' ? <AdminMocaLiveQuizPanel liveId={liveId} /> : <AdminMocaLiveNumberGamePanel liveId={liveId} />}
         </div>
     );
 };
@@ -681,7 +913,7 @@ const AdminMocaLive = () => {
                                                         onClick={() => setQuizPanelId(quizPanelId === s.id ? null : s.id)}
                                                         className="text-[11px] font-black text-violet-600 hover:underline"
                                                     >
-                                                        🎮 퀴즈 {quizPanelId === s.id ? '닫기' : '관리'}
+                                                        🎮 게임 {quizPanelId === s.id ? '닫기' : '관리'}
                                                     </button>
                                                     <button onClick={() => openEdit(s)} className="text-[11px] font-black text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">✏️ 수정</button>
                                                     <button onClick={() => handleDelete(s)} className="text-[11px] font-black text-[var(--moca-text-3)] hover:text-red-500">삭제</button>
@@ -691,7 +923,7 @@ const AdminMocaLive = () => {
                                         {quizPanelId === s.id && (
                                             <tr>
                                                 <td colSpan={5} className="pb-3">
-                                                    <AdminMocaLiveQuizPanel liveId={s.id} />
+                                                    <AdminMocaLiveGamesPanel liveId={s.id} />
                                                 </td>
                                             </tr>
                                         )}

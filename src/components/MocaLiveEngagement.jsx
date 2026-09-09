@@ -4,6 +4,7 @@ import {
     fetchLiveChatMessages, sendLiveChatMessage, subscribeToLiveChat,
     sendLiveHeart, subscribeToLiveHearts,
     fetchVisibleQuiz, subscribeToLiveQuiz, fetchMyQuizAnswer, submitQuizAnswer,
+    fetchVisibleNumberGame, subscribeToNumberGame, fetchMyNumberGameEntry, submitNumberGuess,
 } from '../services/mocaLiveEngagementService';
 
 let heartUid = 0;
@@ -24,6 +25,12 @@ const MocaLiveEngagement = ({ liveId }) => {
     const [quiz, setQuiz] = useState(null);
     const [myAnswer, setMyAnswer] = useState(null);
     const [submittingAnswer, setSubmittingAnswer] = useState(false);
+
+    const [numberGame, setNumberGame] = useState(null);
+    const [myNumberEntry, setMyNumberEntry] = useState(null);
+    const [guessInput, setGuessInput] = useState('');
+    const [submittingGuess, setSubmittingGuess] = useState(false);
+    const [guessError, setGuessError] = useState('');
 
     // 채팅
     useEffect(() => {
@@ -112,6 +119,54 @@ const MocaLiveEngagement = ({ liveId }) => {
         setSubmittingAnswer(false);
     };
 
+    // 숫자 맞추기
+    useEffect(() => {
+        if (!liveId) return;
+        let mounted = true;
+
+        const load = async () => {
+            const g = await fetchVisibleNumberGame(liveId);
+            if (!mounted) return;
+            setNumberGame(g);
+            if (g) {
+                const entry = await fetchMyNumberGameEntry(g.id, myNickname);
+                if (mounted) setMyNumberEntry(entry);
+            }
+        };
+        load();
+
+        const unsubscribe = subscribeToNumberGame(liveId, async (updated) => {
+            if (!mounted || !updated) return;
+            setNumberGame(updated);
+        });
+
+        return () => { mounted = false; unsubscribe(); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [liveId]);
+
+    const handleSubmitGuess = async (e) => {
+        e.preventDefault();
+        setGuessError('');
+        if (!numberGame || numberGame.status !== 'open' || myNumberEntry || submittingGuess) return;
+
+        const guess = Number(guessInput);
+        if (!Number.isInteger(guess) || guess < numberGame.min_value || guess > numberGame.max_value) {
+            setGuessError(`${numberGame.min_value}~${numberGame.max_value} 사이 숫자를 입력해주세요.`);
+            return;
+        }
+
+        setSubmittingGuess(true);
+        const { result, error } = await submitNumberGuess(numberGame.id, liveId, myNickname, guess);
+        setSubmittingGuess(false);
+
+        if (error) {
+            setGuessError(error.message?.includes('duplicate') ? '이미 참여하셨어요.' : '제출에 실패했습니다.');
+            return;
+        }
+        setMyNumberEntry({ guess, is_correct: result?.is_correct, is_winner: result?.is_winner, winner_rank: result?.winner_rank });
+        if (result?.game_closed) setNumberGame((g) => (g ? { ...g, status: 'closed' } : g));
+    };
+
     const formatTime = (iso) => {
         if (!iso) return '';
         return new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -119,6 +174,67 @@ const MocaLiveEngagement = ({ liveId }) => {
 
     return (
         <div className="w-full flex flex-col gap-2 mt-2">
+            {/* 숫자 맞추기 카드 */}
+            {numberGame && (
+                <div className="rounded-2xl bg-white/95 backdrop-blur px-4 py-3 shadow-lg">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[13px]">🔢</span>
+                            <p className="text-[12px] font-black text-[#1F1235]">숫자 맞추기</p>
+                        </div>
+                        <span className="text-[10px] font-bold text-[#9CA3AF]">
+                            {numberGame.current_winner_count}/{numberGame.winner_count}명 당첨
+                        </span>
+                    </div>
+                    <p className="text-[13px] font-bold text-[#1F1235] mb-1 leading-snug">
+                        {numberGame.min_value}~{numberGame.max_value} 사이 숫자를 맞혀보세요!
+                    </p>
+                    {numberGame.prize_label && (
+                        <p className="text-[11px] font-bold text-[#9333EA] mb-2.5">🎁 {numberGame.prize_label}</p>
+                    )}
+
+                    {numberGame.status === 'open' && !myNumberEntry && (
+                        <form onSubmit={handleSubmitGuess} className="flex items-center gap-2">
+                            <input
+                                type="number"
+                                value={guessInput}
+                                onChange={(e) => setGuessInput(e.target.value)}
+                                min={numberGame.min_value}
+                                max={numberGame.max_value}
+                                placeholder="숫자 입력"
+                                className="flex-1 px-3 py-2 rounded-xl border border-[#E8E0FA] text-[13px] font-bold"
+                            />
+                            <button
+                                type="submit"
+                                disabled={!guessInput || submittingGuess}
+                                className="px-4 py-2 rounded-xl bg-[#9333EA] text-white text-[12px] font-black disabled:opacity-40"
+                            >
+                                {submittingGuess ? '제출 중...' : '제출'}
+                            </button>
+                        </form>
+                    )}
+                    {guessError && <p className="text-[11px] font-bold text-red-500 mt-1.5">{guessError}</p>}
+
+                    {myNumberEntry && (
+                        <div className="mt-1">
+                            <p className="text-[12px] font-bold text-[#1F1235]">
+                                내가 제출한 숫자: <span className="text-[#9333EA]">{myNumberEntry.guess}</span>
+                            </p>
+                            {myNumberEntry.is_winner ? (
+                                <p className="text-[11px] font-black text-emerald-600 mt-1">🎉 정답입니다! ({myNumberEntry.winner_rank}번째 당첨) 포인트 지급을 기다려주세요.</p>
+                            ) : numberGame.status === 'closed' ? (
+                                <p className="text-[11px] font-bold text-[#9CA3AF] mt-1">아쉬워요, 다음 게임을 노려보세요!</p>
+                            ) : (
+                                <p className="text-[11px] font-bold text-[#9333EA] mt-1">제출 완료! 결과를 기다려주세요.</p>
+                            )}
+                        </div>
+                    )}
+                    {numberGame.status === 'closed' && !myNumberEntry && (
+                        <p className="text-[11px] font-bold text-[#9CA3AF] mt-1">마감되었습니다.</p>
+                    )}
+                </div>
+            )}
+
             {/* 실시간 퀴즈 카드 */}
             {quiz && (
                 <div className="rounded-2xl bg-white/95 backdrop-blur px-4 py-3 shadow-lg">
