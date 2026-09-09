@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { fetchActiveMocaLive } from '../services/mocaLiveService';
 import { getUserGrade } from '../services/userService';
+import MocaLiveEngagement from './MocaLiveEngagement';
 
 const GOLD_OR_ABOVE = ['GOLD', 'IMODEL', 'VIP'];
 
@@ -104,7 +105,7 @@ const MocaLiveBanner = () => {
 
             {showPlayer && (
                 <div
-                    className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/90 px-4"
+                    className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/90 px-4 py-6 overflow-y-auto"
                     onClick={() => setShowPlayer(false)}
                 >
                     <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
@@ -127,6 +128,7 @@ const MocaLiveBanner = () => {
                                 />
                             )}
                         </div>
+                        <MocaLiveEngagement liveId={live.id} />
                     </div>
                 </div>
             )}

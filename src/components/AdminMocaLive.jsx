@@ -4,6 +4,11 @@ import {
     deleteMocaLiveStream, goLive, stopLive, extractYoutubeVideoId, uploadMocaLiveCover,
 } from '../services/mocaLiveService';
 import { sendBroadcastPush } from '../services/pushNotificationService';
+import {
+    fetchQuizzesForLive, createLiveQuiz, openLiveQuiz, closeLiveQuiz,
+    fetchCorrectAnswererNicknames, fetchQuizAnswerStats,
+} from '../services/mocaLiveEngagementService';
+import { grantWinnerPoints } from '../services/quizService';
 
 const MAX_COVER_MB = 10;
 
@@ -86,6 +91,244 @@ const PushResultBadge = ({ result }) => {
     );
 };
 
+const EMPTY_QUIZ_FORM = { question: '', options: ['', ''] };
+
+// 라이브 중 실시간 퀴즈 관리 - 문제 등록/시작/마감(정답 확정+채점)/정답자 포인트 지급.
+const AdminMocaLiveQuizPanel = ({ liveId }) => {
+    const [quizzes, setQuizzes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [form, setForm] = useState(EMPTY_QUIZ_FORM);
+    const [saving, setSaving] = useState(false);
+    const [msg, setMsg] = useState('');
+    const [statsByQuiz, setStatsByQuiz] = useState({});
+    const [closingQuizId, setClosingQuizId] = useState(null);
+    const [correctChoice, setCorrectChoice] = useState(null);
+    const [grantingQuizId, setGrantingQuizId] = useState(null);
+    const [grantAmount, setGrantAmount] = useState('100');
+
+    const load = async () => {
+        setLoading(true);
+        const data = await fetchQuizzesForLive(liveId);
+        setQuizzes(data);
+        setLoading(false);
+
+        const closedIds = data.filter((q) => q.status !== 'draft').map((q) => q.id);
+        const statsEntries = await Promise.all(
+            closedIds.map(async (id) => [id, await fetchQuizAnswerStats(id)])
+        );
+        setStatsByQuiz(Object.fromEntries(statsEntries));
+    };
+
+    useEffect(() => { load(); }, [liveId]);
+
+    const flash = (text) => { setMsg(text); setTimeout(() => setMsg(''), 3000); };
+
+    const updateOption = (idx, value) => {
+        setForm((f) => ({ ...f, options: f.options.map((o, i) => (i === idx ? value : o)) }));
+    };
+
+    const addOption = () => {
+        if (form.options.length >= 4) return;
+        setForm((f) => ({ ...f, options: [...f.options, ''] }));
+    };
+
+    const removeOption = (idx) => {
+        if (form.options.length <= 2) return;
+        setForm((f) => ({ ...f, options: f.options.filter((_, i) => i !== idx) }));
+    };
+
+    const handleCreate = async () => {
+        const question = form.question.trim();
+        const options = form.options.map((o) => o.trim()).filter(Boolean);
+        if (!question) { flash('문제를 입력해주세요.'); return; }
+        if (options.length < 2) { flash('보기를 2개 이상 입력해주세요.'); return; }
+
+        setSaving(true);
+        const { error } = await createLiveQuiz(liveId, question, options);
+        setSaving(false);
+        if (error) { flash('등록 실패: ' + (error.message || '')); return; }
+
+        setForm(EMPTY_QUIZ_FORM);
+        flash('퀴즈가 등록되었습니다. "퀴즈 시작"을 눌러 시청자에게 노출하세요.');
+        await load();
+    };
+
+    const handleOpen = async (quiz) => {
+        if (!window.confirm(`'${quiz.question}' 퀴즈를 시작할까요?\n진행 중인 다른 퀴즈는 자동으로 마감됩니다.`)) return;
+        const { error } = await openLiveQuiz(quiz.id, liveId);
+        if (error) { flash('시작 실패: ' + (error.message || '')); return; }
+        flash('🎮 퀴즈가 시작되었습니다. 시청자에게 실시간으로 노출됩니다.');
+        await load();
+    };
+
+    const startClosing = (quiz) => {
+        setClosingQuizId(quiz.id);
+        setCorrectChoice(null);
+    };
+
+    const handleConfirmClose = async (quiz) => {
+        if (correctChoice === null) { flash('정답을 선택해주세요.'); return; }
+        const { error } = await closeLiveQuiz(quiz.id, correctChoice);
+        if (error) { flash('마감 실패: ' + (error.message || '')); return; }
+        setClosingQuizId(null);
+        flash('✅ 정답이 확정되었습니다. 시청자에게 결과가 표시됩니다.');
+        await load();
+    };
+
+    const handleGrantPoints = async (quiz) => {
+        const amount = Number(grantAmount);
+        if (!amount || amount <= 0) { flash('지급할 포인트 수를 입력해주세요.'); return; }
+
+        const nicknames = await fetchCorrectAnswererNicknames(quiz.id);
+        if (nicknames.length === 0) { flash('정답을 맞춘 시청자가 없습니다.'); return; }
+        if (!window.confirm(`정답자 ${nicknames.length}명에게 ${amount}P씩 지급할까요?`)) return;
+
+        setGrantingQuizId(quiz.id);
+        const results = await grantWinnerPoints(nicknames, amount, `모카TV 라이브 퀴즈 정답 (${quiz.question})`);
+        setGrantingQuizId(null);
+
+        const successCount = results.filter((r) => r.success).length;
+        flash(`포인트 지급 완료: 성공 ${successCount}건 / 실패 ${results.length - successCount}건`);
+    };
+
+    return (
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
+            <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">🎮 실시간 퀴즈 관리</p>
+
+            {msg && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                    {msg}
+                </div>
+            )}
+
+            <div className="bg-white rounded-xl p-3 mb-3 space-y-2">
+                <input
+                    value={form.question}
+                    onChange={(e) => setForm((f) => ({ ...f, question: e.target.value }))}
+                    placeholder="문제를 입력하세요 (예: 오늘 방송에서 소개한 브랜드는?)"
+                    className="w-full px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                />
+                {form.options.map((opt, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5">
+                        <input
+                            value={opt}
+                            onChange={(e) => updateOption(idx, e.target.value)}
+                            placeholder={`보기 ${idx + 1}`}
+                            className="flex-1 px-3 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        />
+                        {form.options.length > 2 && (
+                            <button onClick={() => removeOption(idx)} className="text-[10px] text-[var(--moca-text-3)] font-bold px-1">삭제</button>
+                        )}
+                    </div>
+                ))}
+                <div className="flex items-center justify-between pt-1">
+                    <button
+                        onClick={addOption}
+                        disabled={form.options.length >= 4}
+                        className="text-[11px] font-bold text-[var(--moca-primary)] disabled:opacity-30"
+                    >
+                        + 보기 추가 (최대 4개)
+                    </button>
+                    <button
+                        onClick={handleCreate}
+                        disabled={saving}
+                        className="px-3 py-1.5 rounded-lg bg-[var(--moca-primary)] text-white text-[11px] font-black disabled:opacity-50"
+                    >
+                        {saving ? '등록 중...' : '퀴즈 등록'}
+                    </button>
+                </div>
+            </div>
+
+            {loading ? (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">불러오는 중...</p>
+            ) : quizzes.length === 0 ? (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">등록된 퀴즈가 없습니다.</p>
+            ) : (
+                <div className="space-y-2">
+                    {quizzes.map((q) => {
+                        const stats = statsByQuiz[q.id];
+                        return (
+                            <div key={q.id} className="bg-white rounded-xl p-3">
+                                <div className="flex items-start justify-between gap-2 mb-1.5">
+                                    <p className="text-[12px] font-bold text-[var(--moca-text)] flex-1">{q.question}</p>
+                                    <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black ${
+                                        q.status === 'open' ? 'bg-red-100 text-red-700'
+                                        : q.status === 'closed' ? 'bg-gray-100 text-gray-500'
+                                        : 'bg-amber-100 text-amber-700'
+                                    }`}>
+                                        {q.status === 'open' ? '🔴 진행 중' : q.status === 'closed' ? '마감' : '대기(초안)'}
+                                    </span>
+                                </div>
+
+                                <div className="flex flex-wrap gap-1 mb-2">
+                                    {(q.options || []).map((opt, idx) => (
+                                        <span
+                                            key={idx}
+                                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                                q.status === 'closed' && q.correct_option_index === idx
+                                                    ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                                                    : 'border-[var(--moca-border)] text-[var(--moca-text-3)]'
+                                            }`}
+                                        >
+                                            {opt}{stats?.byOption?.[idx] ? ` (${stats.byOption[idx]})` : ''}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                {closingQuizId === q.id ? (
+                                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-[var(--moca-border)] mt-1.5">
+                                        <span className="text-[10px] font-bold text-[var(--moca-text-3)]">정답 선택:</span>
+                                        {(q.options || []).map((opt, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setCorrectChoice(idx)}
+                                                className={`px-2 py-1 rounded-lg text-[10px] font-bold border ${correctChoice === idx ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-[var(--moca-border)] text-[var(--moca-text-3)]'}`}
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
+                                        <button onClick={() => handleConfirmClose(q)} className="ml-auto text-[10px] font-black text-emerald-600">확정</button>
+                                        <button onClick={() => setClosingQuizId(null)} className="text-[10px] font-bold text-[var(--moca-text-3)]">취소</button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[var(--moca-border)] mt-1.5">
+                                        {q.status !== 'open' && (
+                                            <button onClick={() => handleOpen(q)} className="text-[11px] font-black text-red-500">
+                                                {q.status === 'draft' ? '▶ 퀴즈 시작' : '↻ 다시 시작'}
+                                            </button>
+                                        )}
+                                        {q.status === 'open' && (
+                                            <button onClick={() => startClosing(q)} className="text-[11px] font-black text-[var(--moca-primary)]">🔒 정답 확정 & 마감</button>
+                                        )}
+                                        {q.status === 'closed' && (
+                                            <>
+                                                <input
+                                                    value={grantAmount}
+                                                    onChange={(e) => setGrantAmount(e.target.value)}
+                                                    type="number"
+                                                    className="w-16 px-2 py-1 rounded-lg border border-[var(--moca-border)] text-[10px]"
+                                                />
+                                                <span className="text-[10px] text-[var(--moca-text-3)]">P씩</span>
+                                                <button
+                                                    onClick={() => handleGrantPoints(q)}
+                                                    disabled={grantingQuizId === q.id}
+                                                    className="text-[11px] font-black text-amber-600 disabled:opacity-40"
+                                                >
+                                                    {grantingQuizId === q.id ? '지급 중...' : '🎁 정답자 포인트 지급'}
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const AdminMocaLive = () => {
     const [streams, setStreams] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -97,6 +340,7 @@ const AdminMocaLive = () => {
     const [msg, setMsg] = useState('');
     const [pushResult, setPushResult] = useState(null);
     const [sendingPush, setSendingPush] = useState(false);
+    const [quizPanelId, setQuizPanelId] = useState(null);
 
     const load = async () => {
         setLoading(true);
@@ -394,7 +638,8 @@ const AdminMocaLive = () => {
                                 </thead>
                                 <tbody>
                                     {streams.map((s) => (
-                                        <tr key={s.id} className="border-b border-[var(--moca-border)] last:border-0">
+                                        <React.Fragment key={s.id}>
+                                        <tr className="border-b border-[var(--moca-border)] last:border-0">
                                             <td className="py-2.5 pr-3">
                                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${s.is_live ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
                                                     {s.is_live ? '🔴 라이브 중' : '대기'}
@@ -410,6 +655,9 @@ const AdminMocaLive = () => {
                                                     </span>
                                                 )}
                                                 {s.title}
+                                                {s.heart_count > 0 && (
+                                                    <span className="inline-block ml-1.5 text-[10px] text-red-400 align-middle">❤️ {s.heart_count}</span>
+                                                )}
                                             </td>
                                             <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{s.streamer_name}</td>
                                             <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(s.created_at).toLocaleDateString('ko-KR')}</td>
@@ -429,11 +677,25 @@ const AdminMocaLive = () => {
                                                             {sendingPush ? '발송 중...' : '🔔 알림'}
                                                         </button>
                                                     )}
+                                                    <button
+                                                        onClick={() => setQuizPanelId(quizPanelId === s.id ? null : s.id)}
+                                                        className="text-[11px] font-black text-violet-600 hover:underline"
+                                                    >
+                                                        🎮 퀴즈 {quizPanelId === s.id ? '닫기' : '관리'}
+                                                    </button>
                                                     <button onClick={() => openEdit(s)} className="text-[11px] font-black text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">✏️ 수정</button>
                                                     <button onClick={() => handleDelete(s)} className="text-[11px] font-black text-[var(--moca-text-3)] hover:text-red-500">삭제</button>
                                                 </div>
                                             </td>
                                         </tr>
+                                        {quizPanelId === s.id && (
+                                            <tr>
+                                                <td colSpan={5} className="pb-3">
+                                                    <AdminMocaLiveQuizPanel liveId={s.id} />
+                                                </td>
+                                            </tr>
+                                        )}
+                                        </React.Fragment>
                                     ))}
                                 </tbody>
                             </table>
