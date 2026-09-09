@@ -288,6 +288,7 @@ const AgencyDirectory = () => {
     const goldEligibilityCompletedCount = goldEligibility
         ? [goldEligibility.profileComplete, goldEligibility.quizParticipated, goldEligibility.postComplete, goldEligibility.commentComplete].filter(Boolean).length
         : 0;
+    const goldEligibilityRemaining = 4 - goldEligibilityCompletedCount;
 
     const handleSend = async (agency) => {
         if (sending) return;
@@ -621,13 +622,19 @@ const AgencyDirectory = () => {
                                             ))}
                                         </div>
 
-                                        {/* CTA 버튼 */}
-                                        <button
-                                            onClick={() => navigate('/upgrade')}
-                                            className="w-full max-w-xs py-4 rounded-[20px] bg-gradient-to-r from-[#FFD700] to-[#F9A825] text-[#1F1235] font-black text-base shadow-lg shadow-[#FFD700]/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                        >
-                                            GOLD 등급 업그레이드
-                                        </button>
+                                        {/* CTA 버튼 — 조건 미달성이면 페이지 이동 없이 남은 미션 수만 안내 */}
+                                        {goldEligibility && !goldEligibility.allComplete ? (
+                                            <div className="w-full max-w-xs py-4 rounded-[20px] bg-white/70 border border-[#FFD700]/30 text-[#B45309] font-black text-sm text-center">
+                                                미션 {goldEligibilityRemaining}개만 더 하면 신청할 수 있어요
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => navigate('/upgrade')}
+                                                className="w-full max-w-xs py-4 rounded-[20px] bg-gradient-to-r from-[#FFD700] to-[#F9A825] text-[#1F1235] font-black text-base shadow-lg shadow-[#FFD700]/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                            >
+                                                GOLD 등급 업그레이드
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             )}
