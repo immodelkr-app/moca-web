@@ -146,8 +146,8 @@ const UpgradePage = () => {
                 {/* ── 탭 전환 ── */}
                 <div className="flex gap-2 bg-[#F3E8FF] border border-[#E8E0FA] rounded-2xl p-1">
                     {[
+                        { id: 'plans', label: '등업 신청', icon: 'workspace_premium' },
                         { id: 'compare', label: '등급별 혜택 비교', icon: 'compare' },
-                        { id: 'plans', label: '등급 업그레이드 신청', icon: 'workspace_premium' },
                     ].map(tab => (
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                             className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id
