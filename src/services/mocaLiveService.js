@@ -1,0 +1,151 @@
+import { supabase, isSupabaseEnabled } from './supabaseClient';
+
+/**
+ * 모카 자체 라이브방송(김대표 소통/교육) 서비스.
+ * 판매방송인 모델뷰티 라이브(liveStreamService)와 달리, 송출은 유튜브 라이브로 하고
+ * 모카는 관리자가 수동으로 videoId를 등록/토글해 홈 대시보드에 노출한다.
+ */
+
+// 유튜브 URL(watch/live/youtu.be/embed) 또는 순수 videoId를 입력받아 videoId만 추출
+export const extractYoutubeVideoId = (input) => {
+    if (!input) return '';
+    const trimmed = input.trim();
+
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=)([\w-]{11})/,
+        /(?:youtube\.com\/live\/)([\w-]{11})/,
+        /(?:youtube\.com\/embed\/)([\w-]{11})/,
+        /(?:youtu\.be\/)([\w-]{11})/,
+    ];
+
+    for (const pattern of patterns) {
+        const match = trimmed.match(pattern);
+        if (match) return match[1];
+    }
+
+    // 이미 순수 videoId 형태(11자)인 경우
+    if (/^[\w-]{11}$/.test(trimmed)) return trimmed;
+
+    return '';
+};
+
+// 홈 대시보드용 - 현재 라이브 중인 방송 1건 조회
+export const fetchActiveMocaLive = async () => {
+    if (!isSupabaseEnabled()) return null;
+
+    try {
+        const { data, error } = await supabase
+            .from('moca_live_streams')
+            .select('*')
+            .eq('is_live', true)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data || null;
+    } catch (e) {
+        console.warn('[mocaLiveService] 모카 라이브 조회 실패:', e.message || e);
+        return null;
+    }
+};
+
+// 관리자용 - 전체 목록 조회
+export const fetchAllMocaLiveStreams = async () => {
+    if (!isSupabaseEnabled()) return [];
+
+    const { data, error } = await supabase
+        .from('moca_live_streams')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('[mocaLiveService] 전체 목록 조회 실패:', error);
+        return [];
+    }
+    return data || [];
+};
+
+// 라이브 방송 등록
+export const createMocaLiveStream = async ({ title, youtubeVideoId, streamerName, coverImageUrl }) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+
+    const { data, error } = await supabase
+        .from('moca_live_streams')
+        .insert([{
+            title,
+            youtube_video_id: youtubeVideoId,
+            streamer_name: streamerName || '김대표',
+            cover_image_url: coverImageUrl || null,
+        }])
+        .select()
+        .single();
+
+    return { data, error };
+};
+
+// 라이브 방송 정보 수정
+export const updateMocaLiveStream = async (id, { title, youtubeVideoId, streamerName, coverImageUrl }) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+
+    const { data, error } = await supabase
+        .from('moca_live_streams')
+        .update({
+            title,
+            youtube_video_id: youtubeVideoId,
+            streamer_name: streamerName || '김대표',
+            cover_image_url: coverImageUrl || null,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    return { data, error };
+};
+
+// 라이브 방송 삭제
+export const deleteMocaLiveStream = async (id) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+    const { error } = await supabase
+        .from('moca_live_streams')
+        .delete()
+        .eq('id', id);
+    return { error };
+};
+
+// 라이브 시작 - 동시에 하나만 라이브 상태를 유지하도록 나머지는 자동으로 종료 처리
+export const goLive = async (id) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+
+    const { error: stopOthersError } = await supabase
+        .from('moca_live_streams')
+        .update({ is_live: false, updated_at: new Date().toISOString() })
+        .neq('id', id)
+        .eq('is_live', true);
+
+    if (stopOthersError) return { error: stopOthersError };
+
+    const { data, error } = await supabase
+        .from('moca_live_streams')
+        .update({ is_live: true, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+    return { data, error };
+};
+
+// 라이브 종료
+export const stopLive = async (id) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+
+    const { data, error } = await supabase
+        .from('moca_live_streams')
+        .update({ is_live: false, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+    return { data, error };
+};

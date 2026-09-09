@@ -23,6 +23,7 @@ import AdminCompanyVerification from './AdminCompanyVerification';
 import AdminModelCastings from './AdminModelCastings';
 import AdminAttendanceCoupons from './AdminAttendanceCoupons';
 import AdminCeoQuiz from './AdminCeoQuiz';
+import AdminMocaLive from './AdminMocaLive';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
 
@@ -1119,7 +1120,13 @@ const AdminPage = () => {
                         onClick={() => setActiveTab('ceo-quiz')}
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'ceo-quiz' ? 'border-fuchsia-500 text-fuchsia-700 bg-fuchsia-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
-                        🎁 김대표퀴즈 관리
+                        🎁 모카퀴즈 관리
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('moca-live')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'moca-live' ? 'border-red-500 text-red-700 bg-red-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
+                    >
+                        🔴 모카TV 라이브 관리
                     </button>
 
                 </div>
@@ -4303,6 +4310,10 @@ const AdminPage = () => {
 
                 {activeTab === 'ceo-quiz' && (
                     <AdminCeoQuiz />
+                )}
+
+                {activeTab === 'moca-live' && (
+                    <AdminMocaLive />
                 )}
 
                 {selectedUserForDetail && (

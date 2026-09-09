@@ -178,7 +178,7 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                             </div>
                         )}
                         {iWon && (
-                            <p className="text-[13px] font-black mt-3 bg-white/15 rounded-xl py-2 px-3">축하합니다! 당첨되셨어요 🎉<br />배송 안내를 기다려주세요.</p>
+                            <p className="text-[13px] font-black mt-3 bg-white/15 rounded-xl py-2 px-3">정답을 맞추셨군요. 축하드립니다. 🎉</p>
                         )}
                         <div className="mt-4 pt-3 border-t border-white/25">
                             <p className="text-[11px] font-bold opacity-70 mb-1">🎊 정답 발표</p>
@@ -221,7 +221,7 @@ const CeoQuizCard = ({ quiz, myNickname }) => {
                                                 onClick={() => setDraftAnswer(q.id, choice)}
                                                 className={`w-full text-left px-4 py-2.5 rounded-xl border text-[13px] font-bold transition-colors ${draftAnswers[q.id] === choice ? 'border-[#7C3AED] bg-[#F3E8FF] text-[#7C3AED]' : 'border-[#E8E0FA] text-[#5B4E7A]'}`}
                                             >
-                                                {choice}
+                                                {cIdx + 1}. {choice}
                                             </button>
                                         ))}
                                     </div>

@@ -1,6 +1,6 @@
 /**
  * quizService.js
- * 김대표퀴즈 게시판 - 퀴즈 생성/제출/채점(수동)/결과발표
+ * 모카퀴즈 게시판 - 퀴즈 생성/제출/채점(수동)/결과발표
  *
  * 퀴즈 1건은 문제 1~N개(운영은 보통 1~2개)를 담을 수 있다.
  * quiz_posts.questions = [{ id, question, questionType, choices }]  (정답 미포함, 공개 안전)

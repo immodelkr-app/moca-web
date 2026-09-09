@@ -100,9 +100,12 @@ const CeoQuizBoard = () => {
         setIsRefreshing(false);
     };
 
-    // 회차 번호는 전체 퀴즈(진행중 탭 데이터, 생성순) 기준으로 매긴다
+    // 회차 번호는 전체 퀴즈(fetchOpenQuizzes 데이터, 생성순) 기준으로 매긴다
     const roundNumberById = {};
     [...quizzes].reverse().forEach((q, idx) => { roundNumberById[q.id] = idx + 1; });
+
+    // 진행중 탭에는 이미 발표된 퀴즈는 표시하지 않는다 (지난 결과 탭에서 별도로 보여줌)
+    const ongoingQuizzes = quizzes.filter((q) => q.status !== 'announced');
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--moca-bg)', color: 'var(--moca-text)' }}>
@@ -116,7 +119,7 @@ const CeoQuizBoard = () => {
                     </button>
 
                     <div className="text-center">
-                        <h1 className="text-[#1F1235] font-black text-[17px] tracking-tight">🎁 김대표퀴즈</h1>
+                        <h1 className="text-[#1F1235] font-black text-[17px] tracking-tight">🎁 모카퀴즈</h1>
                         <p className="text-[#9CA3AF] text-[11px] mt-0.5 font-bold">정답 맞추고 상품 받아가세요!</p>
                     </div>
 
@@ -163,7 +166,7 @@ const CeoQuizBoard = () => {
                                 </div>
                             ))}
                         </div>
-                    ) : quizzes.length === 0 ? (
+                    ) : ongoingQuizzes.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4">
                             <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#6C63FF]/20 to-[#A78BFA]/10 border border-[#6C63FF]/20 flex items-center justify-center">
                                 <span className="material-symbols-outlined text-[#A78BFA] text-[40px]">quiz</span>
@@ -173,7 +176,7 @@ const CeoQuizBoard = () => {
                             </p>
                         </div>
                     ) : (
-                        quizzes.map((quiz) => (
+                        ongoingQuizzes.map((quiz) => (
                             <CeoQuizCard key={quiz.id} quiz={quiz} myNickname={myNickname} />
                         ))
                     )

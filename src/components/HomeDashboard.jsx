@@ -7,6 +7,7 @@ import ProfileEditModal from './ProfileEditModal';
 import ModelBeautyBanner from './ModelBeautyBanner';
 import TrialCampaignBanner from './TrialCampaignBanner';
 import LiveStreamBanner from './LiveStreamBanner';
+import MocaLiveBanner from './MocaLiveBanner';
 
 const TOUR_ITEMS = [
     { icon: 'event_note', label: '투어일지', route: '/home/diary', color: 'text-[#8B5CF6]', bgLight: 'bg-[#F3E8FF]' },
@@ -191,7 +192,7 @@ const HomeDashboard = () => {
                 </div>
             </div>
 
-            {/* ── 4-1. 모델캐스팅 / 김대표퀴즈 2열 카드 ── */}
+            {/* ── 4-1. 모델캐스팅 / 모카퀴즈 2열 카드 ── */}
             <div className="px-6 mb-8">
                 <div className="grid grid-cols-2 gap-4">
 
@@ -207,7 +208,7 @@ const HomeDashboard = () => {
                         <p className="text-[11px] font-bold text-white/75 leading-tight">실전 커리큘럼으로<br />배우는 모델 클래스</p>
                     </button>
 
-                    {/* 카드 2: 김대표퀴즈 */}
+                    {/* 카드 2: 모카퀴즈 */}
                     <button
                         onClick={() => navigate('/home/quiz')}
                         className="flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#D946EF] to-[#A21CAF] border border-white/10 shadow-md active:scale-95 transition-all text-center group"
@@ -215,7 +216,7 @@ const HomeDashboard = () => {
                         <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
                             <span className="material-symbols-outlined text-white text-[34px]">quiz</span>
                         </div>
-                        <h3 className="text-lg font-black text-white mb-1">김대표퀴즈</h3>
+                        <h3 className="text-lg font-black text-white mb-1">모카퀴즈</h3>
                         <p className="text-[11px] font-bold text-white/75 leading-tight">정답 맞추고<br />상품 받아가기</p>
                     </button>
 
@@ -307,7 +308,10 @@ const HomeDashboard = () => {
                 </div>
             </div>
 
-            {/* ── 7. 지금 라이브 중 (모델뷰티 연동) ── */}
+            {/* ── 6-1. 모카TV LIVE (모카 자체 소통/교육 라이브) ── */}
+            <MocaLiveBanner />
+
+            {/* ── 7. 모델뷰티TV LIVE (모델뷰티 판매방송 연동) ── */}
             <LiveStreamBanner />
 
             {/* ── 7-1. 체험단 모집중 (모델뷰티 연동) ── */}

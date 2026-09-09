@@ -31,7 +31,7 @@ const LiveStreamBanner = () => {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
                     </span>
-                    <h3 className="text-[#1F1235] font-black text-base">지금 라이브 중</h3>
+                    <h3 className="text-[#1F1235] font-black text-base">모델뷰티TV LIVE</h3>
                 </div>
 
                 <div className="flex flex-col gap-3">

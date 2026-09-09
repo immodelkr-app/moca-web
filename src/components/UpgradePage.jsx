@@ -305,7 +305,7 @@ const UpgradePage = () => {
                                     <div className="flex flex-col gap-2.5">
                                         {[
                                             { done: eligibility?.profileComplete, label: '스마트프로필 필수 항목 작성', hint: '이름·성별·활동나이·키·몸무게·신발사이즈' },
-                                            { done: eligibility?.quizParticipated, label: '김대표퀴즈 1회 이상 참여' },
+                                            { done: eligibility?.quizParticipated, label: '모카퀴즈 1회 이상 참여' },
                                             { done: eligibility?.postComplete, label: '모카그램 게시글 1개 이상 작성', hint: `${eligibility?.postCount ?? 0}/${eligibility?.requiredPostCount ?? 1}` },
                                             { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 이상 작성', hint: `${eligibility?.commentCount ?? 0}/${eligibility?.requiredCommentCount ?? 3}` },
                                         ].map((item) => (

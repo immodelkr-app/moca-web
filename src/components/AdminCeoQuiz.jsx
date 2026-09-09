@@ -212,7 +212,7 @@ const CreateQuizForm = ({ onCreated }) => {
         setSendingPush(true);
         const prizeSuffix = form.prizeDescription.trim() ? ` · 상품: ${form.prizeDescription.trim()}` : '';
         const result = await sendBroadcastPush({
-            title: '🎁 김대표퀴즈 오픈!',
+            title: '🎁 모카퀴즈 오픈!',
             body: `${firstQuestion.slice(0, 30)}${firstQuestion.length > 30 ? '...' : ''}${prizeSuffix}`,
             route: '/home/quiz',
         });
@@ -453,7 +453,7 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
 
     useEffect(() => {
         setAnswerDrafts(quiz.correct_answers || {});
-        setPointDescription(`김대표퀴즈 당첨${quiz.prize_description ? ` - ${quiz.prize_description}` : ''}`);
+        setPointDescription(`모카퀴즈 당첨${quiz.prize_description ? ` - ${quiz.prize_description}` : ''}`);
         setGrantResults(null);
     }, [quiz.id]);
 
@@ -525,14 +525,14 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
             const results = await grantWinnerPoints(
                 winners.map((s) => s.user_nickname),
                 Number(pointAmount),
-                pointDescription.trim() || `김대표퀴즈 당첨${quiz.prize_description ? ` - ${quiz.prize_description}` : ''}`
+                pointDescription.trim() || `모카퀴즈 당첨${quiz.prize_description ? ` - ${quiz.prize_description}` : ''}`
             );
             setGrantResults(results);
 
             const grantedNicknames = results.filter((r) => r.success).map((r) => r.nickname);
             if (grantedNicknames.length > 0) {
                 await sendTargetedPush({
-                    title: '🎉 김대표퀴즈 당첨을 축하드려요!',
+                    title: '🎉 모카퀴즈 당첨을 축하드려요!',
                     body: `${Number(pointAmount)}P가 지급되었습니다. 지금 확인해보세요.`,
                     route: '/home/quiz',
                     nicknames: grantedNicknames,
@@ -554,7 +554,7 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
         const prizeSuffix = quiz.prize_description ? ` · 상품: ${quiz.prize_description}` : '';
         setSendingPush(true);
         const result = await sendBroadcastPush({
-            title: '🎁 김대표퀴즈 참여하기',
+            title: '🎁 모카퀴즈 참여하기',
             body: `${firstQuestion.slice(0, 30)}${firstQuestion.length > 30 ? '...' : ''}${prizeSuffix}`,
             route: '/home/quiz',
             excludeNicknames: submissions.map((s) => s.user_nickname),
@@ -566,7 +566,7 @@ const SubmissionsModal = ({ quiz, onClose, onQuizUpdated }) => {
     const handleSendResultPush = async () => {
         setSendingPush(true);
         const result = await sendBroadcastPush({
-            title: '🎉 김대표퀴즈 결과 발표',
+            title: '🎉 모카퀴즈 결과 발표',
             body: '정답과 당첨자를 확인해보세요!',
             route: '/home/quiz',
         });
