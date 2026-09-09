@@ -147,7 +147,7 @@ const KimDaepyoMessage = () => {
                                 )}
 
                                 <div
-                                    className="text-[#5B4E7A] text-[15px] leading-loose whitespace-pre-wrap break-words mb-8 pb-6 border-b border-[#E8E0FA] font-medium"
+                                    className={`text-[#5B4E7A] ${sizeOpt.bodyClass} leading-loose whitespace-pre-wrap break-words mb-8 pb-6 border-b border-[#E8E0FA] font-medium`}
                                     style={{ fontFamily: fontOpt.family }}
                                 >
                                     {selectedMessage.content}

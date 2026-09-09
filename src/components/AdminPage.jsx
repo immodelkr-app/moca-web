@@ -84,6 +84,7 @@ const AdminPage = () => {
     const [announcementContent, setAnnouncementContent] = useState('');
     const [announcementImage, setAnnouncementImage] = useState(null);
     const [announcementLinkUrl, setAnnouncementLinkUrl] = useState('');
+    const announcementImageInputRef = useRef(null);
     const [noticeFontFamily, setNoticeFontFamily] = useState('Pretendard');
     const [noticeFontSize, setNoticeFontSize] = useState('md');
     const [noticeHighlightGradient, setNoticeHighlightGradient] = useState('purple');
@@ -2426,7 +2427,7 @@ const AdminPage = () => {
                                                     </span>
                                                 </h3>
                                                 <p
-                                                    className="text-[#5B4E7A] text-xs leading-relaxed whitespace-pre-wrap font-medium"
+                                                    className={`text-[#5B4E7A] ${curSize.bodyClass} leading-relaxed whitespace-pre-wrap font-medium`}
                                                     style={{ fontFamily: curFont.family }}
                                                 >
                                                     {editContent || '본문 내용 스타일 미리보기'}
@@ -2473,6 +2474,7 @@ const AdminPage = () => {
                                     <div>
                                         <label className="block text-sm font-bold text-[var(--moca-text-2)] mb-2">사진 첨부 (선택)</label>
                                         <input
+                                            ref={announcementImageInputRef}
                                             type="file"
                                             accept="image/*"
                                             onChange={(e) => {
@@ -2483,7 +2485,20 @@ const AdminPage = () => {
                                             className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-[var(--moca-text)] focus:outline-none focus:border-[var(--moca-primary)] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-[var(--moca-primary-lt)] file:text-[var(--moca-accent)] hover:file:bg-[var(--moca-primary)]/20"
                                         />
                                         {announcementImage && (
-                                            <p className="text-xs text-green-400 mt-2">선택된 파일: {announcementImage.name}</p>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <p className="text-xs text-green-400 flex-1">선택된 파일: {announcementImage.name}</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setAnnouncementImage(null);
+                                                        if (announcementImageInputRef.current) announcementImageInputRef.current.value = '';
+                                                    }}
+                                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-1"
+                                                >
+                                                    <span className="material-symbols-outlined text-[14px]">delete</span>
+                                                    사진 삭제
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
 
@@ -2616,7 +2631,7 @@ const AdminPage = () => {
                                                     </span>
                                                 </h3>
                                                 <p
-                                                    className="text-[#5B4E7A] text-xs leading-relaxed whitespace-pre-wrap font-medium"
+                                                    className={`text-[#5B4E7A] ${curSize.bodyClass} leading-relaxed whitespace-pre-wrap font-medium`}
                                                     style={{ fontFamily: curFont.family }}
                                                 >
                                                     {announcementContent || '어떤 소식을 전하고 싶으신가요? 글꼴과 테마가 반영되어 표시됩니다.'}

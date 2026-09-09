@@ -34,10 +34,10 @@ export const FONT_OPTIONS = [
 ];
 
 export const FONT_SIZE_OPTIONS = [
-    { id: 'sm', label: '작게', heroClass: 'text-xl md:text-2xl' },
-    { id: 'md', label: '보통', heroClass: 'text-2xl md:text-3xl' },
-    { id: 'lg', label: '크게', heroClass: 'text-3xl md:text-4xl' },
-    { id: 'xl', label: '매우 크게', heroClass: 'text-4xl md:text-5xl' },
+    { id: 'sm', label: '작게', heroClass: 'text-xl md:text-2xl', bodyClass: 'text-xs' },
+    { id: 'md', label: '보통', heroClass: 'text-2xl md:text-3xl', bodyClass: 'text-sm' },
+    { id: 'lg', label: '크게', heroClass: 'text-3xl md:text-4xl', bodyClass: 'text-base' },
+    { id: 'xl', label: '매우 크게', heroClass: 'text-4xl md:text-5xl', bodyClass: 'text-lg' },
 ];
 
 export const GRADIENT_OPTIONS = [
