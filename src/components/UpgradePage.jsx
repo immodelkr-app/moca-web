@@ -190,7 +190,7 @@ const UpgradePage = () => {
                             <div className="grid grid-cols-[1fr_70px_70px] px-4 py-3 border-b border-[#E8E0FA] bg-[#F8F5FF]">
                                 <span className="text-[#5B4E7A] text-[11px] font-bold">기능</span>
                                 <span className="text-[#5B4E7A] text-[11px] font-bold text-center">SILVER</span>
-                                <span className="text-[#FCD34D]/50 text-[11px] font-bold text-center">GOLD</span>
+                                <span className="text-[#B45309] text-[11px] font-bold text-center">GOLD</span>
                             </div>
                             {FEATURES.map((feat, i) => (
                                 <div key={i} className={`grid grid-cols-[1fr_70px_70px] px-4 py-3 items-center ${i < FEATURES.length - 1 ? 'border-b border-[#E8E0FA]' : ''}`}>
