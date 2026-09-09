@@ -586,10 +586,10 @@ const AgencyDirectory = () => {
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
                                                     {[
-                                                        { done: goldEligibility.profileComplete, text: '스마트프로필 필수 항목 작성' },
-                                                        { done: goldEligibility.quizParticipated, text: '모카퀴즈 1회 이상 참여' },
-                                                        { done: goldEligibility.postComplete, text: `모카그램 게시글 ${goldEligibility.postCount}/${goldEligibility.requiredPostCount}` },
-                                                        { done: goldEligibility.commentComplete, text: `모카그램 댓글 ${goldEligibility.commentCount}/${goldEligibility.requiredCommentCount}` },
+                                                        { done: goldEligibility.profileComplete, text: '프로필관리 필수항목 작성하기' },
+                                                        { done: goldEligibility.quizParticipated, text: '모카퀴즈 1회 이상 참여하기' },
+                                                        { done: goldEligibility.postComplete, text: '모카그램 게시글 1개 이상 작성하기' },
+                                                        { done: goldEligibility.commentComplete, text: '모카그램 댓글 3개 이상 작성하기' },
                                                     ].map((item) => (
                                                         <div key={item.text} className="flex items-center gap-2 px-3 py-2 bg-white/70 rounded-xl border border-[#FFD700]/20">
                                                             <span className={`material-symbols-outlined text-[15px] flex-shrink-0 ${item.done ? 'text-[#10B981]' : 'text-[#C7BEDD]'}`}>
@@ -599,6 +599,9 @@ const AgencyDirectory = () => {
                                                         </div>
                                                     ))}
                                                 </div>
+                                                <p className="text-[#B45309] text-xs font-black text-center pt-2">
+                                                    {goldEligibilityCompletedCount}개의 미션이 충족되었습니다
+                                                </p>
                                             </div>
                                         )}
 

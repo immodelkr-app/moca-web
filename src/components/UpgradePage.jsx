@@ -313,10 +313,10 @@ const UpgradePage = () => {
                                 ) : (
                                     <div className="flex flex-col gap-2.5">
                                         {[
-                                            { done: eligibility?.profileComplete, label: '스마트프로필 필수 항목 작성', hint: '이름·성별·활동나이·키·몸무게·신발사이즈' },
-                                            { done: eligibility?.quizParticipated, label: '모카퀴즈 1회 이상 참여' },
-                                            { done: eligibility?.postComplete, label: '모카그램 게시글 1개 이상 작성', hint: `${eligibility?.postCount ?? 0}/${eligibility?.requiredPostCount ?? 1}` },
-                                            { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 이상 작성', hint: `${eligibility?.commentCount ?? 0}/${eligibility?.requiredCommentCount ?? 3}` },
+                                            { done: eligibility?.profileComplete, label: '프로필관리 필수항목 작성하기', hint: '이름·성별·활동나이·키·몸무게·신발사이즈' },
+                                            { done: eligibility?.quizParticipated, label: '모카퀴즈 1회 이상 참여하기' },
+                                            { done: eligibility?.postComplete, label: '모카그램 게시글 1개 이상 작성하기' },
+                                            { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 이상 작성하기' },
                                         ].map((item) => (
                                             <div key={item.label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${item.done ? 'bg-[#F3E8FF] border-[#E8E0FA]' : 'bg-[#F8F5FF] border-[#E8E0FA]'}`}>
                                                 <span className={`material-symbols-outlined text-[18px] flex-shrink-0 ${item.done ? 'text-[#9333EA]' : 'text-[#C7BEDD]'}`}>
@@ -328,6 +328,9 @@ const UpgradePage = () => {
                                                 </div>
                                             </div>
                                         ))}
+                                        <p className="text-[#9333EA] text-xs font-black text-center pt-1">
+                                            {eligibilityCompletedCount}개의 미션이 충족되었습니다
+                                        </p>
                                     </div>
                                 )}
                             </div>
