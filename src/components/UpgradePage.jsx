@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser, GRADE_INFO } from '../services/userService';
 import { getGoldEligibility } from '../services/goldEligibilityService';
@@ -57,9 +57,16 @@ const UpgradePage = () => {
         ? [eligibility.profileComplete, eligibility.quizParticipated, eligibility.postComplete, eligibility.commentComplete].filter(Boolean).length
         : 0;
 
+    const conditionsRef = useRef(null);
+    const [showMissingHint, setShowMissingHint] = useState(false);
+
     // ── 등업 신청서 페이지로 이동 ────────────────────────────────────────────────
     const handleApply = () => {
-        if (!canApply) return;
+        if (!canApply) {
+            setShowMissingHint(true);
+            conditionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
         navigate('/upgrade-apply');
     };
 
@@ -288,7 +295,7 @@ const UpgradePage = () => {
 
                         {/* GOLD 신청 최소 활동 조건 체크리스트 */}
                         {!isAlreadyGold && (
-                            <div className="bg-white border border-[#E8E0FA] rounded-[32px] p-6 shadow-sm">
+                            <div ref={conditionsRef} className={`bg-white rounded-[32px] p-6 shadow-sm border transition-colors ${showMissingHint && !canApply ? 'border-red-300' : 'border-[#E8E0FA]'}`}>
                                 <div className="flex items-center justify-between mb-4">
                                     <p className="text-[#1F1235] font-black text-sm flex items-center gap-1.5">
                                         <span className="material-symbols-outlined text-[16px] text-[#9333EA]">checklist</span>
@@ -344,11 +351,16 @@ const UpgradePage = () => {
                                 </div>
                             ) : (
                                 <div className="flex flex-col gap-3">
-                                    <button onClick={handleApply} disabled={!canApply}
-                                        className={`w-full py-5 rounded-[24px] font-black text-lg shadow-[0_8px_16px_rgba(31,18,53,0.15)] transition-all flex items-center justify-center gap-2.5 active:scale-[0.97] ${canApply ? 'bg-[#1F1235] text-white' : 'bg-[#E8E0FA] text-[#9CA3AF] cursor-not-allowed shadow-none active:scale-100'}`}>
+                                    <button onClick={handleApply}
+                                        className={`w-full py-5 rounded-[24px] font-black text-lg shadow-[0_8px_16px_rgba(31,18,53,0.15)] transition-all flex items-center justify-center gap-2.5 active:scale-[0.97] ${canApply ? 'bg-[#1F1235] text-white' : 'bg-[#E8E0FA] text-[#9CA3AF] shadow-none active:scale-100'}`}>
                                         <span className="text-xl">👑</span>
                                         {canApply ? '등업 신청하기' : '신청 조건 미달성'}
                                     </button>
+                                    {showMissingHint && !canApply && (
+                                        <p className="text-red-500 text-xs font-bold text-center -mt-1">
+                                            위 GOLD 신청 조건을 모두 충족해야 신청할 수 있어요
+                                        </p>
+                                    )}
                                     <button onClick={() => window.open(KAKAO_CHANNEL_URL, '_blank')}
                                         className="w-full py-4 rounded-[24px] font-black text-sm shadow-sm border border-[#E8E0FA] transition-all flex items-center justify-center gap-2 active:scale-[0.97] bg-[#FEE500] text-[#391B1B]">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="#391B1B">

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchAgencies } from '../services/agencyService';
 import { getUser, getUserGrade, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
+import { getGoldEligibility } from '../services/goldEligibilityService';
 import { getLocalKey } from '../services/diaryService';
 import { getNaverMapUrl } from '../lib/naverMap';
 
@@ -272,6 +273,21 @@ const AgencyDirectory = () => {
     };
 
     const isUnlimited = grade === 'GOLD' || grade === 'IMODEL' || grade === 'VIP';
+
+    // ── GOLD 신청 최소 활동 조건 충족 여부 (실버 페이월에 노출) ──────────────────
+    const [goldEligibility, setGoldEligibility] = useState(null);
+    useEffect(() => {
+        if (isUnlimited) return;
+        let cancelled = false;
+        getGoldEligibility(user).then((result) => {
+            if (!cancelled) setGoldEligibility(result);
+        });
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isUnlimited]);
+    const goldEligibilityCompletedCount = goldEligibility
+        ? [goldEligibility.profileComplete, goldEligibility.quizParticipated, goldEligibility.postComplete, goldEligibility.commentComplete].filter(Boolean).length
+        : 0;
 
     const handleSend = async (agency) => {
         if (sending) return;
@@ -550,8 +566,45 @@ const AgencyDirectory = () => {
                                             </p>
                                         </div>
 
+                                        {/* GOLD 신청 조건 체크리스트 */}
+                                        {goldEligibility && (
+                                            <div className="w-full max-w-xs">
+                                                <div className="flex items-center justify-between mb-2 px-1">
+                                                    <p className="text-[#1F1235] text-xs font-black flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-[14px] text-[#B45309]">checklist</span>
+                                                        GOLD 신청 조건
+                                                    </p>
+                                                    <span className={`text-xs font-black ${goldEligibility.allComplete ? 'text-[#10B981]' : 'text-[#B45309]'}`}>
+                                                        {goldEligibility.allComplete ? '신청 가능 🎉' : `${goldEligibilityCompletedCount}/4 완료`}
+                                                    </span>
+                                                </div>
+                                                <div className="h-1.5 w-full rounded-full bg-white/70 overflow-hidden mb-3">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all ${goldEligibility.allComplete ? 'bg-[#10B981]' : 'bg-gradient-to-r from-[#FFD700] to-[#F9A825]'}`}
+                                                        style={{ width: `${(goldEligibilityCompletedCount / 4) * 100}%` }}
+                                                    />
+                                                </div>
+                                                <div className="flex flex-col gap-1.5">
+                                                    {[
+                                                        { done: goldEligibility.profileComplete, text: '스마트프로필 필수 항목 작성' },
+                                                        { done: goldEligibility.quizParticipated, text: '모카퀴즈 1회 이상 참여' },
+                                                        { done: goldEligibility.postComplete, text: `모카그램 게시글 ${goldEligibility.postCount}/${goldEligibility.requiredPostCount}` },
+                                                        { done: goldEligibility.commentComplete, text: `모카그램 댓글 ${goldEligibility.commentCount}/${goldEligibility.requiredCommentCount}` },
+                                                    ].map((item) => (
+                                                        <div key={item.text} className="flex items-center gap-2 px-3 py-2 bg-white/70 rounded-xl border border-[#FFD700]/20">
+                                                            <span className={`material-symbols-outlined text-[15px] flex-shrink-0 ${item.done ? 'text-[#10B981]' : 'text-[#C7BEDD]'}`}>
+                                                                {item.done ? 'check_circle' : 'radio_button_unchecked'}
+                                                            </span>
+                                                            <span className="text-[#1F1235] text-xs font-bold text-left">{item.text}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* 혜택 요약 */}
                                         <div className="w-full max-w-xs flex flex-col gap-2">
+                                            <p className="text-[#B45309] text-xs font-black px-1 mb-0.5">GOLD가 되면 이런 게 좋아져요</p>
                                             {[
                                                 { icon: 'apartment', text: `전체 ${agencies.length}개 에이전시 열람` },
                                                 { icon: 'forward_to_inbox', text: '프로필 월 무제한 발송' },
