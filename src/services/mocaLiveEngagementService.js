@@ -61,31 +61,35 @@ export const subscribeToLiveChat = (liveId, onNewMessage) => {
 
 // 누적 카운트는 RPC로 원자적으로 증가시키고, 다른 시청자 화면의 하트 애니메이션은
 // DB 왕복 없이 Realtime Broadcast로 즉시 알린다.
-export const sendLiveHeart = async (liveId) => {
-    if (!isSupabaseEnabled() || !liveId) return { count: null, error: new Error('전송 불가') };
+//
+// 주의: 같은 topic(`moca_live_hearts_{liveId}`)으로 채널을 두 번 만들면 안 된다 - 리스너용
+// 채널이 이미 구독 중인 상태에서 전송할 때마다 새 채널을 또 join하면 같은 소켓이 같은 topic을
+// 중복 join하게 되어 기존 구독이 끊기거나 브로드캐스트가 유실될 수 있다. 그래서 리스닝용
+// 채널 인스턴스를 그대로 넘겨받아 전송에도 재사용한다 (openLiveHeartChannel 참고).
+export const openLiveHeartChannel = (liveId, onHeart) => {
+    if (!isSupabaseEnabled() || !liveId) return null;
 
-    const channel = supabase.channel(`moca_live_hearts_${liveId}`);
-    channel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-            channel.send({ type: 'broadcast', event: 'heart', payload: {} });
-            setTimeout(() => supabase.removeChannel(channel), 500);
-        }
-    });
-
-    const { data, error } = await supabase.rpc('increment_moca_live_heart', { p_live_id: liveId });
-    if (error) console.error('[mocaLiveEngagementService] 하트 전송 실패:', error);
-    return { count: data, error };
-};
-
-export const subscribeToLiveHearts = (liveId, onHeart) => {
-    if (!isSupabaseEnabled() || !liveId) return () => {};
-
-    const channel = supabase
+    return supabase
         .channel(`moca_live_hearts_${liveId}`)
         .on('broadcast', { event: 'heart' }, () => onHeart())
         .subscribe();
+};
 
-    return () => supabase.removeChannel(channel);
+export const closeLiveHeartChannel = (channel) => {
+    if (channel) supabase.removeChannel(channel);
+};
+
+export const broadcastLiveHeart = (channel) => {
+    if (!channel) return;
+    channel.send({ type: 'broadcast', event: 'heart', payload: {} });
+};
+
+export const incrementLiveHeart = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return { count: null, error: new Error('전송 불가') };
+
+    const { data, error } = await supabase.rpc('increment_moca_live_heart', { p_live_id: liveId });
+    if (error) console.error('[mocaLiveEngagementService] 하트 카운트 증가 실패:', error);
+    return { count: data, error };
 };
 
 // --- 실시간 퀴즈 ---

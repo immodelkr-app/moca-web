@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { getUser } from '../services/userService';
 import {
     fetchLiveChatMessages, sendLiveChatMessage, subscribeToLiveChat,
-    sendLiveHeart, subscribeToLiveHearts,
+    openLiveHeartChannel, closeLiveHeartChannel, broadcastLiveHeart, incrementLiveHeart,
     fetchVisibleQuiz, subscribeToLiveQuiz, fetchMyQuizAnswer, submitQuizAnswer,
     fetchVisibleNumberGame, subscribeToNumberGame, fetchMyNumberGameEntry, submitNumberGuess,
     fetchVisibleKeywordEvent, subscribeToKeywordEvent, fetchMyKeywordEntry, subscribeToKeywordEntries,
@@ -22,6 +22,7 @@ const MocaLiveEngagement = ({ liveId }) => {
     const messagesEndRef = useRef(null);
 
     const [hearts, setHearts] = useState([]);
+    const heartChannelRef = useRef(null);
 
     const [quiz, setQuiz] = useState(null);
     const [myAnswer, setMyAnswer] = useState(null);
@@ -64,13 +65,15 @@ const MocaLiveEngagement = ({ liveId }) => {
         setSending(false);
     };
 
-    // 하트
+    // 하트 - 리스닝/전송을 채널 하나로 재사용 (같은 topic을 중복 join하지 않도록)
     useEffect(() => {
         if (!liveId) return;
-        const unsubscribe = subscribeToLiveHearts(liveId, () => {
-            spawnHeart();
-        });
-        return unsubscribe;
+        const channel = openLiveHeartChannel(liveId, () => spawnHeart());
+        heartChannelRef.current = channel;
+        return () => {
+            closeLiveHeartChannel(channel);
+            heartChannelRef.current = null;
+        };
     }, [liveId]);
 
     const spawnHeart = () => {
@@ -84,7 +87,8 @@ const MocaLiveEngagement = ({ liveId }) => {
 
     const handleTapHeart = () => {
         spawnHeart();
-        sendLiveHeart(liveId);
+        broadcastLiveHeart(heartChannelRef.current);
+        incrementLiveHeart(liveId);
     };
 
     // 실시간 퀴즈
