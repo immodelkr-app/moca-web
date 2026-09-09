@@ -6,6 +6,7 @@ import {
     fetchVisibleQuiz, subscribeToLiveQuiz, fetchMyQuizAnswer, submitQuizAnswer,
     fetchVisibleNumberGame, subscribeToNumberGame, fetchMyNumberGameEntry, submitNumberGuess,
     fetchVisibleKeywordEvent, subscribeToKeywordEvent, fetchMyKeywordEntry, subscribeToKeywordEntries,
+    fetchPinnedMessage, subscribeToPinnedMessage,
 } from '../services/mocaLiveEngagementService';
 
 let heartUid = 0;
@@ -20,6 +21,8 @@ const MocaLiveEngagement = ({ liveId }) => {
     const [inputValue, setInputValue] = useState('');
     const [sending, setSending] = useState(false);
     const messagesEndRef = useRef(null);
+
+    const [pinned, setPinned] = useState(null);
 
     const [hearts, setHearts] = useState([]);
     const heartChannelRef = useRef(null);
@@ -53,6 +56,20 @@ const MocaLiveEngagement = ({ liveId }) => {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, [messages]);
+
+    // 고정 댓글
+    useEffect(() => {
+        if (!liveId) return;
+        let mounted = true;
+
+        fetchPinnedMessage(liveId).then((data) => { if (mounted) setPinned(data); });
+        const unsubscribe = subscribeToPinnedMessage(liveId, (updated) => {
+            if (!mounted) return;
+            setPinned(updated?.pinned_message ? updated : null);
+        });
+
+        return () => { mounted = false; unsubscribe(); };
+    }, [liveId]);
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
@@ -347,6 +364,17 @@ const MocaLiveEngagement = ({ liveId }) => {
 
             {/* 채팅 + 하트 */}
             <div className="rounded-2xl bg-black/40 backdrop-blur overflow-hidden flex flex-col">
+                {pinned && (
+                    <div className="flex items-start gap-1.5 px-3 py-2 bg-amber-400/15 border-b border-amber-400/20">
+                        <span className="text-[12px] flex-shrink-0 mt-0.5">📌</span>
+                        <p className="text-[12px] leading-snug font-bold text-amber-200 break-words">
+                            {pinned.pinned_message_author && (
+                                <span className="text-amber-300 font-black">{pinned.pinned_message_author}: </span>
+                            )}
+                            {pinned.pinned_message}
+                        </p>
+                    </div>
+                )}
                 <div className="h-40 overflow-y-auto px-3 py-2 flex flex-col gap-1.5 hide-scrollbar">
                     {messages.length === 0 && (
                         <p className="text-[11px] text-white/50 font-bold text-center py-4">첫 채팅을 남겨보세요!</p>

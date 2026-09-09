@@ -11,6 +11,8 @@ import {
     fetchNumberGameWinnerNicknames,
     fetchKeywordEventsForLive, createKeywordEvent, cancelKeywordEvent, endKeywordEventNow,
     fetchKeywordEventWinnerNicknames,
+    fetchLiveChatMessages, subscribeToLiveChat,
+    fetchPinnedMessage, setPinnedMessage, clearPinnedMessage,
 } from '../services/mocaLiveEngagementService';
 import { grantWinnerPoints } from '../services/quizService';
 
@@ -752,6 +754,123 @@ const AdminMocaLiveGamesPanel = ({ liveId }) => {
     );
 };
 
+// 고정 댓글(공지) 관리 - 직접 문구를 입력하거나 최근 채팅 중 하나를 골라 그대로 고정
+const AdminMocaLivePinnedMessagePanel = ({ liveId }) => {
+    const [pinned, setPinned] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [manualText, setManualText] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [msg, setMsg] = useState('');
+    const [recentChat, setRecentChat] = useState([]);
+
+    const load = async () => {
+        setLoading(true);
+        const [pin, chat] = await Promise.all([
+            fetchPinnedMessage(liveId),
+            fetchLiveChatMessages(liveId, 20),
+        ]);
+        setPinned(pin);
+        setRecentChat(chat);
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        load();
+        const unsubscribe = subscribeToLiveChat(liveId, (newMsg) => {
+            setRecentChat((prev) => [...prev.slice(-19), newMsg]);
+        });
+        return unsubscribe;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [liveId]);
+
+    const flash = (text) => { setMsg(text); setTimeout(() => setMsg(''), 3000); };
+
+    const handlePin = async (text, author) => {
+        if (!text.trim()) { flash('고정할 내용을 입력해주세요.'); return; }
+        setSaving(true);
+        const { error } = await setPinnedMessage(liveId, text, author || null);
+        setSaving(false);
+        if (error) { flash('고정 실패: ' + (error.message || '')); return; }
+        setManualText('');
+        flash('📌 고정되었습니다.');
+        await load();
+    };
+
+    const handleUnpin = async () => {
+        const { error } = await clearPinnedMessage(liveId);
+        if (error) { flash('해제 실패: ' + (error.message || '')); return; }
+        flash('고정이 해제되었습니다.');
+        await load();
+    };
+
+    return (
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
+            <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">📌 고정 댓글 관리</p>
+
+            {msg && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                    {msg}
+                </div>
+            )}
+
+            {pinned ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 flex items-start justify-between gap-2">
+                    <p className="text-[12px] font-bold text-amber-800 flex-1">
+                        {pinned.pinned_message_author && <span className="font-black">{pinned.pinned_message_author}: </span>}
+                        {pinned.pinned_message}
+                    </p>
+                    <button onClick={handleUnpin} className="text-[11px] font-black text-red-500 flex-shrink-0">해제</button>
+                </div>
+            ) : (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-3">현재 고정된 댓글이 없습니다.</p>
+            )}
+
+            <div className="bg-white rounded-xl p-3 mb-3 space-y-2">
+                <p className="text-[11px] font-bold text-[var(--moca-text-3)]">직접 입력해서 고정</p>
+                <div className="flex items-center gap-1.5">
+                    <input
+                        value={manualText}
+                        onChange={(e) => setManualText(e.target.value)}
+                        placeholder="예: 정답은 채팅에 그대로 쳐주세요!"
+                        className="flex-1 px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                    />
+                    <button
+                        onClick={() => handlePin(manualText, null)}
+                        disabled={saving || !manualText.trim()}
+                        className="px-3 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-[11px] font-black disabled:opacity-40"
+                    >
+                        📌 고정
+                    </button>
+                </div>
+            </div>
+
+            <p className="text-[11px] font-bold text-[var(--moca-text-3)] mb-1.5">최근 채팅에서 골라 고정</p>
+            {loading ? (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">불러오는 중...</p>
+            ) : recentChat.length === 0 ? (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">아직 채팅이 없습니다.</p>
+            ) : (
+                <div className="bg-white rounded-xl max-h-64 overflow-y-auto divide-y divide-[var(--moca-border)]">
+                    {recentChat.slice().reverse().map((c) => (
+                        <div key={c.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                            <p className="text-[11.5px] text-[var(--moca-text)] flex-1 truncate">
+                                <span className="font-black">{c.user_nickname}</span>: {c.message}
+                            </p>
+                            <button
+                                onClick={() => handlePin(c.message, c.user_nickname)}
+                                disabled={saving}
+                                className="text-[11px] font-bold text-[var(--moca-primary)] flex-shrink-0 disabled:opacity-40"
+                            >
+                                📌 고정
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const AdminMocaLive = () => {
     const [streams, setStreams] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -764,6 +883,7 @@ const AdminMocaLive = () => {
     const [pushResult, setPushResult] = useState(null);
     const [sendingPush, setSendingPush] = useState(false);
     const [quizPanelId, setQuizPanelId] = useState(null);
+    const [pinnedPanelId, setPinnedPanelId] = useState(null);
 
     const load = async () => {
         setLoading(true);
@@ -1106,6 +1226,12 @@ const AdminMocaLive = () => {
                                                     >
                                                         🎮 게임 {quizPanelId === s.id ? '닫기' : '관리'}
                                                     </button>
+                                                    <button
+                                                        onClick={() => setPinnedPanelId(pinnedPanelId === s.id ? null : s.id)}
+                                                        className="text-[11px] font-black text-amber-600 hover:underline"
+                                                    >
+                                                        📌 고정댓글 {pinnedPanelId === s.id ? '닫기' : '관리'}
+                                                    </button>
                                                     <button onClick={() => openEdit(s)} className="text-[11px] font-black text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">✏️ 수정</button>
                                                     <button onClick={() => handleDelete(s)} className="text-[11px] font-black text-[var(--moca-text-3)] hover:text-red-500">삭제</button>
                                                 </div>
@@ -1115,6 +1241,13 @@ const AdminMocaLive = () => {
                                             <tr>
                                                 <td colSpan={5} className="pb-3">
                                                     <AdminMocaLiveGamesPanel liveId={s.id} />
+                                                </td>
+                                            </tr>
+                                        )}
+                                        {pinnedPanelId === s.id && (
+                                            <tr>
+                                                <td colSpan={5} className="pb-3">
+                                                    <AdminMocaLivePinnedMessagePanel liveId={s.id} />
                                                 </td>
                                             </tr>
                                         )}

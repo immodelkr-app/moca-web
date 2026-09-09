@@ -57,6 +57,69 @@ export const subscribeToLiveChat = (liveId, onNewMessage) => {
     return () => supabase.removeChannel(channel);
 };
 
+// --- 고정 댓글(공지) ---
+// 라이브당 1건만 고정 가능. 관리자가 직접 문구를 입력하거나, 기존 채팅 메시지 중 하나를
+// 골라 그대로 고정할 수 있다.
+
+export const fetchPinnedMessage = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return null;
+
+    const { data, error } = await supabase
+        .from('moca_live_streams')
+        .select('pinned_message, pinned_message_author, pinned_message_at')
+        .eq('id', liveId)
+        .maybeSingle();
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 고정 댓글 조회 실패:', error);
+        return null;
+    }
+    return data?.pinned_message ? data : null;
+};
+
+export const subscribeToPinnedMessage = (liveId, onChange) => {
+    if (!isSupabaseEnabled() || !liveId) return () => {};
+
+    const channel = supabase
+        .channel(`moca_live_pinned_${liveId}`)
+        .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'moca_live_streams', filter: `id=eq.${liveId}` },
+            (payload) => onChange(payload.new)
+        )
+        .subscribe();
+
+    return () => supabase.removeChannel(channel);
+};
+
+export const setPinnedMessage = async (liveId, message, author) => {
+    if (!isSupabaseEnabled() || !liveId || !message?.trim()) return { error: new Error('고정 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_streams')
+        .update({
+            pinned_message: message.trim(),
+            pinned_message_author: author || null,
+            pinned_message_at: new Date().toISOString(),
+        })
+        .eq('id', liveId);
+
+    if (error) console.error('[mocaLiveEngagementService] 고정 댓글 설정 실패:', error);
+    return { error };
+};
+
+export const clearPinnedMessage = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return { error: new Error('해제 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_streams')
+        .update({ pinned_message: null, pinned_message_author: null, pinned_message_at: null })
+        .eq('id', liveId);
+
+    if (error) console.error('[mocaLiveEngagementService] 고정 댓글 해제 실패:', error);
+    return { error };
+};
+
 // --- 하트 ---
 
 // 누적 카운트는 RPC로 원자적으로 증가시키고, 다른 시청자 화면의 하트 애니메이션은
