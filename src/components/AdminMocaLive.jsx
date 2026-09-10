@@ -13,10 +13,25 @@ import {
     fetchKeywordEventWinnerNicknames,
     fetchLiveChatMessages, subscribeToLiveChat,
     fetchPinnedMessage, setPinnedMessage, clearPinnedMessage,
+    openLiveViewerPresence, closeLiveViewerPresence,
 } from '../services/mocaLiveEngagementService';
 import { grantWinnerPoints } from '../services/quizService';
 
 const MAX_COVER_MB = 10;
+
+// 관리자는 시청자로 집계되지 않도록 track() 없이 상태만 구독해서 인원수를 읽는다.
+const LiveViewerCount = ({ liveId }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        if (!liveId) return;
+        const channel = openLiveViewerPresence(liveId, setCount, false);
+        return () => closeLiveViewerPresence(channel);
+    }, [liveId]);
+
+    if (count === 0) return null;
+    return <span className="ml-1.5 text-[10px] font-black text-[var(--moca-text-3)] align-middle">👀 {count}명</span>;
+};
 
 const EMPTY_FORM = {
     title: '',
@@ -1183,10 +1198,11 @@ const AdminMocaLive = () => {
                                     {streams.map((s) => (
                                         <React.Fragment key={s.id}>
                                         <tr className="border-b border-[var(--moca-border)] last:border-0">
-                                            <td className="py-2.5 pr-3">
+                                            <td className="py-2.5 pr-3 whitespace-nowrap">
                                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${s.is_live ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
                                                     {s.is_live ? '🔴 라이브 중' : '대기'}
                                                 </span>
+                                                {s.is_live && <LiveViewerCount liveId={s.id} />}
                                             </td>
                                             <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)] max-w-[240px] truncate">
                                                 <span className="inline-block mr-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-gray-100 text-gray-500 align-middle">

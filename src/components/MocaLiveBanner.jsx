@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { fetchActiveMocaLive } from '../services/mocaLiveService';
+import { openLiveViewerPresence, closeLiveViewerPresence } from '../services/mocaLiveEngagementService';
 import { getUserGrade } from '../services/userService';
 import MocaLiveEngagement from './MocaLiveEngagement';
 
@@ -52,6 +53,7 @@ const MocaLiveBanner = () => {
     const [live, setLive] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showPlayer, setShowPlayer] = useState(false);
+    const [viewerCount, setViewerCount] = useState(0);
 
     useEffect(() => {
         let mounted = true;
@@ -63,6 +65,16 @@ const MocaLiveBanner = () => {
         });
         return () => { mounted = false; };
     }, []);
+
+    // 플레이어를 실제로 열어놓은 동안만 시청자로 집계 (닫으면 카운트에서 빠짐)
+    useEffect(() => {
+        if (!showPlayer || !live?.id) return;
+        const channel = openLiveViewerPresence(live.id, setViewerCount, true);
+        return () => {
+            closeLiveViewerPresence(channel);
+            setViewerCount(0);
+        };
+    }, [showPlayer, live?.id]);
 
     if (loading || !live) return null;
 
@@ -114,7 +126,12 @@ const MocaLiveBanner = () => {
                 >
                     <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-3 px-1">
-                            <h4 className="text-white font-black text-sm truncate pr-3">{live.title}</h4>
+                            <div className="flex items-center gap-2 min-w-0">
+                                <h4 className="text-white font-black text-sm truncate">{live.title}</h4>
+                                {viewerCount > 0 && (
+                                    <span className="flex-shrink-0 text-[10px] font-black text-white/70">👀 {viewerCount}명 시청 중</span>
+                                )}
+                            </div>
                             <button onClick={() => setShowPlayer(false)} className="text-white/80 hover:text-white flex-shrink-0">
                                 <span className="material-symbols-outlined text-[26px]">close</span>
                             </button>

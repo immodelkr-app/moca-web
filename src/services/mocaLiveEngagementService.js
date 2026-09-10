@@ -147,6 +147,34 @@ export const broadcastLiveHeart = (channel) => {
     channel.send({ type: 'broadcast', event: 'heart', payload: {} });
 };
 
+// --- 실시간 시청자 수 ---
+// DB에 남기지 않고 Realtime Presence로만 집계한다. asViewer=true로 열면 실제로 플레이어를
+// 연 사람으로 자신을 등록(track)하고, 관리자 모니터링 화면은 asViewer=false로 열어 상태만
+// 구독해서 관리자 본인은 시청자 수에 포함되지 않게 한다.
+export const openLiveViewerPresence = (liveId, onCountChange, asViewer = false) => {
+    if (!isSupabaseEnabled() || !liveId) return null;
+
+    const channel = supabase.channel(`moca_live_viewers_${liveId}`, {
+        config: { presence: { key: `${Date.now()}_${Math.random().toString(36).slice(2)}` } },
+    });
+
+    channel
+        .on('presence', { event: 'sync' }, () => {
+            onCountChange(Object.keys(channel.presenceState()).length);
+        })
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED' && asViewer) {
+                channel.track({ online_at: new Date().toISOString() });
+            }
+        });
+
+    return channel;
+};
+
+export const closeLiveViewerPresence = (channel) => {
+    if (channel) supabase.removeChannel(channel);
+};
+
 export const incrementLiveHeart = async (liveId) => {
     if (!isSupabaseEnabled() || !liveId) return { count: null, error: new Error('전송 불가') };
 
