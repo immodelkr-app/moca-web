@@ -380,9 +380,14 @@ const MocaLiveEngagement = ({ liveId }) => {
                         <p className="text-[11px] text-white/50 font-bold text-center py-4">첫 채팅을 남겨보세요!</p>
                     )}
                     {messages.map((msg, idx) => (
-                        <div key={msg.id || idx} className="flex items-baseline gap-1.5 text-[12px] leading-snug">
-                            <span className="font-black text-[#C084FC] flex-shrink-0">{msg.user_nickname}</span>
-                            <span className="text-white/90 font-medium break-words">{msg.message}</span>
+                        <div
+                            key={msg.id || idx}
+                            className={`flex items-baseline gap-1.5 text-[12px] leading-snug ${msg.is_host ? 'bg-amber-400/15 rounded-lg px-1.5 py-1 -mx-1.5' : ''}`}
+                        >
+                            <span className={`font-black flex-shrink-0 ${msg.is_host ? 'text-amber-300' : 'text-[#C084FC]'}`}>
+                                {msg.is_host && '👑 '}{msg.user_nickname}
+                            </span>
+                            <span className={`font-medium break-words ${msg.is_host ? 'text-amber-100' : 'text-white/90'}`}>{msg.message}</span>
                             <span className="text-[9px] text-white/40 flex-shrink-0 ml-auto">{formatTime(msg.created_at)}</span>
                         </div>
                     ))}

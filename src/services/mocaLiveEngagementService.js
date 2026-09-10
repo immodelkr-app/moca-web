@@ -31,12 +31,12 @@ export const fetchLiveChatMessages = async (liveId, limit = 50) => {
     return data.reverse();
 };
 
-export const sendLiveChatMessage = async (liveId, userNickname, message) => {
+export const sendLiveChatMessage = async (liveId, userNickname, message, { isHost = false } = {}) => {
     if (!isSupabaseEnabled() || !liveId || !message?.trim()) return { error: new Error('전송 불가') };
 
     const { error } = await supabase
         .from('moca_live_chat_messages')
-        .insert([{ live_id: liveId, user_nickname: userNickname, message: message.trim() }]);
+        .insert([{ live_id: liveId, user_nickname: userNickname, message: message.trim(), is_host: isHost }]);
 
     if (error) console.error('[mocaLiveEngagementService] 채팅 전송 실패:', error);
     return { error };

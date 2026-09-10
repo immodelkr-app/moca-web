@@ -11,7 +11,7 @@ import {
     fetchNumberGameWinnerNicknames,
     fetchKeywordEventsForLive, createKeywordEvent, cancelKeywordEvent, endKeywordEventNow,
     fetchKeywordEventWinnerNicknames,
-    fetchLiveChatMessages, subscribeToLiveChat,
+    fetchLiveChatMessages, subscribeToLiveChat, sendLiveChatMessage,
     fetchPinnedMessage, setPinnedMessage, clearPinnedMessage,
     openLiveViewerPresence, closeLiveViewerPresence,
 } from '../services/mocaLiveEngagementService';
@@ -769,14 +769,19 @@ const AdminMocaLiveGamesPanel = ({ liveId }) => {
     );
 };
 
-// 고정 댓글(공지) 관리 - 직접 문구를 입력하거나 최근 채팅 중 하나를 골라 그대로 고정
-const AdminMocaLivePinnedMessagePanel = ({ liveId }) => {
+// 고정 댓글(공지) + 운영자 채팅 관리
+// - 고정 댓글: 직접 문구를 입력하거나 최근 채팅 중 하나를 골라 그대로 고정
+// - 운영자 채팅: 시청자처럼 프론트에 로그인하지 않아도 여기서 바로 채팅에 메시지를 보낼 수 있음
+//   (is_host=true로 저장되어 시청자 화면 채팅창에 다른 색/배지로 구분 표시됨)
+const AdminMocaLivePinnedMessagePanel = ({ liveId, streamerName }) => {
     const [pinned, setPinned] = useState(null);
     const [loading, setLoading] = useState(true);
     const [manualText, setManualText] = useState('');
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState('');
     const [recentChat, setRecentChat] = useState([]);
+    const [chatInput, setChatInput] = useState('');
+    const [sendingChat, setSendingChat] = useState(false);
 
     const load = async () => {
         setLoading(true);
@@ -818,8 +823,39 @@ const AdminMocaLivePinnedMessagePanel = ({ liveId }) => {
         await load();
     };
 
+    const handleSendChat = async () => {
+        const text = chatInput.trim();
+        if (!text || sendingChat) return;
+        setSendingChat(true);
+        const { error } = await sendLiveChatMessage(liveId, streamerName || '김대표', text, { isHost: true });
+        setSendingChat(false);
+        if (error) { flash('채팅 전송 실패: ' + (error.message || '')); return; }
+        setChatInput('');
+    };
+
     return (
         <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
+            <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">👑 운영자 채팅 보내기</p>
+            <div className="bg-white rounded-xl p-3 mb-4 space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                    <input
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSendChat(); }}
+                        placeholder={`${streamerName || '김대표'}(으)로 채팅 보내기`}
+                        className="flex-1 px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                    />
+                    <button
+                        onClick={handleSendChat}
+                        disabled={sendingChat || !chatInput.trim()}
+                        className="px-3 py-2 rounded-lg bg-amber-500 text-white text-[11px] font-black disabled:opacity-40"
+                    >
+                        {sendingChat ? '전송 중...' : '👑 전송'}
+                    </button>
+                </div>
+                <p className="text-[10px] text-[var(--moca-text-3)]">프론트에 로그인하지 않아도 여기서 바로 채팅을 보낼 수 있어요. 시청자 화면엔 👑 배지와 강조색으로 표시됩니다.</p>
+            </div>
+
             <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">📌 고정 댓글 관리</p>
 
             {msg && (
@@ -869,7 +905,7 @@ const AdminMocaLivePinnedMessagePanel = ({ liveId }) => {
                     {recentChat.slice().reverse().map((c) => (
                         <div key={c.id} className="flex items-center justify-between gap-2 px-3 py-2">
                             <p className="text-[11.5px] text-[var(--moca-text)] flex-1 truncate">
-                                <span className="font-black">{c.user_nickname}</span>: {c.message}
+                                <span className={`font-black ${c.is_host ? 'text-amber-600' : ''}`}>{c.is_host && '👑 '}{c.user_nickname}</span>: {c.message}
                             </p>
                             <button
                                 onClick={() => handlePin(c.message, c.user_nickname)}
@@ -1263,7 +1299,7 @@ const AdminMocaLive = () => {
                                         {pinnedPanelId === s.id && (
                                             <tr>
                                                 <td colSpan={5} className="pb-3">
-                                                    <AdminMocaLivePinnedMessagePanel liveId={s.id} />
+                                                    <AdminMocaLivePinnedMessagePanel liveId={s.id} streamerName={s.streamer_name} />
                                                 </td>
                                             </tr>
                                         )}
