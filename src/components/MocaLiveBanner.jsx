@@ -7,7 +7,11 @@ import MocaLiveEngagement from './MocaLiveEngagement';
 const GOLD_OR_ABOVE = ['GOLD', 'IMODEL', 'VIP'];
 
 // RTMP(AWS IVS 등) 채널의 HLS 재생 URL을 재생하는 플레이어.
-// Safari/iOS는 <video>가 HLS를 네이티브로 지원하므로 그대로 두고, 그 외 브라우저는 hls.js로 붙인다.
+// MediaSource(hls.js)를 지원하는 브라우저는 전부 hls.js로 붙인다. Chrome/Android WebView는
+// canPlayType('application/vnd.apple.mpegurl')에 "maybe"를 잘못 반환하는 경우가 있어
+// (실제로는 네이티브 HLS 재생을 못 해 MEDIA_ERR_SRC_NOT_SUPPORTED로 조용히 실패함),
+// canPlayType을 먼저 보지 않고 Hls.isSupported()를 우선 확인한다.
+// 네이티브 HLS만 되고 MSE가 없는 환경(Safari/iOS)은 canPlayType 경로로 폴백한다.
 const RtmpPlayer = ({ src, title }) => {
     const videoRef = useRef(null);
 
@@ -15,18 +19,18 @@ const RtmpPlayer = ({ src, title }) => {
         const video = videoRef.current;
         if (!video || !src) return;
 
-        if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = src;
-            video.play().catch(() => {});
-            return;
-        }
-
         if (Hls.isSupported()) {
             const hls = new Hls();
             hls.loadSource(src);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
             return () => hls.destroy();
+        }
+
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = src;
+            video.play().catch(() => {});
+            return;
         }
     }, [src]);
 
