@@ -126,6 +126,7 @@ const MocaLiveEngagement = ({ liveId }) => {
 
         const unsubscribe = subscribeToLiveQuiz(liveId, async (updated) => {
             if (!mounted || !updated) return;
+            if (updated.status === 'archived') { setQuiz(null); setMyAnswer(null); return; }
             setQuiz(updated);
             const ans = await fetchMyQuizAnswer(updated.id, myNickname);
             if (mounted) setMyAnswer(ans);
@@ -162,6 +163,7 @@ const MocaLiveEngagement = ({ liveId }) => {
 
         const unsubscribe = subscribeToNumberGame(liveId, async (updated) => {
             if (!mounted || !updated) return;
+            if (updated.status === 'archived') { setNumberGame(null); setMyNumberEntry(null); return; }
             setNumberGame(updated);
         });
 
@@ -210,6 +212,7 @@ const MocaLiveEngagement = ({ liveId }) => {
 
         const unsubscribeEvent = subscribeToKeywordEvent(liveId, (updated) => {
             if (!mounted || !updated) return;
+            if (updated.status === 'archived') { setKeywordEvent(null); setMyKeywordEntry(null); return; }
             setKeywordEvent(updated);
         });
         const unsubscribeEntries = subscribeToKeywordEntries(liveId, (entry) => {

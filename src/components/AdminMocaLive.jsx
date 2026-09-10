@@ -5,11 +5,11 @@ import {
 } from '../services/mocaLiveService';
 import { sendBroadcastPush } from '../services/pushNotificationService';
 import {
-    fetchQuizzesForLive, createLiveQuiz, openLiveQuiz, closeLiveQuiz,
+    fetchQuizzesForLive, createLiveQuiz, openLiveQuiz, closeLiveQuiz, archiveLiveQuiz,
     fetchCorrectAnswererNicknames, fetchQuizAnswerStats,
-    fetchNumberGamesForLive, createNumberGame, cancelNumberGame, endNumberGameNow,
+    fetchNumberGamesForLive, createNumberGame, cancelNumberGame, endNumberGameNow, archiveNumberGame,
     fetchNumberGameWinnerNicknames,
-    fetchKeywordEventsForLive, createKeywordEvent, cancelKeywordEvent, endKeywordEventNow,
+    fetchKeywordEventsForLive, createKeywordEvent, cancelKeywordEvent, endKeywordEventNow, archiveKeywordEvent,
     fetchKeywordEventWinnerNicknames,
     fetchLiveChatMessages, subscribeToLiveChat, sendLiveChatMessage,
     fetchPinnedMessage, setPinnedMessage, clearPinnedMessage,
@@ -212,6 +212,16 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
         flash(`포인트 지급 완료: 성공 ${successCount}건 / 실패 ${results.length - successCount}건`);
     };
 
+    // 시청자 화면에서 내리기(보관) - 응답 기록/포인트 지급 이력은 그대로 남는다.
+    // 방송을 껐다 켜도 지난 퀴즈 결과가 다시 노출되는 걸 막기 위해 다음 퀴즈 전 눌러준다.
+    const handleArchive = async (quiz) => {
+        if (!window.confirm('이 퀴즈를 시청자 화면에서 내릴까요? (응답 기록은 어드민에 그대로 남습니다)')) return;
+        const { error } = await archiveLiveQuiz(quiz.id);
+        if (error) { flash('보관 실패: ' + (error.message || '')); return; }
+        flash('🗄 시청자 화면에서 내려갔습니다.');
+        await load();
+    };
+
     return (
         <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
             <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">🎮 실시간 퀴즈 관리</p>
@@ -275,9 +285,10 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
                                     <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black ${
                                         q.status === 'open' ? 'bg-red-100 text-red-700'
                                         : q.status === 'closed' ? 'bg-gray-100 text-gray-500'
+                                        : q.status === 'archived' ? 'bg-slate-100 text-slate-400'
                                         : 'bg-amber-100 text-amber-700'
                                     }`}>
-                                        {q.status === 'open' ? '🔴 진행 중' : q.status === 'closed' ? '마감' : '대기(초안)'}
+                                        {q.status === 'open' ? '🔴 진행 중' : q.status === 'closed' ? '마감' : q.status === 'archived' ? '🗄 보관됨' : '대기(초안)'}
                                     </span>
                                 </div>
 
@@ -336,6 +347,9 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
                                                     className="text-[11px] font-black text-amber-600 disabled:opacity-40"
                                                 >
                                                     {grantingQuizId === q.id ? '지급 중...' : '🎁 정답자 포인트 지급'}
+                                                </button>
+                                                <button onClick={() => handleArchive(q)} className="text-[11px] font-black text-slate-400 hover:text-slate-600">
+                                                    🗄 내리기
                                                 </button>
                                             </>
                                         )}
@@ -433,6 +447,15 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
         flash(`포인트 지급 완료: 성공 ${successCount}건 / 실패 ${results.length - successCount}건`);
     };
 
+    // 시청자 화면에서 내리기(보관) - 당첨 기록/포인트 지급 이력은 그대로 남는다.
+    const handleArchive = async (game) => {
+        if (!window.confirm('이 게임을 시청자 화면에서 내릴까요? (당첨 기록은 어드민에 그대로 남습니다)')) return;
+        const { error } = await archiveNumberGame(game.id);
+        if (error) { flash('보관 실패: ' + (error.message || '')); return; }
+        flash('🗄 시청자 화면에서 내려갔습니다.');
+        await load();
+    };
+
     return (
         <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
             <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">🔢 숫자 맞추기 관리</p>
@@ -512,9 +535,10 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
                                 <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black ${
                                     g.status === 'open' ? 'bg-red-100 text-red-700'
                                     : g.status === 'closed' ? 'bg-gray-100 text-gray-500'
+                                    : g.status === 'archived' ? 'bg-slate-100 text-slate-400'
                                     : 'bg-gray-100 text-gray-400'
                                 }`}>
-                                    {g.status === 'open' ? '🔴 진행 중' : g.status === 'closed' ? '마감' : '취소됨'}
+                                    {g.status === 'open' ? '🔴 진행 중' : g.status === 'closed' ? '마감' : g.status === 'archived' ? '🗄 보관됨' : '취소됨'}
                                 </span>
                             </div>
                             <p className="text-[10px] text-[var(--moca-text-3)] mb-2">
@@ -543,6 +567,9 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
                                             className="text-[11px] font-black text-amber-600 disabled:opacity-40"
                                         >
                                             {grantingGameId === g.id ? '지급 중...' : '🎁 당첨자 포인트 지급'}
+                                        </button>
+                                        <button onClick={() => handleArchive(g)} className="text-[11px] font-black text-slate-400 hover:text-slate-600">
+                                            🗄 내리기
                                         </button>
                                     </>
                                 )}
@@ -629,6 +656,15 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
         flash(`포인트 지급 완료: 성공 ${successCount}건 / 실패 ${results.length - successCount}건`);
     };
 
+    // 시청자 화면에서 내리기(보관) - 당첨 기록/포인트 지급 이력은 그대로 남는다.
+    const handleArchive = async (event) => {
+        if (!window.confirm('이 이벤트를 시청자 화면에서 내릴까요? (당첨 기록은 어드민에 그대로 남습니다)')) return;
+        const { error } = await archiveKeywordEvent(event.id);
+        if (error) { flash('보관 실패: ' + (error.message || '')); return; }
+        flash('🗄 시청자 화면에서 내려갔습니다.');
+        await load();
+    };
+
     return (
         <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
             <p className="text-[12px] font-black text-[var(--moca-text)] mb-1">💬 정답 맞추기 이벤트 관리</p>
@@ -693,9 +729,10 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
                                 <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black ${
                                     e.status === 'open' ? 'bg-red-100 text-red-700'
                                     : e.status === 'closed' ? 'bg-gray-100 text-gray-500'
+                                    : e.status === 'archived' ? 'bg-slate-100 text-slate-400'
                                     : 'bg-gray-100 text-gray-400'
                                 }`}>
-                                    {e.status === 'open' ? '🔴 진행 중' : e.status === 'closed' ? '마감' : '취소됨'}
+                                    {e.status === 'open' ? '🔴 진행 중' : e.status === 'closed' ? '마감' : e.status === 'archived' ? '🗄 보관됨' : '취소됨'}
                                 </span>
                             </div>
                             <p className="text-[10px] text-[var(--moca-text-3)] mb-2">
@@ -724,6 +761,9 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
                                             className="text-[11px] font-black text-amber-600 disabled:opacity-40"
                                         >
                                             {grantingEventId === e.id ? '지급 중...' : '🎁 당첨자 포인트 지급'}
+                                        </button>
+                                        <button onClick={() => handleArchive(e)} className="text-[11px] font-black text-slate-400 hover:text-slate-600">
+                                            🗄 내리기
                                         </button>
                                     </>
                                 )}

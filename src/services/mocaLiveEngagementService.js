@@ -324,6 +324,19 @@ export const closeLiveQuiz = async (quizId, correctOptionIndex) => {
     return { data, error: null };
 };
 
+// 시청자 화면에서 내리기(보관) - 응답 기록은 남기고 fetchVisibleQuiz 대상에서만 제외시켜
+// 다음 방송(재시작)에서 지난 결과가 다시 노출되지 않게 한다.
+export const archiveLiveQuiz = async (quizId) => {
+    if (!isSupabaseEnabled()) return { error: new Error('보관 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_quiz')
+        .update({ status: 'archived' })
+        .eq('id', quizId);
+
+    return { error };
+};
+
 // 정답을 맞춘 시청자 닉네임 목록 (빨리 답한 순)
 export const fetchCorrectAnswererNicknames = async (quizId) => {
     if (!isSupabaseEnabled() || !quizId) return [];
@@ -493,6 +506,18 @@ export const endNumberGameNow = async (gameId) => {
     return { error };
 };
 
+// 시청자 화면에서 내리기(보관) - 당첨 기록은 남기고 fetchVisibleNumberGame 대상에서만 제외
+export const archiveNumberGame = async (gameId) => {
+    if (!isSupabaseEnabled()) return { error: new Error('보관 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_number_game')
+        .update({ status: 'archived' })
+        .eq('id', gameId);
+
+    return { error };
+};
+
 export const fetchNumberGameWinnerNicknames = async (gameId) => {
     if (!isSupabaseEnabled() || !gameId) return [];
 
@@ -637,6 +662,18 @@ export const endKeywordEventNow = async (eventId) => {
         .update({ status: 'closed', closed_at: new Date().toISOString() })
         .eq('id', eventId)
         .eq('status', 'open');
+
+    return { error };
+};
+
+// 시청자 화면에서 내리기(보관) - 당첨 기록은 남기고 fetchVisibleKeywordEvent 대상에서만 제외
+export const archiveKeywordEvent = async (eventId) => {
+    if (!isSupabaseEnabled()) return { error: new Error('보관 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_keyword_event')
+        .update({ status: 'archived' })
+        .eq('id', eventId);
 
     return { error };
 };
