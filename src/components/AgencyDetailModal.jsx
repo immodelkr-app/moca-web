@@ -1,12 +1,10 @@
 import React from 'react';
-import { getUserGrade } from '../services/userService';
 import { getLocalKey } from '../services/diaryService';
 import { getNaverMapUrl } from '../lib/naverMap';
 
 const AgencyDetailModal = ({ agency, onClose, onWriteMemo, onSendProfile, sendInfo }) => {
     if (!agency) return null;
 
-    const userGrade = getUserGrade();
     const naverMapsUrl = getNaverMapUrl(agency);
 
     // 투어일지 기록 가져오기
@@ -87,15 +85,9 @@ const AgencyDetailModal = ({ agency, onClose, onWriteMemo, onSendProfile, sendIn
                         {agency.email ? (
                             <div className="flex items-center gap-3 pt-2 border-t border-gray-200/60">
                                 <span className="material-symbols-outlined text-[18px] text-[#6C63FF]">mail</span>
-                                {userGrade === 'GOLD' || userGrade === 'VIP' || userGrade === 'IMODEL' ? (
-                                    <a href={`mailto:${agency.email}`} className="text-sm font-bold text-[#6C63FF] hover:underline">
-                                        {agency.email}
-                                    </a>
-                                ) : (
-                                    <span className="text-xs text-gray-400 font-medium">
-                                        🔒 이메일은 GOLD 등급 이상에게만 공개됩니다
-                                    </span>
-                                )}
+                                <a href={`mailto:${agency.email}`} className="text-sm font-bold text-[#6C63FF] hover:underline">
+                                    {agency.email}
+                                </a>
                             </div>
                         ) : null}
 
