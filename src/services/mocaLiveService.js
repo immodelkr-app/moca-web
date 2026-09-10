@@ -49,6 +49,24 @@ export const uploadMocaLiveCover = async (file) => {
     }
 };
 
+// 홈 대시보드용 - is_live 변경(시작/종료)을 실시간으로 반영. 배너가 마운트 시 한 번만
+// 조회하면, 이미 화면을 열어둔 사용자는 관리자가 종료해도 새로고침 전까지 썸네일이
+// 그대로 남아있게 되어(눌러도 재생 안 되는 죽은 배너) 추가함.
+export const subscribeToActiveMocaLive = (onChange) => {
+    if (!isSupabaseEnabled()) return () => {};
+
+    const channel = supabase
+        .channel('moca_live_streams_active')
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'moca_live_streams' },
+            () => { fetchActiveMocaLive().then(onChange); }
+        )
+        .subscribe();
+
+    return () => supabase.removeChannel(channel);
+};
+
 // 홈 대시보드용 - 현재 라이브 중인 방송 1건 조회
 export const fetchActiveMocaLive = async () => {
     if (!isSupabaseEnabled()) return null;

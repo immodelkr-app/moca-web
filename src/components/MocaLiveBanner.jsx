@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
-import { fetchActiveMocaLive } from '../services/mocaLiveService';
+import { fetchActiveMocaLive, subscribeToActiveMocaLive } from '../services/mocaLiveService';
 import { openLiveViewerPresence, closeLiveViewerPresence } from '../services/mocaLiveEngagementService';
 import { getUserGrade } from '../services/userService';
 import MocaLiveEngagement from './MocaLiveEngagement';
@@ -55,6 +55,9 @@ const MocaLiveBanner = () => {
     const [showPlayer, setShowPlayer] = useState(false);
     const [viewerCount, setViewerCount] = useState(0);
 
+    const liveIdRef = useRef(null);
+    useEffect(() => { liveIdRef.current = live?.id ?? null; }, [live]);
+
     useEffect(() => {
         let mounted = true;
         fetchActiveMocaLive().then((data) => {
@@ -64,6 +67,16 @@ const MocaLiveBanner = () => {
             }
         });
         return () => { mounted = false; };
+    }, []);
+
+    // 관리자가 방송을 시작/종료하면 즉시 반영 (안 하면 이미 화면을 열어둔 사용자에게는
+    // 종료된 뒤에도 새로고침 전까지 눌러도 재생 안 되는 죽은 썸네일이 계속 남아있게 됨)
+    useEffect(() => {
+        const unsubscribe = subscribeToActiveMocaLive((data) => {
+            if (!data || data.id !== liveIdRef.current) setShowPlayer(false);
+            setLive(data);
+        });
+        return unsubscribe;
     }, []);
 
     // 플레이어를 실제로 열어놓은 동안만 시청자로 집계 (닫으면 카운트에서 빠짐)
