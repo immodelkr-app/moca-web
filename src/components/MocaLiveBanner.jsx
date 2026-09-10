@@ -37,7 +37,7 @@ const RtmpPlayer = ({ src, title }) => {
     return (
         <video
             ref={videoRef}
-            className="w-full h-full"
+            className="w-full h-full object-contain"
             controls
             autoPlay
             playsInline
