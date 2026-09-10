@@ -54,6 +54,7 @@ const MocaLiveBanner = () => {
     const [loading, setLoading] = useState(true);
     const [showPlayer, setShowPlayer] = useState(false);
     const [viewerCount, setViewerCount] = useState(0);
+    const [shareSuccess, setShareSuccess] = useState(false);
 
     const liveIdRef = useRef(null);
     useEffect(() => { liveIdRef.current = live?.id ?? null; }, [live]);
@@ -88,6 +89,21 @@ const MocaLiveBanner = () => {
             setViewerCount(0);
         };
     }, [showPlayer, live?.id]);
+
+    const handleShare = async () => {
+        const shareData = {
+            title: `🔴 모카TV 라이브 - ${live.title}`,
+            text: `${live.streamer_name}님의 라이브 방송이 진행 중이에요! 지금 아임모카에서 함께 보세요 🎥`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            try { await navigator.share(shareData); } catch (e) {}
+        } else {
+            await navigator.clipboard.writeText(window.location.href);
+            setShareSuccess(true);
+            setTimeout(() => setShareSuccess(false), 2500);
+        }
+    };
 
     if (loading || !live) return null;
 
@@ -145,9 +161,14 @@ const MocaLiveBanner = () => {
                                     <span className="flex-shrink-0 text-[10px] font-black text-white/70">👀 {viewerCount}명 시청 중</span>
                                 )}
                             </div>
-                            <button onClick={() => setShowPlayer(false)} className="text-white/80 hover:text-white flex-shrink-0">
-                                <span className="material-symbols-outlined text-[26px]">close</span>
-                            </button>
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                                <button onClick={handleShare} className={shareSuccess ? 'text-emerald-400' : 'text-white/80 hover:text-white'}>
+                                    <span className="material-symbols-outlined text-[22px]">{shareSuccess ? 'check' : 'ios_share'}</span>
+                                </button>
+                                <button onClick={() => setShowPlayer(false)} className="text-white/80 hover:text-white">
+                                    <span className="material-symbols-outlined text-[26px]">close</span>
+                                </button>
+                            </div>
                         </div>
                         <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black">
                             {live.stream_type === 'rtmp' ? (

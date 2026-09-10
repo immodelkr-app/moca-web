@@ -3,7 +3,8 @@ import {
     fetchAllMocaLiveStreams, createMocaLiveStream, updateMocaLiveStream,
     deleteMocaLiveStream, goLive, stopLive, extractYoutubeVideoId, uploadMocaLiveCover,
 } from '../services/mocaLiveService';
-import { sendBroadcastPush } from '../services/pushNotificationService';
+import { sendBroadcastPush, fetchUsersWithoutPushToken } from '../services/pushNotificationService';
+import { sendFriendtalk } from '../services/solapiService';
 import {
     fetchQuizzesForLive, createLiveQuiz, openLiveQuiz, closeLiveQuiz, archiveLiveQuiz,
     fetchCorrectAnswererNicknames, fetchQuizAnswerStats,
@@ -100,15 +101,29 @@ const CoverUploader = ({ value, onChange, onError }) => {
     );
 };
 
-const PushResultBadge = ({ result }) => {
-    if (!result) return null;
-    if (!result.success) {
-        return <p className="text-[11px] font-bold text-red-500 mt-1.5">발송 실패: {result.error}</p>;
-    }
+const PushResultBadge = ({ result, solapiResult }) => {
+    if (!result && !solapiResult) return null;
     return (
-        <p className="text-[11px] font-bold text-emerald-600 mt-1.5">
-            발송 완료 · 성공 {result.successCount}건 / 실패 {result.failCount}건
-        </p>
+        <div className="mt-1.5 space-y-0.5">
+            {result && (
+                result.success ? (
+                    <p className="text-[11px] font-bold text-emerald-600">
+                        📲 앱 푸시 · 성공 {result.successCount}건 / 실패 {result.failCount}건
+                    </p>
+                ) : (
+                    <p className="text-[11px] font-bold text-red-500">📲 앱 푸시 발송 실패: {result.error}</p>
+                )
+            )}
+            {solapiResult && (
+                solapiResult.success ? (
+                    <p className="text-[11px] font-bold text-emerald-600">
+                        💬 카카오톡/문자(앱 미설치·푸시 미허용 회원) · {solapiResult.count}명 발송
+                    </p>
+                ) : (
+                    <p className="text-[11px] font-bold text-red-500">💬 카카오톡/문자 발송 실패: {solapiResult.error}</p>
+                )
+            )}
+        </div>
     );
 };
 
@@ -972,6 +987,7 @@ const AdminMocaLive = () => {
     const [error, setError] = useState('');
     const [msg, setMsg] = useState('');
     const [pushResult, setPushResult] = useState(null);
+    const [solapiResult, setSolapiResult] = useState(null);
     const [sendingPush, setSendingPush] = useState(false);
     const [quizPanelId, setQuizPanelId] = useState(null);
     const [pinnedPanelId, setPinnedPanelId] = useState(null);
@@ -1087,14 +1103,37 @@ const AdminMocaLive = () => {
         await load();
     };
 
+    // 앱 푸시는 무료지만 앱 미설치/푸시 미허용 회원에게는 안 닿는다. 그 회원들에게는
+    // 카카오 친구톡(수신 불가 시 솔라피가 자동으로 SMS 대체 발송, disableSms:false)으로
+    // 보완 발송한다 - 건당 비용이 발생하므로 발송 전 인원수를 보여주고 확인받는다.
     const handleSendLivePush = async (stream) => {
         setSendingPush(true);
+        setPushResult(null);
+        setSolapiResult(null);
+
         const result = await sendBroadcastPush({
             title: '🔴 모카TV 라이브 방송 중!',
             body: stream.title,
             route: '/home/dashboard',
         });
         setPushResult(result);
+
+        const { data: noPushUsers } = await fetchUsersWithoutPushToken();
+        const phones = (noPushUsers || []).map((u) => u.phone).filter(Boolean);
+        if (phones.length > 0) {
+            if (window.confirm(`앱 푸시를 못 받는 회원 ${phones.length}명에게 카카오톡/문자로도 라이브 시작 알림을 보낼까요?\n(건당 비용이 발생합니다)`)) {
+                try {
+                    await sendFriendtalk(phones.map((phone) => ({
+                        phone,
+                        content: `🔴 모카TV 라이브 시작!\n${stream.title}\n\n지금 아임모카 앱에서 바로 시청하세요!`,
+                    })));
+                    setSolapiResult({ success: true, count: phones.length });
+                } catch (err) {
+                    setSolapiResult({ success: false, error: err.message || '발송에 실패했습니다.' });
+                }
+            }
+        }
+
         setSendingPush(false);
     };
 
@@ -1349,7 +1388,7 @@ const AdminMocaLive = () => {
                             </table>
                         </div>
                     )}
-                    <PushResultBadge result={pushResult} />
+                    <PushResultBadge result={pushResult} solapiResult={solapiResult} />
                 </>
             )}
         </div>
