@@ -1,9 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { fetchPastMocaLiveStreams } from '../services/mocaLiveService';
+import { fetchPastMocaLiveStreams, extractYoutubeVideoId } from '../services/mocaLiveService';
 import { getUserGrade } from '../services/userService';
 import { RtmpPlayer } from './MocaLiveBanner';
 
 const GOLD_OR_ABOVE = ['GOLD', 'IMODEL', 'VIP'];
+
+const extractVimeoVideoId = (input) => {
+    if (!input) return '';
+    const match = input.trim().match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    return match ? match[1] : '';
+};
+
+// RTMP 다시보기는 원래 CloudFront HLS(.m3u8) 링크만 기대하지만, 관리자가 방송 편집본을
+// 유튜브/비메오에 올려서 그 링크를 그대로 붙여넣는 경우도 있어 링크 형태를 보고 자동 판별한다.
+const resolveRtmpReplayPlayer = (vodUrl, title) => {
+    const youtubeId = extractYoutubeVideoId(vodUrl);
+    if (youtubeId) {
+        return (
+            <iframe
+                src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
+                title={title}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+            />
+        );
+    }
+
+    const vimeoId = extractVimeoVideoId(vodUrl);
+    if (vimeoId) {
+        return (
+            <iframe
+                src={`https://player.vimeo.com/video/${vimeoId}`}
+                title={title}
+                className="w-full h-full"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+            />
+        );
+    }
+
+    return <RtmpPlayer src={vodUrl} title={title} />;
+};
 
 // 모카TV 라이브 다시보기(VOD) - 홈 대시보드/모카TV 탭 등 여러 위치에서 재사용.
 // 유튜브 라이브는 종료 후 같은 videoId가 자동으로 다시보기가 되고, RTMP는 관리자가
@@ -80,7 +118,7 @@ const MocaLiveReplaySection = ({ className = 'px-6 mb-6' }) => {
                         </div>
                         <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black">
                             {selected.stream_type === 'rtmp' ? (
-                                <RtmpPlayer src={selected.vod_url} title={selected.title} />
+                                resolveRtmpReplayPlayer(selected.vod_url, selected.title)
                             ) : (
                                 <iframe
                                     src={`https://www.youtube.com/embed/${selected.youtube_video_id}?rel=0`}
