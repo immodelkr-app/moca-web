@@ -247,47 +247,47 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
     };
 
     return (
-        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
-            <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">🎮 실시간 퀴즈 관리</p>
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-5 lg:p-6 mt-3">
+            <p className="text-[14px] font-black text-[var(--moca-text)] mb-4">🎮 실시간 퀴즈 관리</p>
 
             {msg && (
-                <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                <div className="mb-4 px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold">
                     {msg}
                 </div>
             )}
 
-            <div className="bg-white rounded-xl p-3 mb-3 space-y-2">
+            <div className="bg-white rounded-2xl p-4 lg:p-5 mb-4 space-y-3">
                 <input
                     value={form.question}
                     onChange={(e) => setForm((f) => ({ ...f, question: e.target.value }))}
                     placeholder="문제를 입력하세요 (예: 오늘 방송에서 소개한 브랜드는?)"
-                    className="w-full px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                    className="w-full px-4 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                 />
                 {form.options.map((opt, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5">
+                    <div key={idx} className="flex items-center gap-2">
                         <input
                             value={opt}
                             onChange={(e) => updateOption(idx, e.target.value)}
                             placeholder={`보기 ${idx + 1}`}
-                            className="flex-1 px-3 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                            className="flex-1 px-4 py-2 rounded-lg border border-[var(--moca-border)] text-[13px]"
                         />
                         {form.options.length > 2 && (
-                            <button onClick={() => removeOption(idx)} className="text-[10px] text-[var(--moca-text-3)] font-bold px-1">삭제</button>
+                            <button onClick={() => removeOption(idx)} className="text-[11px] text-[var(--moca-text-3)] font-bold px-1.5">삭제</button>
                         )}
                     </div>
                 ))}
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between pt-1.5">
                     <button
                         onClick={addOption}
                         disabled={form.options.length >= 4}
-                        className="text-[11px] font-bold text-[var(--moca-primary)] disabled:opacity-30"
+                        className="text-[12px] font-bold text-[var(--moca-primary)] disabled:opacity-30"
                     >
                         + 보기 추가 (최대 4개)
                     </button>
                     <button
                         onClick={handleCreate}
                         disabled={saving}
-                        className="px-3 py-1.5 rounded-lg bg-[var(--moca-primary)] text-white text-[11px] font-black disabled:opacity-50"
+                        className="px-4 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-[12px] font-black disabled:opacity-50"
                     >
                         {saving ? '등록 중...' : '퀴즈 등록'}
                     </button>
@@ -295,18 +295,18 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
             </div>
 
             {loading ? (
-                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">불러오는 중...</p>
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">불러오는 중...</p>
             ) : quizzes.length === 0 ? (
-                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">등록된 퀴즈가 없습니다.</p>
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">등록된 퀴즈가 없습니다.</p>
             ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {quizzes.map((q) => {
                         const stats = statsByQuiz[q.id];
                         return (
-                            <div key={q.id} className="bg-white rounded-xl p-3">
-                                <div className="flex items-start justify-between gap-2 mb-1.5">
-                                    <p className="text-[12px] font-bold text-[var(--moca-text)] flex-1">{q.question}</p>
-                                    <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black ${
+                            <div key={q.id} className="bg-white rounded-2xl p-4 lg:p-5">
+                                <div className="flex items-start justify-between gap-3 mb-2">
+                                    <p className="text-[13.5px] font-bold text-[var(--moca-text)] flex-1">{q.question}</p>
+                                    <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black ${
                                         q.status === 'open' ? 'bg-red-100 text-red-700'
                                         : q.status === 'closed' ? 'bg-gray-100 text-gray-500'
                                         : q.status === 'archived' ? 'bg-slate-100 text-slate-400'
@@ -316,11 +316,11 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
                                     </span>
                                 </div>
 
-                                <div className="flex flex-wrap gap-1 mb-2">
+                                <div className="flex flex-wrap gap-1.5 mb-3">
                                     {(q.options || []).map((opt, idx) => (
                                         <span
                                             key={idx}
-                                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                            className={`px-2.5 py-1 rounded-md text-[11px] font-bold border ${
                                                 q.status === 'closed' && q.correct_option_index === idx
                                                     ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
                                                     : 'border-[var(--moca-border)] text-[var(--moca-text-3)]'
@@ -332,29 +332,29 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
                                 </div>
 
                                 {closingQuizId === q.id ? (
-                                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-[var(--moca-border)] mt-1.5">
-                                        <span className="text-[10px] font-bold text-[var(--moca-text-3)]">정답 선택:</span>
+                                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--moca-border)] mt-2">
+                                        <span className="text-[11px] font-bold text-[var(--moca-text-3)]">정답 선택:</span>
                                         {(q.options || []).map((opt, idx) => (
                                             <button
                                                 key={idx}
                                                 onClick={() => setCorrectChoice(idx)}
-                                                className={`px-2 py-1 rounded-lg text-[10px] font-bold border ${correctChoice === idx ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-[var(--moca-border)] text-[var(--moca-text-3)]'}`}
+                                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border ${correctChoice === idx ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-[var(--moca-border)] text-[var(--moca-text-3)]'}`}
                                             >
                                                 {opt}
                                             </button>
                                         ))}
-                                        <button onClick={() => handleConfirmClose(q)} className="ml-auto text-[10px] font-black text-emerald-600">확정</button>
-                                        <button onClick={() => setClosingQuizId(null)} className="text-[10px] font-bold text-[var(--moca-text-3)]">취소</button>
+                                        <button onClick={() => handleConfirmClose(q)} className="ml-auto text-[11px] font-black text-emerald-600">확정</button>
+                                        <button onClick={() => setClosingQuizId(null)} className="text-[11px] font-bold text-[var(--moca-text-3)]">취소</button>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[var(--moca-border)] mt-1.5">
+                                    <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[var(--moca-border)] mt-2">
                                         {q.status !== 'open' && (
-                                            <button onClick={() => handleOpen(q)} className="text-[11px] font-black text-red-500">
+                                            <button onClick={() => handleOpen(q)} className="text-[12px] font-black text-red-500">
                                                 {q.status === 'draft' ? '▶ 퀴즈 시작' : '↻ 다시 시작'}
                                             </button>
                                         )}
                                         {q.status === 'open' && (
-                                            <button onClick={() => startClosing(q)} className="text-[11px] font-black text-[var(--moca-primary)]">🔒 정답 확정 & 마감</button>
+                                            <button onClick={() => startClosing(q)} className="text-[12px] font-black text-[var(--moca-primary)]">🔒 정답 확정 & 마감</button>
                                         )}
                                         {q.status === 'closed' && (
                                             <>
@@ -362,17 +362,17 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
                                                     value={grantAmount}
                                                     onChange={(e) => setGrantAmount(e.target.value)}
                                                     type="number"
-                                                    className="w-16 px-2 py-1 rounded-lg border border-[var(--moca-border)] text-[10px]"
+                                                    className="w-20 px-2.5 py-1.5 rounded-lg border border-[var(--moca-border)] text-[11px]"
                                                 />
-                                                <span className="text-[10px] text-[var(--moca-text-3)]">P씩</span>
+                                                <span className="text-[11px] text-[var(--moca-text-3)]">P씩</span>
                                                 <button
                                                     onClick={() => handleGrantPoints(q)}
                                                     disabled={grantingQuizId === q.id}
-                                                    className="text-[11px] font-black text-amber-600 disabled:opacity-40"
+                                                    className="text-[12px] font-black text-amber-600 disabled:opacity-40"
                                                 >
                                                     {grantingQuizId === q.id ? '지급 중...' : '🎁 정답자 포인트 지급'}
                                                 </button>
-                                                <button onClick={() => handleArchive(q)} className="text-[11px] font-black text-slate-400 hover:text-slate-600">
+                                                <button onClick={() => handleArchive(q)} className="text-[12px] font-black text-slate-400 hover:text-slate-600">
                                                     🗄 내리기
                                                 </button>
                                             </>
@@ -488,62 +488,62 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
     };
 
     return (
-        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
-            <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">🔢 숫자 맞추기 관리</p>
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-5 lg:p-6 mt-3">
+            <p className="text-[14px] font-black text-[var(--moca-text)] mb-4">🔢 숫자 맞추기 관리</p>
 
             {msg && (
-                <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                <div className="mb-4 px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold">
                     {msg}
                 </div>
             )}
 
             {!hasOpenGame && (
-                <div className="bg-white rounded-xl p-3 mb-3 space-y-2">
-                    <div className="flex items-center gap-1.5">
+                <div className="bg-white rounded-2xl p-4 lg:p-5 mb-4 space-y-3">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <input
                             value={form.minValue}
                             onChange={(e) => setForm((f) => ({ ...f, minValue: e.target.value }))}
                             type="number"
                             placeholder="최소"
-                            className="w-16 px-2 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                            className="w-20 px-3 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                         />
-                        <span className="text-[11px] text-[var(--moca-text-3)]">~</span>
+                        <span className="text-[12px] text-[var(--moca-text-3)]">~</span>
                         <input
                             value={form.maxValue}
                             onChange={(e) => setForm((f) => ({ ...f, maxValue: e.target.value }))}
                             type="number"
                             placeholder="최대"
-                            className="w-16 px-2 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                            className="w-20 px-3 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                         />
-                        <span className="text-[11px] text-[var(--moca-text-3)] ml-2">정답:</span>
+                        <span className="text-[12px] text-[var(--moca-text-3)] ml-2">정답:</span>
                         <input
                             value={form.answer}
                             onChange={(e) => setForm((f) => ({ ...f, answer: e.target.value }))}
                             type="number"
                             placeholder="예: 42"
-                            className="w-20 px-2 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                            className="w-24 px-3 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                         />
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                         <input
                             value={form.prizeLabel}
                             onChange={(e) => setForm((f) => ({ ...f, prizeLabel: e.target.value }))}
                             placeholder="경품 설명 (선택, 예: 스타벅스 기프티콘)"
-                            className="flex-1 px-3 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                            className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                         />
                         <input
                             value={form.winnerCount}
                             onChange={(e) => setForm((f) => ({ ...f, winnerCount: e.target.value }))}
                             type="number"
                             min="1"
-                            className="w-14 px-2 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                            className="w-16 px-3 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                         />
-                        <span className="text-[10px] text-[var(--moca-text-3)]">명 당첨</span>
+                        <span className="text-[11px] text-[var(--moca-text-3)]">명 당첨</span>
                     </div>
                     <button
                         onClick={handleStart}
                         disabled={saving}
-                        className="w-full py-2 rounded-lg bg-[var(--moca-primary)] text-white text-[12px] font-black disabled:opacity-50"
+                        className="w-full py-3 rounded-lg bg-[var(--moca-primary)] text-white text-[13px] font-black disabled:opacity-50"
                     >
                         {saving ? '시작 중...' : '🔢 게임 시작'}
                     </button>
@@ -551,19 +551,19 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
             )}
 
             {loading ? (
-                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">불러오는 중...</p>
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">불러오는 중...</p>
             ) : games.length === 0 ? (
-                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">등록된 게임이 없습니다.</p>
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">등록된 게임이 없습니다.</p>
             ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {games.map((g) => (
-                        <div key={g.id} className="bg-white rounded-xl p-3">
-                            <div className="flex items-start justify-between gap-2 mb-1.5">
-                                <p className="text-[12px] font-bold text-[var(--moca-text)]">
+                        <div key={g.id} className="bg-white rounded-2xl p-4 lg:p-5">
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                                <p className="text-[13.5px] font-bold text-[var(--moca-text)]">
                                     {g.min_value}~{g.max_value} · 정답 {g.answer}
                                     {g.prize_label && <span className="text-[var(--moca-text-3)]"> · {g.prize_label}</span>}
                                 </p>
-                                <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black ${
+                                <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black ${
                                     g.status === 'open' ? 'bg-red-100 text-red-700'
                                     : g.status === 'closed' ? 'bg-gray-100 text-gray-500'
                                     : g.status === 'archived' ? 'bg-slate-100 text-slate-400'
@@ -572,15 +572,15 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
                                     {g.status === 'open' ? '🔴 진행 중' : g.status === 'closed' ? '마감' : g.status === 'archived' ? '🗄 보관됨' : '취소됨'}
                                 </span>
                             </div>
-                            <p className="text-[10px] text-[var(--moca-text-3)] mb-2">
+                            <p className="text-[11px] text-[var(--moca-text-3)] mb-3">
                                 당첨 {g.current_winner_count}/{g.winner_count}명
                             </p>
 
-                            <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[var(--moca-border)] mt-1.5">
+                            <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[var(--moca-border)] mt-2">
                                 {g.status === 'open' && (
                                     <>
-                                        <button onClick={() => handleEndNow(g)} className="text-[11px] font-black text-[var(--moca-primary)]">⏹ 지금 마감</button>
-                                        <button onClick={() => handleCancel(g)} className="text-[11px] font-black text-[var(--moca-text-3)]">🚫 취소</button>
+                                        <button onClick={() => handleEndNow(g)} className="text-[12px] font-black text-[var(--moca-primary)]">⏹ 지금 마감</button>
+                                        <button onClick={() => handleCancel(g)} className="text-[12px] font-black text-[var(--moca-text-3)]">🚫 취소</button>
                                     </>
                                 )}
                                 {g.status === 'closed' && (
@@ -589,17 +589,17 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
                                             value={grantAmount}
                                             onChange={(e) => setGrantAmount(e.target.value)}
                                             type="number"
-                                            className="w-16 px-2 py-1 rounded-lg border border-[var(--moca-border)] text-[10px]"
+                                            className="w-20 px-2.5 py-1.5 rounded-lg border border-[var(--moca-border)] text-[11px]"
                                         />
-                                        <span className="text-[10px] text-[var(--moca-text-3)]">P씩</span>
+                                        <span className="text-[11px] text-[var(--moca-text-3)]">P씩</span>
                                         <button
                                             onClick={() => handleGrantPoints(g)}
                                             disabled={grantingGameId === g.id}
-                                            className="text-[11px] font-black text-amber-600 disabled:opacity-40"
+                                            className="text-[12px] font-black text-amber-600 disabled:opacity-40"
                                         >
                                             {grantingGameId === g.id ? '지급 중...' : '🎁 당첨자 포인트 지급'}
                                         </button>
-                                        <button onClick={() => handleArchive(g)} className="text-[11px] font-black text-slate-400 hover:text-slate-600">
+                                        <button onClick={() => handleArchive(g)} className="text-[12px] font-black text-slate-400 hover:text-slate-600">
                                             🗄 내리기
                                         </button>
                                     </>
@@ -704,47 +704,47 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
     };
 
     return (
-        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
-            <p className="text-[12px] font-black text-[var(--moca-text)] mb-1">💬 정답 맞추기 이벤트 관리</p>
-            <p className="text-[10px] text-[var(--moca-text-3)] mb-3 leading-relaxed">
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-5 lg:p-6 mt-3">
+            <p className="text-[14px] font-black text-[var(--moca-text)] mb-1.5">💬 정답 맞추기 이벤트 관리</p>
+            <p className="text-[11px] text-[var(--moca-text-3)] mb-4 leading-relaxed">
                 문제/보기를 미리 안 써도 돼요. 정답 키워드만 등록하고 방송에서 말로 질문하면, 시청자가 채팅창에
                 그 단어가 들어간 메시지를 치는 순간 자동으로 당첨 처리됩니다 (선착순, 1인 1회).
             </p>
 
             {msg && (
-                <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                <div className="mb-4 px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold">
                     {msg}
                 </div>
             )}
 
             {!hasOpenEvent && (
-                <div className="bg-white rounded-xl p-3 mb-3 space-y-2">
+                <div className="bg-white rounded-2xl p-4 lg:p-5 mb-4 space-y-3">
                     <input
                         value={form.keyword}
                         onChange={(e) => setForm((f) => ({ ...f, keyword: e.target.value }))}
                         placeholder="정답 키워드 (예: 아임모델)"
-                        className="w-full px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                     />
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                         <input
                             value={form.prizeLabel}
                             onChange={(e) => setForm((f) => ({ ...f, prizeLabel: e.target.value }))}
                             placeholder="경품 설명 (선택)"
-                            className="flex-1 px-3 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                            className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                         />
                         <input
                             value={form.winnerCount}
                             onChange={(e) => setForm((f) => ({ ...f, winnerCount: e.target.value }))}
                             type="number"
                             min="1"
-                            className="w-14 px-2 py-1.5 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                            className="w-16 px-3 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                         />
-                        <span className="text-[10px] text-[var(--moca-text-3)]">명 당첨</span>
+                        <span className="text-[11px] text-[var(--moca-text-3)]">명 당첨</span>
                     </div>
                     <button
                         onClick={handleStart}
                         disabled={saving}
-                        className="w-full py-2 rounded-lg bg-[var(--moca-primary)] text-white text-[12px] font-black disabled:opacity-50"
+                        className="w-full py-3 rounded-lg bg-[var(--moca-primary)] text-white text-[13px] font-black disabled:opacity-50"
                     >
                         {saving ? '시작 중...' : '💬 이벤트 시작'}
                     </button>
@@ -752,19 +752,19 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
             )}
 
             {loading ? (
-                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">불러오는 중...</p>
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">불러오는 중...</p>
             ) : events.length === 0 ? (
-                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">등록된 이벤트가 없습니다.</p>
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">등록된 이벤트가 없습니다.</p>
             ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {events.map((e) => (
-                        <div key={e.id} className="bg-white rounded-xl p-3">
-                            <div className="flex items-start justify-between gap-2 mb-1.5">
-                                <p className="text-[12px] font-bold text-[var(--moca-text)]">
+                        <div key={e.id} className="bg-white rounded-2xl p-4 lg:p-5">
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                                <p className="text-[13.5px] font-bold text-[var(--moca-text)]">
                                     정답: {e.keyword}
                                     {e.prize_label && <span className="text-[var(--moca-text-3)]"> · {e.prize_label}</span>}
                                 </p>
-                                <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black ${
+                                <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black ${
                                     e.status === 'open' ? 'bg-red-100 text-red-700'
                                     : e.status === 'closed' ? 'bg-gray-100 text-gray-500'
                                     : e.status === 'archived' ? 'bg-slate-100 text-slate-400'
@@ -773,15 +773,15 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
                                     {e.status === 'open' ? '🔴 진행 중' : e.status === 'closed' ? '마감' : e.status === 'archived' ? '🗄 보관됨' : '취소됨'}
                                 </span>
                             </div>
-                            <p className="text-[10px] text-[var(--moca-text-3)] mb-2">
+                            <p className="text-[11px] text-[var(--moca-text-3)] mb-3">
                                 당첨 {e.current_winner_count}/{e.winner_count}명
                             </p>
 
-                            <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-[var(--moca-border)] mt-1.5">
+                            <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[var(--moca-border)] mt-2">
                                 {e.status === 'open' && (
                                     <>
-                                        <button onClick={() => handleEndNow(e)} className="text-[11px] font-black text-[var(--moca-primary)]">⏹ 지금 마감</button>
-                                        <button onClick={() => handleCancel(e)} className="text-[11px] font-black text-[var(--moca-text-3)]">🚫 취소</button>
+                                        <button onClick={() => handleEndNow(e)} className="text-[12px] font-black text-[var(--moca-primary)]">⏹ 지금 마감</button>
+                                        <button onClick={() => handleCancel(e)} className="text-[12px] font-black text-[var(--moca-text-3)]">🚫 취소</button>
                                     </>
                                 )}
                                 {e.status === 'closed' && (
@@ -790,17 +790,17 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
                                             value={grantAmount}
                                             onChange={(ev) => setGrantAmount(ev.target.value)}
                                             type="number"
-                                            className="w-16 px-2 py-1 rounded-lg border border-[var(--moca-border)] text-[10px]"
+                                            className="w-20 px-2.5 py-1.5 rounded-lg border border-[var(--moca-border)] text-[11px]"
                                         />
-                                        <span className="text-[10px] text-[var(--moca-text-3)]">P씩</span>
+                                        <span className="text-[11px] text-[var(--moca-text-3)]">P씩</span>
                                         <button
                                             onClick={() => handleGrantPoints(e)}
                                             disabled={grantingEventId === e.id}
-                                            className="text-[11px] font-black text-amber-600 disabled:opacity-40"
+                                            className="text-[12px] font-black text-amber-600 disabled:opacity-40"
                                         >
                                             {grantingEventId === e.id ? '지급 중...' : '🎁 당첨자 포인트 지급'}
                                         </button>
-                                        <button onClick={() => handleArchive(e)} className="text-[11px] font-black text-slate-400 hover:text-slate-600">
+                                        <button onClick={() => handleArchive(e)} className="text-[12px] font-black text-slate-400 hover:text-slate-600">
                                             🗄 내리기
                                         </button>
                                     </>
@@ -852,60 +852,60 @@ const AdminMocaLivePinnedOnlyPanel = ({ liveId, chat }) => {
     };
 
     return (
-        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
-            <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">📌 고정 댓글 관리</p>
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-5 lg:p-6 mt-3">
+            <p className="text-[14px] font-black text-[var(--moca-text)] mb-4">📌 고정 댓글 관리</p>
 
             {msg && (
-                <div className="mb-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                <div className="mb-4 px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold">
                     {msg}
                 </div>
             )}
 
             {loading ? null : pinned ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 flex items-start justify-between gap-2">
-                    <p className="text-[12px] font-bold text-amber-800 flex-1">
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4 flex items-start justify-between gap-3">
+                    <p className="text-[13px] font-bold text-amber-800 flex-1">
                         {pinned.pinned_message_author && <span className="font-black">{pinned.pinned_message_author}: </span>}
                         {pinned.pinned_message}
                     </p>
-                    <button onClick={handleUnpin} className="text-[11px] font-black text-red-500 flex-shrink-0">해제</button>
+                    <button onClick={handleUnpin} className="text-[12px] font-black text-red-500 flex-shrink-0">해제</button>
                 </div>
             ) : (
-                <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-3">현재 고정된 댓글이 없습니다.</p>
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold mb-4">현재 고정된 댓글이 없습니다.</p>
             )}
 
-            <div className="bg-white rounded-xl p-3 mb-3 space-y-2">
-                <p className="text-[11px] font-bold text-[var(--moca-text-3)]">직접 입력해서 고정</p>
-                <div className="flex items-center gap-1.5">
+            <div className="bg-white rounded-2xl p-4 lg:p-5 mb-4 space-y-3">
+                <p className="text-[12px] font-bold text-[var(--moca-text-3)]">직접 입력해서 고정</p>
+                <div className="flex items-center gap-2">
                     <input
                         value={manualText}
                         onChange={(e) => setManualText(e.target.value)}
                         placeholder="예: 정답은 채팅에 그대로 쳐주세요!"
-                        className="flex-1 px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                     />
                     <button
                         onClick={() => handlePin(manualText, null)}
                         disabled={saving || !manualText.trim()}
-                        className="px-3 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-[11px] font-black disabled:opacity-40"
+                        className="px-4 py-2.5 rounded-lg bg-[var(--moca-primary)] text-white text-[12px] font-black disabled:opacity-40"
                     >
                         📌 고정
                     </button>
                 </div>
             </div>
 
-            <p className="text-[11px] font-bold text-[var(--moca-text-3)] mb-1.5">왼쪽 채팅에서 골라 고정</p>
+            <p className="text-[12px] font-bold text-[var(--moca-text-3)] mb-2">왼쪽 채팅에서 골라 고정</p>
             {chat.length === 0 ? (
-                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">아직 채팅이 없습니다.</p>
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">아직 채팅이 없습니다.</p>
             ) : (
-                <div className="bg-white rounded-xl max-h-64 overflow-y-auto divide-y divide-[var(--moca-border)]">
+                <div className="bg-white rounded-2xl max-h-72 overflow-y-auto divide-y divide-[var(--moca-border)]">
                     {chat.slice().reverse().map((c) => (
-                        <div key={c.id} className="flex items-center justify-between gap-2 px-3 py-2">
-                            <p className="text-[11.5px] text-[var(--moca-text)] flex-1 truncate">
+                        <div key={c.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                            <p className="text-[13px] text-[var(--moca-text)] flex-1 truncate">
                                 <span className={`font-black ${c.is_host ? 'text-amber-600' : ''}`}>{c.is_host && '👑 '}{c.user_nickname}</span>: {c.message}
                             </p>
                             <button
                                 onClick={() => handlePin(c.message, c.user_nickname)}
                                 disabled={saving}
-                                className="text-[11px] font-bold text-[var(--moca-primary)] flex-shrink-0 disabled:opacity-40"
+                                className="text-[12px] font-bold text-[var(--moca-primary)] flex-shrink-0 disabled:opacity-40"
                             >
                                 📌 고정
                             </button>
@@ -977,44 +977,44 @@ export const AdminMocaLiveControlPanel = ({ liveId, streamerName, chatHeightClas
     ];
 
     return (
-        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 items-start">
-            <div className={`bg-white rounded-xl p-3 flex flex-col ${chatHeightClass}`}>
-                <div className="flex items-center justify-between mb-2">
-                    <p className="text-[12px] font-black text-[var(--moca-text)]">💬 실시간 채팅</p>
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-5 lg:p-7 mt-3 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5 lg:gap-8 items-start">
+            <div className={`bg-white rounded-2xl p-4 lg:p-5 flex flex-col ${chatHeightClass}`}>
+                <div className="flex items-center justify-between mb-3">
+                    <p className="text-[14px] font-black text-[var(--moca-text)]">💬 실시간 채팅</p>
                     <button
                         onClick={handleClearChat}
                         disabled={clearingChat}
-                        className="text-[10px] font-black text-slate-400 hover:text-red-500 disabled:opacity-40"
+                        className="text-[11px] font-black text-slate-400 hover:text-red-500 disabled:opacity-40"
                     >
                         {clearingChat ? '초기화 중...' : '🗑 초기화'}
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+                <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
                     {chatLoading ? (
-                        <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">불러오는 중...</p>
+                        <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">불러오는 중...</p>
                     ) : chat.length === 0 ? (
-                        <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">아직 채팅이 없습니다.</p>
+                        <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">아직 채팅이 없습니다.</p>
                     ) : (
                         chat.map((c) => (
-                            <p key={c.id} className="text-[11.5px] text-[var(--moca-text)] leading-snug">
+                            <p key={c.id} className="text-[13px] text-[var(--moca-text)] leading-snug">
                                 <span className={`font-black ${c.is_host ? 'text-amber-600' : ''}`}>{c.is_host && '👑 '}{c.user_nickname}</span>: {c.message}
                             </p>
                         ))
                     )}
                     <div ref={chatEndRef} />
                 </div>
-                <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-[var(--moca-border)]">
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--moca-border)]">
                     <input
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleSendChat(); }}
                         placeholder={`${streamerName || '김대표'}(으)로 채팅 보내기`}
-                        className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                        className="flex-1 min-w-0 px-4 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                     />
                     <button
                         onClick={handleSendChat}
                         disabled={sendingChat || !chatInput.trim()}
-                        className="px-3 py-2 rounded-lg bg-amber-500 text-white text-[11px] font-black disabled:opacity-40 flex-shrink-0"
+                        className="px-4 py-2.5 rounded-lg bg-amber-500 text-white text-[12px] font-black disabled:opacity-40 flex-shrink-0"
                     >
                         👑
                     </button>
@@ -1022,12 +1022,12 @@ export const AdminMocaLiveControlPanel = ({ liveId, streamerName, chatHeightClas
             </div>
 
             <div>
-                <div className="flex gap-1 p-1 rounded-xl bg-white border border-[var(--moca-border)] w-fit mb-1 flex-wrap">
+                <div className="flex gap-1.5 p-1.5 rounded-2xl bg-white border border-[var(--moca-border)] w-fit mb-2 flex-wrap">
                     {TABS.map((t) => (
                         <button
                             key={t.id}
                             onClick={() => setTab(t.id)}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors whitespace-nowrap ${tab === t.id ? 'bg-[var(--moca-surface-2)] text-[var(--moca-primary)]' : 'text-[var(--moca-text-3)]'}`}
+                            className={`px-4 py-2 rounded-xl text-[12.5px] font-black transition-colors whitespace-nowrap ${tab === t.id ? 'bg-[var(--moca-surface-2)] text-[var(--moca-primary)]' : 'text-[var(--moca-text-3)]'}`}
                         >
                             {t.label}
                         </button>

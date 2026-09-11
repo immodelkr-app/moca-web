@@ -90,25 +90,25 @@ const AdminMocaLiveControlPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[var(--moca-surface-2)] px-4 py-4 lg:px-8 lg:py-6">
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="min-h-screen bg-[var(--moca-surface-2)] px-5 py-6 lg:px-12 lg:py-9">
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                 <div>
-                    <button onClick={() => navigate('/admin')} className="text-[11px] font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)] mb-1">
+                    <button onClick={() => navigate('/admin')} className="text-[12px] font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)] mb-2">
                         ← 어드민 목록으로
                     </button>
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${stream.is_live ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-black ${stream.is_live ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
                             {stream.is_live ? '🔴 라이브 중' : '대기'}
                         </span>
                         {stream.is_live && <LiveViewerCount liveId={stream.id} />}
-                        <p className="text-base font-black text-[var(--moca-text)]">{stream.title}</p>
-                        <span className="text-[12px] text-[var(--moca-text-3)]">{stream.streamer_name}</span>
+                        <p className="text-lg font-black text-[var(--moca-text)]">{stream.title}</p>
+                        <span className="text-[13px] text-[var(--moca-text-3)]">{stream.streamer_name}</span>
                     </div>
                 </div>
                 <button
                     onClick={handleToggleLive}
                     disabled={toggling}
-                    className={`px-4 py-2 rounded-xl text-[12px] font-black disabled:opacity-50 ${stream.is_live ? 'bg-gray-200 text-gray-600' : 'bg-red-500 text-white'}`}
+                    className={`px-5 py-2.5 rounded-xl text-[13px] font-black disabled:opacity-50 ${stream.is_live ? 'bg-gray-200 text-gray-600' : 'bg-red-500 text-white'}`}
                 >
                     {toggling ? '처리 중...' : stream.is_live ? '방송 종료' : '🔴 라이브 시작'}
                 </button>
@@ -117,7 +117,7 @@ const AdminMocaLiveControlPage = () => {
             <AdminMocaLiveControlPanel
                 liveId={stream.id}
                 streamerName={stream.streamer_name}
-                chatHeightClass="h-[calc(100vh-180px)] lg:h-[calc(100vh-160px)]"
+                chatHeightClass="h-[calc(100vh-220px)] lg:h-[calc(100vh-190px)]"
             />
         </div>
     );
