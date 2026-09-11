@@ -195,12 +195,13 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
         const { error } = await openLiveQuiz(quiz.id, liveId);
         if (error) { flash('시작 실패: ' + (error.message || '')); return; }
         flash('🎮 퀴즈가 시작되었습니다. 시청자에게 실시간으로 노출됩니다.');
-        // 방송 시작 알림과 달리 건당 비용이 없는 앱 푸시라 확인 없이 바로 보낸다.
-        sendBroadcastPush({
-            title: '🎮 지금 라이브에서 퀴즈가 시작됐어요!',
-            body: quiz.question,
-            route: '/home/dashboard',
-        }).catch((e) => console.warn('[AdminMocaLive] 퀴즈 시작 알림 실패:', e));
+        if (window.confirm('참여 유도 앱 푸시 알림을 보낼까요?')) {
+            sendBroadcastPush({
+                title: '🎮 지금 라이브에서 퀴즈가 시작됐어요!',
+                body: quiz.question,
+                route: '/home/dashboard',
+            }).catch((e) => console.warn('[AdminMocaLive] 퀴즈 시작 알림 실패:', e));
+        }
         await load();
     };
 
@@ -434,11 +435,13 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
 
         setForm(EMPTY_NUMBER_GAME_FORM);
         flash('🔢 게임이 시작되었습니다. 시청자에게 실시간으로 노출됩니다.');
-        sendBroadcastPush({
-            title: '🔢 지금 라이브에서 숫자맞추기가 시작됐어요!',
-            body: `${minValue}~${maxValue} 사이 숫자를 맞혀보세요!`,
-            route: '/home/dashboard',
-        }).catch((e) => console.warn('[AdminMocaLive] 숫자맞추기 시작 알림 실패:', e));
+        if (window.confirm('참여 유도 앱 푸시 알림을 보낼까요?')) {
+            sendBroadcastPush({
+                title: '🔢 지금 라이브에서 숫자맞추기가 시작됐어요!',
+                body: `${minValue}~${maxValue} 사이 숫자를 맞혀보세요!`,
+                route: '/home/dashboard',
+            }).catch((e) => console.warn('[AdminMocaLive] 숫자맞추기 시작 알림 실패:', e));
+        }
         await load();
     };
 
@@ -648,11 +651,13 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
 
         setForm(EMPTY_KEYWORD_EVENT_FORM);
         flash('💬 이벤트가 시작되었습니다. 이제 방송에서 말로 질문하시면, 채팅에 정답을 치는 시청자가 자동으로 당첨돼요.');
-        sendBroadcastPush({
-            title: '💬 지금 라이브에서 정답 맞추기 이벤트가 시작됐어요!',
-            body: '방송을 보고 채팅창에 정답을 쳐보세요!',
-            route: '/home/dashboard',
-        }).catch((e) => console.warn('[AdminMocaLive] 정답맞추기 시작 알림 실패:', e));
+        if (window.confirm('참여 유도 앱 푸시 알림을 보낼까요?')) {
+            sendBroadcastPush({
+                title: '💬 지금 라이브에서 정답 맞추기 이벤트가 시작됐어요!',
+                body: '방송을 보고 채팅창에 정답을 쳐보세요!',
+                route: '/home/dashboard',
+            }).catch((e) => console.warn('[AdminMocaLive] 정답맞추기 시작 알림 실패:', e));
+        }
         await load();
     };
 
