@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     fetchAllMocaLiveStreams, createMocaLiveStream, updateMocaLiveStream,
     deleteMocaLiveStream, goLive, stopLive, extractYoutubeVideoId, uploadMocaLiveCover,
@@ -21,7 +22,7 @@ import { grantWinnerPoints } from '../services/quizService';
 const MAX_COVER_MB = 10;
 
 // 관리자는 시청자로 집계되지 않도록 track() 없이 상태만 구독해서 인원수를 읽는다.
-const LiveViewerCount = ({ liveId }) => {
+export const LiveViewerCount = ({ liveId }) => {
     const [count, setCount] = useState(0);
 
     useEffect(() => {
@@ -813,73 +814,22 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
     );
 };
 
-// 라이브별 게임 관리 진입점 - 정답 맞추기(키워드) / 실시간 퀴즈 / 숫자맞추기 탭으로 구분
-const AdminMocaLiveGamesPanel = ({ liveId }) => {
-    const [tab, setTab] = useState('keyword');
-
-    return (
-        <div>
-            <div className="flex gap-1 p-1 rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] w-fit">
-                <button
-                    onClick={() => setTab('keyword')}
-                    className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors ${tab === 'keyword' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
-                >
-                    💬 정답 맞추기
-                </button>
-                <button
-                    onClick={() => setTab('number')}
-                    className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors ${tab === 'number' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
-                >
-                    🔢 숫자 맞추기
-                </button>
-                <button
-                    onClick={() => setTab('quiz')}
-                    className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors ${tab === 'quiz' ? 'bg-white text-[var(--moca-primary)] shadow-sm' : 'text-[var(--moca-text-3)]'}`}
-                >
-                    🎮 실시간 퀴즈
-                </button>
-            </div>
-            {tab === 'keyword' && <AdminMocaLiveKeywordEventPanel liveId={liveId} />}
-            {tab === 'number' && <AdminMocaLiveNumberGamePanel liveId={liveId} />}
-            {tab === 'quiz' && <AdminMocaLiveQuizPanel liveId={liveId} />}
-        </div>
-    );
-};
-
-// 고정 댓글(공지) + 운영자 채팅 관리
-// - 고정 댓글: 직접 문구를 입력하거나 최근 채팅 중 하나를 골라 그대로 고정
-// - 운영자 채팅: 시청자처럼 프론트에 로그인하지 않아도 여기서 바로 채팅에 메시지를 보낼 수 있음
-//   (is_host=true로 저장되어 시청자 화면 채팅창에 다른 색/배지로 구분 표시됨)
-const AdminMocaLivePinnedMessagePanel = ({ liveId, streamerName }) => {
+// 고정 댓글(공지) 관리 - 직접 문구를 입력하거나, 옆에서 공유되는 실시간 채팅(chat prop) 중
+// 하나를 골라 그대로 고정한다. 채팅 조회/발송 자체는 AdminMocaLiveControlPanel이 공유해서 갖고 있음.
+const AdminMocaLivePinnedOnlyPanel = ({ liveId, chat }) => {
     const [pinned, setPinned] = useState(null);
     const [loading, setLoading] = useState(true);
     const [manualText, setManualText] = useState('');
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState('');
-    const [recentChat, setRecentChat] = useState([]);
-    const [chatInput, setChatInput] = useState('');
-    const [sendingChat, setSendingChat] = useState(false);
-    const [clearingChat, setClearingChat] = useState(false);
 
     const load = async () => {
         setLoading(true);
-        const [pin, chat] = await Promise.all([
-            fetchPinnedMessage(liveId),
-            fetchLiveChatMessages(liveId, 20),
-        ]);
-        setPinned(pin);
-        setRecentChat(chat);
+        setPinned(await fetchPinnedMessage(liveId));
         setLoading(false);
     };
 
-    useEffect(() => {
-        load();
-        const unsubscribe = subscribeToLiveChat(liveId, (newMsg) => {
-            setRecentChat((prev) => [...prev.slice(-19), newMsg]);
-        });
-        return unsubscribe;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [liveId]);
+    useEffect(() => { load(); }, [liveId]);
 
     const flash = (text) => { setMsg(text); setTimeout(() => setMsg(''), 3000); };
 
@@ -901,59 +851,8 @@ const AdminMocaLivePinnedMessagePanel = ({ liveId, streamerName }) => {
         await load();
     };
 
-    const handleSendChat = async () => {
-        const text = chatInput.trim();
-        if (!text || sendingChat) return;
-        setSendingChat(true);
-        const { error } = await sendLiveChatMessage(liveId, streamerName || '김대표', text, { isHost: true });
-        setSendingChat(false);
-        if (error) { flash('채팅 전송 실패: ' + (error.message || '')); return; }
-        setChatInput('');
-    };
-
-    // 채팅은 게임/퀴즈 결과와 달리 별도 역사적 가치가 없어 완전 삭제한다 (복구 불가라 확인 필요).
-    const handleClearChat = async () => {
-        if (!window.confirm('이 방송의 채팅 기록을 전부 삭제할까요? (복구 불가, 같은 방송을 재시작해도 다시 안 보임)')) return;
-        setClearingChat(true);
-        const { error } = await clearLiveChat(liveId);
-        setClearingChat(false);
-        if (error) { flash('초기화 실패: ' + (error.message || '')); return; }
-        flash('🗑 채팅 기록이 초기화되었습니다.');
-        setRecentChat([]);
-    };
-
     return (
         <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
-            <div className="flex items-center justify-between mb-3">
-                <p className="text-[12px] font-black text-[var(--moca-text)]">👑 운영자 채팅 보내기</p>
-                <button
-                    onClick={handleClearChat}
-                    disabled={clearingChat}
-                    className="text-[11px] font-black text-slate-400 hover:text-red-500 disabled:opacity-40"
-                >
-                    {clearingChat ? '초기화 중...' : '🗑 채팅 초기화'}
-                </button>
-            </div>
-            <div className="bg-white rounded-xl p-3 mb-4 space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                    <input
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleSendChat(); }}
-                        placeholder={`${streamerName || '김대표'}(으)로 채팅 보내기`}
-                        className="flex-1 px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[12px]"
-                    />
-                    <button
-                        onClick={handleSendChat}
-                        disabled={sendingChat || !chatInput.trim()}
-                        className="px-3 py-2 rounded-lg bg-amber-500 text-white text-[11px] font-black disabled:opacity-40"
-                    >
-                        {sendingChat ? '전송 중...' : '👑 전송'}
-                    </button>
-                </div>
-                <p className="text-[10px] text-[var(--moca-text-3)]">프론트에 로그인하지 않아도 여기서 바로 채팅을 보낼 수 있어요. 시청자 화면엔 👑 배지와 강조색으로 표시됩니다.</p>
-            </div>
-
             <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">📌 고정 댓글 관리</p>
 
             {msg && (
@@ -962,7 +861,7 @@ const AdminMocaLivePinnedMessagePanel = ({ liveId, streamerName }) => {
                 </div>
             )}
 
-            {pinned ? (
+            {loading ? null : pinned ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 flex items-start justify-between gap-2">
                     <p className="text-[12px] font-bold text-amber-800 flex-1">
                         {pinned.pinned_message_author && <span className="font-black">{pinned.pinned_message_author}: </span>}
@@ -993,14 +892,12 @@ const AdminMocaLivePinnedMessagePanel = ({ liveId, streamerName }) => {
                 </div>
             </div>
 
-            <p className="text-[11px] font-bold text-[var(--moca-text-3)] mb-1.5">최근 채팅에서 골라 고정</p>
-            {loading ? (
-                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">불러오는 중...</p>
-            ) : recentChat.length === 0 ? (
+            <p className="text-[11px] font-bold text-[var(--moca-text-3)] mb-1.5">왼쪽 채팅에서 골라 고정</p>
+            {chat.length === 0 ? (
                 <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">아직 채팅이 없습니다.</p>
             ) : (
                 <div className="bg-white rounded-xl max-h-64 overflow-y-auto divide-y divide-[var(--moca-border)]">
-                    {recentChat.slice().reverse().map((c) => (
+                    {chat.slice().reverse().map((c) => (
                         <div key={c.id} className="flex items-center justify-between gap-2 px-3 py-2">
                             <p className="text-[11.5px] text-[var(--moca-text)] flex-1 truncate">
                                 <span className={`font-black ${c.is_host ? 'text-amber-600' : ''}`}>{c.is_host && '👑 '}{c.user_nickname}</span>: {c.message}
@@ -1020,7 +917,133 @@ const AdminMocaLivePinnedMessagePanel = ({ liveId, streamerName }) => {
     );
 };
 
+// 라이브 방송 컨트롤 - 왼쪽엔 실시간 채팅(조회+운영자 발송+초기화), 오른쪽엔 고정댓글/게임 탭.
+// 게임/퀴즈 탭에서 이벤트를 시작하면 왼쪽 채팅에 들어오는 정답도 바로 눈으로 확인할 수 있다.
+// 목록 페이지에 접혀 들어가는 버전(기본 520px)과, 전용 컨트롤 페이지에서 쓰는 전체높이 버전이 있어
+// chatHeightClass로 높이를 넘겨받는다.
+export const AdminMocaLiveControlPanel = ({ liveId, streamerName, chatHeightClass = 'h-[520px]' }) => {
+    const [tab, setTab] = useState('pinned');
+    const [chat, setChat] = useState([]);
+    const [chatLoading, setChatLoading] = useState(true);
+    const [chatInput, setChatInput] = useState('');
+    const [sendingChat, setSendingChat] = useState(false);
+    const [clearingChat, setClearingChat] = useState(false);
+    const chatEndRef = useRef(null);
+
+    const loadChat = async () => {
+        setChatLoading(true);
+        setChat(await fetchLiveChatMessages(liveId, 100));
+        setChatLoading(false);
+    };
+
+    useEffect(() => {
+        loadChat();
+        const unsubscribe = subscribeToLiveChat(liveId, (newMsg) => {
+            setChat((prev) => [...prev.slice(-99), newMsg]);
+        });
+        return unsubscribe;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [liveId]);
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ block: 'end' });
+    }, [chat.length]);
+
+    const handleSendChat = async () => {
+        const text = chatInput.trim();
+        if (!text || sendingChat) return;
+        setSendingChat(true);
+        const { error } = await sendLiveChatMessage(liveId, streamerName || '김대표', text, { isHost: true });
+        setSendingChat(false);
+        if (error) { window.alert('채팅 전송 실패: ' + (error.message || '')); return; }
+        setChatInput('');
+    };
+
+    // 채팅은 게임/퀴즈 결과와 달리 별도 역사적 가치가 없어 완전 삭제한다 (복구 불가라 확인 필요).
+    const handleClearChat = async () => {
+        if (!window.confirm('이 방송의 채팅 기록을 전부 삭제할까요? (복구 불가, 같은 방송을 재시작해도 다시 안 보임)')) return;
+        setClearingChat(true);
+        const { error } = await clearLiveChat(liveId);
+        setClearingChat(false);
+        if (error) { window.alert('초기화 실패: ' + (error.message || '')); return; }
+        setChat([]);
+    };
+
+    const TABS = [
+        { id: 'pinned', label: '📌 고정댓글' },
+        { id: 'keyword', label: '💬 정답 맞추기' },
+        { id: 'number', label: '🔢 숫자 맞추기' },
+        { id: 'quiz', label: '🎮 실시간 퀴즈' },
+    ];
+
+    return (
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 items-start">
+            <div className={`bg-white rounded-xl p-3 flex flex-col ${chatHeightClass}`}>
+                <div className="flex items-center justify-between mb-2">
+                    <p className="text-[12px] font-black text-[var(--moca-text)]">💬 실시간 채팅</p>
+                    <button
+                        onClick={handleClearChat}
+                        disabled={clearingChat}
+                        className="text-[10px] font-black text-slate-400 hover:text-red-500 disabled:opacity-40"
+                    >
+                        {clearingChat ? '초기화 중...' : '🗑 초기화'}
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+                    {chatLoading ? (
+                        <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">불러오는 중...</p>
+                    ) : chat.length === 0 ? (
+                        <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-4 text-center">아직 채팅이 없습니다.</p>
+                    ) : (
+                        chat.map((c) => (
+                            <p key={c.id} className="text-[11.5px] text-[var(--moca-text)] leading-snug">
+                                <span className={`font-black ${c.is_host ? 'text-amber-600' : ''}`}>{c.is_host && '👑 '}{c.user_nickname}</span>: {c.message}
+                            </p>
+                        ))
+                    )}
+                    <div ref={chatEndRef} />
+                </div>
+                <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-[var(--moca-border)]">
+                    <input
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSendChat(); }}
+                        placeholder={`${streamerName || '김대표'}(으)로 채팅 보내기`}
+                        className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[12px]"
+                    />
+                    <button
+                        onClick={handleSendChat}
+                        disabled={sendingChat || !chatInput.trim()}
+                        className="px-3 py-2 rounded-lg bg-amber-500 text-white text-[11px] font-black disabled:opacity-40 flex-shrink-0"
+                    >
+                        👑
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <div className="flex gap-1 p-1 rounded-xl bg-white border border-[var(--moca-border)] w-fit mb-1 flex-wrap">
+                    {TABS.map((t) => (
+                        <button
+                            key={t.id}
+                            onClick={() => setTab(t.id)}
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-colors whitespace-nowrap ${tab === t.id ? 'bg-[var(--moca-surface-2)] text-[var(--moca-primary)]' : 'text-[var(--moca-text-3)]'}`}
+                        >
+                            {t.label}
+                        </button>
+                    ))}
+                </div>
+                {tab === 'pinned' && <AdminMocaLivePinnedOnlyPanel liveId={liveId} chat={chat} />}
+                {tab === 'keyword' && <AdminMocaLiveKeywordEventPanel liveId={liveId} />}
+                {tab === 'number' && <AdminMocaLiveNumberGamePanel liveId={liveId} />}
+                {tab === 'quiz' && <AdminMocaLiveQuizPanel liveId={liveId} />}
+            </div>
+        </div>
+    );
+};
+
 const AdminMocaLive = () => {
+    const navigate = useNavigate();
     const [streams, setStreams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('list');
@@ -1032,8 +1055,6 @@ const AdminMocaLive = () => {
     const [pushResult, setPushResult] = useState(null);
     const [solapiResult, setSolapiResult] = useState(null);
     const [sendingPush, setSendingPush] = useState(false);
-    const [quizPanelId, setQuizPanelId] = useState(null);
-    const [pinnedPanelId, setPinnedPanelId] = useState(null);
 
     const load = async () => {
         setLoading(true);
@@ -1412,36 +1433,16 @@ const AdminMocaLive = () => {
                                                         </button>
                                                     )}
                                                     <button
-                                                        onClick={() => setQuizPanelId(quizPanelId === s.id ? null : s.id)}
+                                                        onClick={() => navigate(`/admin/moca-live-control/${s.id}`)}
                                                         className="text-[11px] font-black text-violet-600 hover:underline"
                                                     >
-                                                        🎮 게임 {quizPanelId === s.id ? '닫기' : '관리'}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setPinnedPanelId(pinnedPanelId === s.id ? null : s.id)}
-                                                        className="text-[11px] font-black text-amber-600 hover:underline"
-                                                    >
-                                                        📌 고정댓글 {pinnedPanelId === s.id ? '닫기' : '관리'}
+                                                        🎛 방송 컨트롤
                                                     </button>
                                                     <button onClick={() => openEdit(s)} className="text-[11px] font-black text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">✏️ 수정</button>
                                                     <button onClick={() => handleDelete(s)} className="text-[11px] font-black text-[var(--moca-text-3)] hover:text-red-500">삭제</button>
                                                 </div>
                                             </td>
                                         </tr>
-                                        {quizPanelId === s.id && (
-                                            <tr>
-                                                <td colSpan={5} className="pb-3">
-                                                    <AdminMocaLiveGamesPanel liveId={s.id} />
-                                                </td>
-                                            </tr>
-                                        )}
-                                        {pinnedPanelId === s.id && (
-                                            <tr>
-                                                <td colSpan={5} className="pb-3">
-                                                    <AdminMocaLivePinnedMessagePanel liveId={s.id} streamerName={s.streamer_name} />
-                                                </td>
-                                            </tr>
-                                        )}
                                         </React.Fragment>
                                     ))}
                                 </tbody>

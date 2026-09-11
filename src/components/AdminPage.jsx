@@ -25,11 +25,14 @@ import AdminAttendanceCoupons from './AdminAttendanceCoupons';
 import AdminCeoQuiz from './AdminCeoQuiz';
 import AdminMocaLive from './AdminMocaLive';
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
+export const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
+// 모카TV 라이브 컨트롤 페이지(별도 라우트)와 로그인 상태를 공유하기 위한 세션 플래그.
+// AdminPage에서 로그인하면 라이브 컨트롤 페이지로 이동해도 비밀번호를 다시 묻지 않는다.
+export const ADMIN_AUTH_SESSION_KEY = 'moca_admin_auth';
 
 const AdminPage = () => {
     const navigate = useNavigate();
-    const [authenticated, setAuthenticated] = useState(false);
+    const [authenticated, setAuthenticated] = useState(() => window.sessionStorage.getItem(ADMIN_AUTH_SESSION_KEY) === '1');
     const [passwordInput, setPasswordInput] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
@@ -181,8 +184,16 @@ const AdminPage = () => {
     // 알림 센터 서브탭
     const [notifSubTab, setNotifSubTab] = useState('push'); // 'push' | 'encourage' | 'history'
 
+    // 세션 스토리지 인증 상태로 바로 들어온 경우(별도 라이브 컨트롤 페이지에서 돌아온 경우 등)
+    // handlePasswordSubmit을 거치지 않으므로 여기서 최초 1회 데이터를 불러온다.
+    useEffect(() => {
+        if (authenticated) fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const handleLogout = () => {
         logoutUser();
+        window.sessionStorage.removeItem(ADMIN_AUTH_SESSION_KEY);
         setAuthenticated(false);
         navigate('/');
     };
@@ -202,6 +213,7 @@ const AdminPage = () => {
     const handlePasswordSubmit = (e) => {
         e.preventDefault();
         if (passwordInput === ADMIN_PASSWORD) {
+            window.sessionStorage.setItem(ADMIN_AUTH_SESSION_KEY, '1');
             setAuthenticated(true);
             fetchData();
         } else {
@@ -2077,11 +2089,11 @@ const AdminPage = () => {
                                                                     </option>
                                                                 )}
                                                             </select>
-                                                            {user.grade === 'GOLD' && user.grade_expires_at && (
-                                                                <span className="text-[10px] text-[var(--moca-accent)] whitespace-nowrap">
-                                                                    ~ {new Date(user.grade_expires_at).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' })} 만료
-                                                                </span>
-                                                            )}
+                                                            <span className={`text-[10px] whitespace-nowrap ${user.grade === 'GOLD' && user.grade_expires_at ? 'text-[var(--moca-accent)]' : 'invisible'}`}>
+                                                                {user.grade === 'GOLD' && user.grade_expires_at
+                                                                    ? `~ ${new Date(user.grade_expires_at).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' })} 만료`
+                                                                    : ' '}
+                                                            </span>
                                                         </div>
 
                                                         {/* 생년 */}

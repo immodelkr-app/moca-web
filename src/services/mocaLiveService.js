@@ -104,6 +104,23 @@ export const fetchAllMocaLiveStreams = async () => {
     return data || [];
 };
 
+// 관리자용 - 단건 조회 (방송 컨트롤 페이지에서 사용)
+export const fetchMocaLiveStreamById = async (id) => {
+    if (!isSupabaseEnabled()) return null;
+
+    const { data, error } = await supabase
+        .from('moca_live_streams')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error('[mocaLiveService] 단건 조회 실패:', error);
+        return null;
+    }
+    return data;
+};
+
 // 라이브 방송 등록
 export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl }) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };

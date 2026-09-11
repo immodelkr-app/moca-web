@@ -16,6 +16,7 @@ import AgencyDirectory from './components/AgencyDirectory';
 import KimDaepyoTV from './components/KimDaepyoTV';
 import AgencyTourCalendar from './components/AgencyTourCalendar';
 import AdminPage from './components/AdminPage';
+import AdminMocaLiveControlPage from './components/AdminMocaLiveControlPage';
 import UpgradePage from './components/UpgradePage';
 import UpgradeApplicationPage from './components/UpgradeApplicationPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -190,6 +191,7 @@ function AppContent() {
 
                 {/* 관리자 페이지 */}
                 <Route path="/admin" element={<AdminPage />} />
+                <Route path="/admin/moca-live-control/:id" element={<AdminMocaLiveControlPage />} />
 
                 {/* 업그레이드 (페이월) 페이지 */}
                 <Route path="/upgrade" element={<UpgradePage />} />
