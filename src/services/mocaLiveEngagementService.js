@@ -57,6 +57,20 @@ export const subscribeToLiveChat = (liveId, onNewMessage) => {
     return () => supabase.removeChannel(channel);
 };
 
+// 채팅 전체 삭제 - 게임/퀴즈 결과는 status를 archived로 바꿔 "숨기기"만 하지만, 채팅은
+// 별도 역사적 가치가 없어 그냥 삭제한다 (같은 방송을 재사용할 때 지난 대화가 다시 보이지
+// 않도록 초기화하는 용도).
+export const clearLiveChat = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return { error: new Error('초기화 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_chat_messages')
+        .delete()
+        .eq('live_id', liveId);
+
+    return { error };
+};
+
 // --- 고정 댓글(공지) ---
 // 라이브당 1건만 고정 가능. 관리자가 직접 문구를 입력하거나, 기존 채팅 메시지 중 하나를
 // 골라 그대로 고정할 수 있다.

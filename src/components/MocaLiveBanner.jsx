@@ -13,7 +13,7 @@ const GOLD_OR_ABOVE = ['GOLD', 'IMODEL', 'VIP'];
 // (실제로는 네이티브 HLS 재생을 못 해 MEDIA_ERR_SRC_NOT_SUPPORTED로 조용히 실패함),
 // canPlayType을 먼저 보지 않고 Hls.isSupported()를 우선 확인한다.
 // 네이티브 HLS만 되고 MSE가 없는 환경(Safari/iOS)은 canPlayType 경로로 폴백한다.
-const RtmpPlayer = ({ src, title }) => {
+export const RtmpPlayer = ({ src, title }) => {
     const videoRef = useRef(null);
 
     useEffect(() => {

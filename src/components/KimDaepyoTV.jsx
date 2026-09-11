@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchKimDaepyoVideos } from '../services/youtubeService';
 import { fetchFeaturedVideos } from '../services/mocaTVService';
+import MocaLiveReplaySection from './MocaLiveReplaySection';
 
 const PLATFORM_BADGE = {
     instagram: { label: 'Reels', color: 'bg-gradient-to-r from-[#E1306C] to-[#F77737]', icon: 'photo_camera' },
@@ -85,6 +86,9 @@ const KimDaepyoTV = () => {
                     </div>
                 </div>
             </div>
+
+            {/* 모카TV 라이브 다시보기 */}
+            <MocaLiveReplaySection className="relative z-10 px-5 mb-6 max-w-7xl mx-auto w-full" />
 
             {/* Collage Video Grid */}
             <div className="relative z-10 px-5 pb-20 max-w-7xl mx-auto w-full flex-1">

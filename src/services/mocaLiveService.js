@@ -105,7 +105,7 @@ export const fetchAllMocaLiveStreams = async () => {
 };
 
 // 라이브 방송 등록
-export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade }) => {
+export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl }) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
 
     const { data, error } = await supabase
@@ -118,6 +118,7 @@ export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, 
             streamer_name: streamerName || '김대표',
             cover_image_url: coverImageUrl || null,
             target_grade: targetGrade || 'ALL',
+            vod_url: vodUrl || null,
         }])
         .select()
         .single();
@@ -126,7 +127,7 @@ export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, 
 };
 
 // 라이브 방송 정보 수정
-export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade }) => {
+export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl }) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
 
     const { data, error } = await supabase
@@ -139,6 +140,7 @@ export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideo
             streamer_name: streamerName || '김대표',
             cover_image_url: coverImageUrl || null,
             target_grade: targetGrade || 'ALL',
+            vod_url: vodUrl || null,
             updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -146,6 +148,28 @@ export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideo
         .single();
 
     return { data, error };
+};
+
+// 다시보기(VOD) 목록 - 유튜브 라이브는 종료 후 같은 videoId가 자동으로 다시보기가 되고,
+// RTMP는 관리자가 vod_url을 수동으로 채워준 것만 다시보기 대상이 된다.
+export const fetchPastMocaLiveStreams = async (limit = 12) => {
+    if (!isSupabaseEnabled()) return [];
+
+    try {
+        const { data, error } = await supabase
+            .from('moca_live_streams')
+            .select('*')
+            .eq('is_live', false)
+            .or('stream_type.eq.youtube,vod_url.not.is.null')
+            .order('updated_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return data || [];
+    } catch (e) {
+        console.warn('[mocaLiveService] 다시보기 목록 조회 실패:', e.message || e);
+        return [];
+    }
 };
 
 // 라이브 방송 삭제

@@ -12,7 +12,7 @@ import {
     fetchNumberGameWinnerNicknames,
     fetchKeywordEventsForLive, createKeywordEvent, cancelKeywordEvent, endKeywordEventNow, archiveKeywordEvent,
     fetchKeywordEventWinnerNicknames,
-    fetchLiveChatMessages, subscribeToLiveChat, sendLiveChatMessage,
+    fetchLiveChatMessages, subscribeToLiveChat, sendLiveChatMessage, clearLiveChat,
     fetchPinnedMessage, setPinnedMessage, clearPinnedMessage,
     openLiveViewerPresence, closeLiveViewerPresence,
 } from '../services/mocaLiveEngagementService';
@@ -42,6 +42,7 @@ const EMPTY_FORM = {
     streamerName: '김대표',
     coverImageUrl: '',
     targetGrade: 'ALL', // 'ALL' | 'GOLD'
+    vodUrl: '',
 };
 
 // 커버 썸네일 업로더 - jpg/png 파일을 바로 올리거나, URL을 직접 붙여넣을 수도 있음
@@ -194,6 +195,12 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
         const { error } = await openLiveQuiz(quiz.id, liveId);
         if (error) { flash('시작 실패: ' + (error.message || '')); return; }
         flash('🎮 퀴즈가 시작되었습니다. 시청자에게 실시간으로 노출됩니다.');
+        // 방송 시작 알림과 달리 건당 비용이 없는 앱 푸시라 확인 없이 바로 보낸다.
+        sendBroadcastPush({
+            title: '🎮 지금 라이브에서 퀴즈가 시작됐어요!',
+            body: quiz.question,
+            route: '/home/dashboard',
+        }).catch((e) => console.warn('[AdminMocaLive] 퀴즈 시작 알림 실패:', e));
         await load();
     };
 
@@ -427,6 +434,11 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
 
         setForm(EMPTY_NUMBER_GAME_FORM);
         flash('🔢 게임이 시작되었습니다. 시청자에게 실시간으로 노출됩니다.');
+        sendBroadcastPush({
+            title: '🔢 지금 라이브에서 숫자맞추기가 시작됐어요!',
+            body: `${minValue}~${maxValue} 사이 숫자를 맞혀보세요!`,
+            route: '/home/dashboard',
+        }).catch((e) => console.warn('[AdminMocaLive] 숫자맞추기 시작 알림 실패:', e));
         await load();
     };
 
@@ -636,6 +648,11 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
 
         setForm(EMPTY_KEYWORD_EVENT_FORM);
         flash('💬 이벤트가 시작되었습니다. 이제 방송에서 말로 질문하시면, 채팅에 정답을 치는 시청자가 자동으로 당첨돼요.');
+        sendBroadcastPush({
+            title: '💬 지금 라이브에서 정답 맞추기 이벤트가 시작됐어요!',
+            body: '방송을 보고 채팅창에 정답을 쳐보세요!',
+            route: '/home/dashboard',
+        }).catch((e) => console.warn('[AdminMocaLive] 정답맞추기 시작 알림 실패:', e));
         await load();
     };
 
@@ -837,6 +854,7 @@ const AdminMocaLivePinnedMessagePanel = ({ liveId, streamerName }) => {
     const [recentChat, setRecentChat] = useState([]);
     const [chatInput, setChatInput] = useState('');
     const [sendingChat, setSendingChat] = useState(false);
+    const [clearingChat, setClearingChat] = useState(false);
 
     const load = async () => {
         setLoading(true);
@@ -888,9 +906,29 @@ const AdminMocaLivePinnedMessagePanel = ({ liveId, streamerName }) => {
         setChatInput('');
     };
 
+    // 채팅은 게임/퀴즈 결과와 달리 별도 역사적 가치가 없어 완전 삭제한다 (복구 불가라 확인 필요).
+    const handleClearChat = async () => {
+        if (!window.confirm('이 방송의 채팅 기록을 전부 삭제할까요? (복구 불가, 같은 방송을 재시작해도 다시 안 보임)')) return;
+        setClearingChat(true);
+        const { error } = await clearLiveChat(liveId);
+        setClearingChat(false);
+        if (error) { flash('초기화 실패: ' + (error.message || '')); return; }
+        flash('🗑 채팅 기록이 초기화되었습니다.');
+        setRecentChat([]);
+    };
+
     return (
         <div className="bg-[var(--moca-surface-2)] rounded-2xl p-4 mt-2">
-            <p className="text-[12px] font-black text-[var(--moca-text)] mb-3">👑 운영자 채팅 보내기</p>
+            <div className="flex items-center justify-between mb-3">
+                <p className="text-[12px] font-black text-[var(--moca-text)]">👑 운영자 채팅 보내기</p>
+                <button
+                    onClick={handleClearChat}
+                    disabled={clearingChat}
+                    className="text-[11px] font-black text-slate-400 hover:text-red-500 disabled:opacity-40"
+                >
+                    {clearingChat ? '초기화 중...' : '🗑 채팅 초기화'}
+                </button>
+            </div>
             <div className="bg-white rounded-xl p-3 mb-4 space-y-1.5">
                 <div className="flex items-center gap-1.5">
                     <input
@@ -1025,6 +1063,7 @@ const AdminMocaLive = () => {
             streamerName: stream.streamer_name,
             coverImageUrl: stream.cover_image_url || '',
             targetGrade: stream.target_grade || 'ALL',
+            vodUrl: stream.vod_url || '',
         });
         setError('');
         setActiveTab('create');
@@ -1054,6 +1093,7 @@ const AdminMocaLive = () => {
             streamerName: form.streamerName.trim() || '김대표',
             coverImageUrl: form.coverImageUrl.trim(),
             targetGrade: form.targetGrade,
+            vodUrl: form.vodUrl.trim(),
         };
         const { error: saveError } = editingId
             ? await updateMocaLiveStream(editingId, payload)
@@ -1263,6 +1303,21 @@ const AdminMocaLive = () => {
                             onChange={(url) => setForm((f) => ({ ...f, coverImageUrl: url }))}
                             onError={setError}
                         />
+
+                        <div>
+                            <label className="text-[11px] font-bold text-[var(--moca-text-3)]">다시보기(VOD) 재생 URL (선택)</label>
+                            <input
+                                value={form.vodUrl}
+                                onChange={(e) => setForm((f) => ({ ...f, vodUrl: e.target.value }))}
+                                className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                                placeholder="예: https://xxxxxxxxxxxx.cloudfront.net/.../master.m3u8"
+                            />
+                            <p className="text-[10px] text-[var(--moca-text-3)] mt-1 leading-relaxed">
+                                유튜브 라이브는 방송 종료 후 같은 링크가 자동으로 다시보기가 되므로 비워둬도 됩니다.
+                                RTMP 방송은 AWS IVS 녹화 설정을 켜서 S3에 저장한 뒤 그 재생 URL을 여기에 붙여넣어야
+                                "모카TV 다시보기"에 노출됩니다.
+                            </p>
+                        </div>
 
                         {error && <p className="text-[12px] font-bold text-red-500">{error}</p>}
 

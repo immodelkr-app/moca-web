@@ -9,6 +9,7 @@ import ModelBeautyBanner from './ModelBeautyBanner';
 import TrialCampaignBanner from './TrialCampaignBanner';
 import LiveStreamBanner from './LiveStreamBanner';
 import MocaLiveBanner from './MocaLiveBanner';
+import MocaLiveReplaySection from './MocaLiveReplaySection';
 
 const TOUR_ITEMS = [
     { icon: 'event_note', label: '투어일지', route: '/home/diary', color: 'text-[#8B5CF6]', bgLight: 'bg-[#F3E8FF]' },
@@ -349,6 +350,9 @@ const HomeDashboard = () => {
             <div className="px-6 mb-6">
                 <ModelBeautyBanner variant="card" />
             </div>
+
+            {/* ── 9. 모카TV 다시보기 ── */}
+            <MocaLiveReplaySection />
 
             {/* Profile Edit Modal */}
             {isProfileModalOpen && (
