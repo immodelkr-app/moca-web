@@ -313,7 +313,7 @@ const AgencyDirectory = () => {
         }
 
         // 에이전시 이메일 있으면 확인 후 바로 발송, 없으면 입력 모달
-        if (agency.email) {
+        if (agency.email && agency.email.includes('@')) {
             if (!window.confirm('프로필 첨부하셨나요?\n신중하게 보내주세요.')) return;
             await executeSend(agency, agency.email);
         } else {

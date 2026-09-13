@@ -85,9 +85,13 @@ const AgencyDetailModal = ({ agency, onClose, onWriteMemo, onSendProfile, sendIn
                         {agency.email ? (
                             <div className="flex items-center gap-3 pt-2 border-t border-gray-200/60">
                                 <span className="material-symbols-outlined text-[18px] text-[#6C63FF]">mail</span>
-                                <a href={`mailto:${agency.email}`} className="text-sm font-bold text-[#6C63FF] hover:underline">
-                                    {agency.email}
-                                </a>
+                                {agency.email.includes('@') ? (
+                                    <a href={`mailto:${agency.email}`} className="text-sm font-bold text-[#6C63FF] hover:underline">
+                                        {agency.email}
+                                    </a>
+                                ) : (
+                                    <span className="text-sm font-bold text-[#1F1235]">{agency.email}</span>
+                                )}
                             </div>
                         ) : null}
 
