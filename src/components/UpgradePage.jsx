@@ -316,6 +316,8 @@ const UpgradePage = () => {
                                 ) : (
                                     <div className="flex flex-col gap-2.5">
                                         {[
+                                            { done: eligibility?.profileComplete, label: '프로필관리 필수항목 작성하기', hint: '이름·성별·활동나이·키·몸무게·신발사이즈' },
+                                            { done: eligibility?.postComplete, label: '모카그램 게시글 1개 이상 작성하기' },
                                             { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 작성하기', hint: `${eligibilityCommentCount}/${eligibility?.requiredCommentCount ?? 3}개 작성 완료` },
                                         ].map((item) => (
                                             <div key={item.label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${item.done ? 'bg-[#D1FAE5] border-[#10B981]/30' : 'bg-[#F8F5FF] border-[#E8E0FA]'}`}>

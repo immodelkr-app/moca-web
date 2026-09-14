@@ -574,6 +574,8 @@ const AgencyDirectory = () => {
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
                                                     {[
+                                                        { done: goldEligibility.profileComplete, text: '프로필관리 필수항목 작성하기' },
+                                                        { done: goldEligibility.postComplete, text: '모카그램 게시글 1개 이상 작성하기' },
                                                         { done: goldEligibility.commentComplete, text: '모카그램 댓글 3개 작성하기' },
                                                     ].map((item) => (
                                                         <div key={item.text} className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${item.done ? 'bg-[#D1FAE5] border-[#10B981]/30' : 'bg-white/70 border-[#FFD700]/20'}`}>
