@@ -707,3 +707,66 @@ export const fetchKeywordEventWinnerNicknames = async (eventId) => {
     }
     return (data || []).map((r) => r.user_nickname);
 };
+
+// --- 채팅 금칙어 관리 - 등록된 단어는 DB 트리거(mask_moca_live_chat_message)가 채팅 INSERT
+// 시점에 같은 글자수의 *로 자동 치환한다 (어느 클라이언트로 보내든 항상 마스킹됨) ---
+
+export const fetchBannedWords = async () => {
+    if (!isSupabaseEnabled()) return [];
+
+    const { data, error } = await supabase
+        .from('moca_chat_banned_words')
+        .select('word')
+        .order('word', { ascending: true });
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 금칙어 목록 조회 실패:', error);
+        return [];
+    }
+    return (data || []).map((r) => r.word);
+};
+
+export const addBannedWord = async (word) => {
+    if (!isSupabaseEnabled() || !word?.trim()) return { error: new Error('추가 불가') };
+
+    const { error } = await supabase
+        .from('moca_chat_banned_words')
+        .upsert({ word: word.trim() }, { onConflict: 'word' });
+
+    return { error };
+};
+
+export const removeBannedWord = async (word) => {
+    if (!isSupabaseEnabled()) return { error: new Error('삭제 불가') };
+
+    const { error } = await supabase
+        .from('moca_chat_banned_words')
+        .delete()
+        .eq('word', word);
+
+    return { error };
+};
+
+// --- 방송 참여 요약 / 피크 시청자수 ---
+
+// 실시간 시청자수는 Presence로만 집계되고 DB에 남지 않으므로, 어드민 화면(목록/컨트롤 페이지)이
+// 열려있는 동안 관측된 값 중 최댓값만 원자적으로 기록해 "피크 시청자수"로 사용한다.
+export const bumpLivePeakViewers = async (liveId, count) => {
+    if (!isSupabaseEnabled() || !liveId) return;
+
+    const { error } = await supabase.rpc('bump_moca_live_peak_viewers', { p_live_id: liveId, p_count: count });
+    if (error) console.warn('[mocaLiveEngagementService] 피크 시청자 기록 실패:', error.message || error);
+};
+
+// 방송별 참여 요약(피크 시청자/하트/채팅/퀴즈·게임·이벤트 참여자수) - 컨트롤 페이지 요약 카드용
+export const fetchLiveEngagementSummary = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return null;
+
+    const { data, error } = await supabase.rpc('get_moca_live_engagement_summary', { p_live_id: liveId });
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 참여 요약 조회 실패:', error);
+        return null;
+    }
+    return data?.[0] || null;
+};

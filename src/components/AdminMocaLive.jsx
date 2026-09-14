@@ -17,6 +17,8 @@ import {
     fetchLiveChatMessages, subscribeToLiveChat, sendLiveChatMessage, clearLiveChat,
     fetchPinnedMessage, setPinnedMessage, clearPinnedMessage,
     openLiveViewerPresence, closeLiveViewerPresence,
+    bumpLivePeakViewers, fetchLiveEngagementSummary,
+    fetchBannedWords, addBannedWord, removeBannedWord,
 } from '../services/mocaLiveEngagementService';
 import { grantWinnerPoints } from '../services/quizService';
 
@@ -31,6 +33,12 @@ export const LiveViewerCount = ({ liveId }) => {
         const channel = openLiveViewerPresence(liveId, setCount, false);
         return () => closeLiveViewerPresence(channel);
     }, [liveId]);
+
+    // 어드민이 이 화면을 보고 있는 동안 관측된 시청자 수 중 최댓값을 "피크 시청자수"로 기록
+    useEffect(() => {
+        if (!liveId || count === 0) return;
+        bumpLivePeakViewers(liveId, count);
+    }, [liveId, count]);
 
     if (count === 0) return null;
     return <span className="ml-1.5 text-[10px] font-black text-[var(--moca-text-3)] align-middle">👀 {count}명</span>;
@@ -839,6 +847,128 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
     );
 };
 
+// 방송 참여 요약 - 컨트롤 페이지에서 채팅/하트/퀴즈/게임/이벤트 참여 현황을 한 번에 보여준다.
+// 라이브 중이든 종료 후든 항상 조회 가능 (종료 후에도 데이터는 그대로 남아있음).
+const LiveEngagementSummary = ({ liveId }) => {
+    const [summary, setSummary] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    const load = async () => {
+        setLoading(true);
+        setSummary(await fetchLiveEngagementSummary(liveId));
+        setLoading(false);
+    };
+
+    useEffect(() => { load(); }, [liveId]);
+
+    const tiles = [
+        { key: 'peak_viewer_count', icon: '👀', label: '피크 시청자' },
+        { key: 'heart_count', icon: '❤️', label: '하트' },
+        { key: 'chat_count', icon: '💬', label: '채팅' },
+        { key: 'quiz_participant_count', icon: '🎮', label: '퀴즈 참여' },
+        { key: 'number_game_participant_count', icon: '🔢', label: '숫자맞추기 참여' },
+        { key: 'keyword_event_participant_count', icon: '🔑', label: '정답맞추기 참여' },
+        { key: 'unique_participant_count', icon: '👥', label: '순 참여자수' },
+    ];
+
+    return (
+        <div className="bg-white rounded-2xl p-4 lg:p-5 mb-4">
+            <div className="flex items-center justify-between mb-3">
+                <p className="text-[13px] font-black text-[var(--moca-text)]">📊 방송 참여 요약</p>
+                <button onClick={load} className="text-[11px] font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">새로고침</button>
+            </div>
+            {loading ? (
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-3 text-center">불러오는 중...</p>
+            ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                    {tiles.map((t) => (
+                        <div key={t.key} className="bg-[var(--moca-surface-2)] rounded-xl p-3 text-center">
+                            <p className="text-base leading-none mb-1">{t.icon}</p>
+                            <p className="text-[15px] font-black text-[var(--moca-text)]">{summary?.[t.key] ?? 0}</p>
+                            <p className="text-[9.5px] text-[var(--moca-text-3)] font-bold mt-0.5 leading-tight">{t.label}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// 채팅 금칙어 관리 - 등록한 단어는 모든 라이브 채팅에서 같은 글자수의 *로 자동 치환된다
+// (DB 트리거 mask_moca_live_chat_message가 적용, 방송 목록 상단에서 전역으로 관리)
+const ChatBannedWordsPanel = () => {
+    const [words, setWords] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [input, setInput] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    const load = async () => {
+        setLoading(true);
+        setWords(await fetchBannedWords());
+        setLoading(false);
+    };
+
+    useEffect(() => { load(); }, []);
+
+    const handleAdd = async () => {
+        const word = input.trim();
+        if (!word || saving) return;
+        setSaving(true);
+        setError('');
+        const { error: addError } = await addBannedWord(word);
+        setSaving(false);
+        if (addError) { setError('추가 실패: ' + (addError.message || '')); return; }
+        setInput('');
+        await load();
+    };
+
+    const handleRemove = async (word) => {
+        await removeBannedWord(word);
+        await load();
+    };
+
+    return (
+        <div className="bg-white border border-[var(--moca-border)] rounded-2xl p-4 mb-4">
+            <p className="text-[13px] font-black text-[var(--moca-text)] mb-1">🚫 채팅 금칙어 관리</p>
+            <p className="text-[10px] text-[var(--moca-text-3)] mb-3 leading-relaxed">
+                등록한 단어는 모든 라이브 채팅에서 같은 글자수의 *로 자동 치환됩니다 (대소문자 구분 없음, 어느 기기에서 보내든 적용).
+            </p>
+            <div className="flex items-center gap-2 mb-3">
+                <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
+                    placeholder="금칙어 입력"
+                    className="flex-1 px-3 py-2 rounded-lg border border-[var(--moca-border)] text-[13px]"
+                />
+                <button
+                    onClick={handleAdd}
+                    disabled={saving || !input.trim()}
+                    className="px-3 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-[12px] font-black disabled:opacity-40"
+                >
+                    추가
+                </button>
+            </div>
+            {error && <p className="text-[11px] font-bold text-red-500 mb-2">{error}</p>}
+            {loading ? (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-2 text-center">불러오는 중...</p>
+            ) : words.length === 0 ? (
+                <p className="text-[11px] text-[var(--moca-text-3)] font-bold py-2 text-center">등록된 금칙어가 없습니다.</p>
+            ) : (
+                <div className="flex flex-wrap gap-1.5">
+                    {words.map((w) => (
+                        <span key={w} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--moca-surface-2)] text-[11px] font-bold text-[var(--moca-text-2)]">
+                            {w}
+                            <button onClick={() => handleRemove(w)} className="text-[var(--moca-text-3)] hover:text-red-500">✕</button>
+                        </span>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 // 고정 댓글(공지) 관리 - 직접 문구를 입력하거나, 옆에서 공유되는 실시간 채팅(chat prop) 중
 // 하나를 골라 그대로 고정한다. 채팅 조회/발송 자체는 AdminMocaLiveControlPanel이 공유해서 갖고 있음.
 const AdminMocaLivePinnedOnlyPanel = ({ liveId, chat }) => {
@@ -925,10 +1055,10 @@ const AdminMocaLivePinnedOnlyPanel = ({ liveId, chat }) => {
                     {chat.slice().reverse().map((c) => (
                         <div key={c.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                             <p className="text-[13px] text-[var(--moca-text)] flex-1 truncate">
-                                <span className={`font-black ${c.is_host ? 'text-amber-600' : ''}`}>{c.is_host && '👑 '}{c.user_nickname}</span>: {c.message}
+                                <span className={`font-black ${c.is_host ? 'text-amber-600' : ''}`}>{c.is_host && '👑 '}{c.user_nickname}</span>: {c.masked_message || c.message}
                             </p>
                             <button
-                                onClick={() => handlePin(c.message, c.user_nickname)}
+                                onClick={() => handlePin(c.masked_message || c.message, c.user_nickname)}
                                 disabled={saving}
                                 className="text-[12px] font-bold text-[var(--moca-primary)] flex-shrink-0 disabled:opacity-40"
                             >
@@ -1002,7 +1132,9 @@ export const AdminMocaLiveControlPanel = ({ liveId, streamerName, chatHeightClas
     ];
 
     return (
-        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-5 lg:p-7 mt-3 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5 lg:gap-8 items-start">
+        <div className="mt-3">
+            <LiveEngagementSummary liveId={liveId} />
+            <div className="bg-[var(--moca-surface-2)] rounded-2xl p-5 lg:p-7 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5 lg:gap-8 items-start">
             <div className={`bg-white rounded-2xl p-4 lg:p-5 flex flex-col ${chatHeightClass}`}>
                 <div className="flex items-center justify-between mb-3">
                     <p className="text-[14px] font-black text-[var(--moca-text)]">💬 실시간 채팅</p>
@@ -1022,7 +1154,7 @@ export const AdminMocaLiveControlPanel = ({ liveId, streamerName, chatHeightClas
                     ) : (
                         chat.map((c) => (
                             <p key={c.id} className="text-[13px] text-[var(--moca-text)] leading-snug">
-                                <span className={`font-black ${c.is_host ? 'text-amber-600' : ''}`}>{c.is_host && '👑 '}{c.user_nickname}</span>: {c.message}
+                                <span className={`font-black ${c.is_host ? 'text-amber-600' : ''}`}>{c.is_host && '👑 '}{c.user_nickname}</span>: {c.masked_message || c.message}
                             </p>
                         ))
                     )}
@@ -1062,6 +1194,7 @@ export const AdminMocaLiveControlPanel = ({ liveId, streamerName, chatHeightClas
                 {tab === 'keyword' && <AdminMocaLiveKeywordEventPanel liveId={liveId} />}
                 {tab === 'number' && <AdminMocaLiveNumberGamePanel liveId={liveId} />}
                 {tab === 'quiz' && <AdminMocaLiveQuizPanel liveId={liveId} />}
+            </div>
             </div>
         </div>
     );
@@ -1457,6 +1590,8 @@ const AdminMocaLive = () => {
 
             {activeTab === 'list' && (
                 <>
+                    <ChatBannedWordsPanel />
+
                     <div className="flex items-center justify-between mb-3">
                         <p className="text-sm font-black text-[var(--moca-text)]">전체 방송 <span className="text-[var(--moca-primary)]">{streams.length}</span>건</p>
                         <button onClick={load} className="text-xs font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">새로고침</button>

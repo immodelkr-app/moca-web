@@ -390,7 +390,7 @@ const MocaLiveEngagement = ({ liveId }) => {
                             <span className={`font-black flex-shrink-0 ${msg.is_host ? 'text-amber-300' : 'text-[#C084FC]'}`}>
                                 {msg.is_host && '👑 '}{msg.user_nickname}
                             </span>
-                            <span className={`font-medium break-words ${msg.is_host ? 'text-amber-100' : 'text-white/90'}`}>{msg.message}</span>
+                            <span className={`font-medium break-words ${msg.is_host ? 'text-amber-100' : 'text-white/90'}`}>{msg.masked_message || msg.message}</span>
                             <span className="text-[9px] text-white/40 flex-shrink-0 ml-auto">{formatTime(msg.created_at)}</span>
                         </div>
                     ))}
