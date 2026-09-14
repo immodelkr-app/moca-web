@@ -552,9 +552,6 @@ const AgencyDirectory = () => {
                                             <p className="text-[#7C3AED] font-black text-2xl mb-1">
                                                 +{hiddenCount}곳 더 있어요
                                             </p>
-                                            <p className="text-[#9CA3AF] text-sm font-bold">
-                                                실버 회원은 상위 {SILVER_AGENCY_LIMIT}개 에이전시까지 열람 가능합니다
-                                            </p>
                                         </div>
 
                                         {/* GOLD 신청 조건 체크리스트 */}
@@ -577,13 +574,13 @@ const AgencyDirectory = () => {
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
                                                     {[
-                                                        { done: goldEligibility.commentComplete, text: '모카그램 댓글 3개 이상 작성하기' },
+                                                        { done: goldEligibility.commentComplete, text: '모카그램 댓글 3개 작성하기' },
                                                     ].map((item) => (
-                                                        <div key={item.text} className="flex items-center gap-2 px-3 py-2 bg-white/70 rounded-xl border border-[#FFD700]/20">
+                                                        <div key={item.text} className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${item.done ? 'bg-[#D1FAE5] border-[#10B981]/30' : 'bg-white/70 border-[#FFD700]/20'}`}>
                                                             <span className={`material-symbols-outlined text-[15px] flex-shrink-0 ${item.done ? 'text-[#10B981]' : 'text-[#C7BEDD]'}`}>
                                                                 {item.done ? 'check_circle' : 'radio_button_unchecked'}
                                                             </span>
-                                                            <span className="text-[#1F1235] text-xs font-bold text-left">{item.text}</span>
+                                                            <span className={`text-xs font-bold text-left ${item.done ? 'text-[#10B981] line-through' : 'text-[#1F1235]'}`}>{item.text}</span>
                                                         </div>
                                                     ))}
                                                 </div>

@@ -316,14 +316,14 @@ const UpgradePage = () => {
                                 ) : (
                                     <div className="flex flex-col gap-2.5">
                                         {[
-                                            { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 이상 작성하기', hint: `${eligibilityCommentCount}/${eligibility?.requiredCommentCount ?? 3}개 작성 완료` },
+                                            { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 작성하기', hint: `${eligibilityCommentCount}/${eligibility?.requiredCommentCount ?? 3}개 작성 완료` },
                                         ].map((item) => (
-                                            <div key={item.label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${item.done ? 'bg-[#F3E8FF] border-[#E8E0FA]' : 'bg-[#F8F5FF] border-[#E8E0FA]'}`}>
-                                                <span className={`material-symbols-outlined text-[18px] flex-shrink-0 ${item.done ? 'text-[#9333EA]' : 'text-[#C7BEDD]'}`}>
+                                            <div key={item.label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${item.done ? 'bg-[#D1FAE5] border-[#10B981]/30' : 'bg-[#F8F5FF] border-[#E8E0FA]'}`}>
+                                                <span className={`material-symbols-outlined text-[18px] flex-shrink-0 ${item.done ? 'text-[#10B981]' : 'text-[#C7BEDD]'}`}>
                                                     {item.done ? 'check_circle' : 'radio_button_unchecked'}
                                                 </span>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className={`text-xs font-bold ${item.done ? 'text-[#1F1235]' : 'text-[#5B4E7A]'}`}>{item.label}</p>
+                                                    <p className={`text-xs font-bold ${item.done ? 'text-[#10B981] line-through' : 'text-[#5B4E7A]'}`}>{item.label}</p>
                                                     {item.hint && <p className="text-[#9CA3AF] text-[10px] mt-0.5">{item.hint}</p>}
                                                 </div>
                                             </div>
