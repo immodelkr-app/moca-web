@@ -54,7 +54,7 @@ const UpgradePage = () => {
 
     const canApply = isAlreadyGold || (!eligibilityLoading && eligibility?.allComplete);
     const eligibilityCompletedCount = eligibility
-        ? [eligibility.profileComplete, eligibility.postComplete, eligibility.commentComplete].filter(Boolean).length
+        ? [eligibility.commentComplete].filter(Boolean).length
         : 0;
 
     const conditionsRef = useRef(null);
@@ -115,13 +115,13 @@ const UpgradePage = () => {
                                     GOLD 신청 조건
                                 </p>
                                 <span className={`text-xs font-black ${eligibility.allComplete ? 'text-[#10B981]' : 'text-[#9333EA]'}`}>
-                                    {eligibility.allComplete ? '신청 가능 🎉' : `${eligibilityCompletedCount}/4 완료`}
+                                    {eligibility.allComplete ? '신청 가능 🎉' : `${eligibilityCompletedCount}/1 완료`}
                                 </span>
                             </div>
                             <div className="h-1.5 w-full rounded-full bg-[#F3E8FF] overflow-hidden">
                                 <div
                                     className={`h-full rounded-full transition-all ${eligibility.allComplete ? 'bg-[#10B981]' : 'bg-gradient-to-r from-[#9333EA] to-[#C084FC]'}`}
-                                    style={{ width: `${(eligibilityCompletedCount / 4) * 100}%` }}
+                                    style={{ width: `${(eligibilityCompletedCount / 1) * 100}%` }}
                                 />
                             </div>
                         </div>
@@ -303,7 +303,7 @@ const UpgradePage = () => {
                                     </p>
                                     {!eligibilityLoading && eligibility && (
                                         <span className="text-[#9333EA] text-xs font-black">
-                                            {eligibilityCompletedCount}/3 완료
+                                            {eligibilityCompletedCount}/1 완료
                                         </span>
                                     )}
                                 </div>
@@ -313,8 +313,6 @@ const UpgradePage = () => {
                                 ) : (
                                     <div className="flex flex-col gap-2.5">
                                         {[
-                                            { done: eligibility?.profileComplete, label: '프로필관리 필수항목 작성하기', hint: '이름·성별·활동나이·키·몸무게·신발사이즈' },
-                                            { done: eligibility?.postComplete, label: '모카그램 게시글 1개 이상 작성하기' },
                                             { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 이상 작성하기' },
                                         ].map((item) => (
                                             <div key={item.label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${item.done ? 'bg-[#F3E8FF] border-[#E8E0FA]' : 'bg-[#F8F5FF] border-[#E8E0FA]'}`}>

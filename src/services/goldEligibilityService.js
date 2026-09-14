@@ -2,21 +2,9 @@ import { supabase, isSupabaseEnabled } from './supabaseClient';
 
 /**
  * GOLD 등급 신청 최소 활동 조건
- * - 스마트프로필 필수 항목(포트폴리오 링크 제외) 전체 기재
- * - 모카그램 게시글 1개 이상 (카테고리 무관)
  * - 모카그램 댓글 3개 이상
  */
-const REQUIRED_PROFILE_FIELDS = ['name', 'gender', 'age', 'height', 'weight', 'shoe_size'];
-const REQUIRED_POST_COUNT = 1;
 const REQUIRED_COMMENT_COUNT = 3;
-
-export const isProfileComplete = (user) => {
-    if (!user) return false;
-    return REQUIRED_PROFILE_FIELDS.every((field) => {
-        const value = user[field];
-        return value !== null && value !== undefined && String(value).trim() !== '';
-    });
-};
 
 const countRows = async (table, userNickname) => {
     if (!isSupabaseEnabled() || !userNickname) return 0;
@@ -35,23 +23,13 @@ const countRows = async (table, userNickname) => {
 export const getGoldEligibility = async (user) => {
     const userNickname = user?.nickname || user?.name;
 
-    const [postCount, commentCount] = await Promise.all([
-        countRows('certification_posts', userNickname),
-        countRows('certification_comments', userNickname),
-    ]);
-
-    const profileComplete = isProfileComplete(user);
-    const postComplete = postCount >= REQUIRED_POST_COUNT;
+    const commentCount = await countRows('certification_comments', userNickname);
     const commentComplete = commentCount >= REQUIRED_COMMENT_COUNT;
 
     return {
-        profileComplete,
-        postCount,
-        postComplete,
         commentCount,
         commentComplete,
-        requiredPostCount: REQUIRED_POST_COUNT,
         requiredCommentCount: REQUIRED_COMMENT_COUNT,
-        allComplete: profileComplete && postComplete && commentComplete,
+        allComplete: commentComplete,
     };
 };

@@ -277,9 +277,9 @@ const AgencyDirectory = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isUnlimited]);
     const goldEligibilityCompletedCount = goldEligibility
-        ? [goldEligibility.profileComplete, goldEligibility.postComplete, goldEligibility.commentComplete].filter(Boolean).length
+        ? [goldEligibility.commentComplete].filter(Boolean).length
         : 0;
-    const goldEligibilityRemaining = 3 - goldEligibilityCompletedCount;
+    const goldEligibilityRemaining = 1 - goldEligibilityCompletedCount;
 
     const handleSend = async (agency) => {
         if (sending) return;
@@ -567,19 +567,17 @@ const AgencyDirectory = () => {
                                                         GOLD 신청 조건
                                                     </p>
                                                     <span className={`text-xs font-black ${goldEligibility.allComplete ? 'text-[#10B981]' : 'text-[#B45309]'}`}>
-                                                        {goldEligibility.allComplete ? '신청 가능 🎉' : `${goldEligibilityCompletedCount}/3 완료`}
+                                                        {goldEligibility.allComplete ? '신청 가능 🎉' : `${goldEligibilityCompletedCount}/1 완료`}
                                                     </span>
                                                 </div>
                                                 <div className="h-1.5 w-full rounded-full bg-white/70 overflow-hidden mb-3">
                                                     <div
                                                         className={`h-full rounded-full transition-all ${goldEligibility.allComplete ? 'bg-[#10B981]' : 'bg-gradient-to-r from-[#FFD700] to-[#F9A825]'}`}
-                                                        style={{ width: `${(goldEligibilityCompletedCount / 3) * 100}%` }}
+                                                        style={{ width: `${(goldEligibilityCompletedCount / 1) * 100}%` }}
                                                     />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
                                                     {[
-                                                        { done: goldEligibility.profileComplete, text: '프로필관리 필수항목 작성하기' },
-                                                        { done: goldEligibility.postComplete, text: '모카그램 게시글 1개 이상 작성하기' },
                                                         { done: goldEligibility.commentComplete, text: '모카그램 댓글 3개 이상 작성하기' },
                                                     ].map((item) => (
                                                         <div key={item.text} className="flex items-center gap-2 px-3 py-2 bg-white/70 rounded-xl border border-[#FFD700]/20">
