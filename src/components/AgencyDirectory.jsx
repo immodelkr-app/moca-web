@@ -602,7 +602,6 @@ const AgencyDirectory = () => {
                                             {[
                                                 { icon: 'apartment', text: `전체 ${agencies.length}개 에이전시 열람` },
                                                 { icon: 'forward_to_inbox', text: '프로필 월 무제한 발송' },
-                                                { icon: 'mail', text: '에이전시 이메일 주소 공개' },
                                                 { icon: 'edit_note', text: '투어일지 무제한 작성' },
                                             ].map((item) => (
                                                 <div key={item.text} className="flex items-center gap-3 px-4 py-2.5 bg-white/70 rounded-xl border border-[#FFD700]/20">
