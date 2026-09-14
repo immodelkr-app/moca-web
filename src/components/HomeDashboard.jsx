@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser, getUserGrade, syncUserGrade, GRADE_INFO, GRADE_EMOJI } from '../services/userService';
-import { getGoldEligibility } from '../services/goldEligibilityService';
+import { checkGoldEligibilityWithAutoUpgrade } from '../services/goldEligibilityService';
 import { fetchMessagesList } from '../services/messageService';
 import { fetchAttendanceProgress, submitAttendanceCheck } from '../services/attendanceService';
 import ProfileEditModal from './ProfileEditModal';
@@ -40,14 +40,16 @@ const HomeDashboard = () => {
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [showCastingNotice, setShowCastingNotice] = useState(false);
 
-    // GOLD 신청 조건 충족 여부 (커뮤니티 메뉴의 "등급 신청하기" 버튼에 남은 미션 수 표시용)
+    // GOLD 조건 충족 여부 (커뮤니티 메뉴의 "등급 신청하기" 버튼에 남은 미션 수 표시용) + 자동 승급
     const isAlreadyGold = ['GOLD', 'IMODEL', 'VIP'].includes(grade);
     const [goldEligibility, setGoldEligibility] = useState(null);
     useEffect(() => {
         if (isAlreadyGold) return;
         let cancelled = false;
-        getGoldEligibility(user).then((result) => {
-            if (!cancelled) setGoldEligibility(result);
+        checkGoldEligibilityWithAutoUpgrade(user).then(({ eligibility, upgraded }) => {
+            if (cancelled) return;
+            setGoldEligibility(eligibility);
+            if (upgraded) window.location.reload();
         });
         return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps

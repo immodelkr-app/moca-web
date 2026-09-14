@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser, GRADE_INFO } from '../services/userService';
-import { getGoldEligibility } from '../services/goldEligibilityService';
+import { checkGoldEligibilityWithAutoUpgrade } from '../services/goldEligibilityService';
 
 // 카카오 플러스채널 링크
 const KAKAO_CHANNEL_URL = 'http://pf.kakao.com/_zlMUxj/chat';
@@ -34,7 +34,7 @@ const UpgradePage = () => {
     const [eligibility, setEligibility] = useState(null);
     const [eligibilityLoading, setEligibilityLoading] = useState(true);
 
-    // ── GOLD 신청 최소 활동 조건 충족 여부 조회 ──────────────────────────────────
+    // ── GOLD 조건 충족 여부 조회 + 조건 충족 시 자동 승급 ─────────────────────────
     useEffect(() => {
         if (isAlreadyGold) {
             setEligibilityLoading(false);
@@ -42,11 +42,11 @@ const UpgradePage = () => {
         }
         let cancelled = false;
         setEligibilityLoading(true);
-        getGoldEligibility(user).then((result) => {
-            if (!cancelled) {
-                setEligibility(result);
-                setEligibilityLoading(false);
-            }
+        checkGoldEligibilityWithAutoUpgrade(user).then(({ eligibility: result, upgraded }) => {
+            if (cancelled) return;
+            setEligibility(result);
+            setEligibilityLoading(false);
+            if (upgraded) window.location.reload();
         });
         return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
