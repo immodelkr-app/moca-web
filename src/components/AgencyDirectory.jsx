@@ -276,10 +276,9 @@ const AgencyDirectory = () => {
         return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isUnlimited]);
-    const goldEligibilityCompletedCount = goldEligibility
-        ? [goldEligibility.commentComplete].filter(Boolean).length
+    const goldEligibilityRemaining = goldEligibility
+        ? Math.max(0, goldEligibility.requiredCommentCount - goldEligibility.commentCount)
         : 0;
-    const goldEligibilityRemaining = 1 - goldEligibilityCompletedCount;
 
     const handleSend = async (agency) => {
         if (sending) return;
@@ -567,13 +566,13 @@ const AgencyDirectory = () => {
                                                         GOLD 신청 조건
                                                     </p>
                                                     <span className={`text-xs font-black ${goldEligibility.allComplete ? 'text-[#10B981]' : 'text-[#B45309]'}`}>
-                                                        {goldEligibility.allComplete ? '신청 가능 🎉' : `${goldEligibilityCompletedCount}/1 완료`}
+                                                        {goldEligibility.allComplete ? '신청 가능 🎉' : `${Math.min(goldEligibility.commentCount, goldEligibility.requiredCommentCount)}/${goldEligibility.requiredCommentCount} 완료`}
                                                     </span>
                                                 </div>
                                                 <div className="h-1.5 w-full rounded-full bg-white/70 overflow-hidden mb-3">
                                                     <div
                                                         className={`h-full rounded-full transition-all ${goldEligibility.allComplete ? 'bg-[#10B981]' : 'bg-gradient-to-r from-[#FFD700] to-[#F9A825]'}`}
-                                                        style={{ width: `${(goldEligibilityCompletedCount / 1) * 100}%` }}
+                                                        style={{ width: `${Math.min(100, (goldEligibility.commentCount / goldEligibility.requiredCommentCount) * 100)}%` }}
                                                     />
                                                 </div>
                                                 <div className="flex flex-col gap-1.5">
@@ -589,15 +588,15 @@ const AgencyDirectory = () => {
                                                     ))}
                                                 </div>
                                                 <p className="text-[#B45309] text-xs font-black text-center pt-2">
-                                                    {goldEligibilityCompletedCount}개의 미션이 충족되었습니다
+                                                    {Math.min(goldEligibility.commentCount, goldEligibility.requiredCommentCount)}개의 댓글을 작성했어요
                                                 </p>
                                             </div>
                                         )}
 
                                         {/* CTA 버튼 — 조건 미달성이면 페이지 이동 없이 남은 미션 수만 안내 */}
                                         {goldEligibility && !goldEligibility.allComplete ? (
-                                            <div className="w-full max-w-xs py-4 rounded-[20px] bg-white/70 border border-[#FFD700]/30 text-[#B45309] font-black text-sm text-center">
-                                                미션 {goldEligibilityRemaining}개만 더 하면 골드등급이 될 수 있어요
+                                            <div className="w-full max-w-xs py-4 rounded-[20px] bg-white/70 border border-[#FFD700]/30 text-[#B45309] font-black text-sm text-center leading-snug">
+                                                미션 {goldEligibilityRemaining}개만 더 하면<br />골드등급이 될 수 있어요
                                             </div>
                                         ) : (
                                             <button

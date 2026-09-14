@@ -53,7 +53,7 @@ const HomeDashboard = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAlreadyGold]);
     const goldEligibilityRemaining = goldEligibility
-        ? 1 - [goldEligibility.commentComplete].filter(Boolean).length
+        ? Math.max(0, goldEligibility.requiredCommentCount - goldEligibility.commentCount)
         : null;
 
     // 출석체크 & 참석 프리패스 진행률

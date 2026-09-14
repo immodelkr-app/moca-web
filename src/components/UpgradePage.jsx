@@ -53,8 +53,11 @@ const UpgradePage = () => {
     }, []);
 
     const canApply = isAlreadyGold || (!eligibilityLoading && eligibility?.allComplete);
-    const eligibilityCompletedCount = eligibility
-        ? [eligibility.commentComplete].filter(Boolean).length
+    const eligibilityCommentCount = eligibility
+        ? Math.min(eligibility.commentCount, eligibility.requiredCommentCount)
+        : 0;
+    const eligibilityRemaining = eligibility
+        ? Math.max(0, eligibility.requiredCommentCount - eligibility.commentCount)
         : 0;
 
     const conditionsRef = useRef(null);
@@ -115,13 +118,13 @@ const UpgradePage = () => {
                                     GOLD 신청 조건
                                 </p>
                                 <span className={`text-xs font-black ${eligibility.allComplete ? 'text-[#10B981]' : 'text-[#9333EA]'}`}>
-                                    {eligibility.allComplete ? '신청 가능 🎉' : `${eligibilityCompletedCount}/1 완료`}
+                                    {eligibility.allComplete ? '신청 가능 🎉' : `${eligibilityCommentCount}/${eligibility.requiredCommentCount} 완료`}
                                 </span>
                             </div>
                             <div className="h-1.5 w-full rounded-full bg-[#F3E8FF] overflow-hidden">
                                 <div
                                     className={`h-full rounded-full transition-all ${eligibility.allComplete ? 'bg-[#10B981]' : 'bg-gradient-to-r from-[#9333EA] to-[#C084FC]'}`}
-                                    style={{ width: `${(eligibilityCompletedCount / 1) * 100}%` }}
+                                    style={{ width: `${Math.min(100, (eligibility.commentCount / eligibility.requiredCommentCount) * 100)}%` }}
                                 />
                             </div>
                         </div>
@@ -234,7 +237,7 @@ const UpgradePage = () => {
                                         ? 'bg-gradient-to-br from-[#9333EA] to-[#7C3AED] text-white shadow-xl shadow-[#9333EA]/20 hover:opacity-95'
                                         : 'bg-[#F3E8FF] text-[#9333EA] border border-[#E8E0FA]'}`}>
                                 <span className="text-xl">{canApply ? '👑' : '📋'}</span>
-                                {canApply ? 'GOLD 등급 신청하기' : `GOLD 신청 조건 보기 (${eligibilityCompletedCount}/4)`}
+                                {canApply ? 'GOLD 등급 신청하기' : `GOLD 신청 조건 보기 (${eligibilityCommentCount}/${eligibility?.requiredCommentCount ?? 3})`}
                             </button>
                         )}
                     </div>
@@ -303,7 +306,7 @@ const UpgradePage = () => {
                                     </p>
                                     {!eligibilityLoading && eligibility && (
                                         <span className="text-[#9333EA] text-xs font-black">
-                                            {eligibilityCompletedCount}/1 완료
+                                            {eligibilityCommentCount}/{eligibility.requiredCommentCount} 완료
                                         </span>
                                     )}
                                 </div>
@@ -313,7 +316,7 @@ const UpgradePage = () => {
                                 ) : (
                                     <div className="flex flex-col gap-2.5">
                                         {[
-                                            { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 이상 작성하기' },
+                                            { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 이상 작성하기', hint: `${eligibilityCommentCount}/${eligibility?.requiredCommentCount ?? 3}개 작성 완료` },
                                         ].map((item) => (
                                             <div key={item.label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${item.done ? 'bg-[#F3E8FF] border-[#E8E0FA]' : 'bg-[#F8F5FF] border-[#E8E0FA]'}`}>
                                                 <span className={`material-symbols-outlined text-[18px] flex-shrink-0 ${item.done ? 'text-[#9333EA]' : 'text-[#C7BEDD]'}`}>
@@ -325,8 +328,8 @@ const UpgradePage = () => {
                                                 </div>
                                             </div>
                                         ))}
-                                        <p className="text-[#9333EA] text-xs font-black text-center pt-1">
-                                            {eligibilityCompletedCount}개의 미션이 충족되었습니다
+                                        <p className="text-[#9333EA] text-xs font-black text-center pt-1 leading-snug">
+                                            {eligibility?.allComplete ? 'GOLD 신청 조건을 모두 충족했어요' : <>미션 {eligibilityRemaining}개만 더 하면<br />골드등급이 될 수 있어요</>}
                                         </p>
                                     </div>
                                 )}
