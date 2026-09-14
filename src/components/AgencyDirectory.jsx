@@ -594,25 +594,10 @@ const AgencyDirectory = () => {
                                             </div>
                                         )}
 
-                                        {/* 혜택 요약 */}
-                                        <div className="w-full max-w-xs flex flex-col gap-2">
-                                            <p className="text-[#B45309] text-xs font-black px-1 mb-0.5">GOLD가 되면 이런 게 좋아져요</p>
-                                            {[
-                                                { icon: 'apartment', text: `전체 ${agencies.length}개 에이전시 열람` },
-                                                { icon: 'forward_to_inbox', text: '프로필 월 무제한 발송' },
-                                                { icon: 'edit_note', text: '투어일지 무제한 작성' },
-                                            ].map((item) => (
-                                                <div key={item.text} className="flex items-center gap-3 px-4 py-2.5 bg-white/70 rounded-xl border border-[#FFD700]/20">
-                                                    <span className="material-symbols-outlined text-[16px] text-[#F9A825]">{item.icon}</span>
-                                                    <span className="text-[#1F1235] text-sm font-bold">{item.text}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-
                                         {/* CTA 버튼 — 조건 미달성이면 페이지 이동 없이 남은 미션 수만 안내 */}
                                         {goldEligibility && !goldEligibility.allComplete ? (
                                             <div className="w-full max-w-xs py-4 rounded-[20px] bg-white/70 border border-[#FFD700]/30 text-[#B45309] font-black text-sm text-center">
-                                                미션 {goldEligibilityRemaining}개만 더 하면 신청할 수 있어요
+                                                미션 {goldEligibilityRemaining}개만 더 하면 골드등급이 될 수 있어요
                                             </div>
                                         ) : (
                                             <button
