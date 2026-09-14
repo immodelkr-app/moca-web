@@ -2704,7 +2704,7 @@ const AdminPage = () => {
                         const presets = {
                             agency: { title: '📍 에이전시 주소 업데이트!', body: '에이전시 주소가 업데이트되었습니다. 지금 확인해보세요!', route: '/agencies' },
                             class: { title: '🆕 새로운 모카 클래스 오픈!', body: '새 클래스가 오픈되었습니다. 지금 바로 확인해보세요!', route: '/home/class' },
-                            notice: { title: '📢 모카 공지사항', body: '중요한 공지사항이 있습니다. 앱에서 확인해주세요.', route: '/home/dashboard' },
+                            notice: { title: '📢 모카 공지사항', body: '중요한 공지사항이 있습니다. 앱에서 확인해주세요.', route: '/home/message' },
                             mocatv: { title: '🎬 모카TV 김대표님 영상 업로드!', body: '모카TV에 김대표님의 새로운 영상이 업로드 되었습니다. 지금 바로 확인해 보세요!', route: '/home/tv' },
                             update: { title: '🆕 모두의 캐스팅 모카 업데이트!', body: '새 버전이 출시되었습니다. 구글플레이에서 업데이트 후 이용해주세요!', route: 'https://play.google.com/store/apps/details?id=com.immodel.mocapp' },
                             trial: { title: '🎁 새 체험단이 떴어요!', body: '모델뷰티에서 체험단 모집이 시작됐어요. 지금 확인하고 신청해보세요!', route: '/home/dashboard' },
@@ -2876,7 +2876,7 @@ const AdminPage = () => {
                                         <div>
                                             <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">탭 시 이동 경로</label>
                                             <div className="flex gap-2">
-                                                {['/agencies', '/home/class', '/home/tv', '/home/dashboard'].map(r => (
+                                                {['/agencies', '/home/class', '/home/tv', '/home/message', '/home/dashboard'].map(r => (
                                                     <button key={r} onClick={() => setPushForm(p => ({ ...p, route: r }))}
                                                         className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
                                                             pushForm.route === r ? 'bg-[var(--moca-primary)] text-white border-[var(--moca-primary)]' : 'bg-[var(--moca-bg)] text-[var(--moca-text-2)] border-[var(--moca-border)] hover:border-[var(--moca-primary)]'
