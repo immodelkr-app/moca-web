@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import ClassListPage from './components/ClassListPage';
 import ClassDetailPage from './components/ClassDetailPage';
+import ClassSharePage from './components/ClassSharePage';
 import OpenAppRedirect from './components/OpenAppRedirect';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
@@ -148,6 +149,7 @@ function AppContent() {
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/open-app" element={<OpenAppRedirect />} />
+                <Route path="/class" element={<ClassSharePage />} />
                 {/* 보호된 라우트 (로그인 필요) */}
                 {/* 업체(모델캐스팅) 전용 라우트 */}
                 <Route element={<CompanyProtectedRoute />}>
