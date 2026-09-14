@@ -48,7 +48,6 @@ const SmartProfile = () => {
     const [currentPhotoUploading, setCurrentPhotoUploading] = useState(false);
     const [currentPhotoMsg, setCurrentPhotoMsg] = useState('');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
-    const [showGradePopup, setShowGradePopup] = useState(false);
 
     // 피드백 말풍선 (GOLD 회원용)
     const [feedbackPopupPhoto, setFeedbackPopupPhoto] = useState(null);
@@ -247,10 +246,6 @@ const SmartProfile = () => {
     const isChatAllowed = CHAT_GRADES.includes(user?.grade);
 
     const handleCurrentPhotoClick = () => {
-        if (!isPhotoAllowed) {
-            setShowGradePopup(true);
-            return;
-        }
         currentPhotoInputRef.current?.click();
     };
 
@@ -678,25 +673,9 @@ const SmartProfile = () => {
                 </div>
 
 
-                {/* ── 현재모습 사진저장 ── */}
+                {/* ── 현재모습 사진저장 (아임모델/전속모델 전용 — 실버·골드에는 노출 안 함) ── */}
+                {isPhotoAllowed && (
                 <div className="relative bg-white border border-[#E8E0FA] rounded-2xl p-5 shadow-sm overflow-hidden">
-                    {!isPhotoAllowed && (
-                        <button
-                            onClick={() => setShowGradePopup(true)}
-                            className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 bg-white/80 backdrop-blur-[2px] active:bg-white/90 transition-colors"
-                        >
-                            <div className="w-11 h-11 bg-[#F59E0B]/15 rounded-full flex items-center justify-center mb-2">
-                                <span className="material-symbols-outlined text-[22px] text-[#F59E0B]">lock</span>
-                            </div>
-                            <p className="text-[#1F1235] font-black text-sm mb-1">
-                                🌟 아임모델 등급부터 이용 가능
-                            </p>
-                            <p className="text-[#9CA3AF] text-[11px] font-bold leading-relaxed">
-                                프로필발송과는 무관한 별도 기능이에요<br/>
-                                (프로필발송은 계속 이용 가능해요)
-                            </p>
-                        </button>
-                    )}
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
                             <span className="material-symbols-outlined text-[15px] text-emerald-600">photo_library</span>
@@ -801,6 +780,7 @@ const SmartProfile = () => {
                         </div>
                     )}
                 </div>
+                )}
 
                 {/* Notice / Error */}
                 {errorMsg && (
@@ -904,53 +884,6 @@ const SmartProfile = () => {
                 </div>
             );
         })()}
-
-        {/* ── 등급 제한 안내 팝업 (실버 → GOLD 유도) ── */}
-        {showGradePopup && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6" onClick={() => setShowGradePopup(false)}>
-                <div
-                    className="w-full max-w-sm bg-white border border-amber-200 rounded-3xl p-6 text-center shadow-2xl shadow-amber-200/50 animate-fadeIn"
-                    onClick={e => e.stopPropagation()}
-                >
-                    <div className="w-16 h-16 bg-[#F59E0B]/15 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="material-symbols-outlined text-4xl text-[#FCD34D]">lock</span>
-                    </div>
-                    <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 mb-3">
-                        <span className="text-amber-600 text-[11px] font-black">🥈 현재 SILVER 등급</span>
-                    </div>
-                    <h3 className="text-[#1F1235] font-black text-lg mb-2">아임모델 등급 전용 기능</h3>
-                    <p className="text-[#5B4E7A] text-sm leading-relaxed mb-1">
-                        <span className="text-amber-600 font-bold">현재모습 사진등록</span>은
-                    </p>
-                    <p className="text-[#5B4E7A] text-sm leading-relaxed mb-1">
-                        <span className="text-amber-600 font-black">🌟 아임모델 등급 이상</span>부터 사용 가능합니다.
-                    </p>
-                    <div className="bg-amber-50/80 rounded-2xl p-3 mb-4 mt-2 text-left">
-                        <p className="text-[#9CA3AF] text-[11px] leading-relaxed">
-                            ✅ 운영자가 사진 한 장 한 장을 직접 검수하고<br/>
-                            ✅ 1:1 피드백 대화로 꼼꼼히 챙겨드립니다
-                        </p>
-                    </div>
-
-                    {/* 버튼 영역 */}
-                    <div className="flex flex-col gap-2.5">
-                        <button
-                            onClick={() => { setShowGradePopup(false); window.open('http://pf.kakao.com/_zlMUxj/chat', '_blank'); }}
-                            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#FCD34D] to-[#F59E0B] text-black font-black text-sm shadow-lg shadow-[#F59E0B]/25 hover:opacity-90 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
-                        >
-                            <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
-                            아임모델 등급 문의하기
-                        </button>
-                        <button
-                            onClick={() => setShowGradePopup(false)}
-                            className="w-full py-3 rounded-2xl bg-[#F8F5FF] border border-[#E8E0FA] text-[#9CA3AF] font-bold text-sm hover:bg-[#EDE8FF] transition-colors"
-                        >
-                            닫기
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )}
 
         {/* ── GOLD 피드백 말풍선 모달 ── */}
         {feedbackPopupPhoto && (
