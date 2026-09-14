@@ -368,13 +368,21 @@ const AgencyDirectory = () => {
             }
         }
 
-        // 에이전시 이메일 있으면 확인 후 바로 발송, 없으면 입력 모달
+        // 에이전시 이메일 있으면 확인 후 바로 발송
         if (agency.email && agency.email.includes('@')) {
             if (!window.confirm('프로필 첨부하셨나요?\n신중하게 보내주세요.')) return;
             await executeSend(agency, agency.email);
-        } else {
-            setCastingModal({ agency });
+            return;
         }
+
+        // 이메일 대신 온라인예약(자체 홈페이지 등)으로만 지원받는 에이전시는 해당 링크로 바로 이동
+        if (agency.reservation_url) {
+            window.open(agency.reservation_url, '_blank', 'noopener,noreferrer');
+            return;
+        }
+
+        // 이메일도 예약 링크도 없으면 직접 입력받는 모달
+        setCastingModal({ agency });
     };
 
     const executeSend = async (agency, agencyEmail) => {
