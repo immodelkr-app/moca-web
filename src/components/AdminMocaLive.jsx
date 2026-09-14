@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     fetchAllMocaLiveStreams, createMocaLiveStream, updateMocaLiveStream,
     deleteMocaLiveStream, goLive, stopLive, extractYoutubeVideoId, uploadMocaLiveCover,
+    fetchLiveReminderSubscriberCount,
 } from '../services/mocaLiveService';
 import { sendBroadcastPush, fetchUsersWithoutPushToken } from '../services/pushNotificationService';
 import { sendFriendtalk } from '../services/solapiService';
@@ -33,6 +34,20 @@ export const LiveViewerCount = ({ liveId }) => {
 
     if (count === 0) return null;
     return <span className="ml-1.5 text-[10px] font-black text-[var(--moca-text-3)] align-middle">👀 {count}명</span>;
+};
+
+// 예고 카드의 "🔔 알림 받기" 신청자 수 - 방송 관심도 참고용
+const ReminderSubscriberCount = ({ liveId }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        let mounted = true;
+        fetchLiveReminderSubscriberCount(liveId).then((c) => { if (mounted) setCount(c); });
+        return () => { mounted = false; };
+    }, [liveId]);
+
+    if (count === 0) return null;
+    return <p className="text-[10px] text-violet-500 font-bold mt-0.5">🔔 알림 신청 {count}명</p>;
 };
 
 const EMPTY_FORM = {
@@ -1215,6 +1230,41 @@ const AdminMocaLive = () => {
         setSendingPush(false);
     };
 
+    // 예고(scheduled_at) 등록 방송에 대한 수동 알림 발송 - 등록 시 자동 발송은 하지 않고
+    // 관리자가 원하는 시점(등록 직후든, 방송 임박 시든)에 직접 눌러서 보낸다.
+    const handleSendSchedulePush = async (stream) => {
+        setSendingPush(true);
+        setPushResult(null);
+        setSolapiResult(null);
+
+        const when = new Date(stream.scheduled_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        const result = await sendBroadcastPush({
+            title: '📅 모카TV 라이브 예고!',
+            body: `${when}에 '${stream.title}' 라이브가 시작됩니다. 잊지 말고 시청하세요!`,
+            route: '/home/dashboard',
+        });
+        setPushResult(result);
+
+        const { data: noPushUsers } = await fetchUsersWithoutPushToken();
+        const phones = (noPushUsers || []).map((u) => u.phone).filter(Boolean);
+        if (phones.length > 0) {
+            if (window.confirm(`앱 푸시를 못 받는 회원 ${phones.length}명에게 카카오톡/문자로도 라이브 예고 알림을 보낼까요?\n(건당 비용이 발생합니다)`)) {
+                try {
+                    await sendFriendtalk(phones.map((phone) => ({
+                        phone,
+                        content: `📅 모카TV 라이브 예고!\n${when} '${stream.title}' 라이브 예정\n\n아임모카 앱에서 잊지 말고 시청하세요!`,
+                    })));
+                    setSolapiResult({ success: true, count: phones.length });
+                } catch (err) {
+                    setSolapiResult({ success: false, error: err.message || '발송에 실패했습니다.' });
+                }
+            }
+        }
+
+        setSendingPush(false);
+    };
+
     return (
         <div className="animate-fadeIn">
             <div className="flex gap-1 p-1 mb-4 rounded-2xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)]">
@@ -1438,9 +1488,12 @@ const AdminMocaLive = () => {
                                                 </span>
                                                 {s.is_live && <LiveViewerCount liveId={s.id} />}
                                                 {!s.is_live && s.scheduled_at && (
-                                                    <p className="text-[10px] text-[var(--moca-text-3)] mt-1 whitespace-nowrap">
-                                                        {new Date(s.scheduled_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 예정
-                                                    </p>
+                                                    <>
+                                                        <p className="text-[10px] text-[var(--moca-text-3)] mt-1 whitespace-nowrap">
+                                                            {new Date(s.scheduled_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 예정
+                                                        </p>
+                                                        <ReminderSubscriberCount liveId={s.id} />
+                                                    </>
                                                 )}
                                             </td>
                                             <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)] max-w-[240px] truncate">
@@ -1473,6 +1526,15 @@ const AdminMocaLive = () => {
                                                             className="text-[11px] font-black text-fuchsia-600 hover:underline disabled:opacity-40"
                                                         >
                                                             {sendingPush ? '발송 중...' : '🔔 알림'}
+                                                        </button>
+                                                    )}
+                                                    {!s.is_live && s.scheduled_at && (
+                                                        <button
+                                                            onClick={() => handleSendSchedulePush(s)}
+                                                            disabled={sendingPush}
+                                                            className="text-[11px] font-black text-violet-600 hover:underline disabled:opacity-40"
+                                                        >
+                                                            {sendingPush ? '발송 중...' : '📅 예고 알림'}
                                                         </button>
                                                     )}
                                                     <button

@@ -221,6 +221,65 @@ export const fetchPastMocaLiveStreams = async (limit = 12) => {
     }
 };
 
+// 예고 알림 신청 여부 조회 - 홈 대시보드 예고 카드의 "🔔 알림 받기" 버튼 초기 상태 표시용
+export const isSubscribedToLiveReminder = async (liveId, userId) => {
+    if (!isSupabaseEnabled() || !liveId || !userId) return false;
+
+    const { data, error } = await supabase
+        .from('moca_live_reminder_subscriptions')
+        .select('id')
+        .eq('live_id', liveId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (error) {
+        console.warn('[mocaLiveService] 예고 알림 신청 여부 조회 실패:', error.message || error);
+        return false;
+    }
+    return !!data;
+};
+
+// 예고 알림 신청 - 방송 시작 10분 전, DB의 pg_cron 스케줄러(send_moca_live_reminders)가
+// 신청자에게만 자동으로 푸시를 발송한다 (전체 발송이 아니라 신청자 타겟팅).
+export const addLiveReminderSubscription = async (liveId, userId, userNickname) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+
+    const { error } = await supabase
+        .from('moca_live_reminder_subscriptions')
+        .upsert({ live_id: liveId, user_id: userId, user_nickname: userNickname }, { onConflict: 'live_id,user_id' });
+
+    return { error };
+};
+
+// 예고 알림 신청 해제
+export const removeLiveReminderSubscription = async (liveId, userId) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+
+    const { error } = await supabase
+        .from('moca_live_reminder_subscriptions')
+        .delete()
+        .eq('live_id', liveId)
+        .eq('user_id', userId);
+
+    return { error };
+};
+
+// 관리자용 - 예고 알림 신청자 수 (방송 컨트롤 화면에서 관심도 참고용)
+export const fetchLiveReminderSubscriberCount = async (liveId) => {
+    if (!isSupabaseEnabled()) return 0;
+
+    const { count, error } = await supabase
+        .from('moca_live_reminder_subscriptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('live_id', liveId);
+
+    if (error) {
+        console.warn('[mocaLiveService] 예고 알림 신청자 수 조회 실패:', error.message || error);
+        return 0;
+    }
+    return count || 0;
+};
+
 // 라이브 방송 삭제
 export const deleteMocaLiveStream = async (id) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };

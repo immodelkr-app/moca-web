@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
-import { fetchActiveMocaLive, fetchUpcomingMocaLive, subscribeToMocaLiveState } from '../services/mocaLiveService';
+import {
+    fetchActiveMocaLive, fetchUpcomingMocaLive, subscribeToMocaLiveState,
+    isSubscribedToLiveReminder, addLiveReminderSubscription, removeLiveReminderSubscription,
+} from '../services/mocaLiveService';
 import { openLiveViewerPresence, closeLiveViewerPresence } from '../services/mocaLiveEngagementService';
-import { getUserGrade } from '../services/userService';
+import { getUserGrade, getUser } from '../services/userService';
 import MocaLiveEngagement from './MocaLiveEngagement';
 
 const GOLD_OR_ABOVE = ['GOLD', 'IMODEL', 'VIP'];
@@ -84,6 +87,32 @@ const UpcomingMocaLiveTeaser = ({ upcoming }) => {
     const thumbnail = upcoming.cover_image_url
         || (upcoming.stream_type === 'rtmp' ? null : `https://img.youtube.com/vi/${upcoming.youtube_video_id}/hqdefault.jpg`);
 
+    const user = getUser();
+    const [subscribed, setSubscribed] = useState(null); // null = 조회 중
+    const [toggling, setToggling] = useState(false);
+
+    useEffect(() => {
+        let mounted = true;
+        if (!user?.id) { setSubscribed(false); return; }
+        isSubscribedToLiveReminder(upcoming.id, user.id).then((v) => { if (mounted) setSubscribed(v); });
+        return () => { mounted = false; };
+    }, [upcoming.id, user?.id]);
+
+    // 방송 10분 전 리마인드 푸시 신청/해제. 실제 발송은 DB의 pg_cron 스케줄러가
+    // 신청자 닉네임만 골라 자동으로 처리한다 (여기선 신청 여부만 저장).
+    const handleToggleSubscribe = async () => {
+        if (!user?.id || toggling) return;
+        setToggling(true);
+        if (subscribed) {
+            setSubscribed(false);
+            await removeLiveReminderSubscription(upcoming.id, user.id);
+        } else {
+            setSubscribed(true);
+            await addLiveReminderSubscription(upcoming.id, user.id, user.nickname || user.name || '');
+        }
+        setToggling(false);
+    };
+
     return (
         <div className="px-6 mb-6">
             <div className="flex items-center gap-1.5 mb-3">
@@ -104,9 +133,22 @@ const UpcomingMocaLiveTeaser = ({ upcoming }) => {
                 <span className="absolute top-3 left-3 flex items-center gap-1 bg-violet-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
                     📅 예고
                 </span>
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h4 className="text-white font-black text-[15px] leading-snug mb-0.5 line-clamp-1">{upcoming.title}</h4>
-                    <p className="text-amber-300 text-xs font-black">{countdownLabel}</p>
+                <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between gap-3">
+                    <div className="min-w-0">
+                        <h4 className="text-white font-black text-[15px] leading-snug mb-0.5 line-clamp-1">{upcoming.title}</h4>
+                        <p className="text-amber-300 text-xs font-black">{countdownLabel}</p>
+                    </div>
+                    {user?.id && subscribed !== null && (
+                        <button
+                            onClick={handleToggleSubscribe}
+                            disabled={toggling}
+                            className={`flex-shrink-0 px-3 py-2 rounded-full text-[11px] font-black transition-colors disabled:opacity-60 ${
+                                subscribed ? 'bg-white text-violet-700' : 'bg-violet-600 text-white'
+                            }`}
+                        >
+                            {subscribed ? '🔔 알림 신청됨' : '🔕 알림 받기'}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
