@@ -1,73 +1,127 @@
 import React, { useEffect, useState } from 'react';
 import { useModelBeautyDeepLink } from '../hooks/useModelBeautyDeepLink';
-import { fetchLiveStreams } from '../services/liveStreamService';
+import { fetchModelBeautyLiveStreams } from '../services/liveStreamService';
+import { useCountdownLabel } from '../hooks/useCountdownLabel';
 
-// 모델뷰티에서 지금 진행 중인 라이브방송을 모카 홈에 노출한다.
-// 시청/채팅/구매는 전부 모델뷰티 쪽에서 처리되므로, 이 컴포넌트는 "지금 라이브 중"
-// 노출과 딥링크(모델뷰티 앱의 해당 라이브 상세로 바로 이동)만 담당한다.
+// 모델뷰티 예고(방송 예정) 카드 - 시청은 모델뷰티 쪽에서만 가능하므로 탭하면 딥링크로
+// 넘겨주기만 하고, 여기선 썸네일 + 카운트다운만 보여준다.
+const UpcomingModelBeautyCard = ({ stream, onOpen }) => {
+    const countdownLabel = useCountdownLabel(stream.scheduledAt);
+
+    return (
+        <button
+            onClick={onOpen}
+            className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-md active:scale-[0.98] transition-all text-left bg-gradient-to-br from-gray-800 to-gray-900"
+        >
+            {stream.coverImageUrl && (
+                <img
+                    src={stream.coverImageUrl}
+                    alt={stream.title}
+                    className="absolute inset-0 w-full h-full object-cover opacity-60"
+                    loading="lazy"
+                />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <span className="absolute top-3 left-3 flex items-center gap-1 bg-violet-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                📅 예고
+            </span>
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+                <h4 className="text-white font-black text-[15px] leading-snug mb-0.5 line-clamp-1">{stream.title}</h4>
+                {countdownLabel ? (
+                    <p className="text-amber-300 text-xs font-black">{countdownLabel}</p>
+                ) : (
+                    <p className="text-white/80 text-xs font-bold">{stream.streamerName}</p>
+                )}
+            </div>
+        </button>
+    );
+};
+
+// 모델뷰티에서 지금 진행 중인 라이브방송 + 예고(방송 예정)를 모카 홈에 노출한다.
+// 시청/채팅/구매는 전부 모델뷰티 쪽에서 처리되므로, 이 컴포넌트는 노출과 딥링크
+// (모델뷰티 앱의 해당 라이브 상세로 바로 이동)만 담당한다.
 const LiveStreamBanner = () => {
     const [streams, setStreams] = useState([]);
+    const [upcoming, setUpcoming] = useState([]);
     const [loading, setLoading] = useState(true);
     const { openApp, showInstallModal, handleInstall, handleContinueWeb, closeModal } = useModelBeautyDeepLink();
 
     useEffect(() => {
         let mounted = true;
-        fetchLiveStreams().then((data) => {
+        fetchModelBeautyLiveStreams().then(({ live, upcoming: upcomingList }) => {
             if (mounted) {
-                setStreams(data);
+                setStreams(live);
+                setUpcoming(upcomingList);
                 setLoading(false);
             }
         });
         return () => { mounted = false; };
     }, []);
 
-    if (loading || streams.length === 0) return null;
+    if (loading || (streams.length === 0 && upcoming.length === 0)) return null;
 
     return (
         <>
-            <div className="px-6 mb-6">
-                <div className="flex items-center gap-1.5 mb-3">
-                    <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
-                    </span>
-                    <h3 className="text-[#1F1235] font-black text-base">모델뷰티TV LIVE</h3>
-                </div>
+            {streams.length > 0 && (
+                <div className="px-6 mb-6">
+                    <div className="flex items-center gap-1.5 mb-3">
+                        <span className="relative flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+                        </span>
+                        <h3 className="text-[#1F1235] font-black text-base">모델뷰티TV LIVE</h3>
+                    </div>
 
-                <div className="flex flex-col gap-3">
-                    {streams.slice(0, 2).map((s) => (
-                        <button
-                            key={s.id}
-                            onClick={() => openApp(`/live/${s.id}`)}
-                            className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-md active:scale-[0.98] transition-all text-left bg-gradient-to-br from-gray-800 to-gray-900"
-                        >
-                            {s.coverImageUrl && (
-                                <img
-                                    src={s.coverImageUrl}
-                                    alt={s.title}
-                                    className="absolute inset-0 w-full h-full object-cover opacity-80"
-                                    loading="lazy"
-                                />
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                            <span className="absolute top-3 left-3 flex items-center gap-1 bg-red-500 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                                <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                                LIVE
-                            </span>
-                            {typeof s.viewerCount === 'number' && (
-                                <span className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[11px] font-black px-2.5 py-1 rounded-full">
-                                    <span className="material-symbols-outlined text-[13px]">visibility</span>
-                                    {s.viewerCount}
+                    <div className="flex flex-col gap-3">
+                        {streams.slice(0, 2).map((s) => (
+                            <button
+                                key={s.id}
+                                onClick={() => openApp(`/live/${s.id}`)}
+                                className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-md active:scale-[0.98] transition-all text-left bg-gradient-to-br from-gray-800 to-gray-900"
+                            >
+                                {s.coverImageUrl && (
+                                    <img
+                                        src={s.coverImageUrl}
+                                        alt={s.title}
+                                        className="absolute inset-0 w-full h-full object-cover opacity-80"
+                                        loading="lazy"
+                                    />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                                <span className="absolute top-3 left-3 flex items-center gap-1 bg-red-500 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                                    LIVE
                                 </span>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 p-4">
-                                <h4 className="text-white font-black text-[15px] leading-snug mb-0.5 line-clamp-1">{s.title}</h4>
-                                <p className="text-white/80 text-xs font-bold">{s.streamerName}</p>
-                            </div>
-                        </button>
-                    ))}
+                                {typeof s.viewerCount === 'number' && (
+                                    <span className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                                        <span className="material-symbols-outlined text-[13px]">visibility</span>
+                                        {s.viewerCount}
+                                    </span>
+                                )}
+                                <div className="absolute bottom-0 left-0 right-0 p-4">
+                                    <h4 className="text-white font-black text-[15px] leading-snug mb-0.5 line-clamp-1">{s.title}</h4>
+                                    <p className="text-white/80 text-xs font-bold">{s.streamerName}</p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {streams.length === 0 && upcoming.length > 0 && (
+                <div className="px-6 mb-6">
+                    <div className="flex items-center gap-1.5 mb-3">
+                        <span className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+                        <h3 className="text-[#1F1235] font-black text-base">모델뷰티TV LIVE 예고</h3>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        {upcoming.slice(0, 2).map((s) => (
+                            <UpcomingModelBeautyCard key={s.id} stream={s} onOpen={() => openApp(`/live/${s.id}`)} />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {showInstallModal && (
                 <div

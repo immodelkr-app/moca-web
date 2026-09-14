@@ -6,39 +6,10 @@ import {
 } from '../services/mocaLiveService';
 import { openLiveViewerPresence, closeLiveViewerPresence } from '../services/mocaLiveEngagementService';
 import { getUserGrade, getUser } from '../services/userService';
+import { useCountdownLabel } from '../hooks/useCountdownLabel';
 import MocaLiveEngagement from './MocaLiveEngagement';
 
 const GOLD_OR_ABOVE = ['GOLD', 'IMODEL', 'VIP'];
-
-// 남은 시간을 "N일 HH:MM:SS 후 시작" 형태로 매초 갱신. 예정 시각이 지나면 "곧 시작합니다"로 고정
-// (관리자가 라이브 전환/삭제하기 전까지 카운트다운이 0 밑으로 안 내려가고 문구만 바뀜).
-const useCountdownLabel = (scheduledAt) => {
-    const [label, setLabel] = useState('');
-
-    useEffect(() => {
-        if (!scheduledAt) { setLabel(''); return; }
-        const target = new Date(scheduledAt).getTime();
-
-        const tick = () => {
-            const diff = target - Date.now();
-            if (diff <= 0) { setLabel('곧 시작합니다'); return; }
-            const totalSec = Math.floor(diff / 1000);
-            const days = Math.floor(totalSec / 86400);
-            const hours = Math.floor((totalSec % 86400) / 3600);
-            const minutes = Math.floor((totalSec % 3600) / 60);
-            const seconds = totalSec % 60;
-            const pad = (n) => String(n).padStart(2, '0');
-            const clock = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-            setLabel(`${days > 0 ? `${days}일 ` : ''}${clock} 후 시작`);
-        };
-
-        tick();
-        const timer = setInterval(tick, 1000);
-        return () => clearInterval(timer);
-    }, [scheduledAt]);
-
-    return label;
-};
 
 // RTMP(AWS IVS 등) 채널의 HLS 재생 URL을 재생하는 플레이어.
 // MediaSource(hls.js)를 지원하는 브라우저는 전부 hls.js로 붙인다. Chrome/Android WebView는

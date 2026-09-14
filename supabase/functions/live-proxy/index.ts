@@ -9,7 +9,35 @@ const corsHeaders = {
 // 이 함수가 서버-서버로 대신 호출해 CORS를 우회한다.
 // 주의: 원본 응답에는 streamKey/ingestEndpoint/channelArn(AWS IVS 송출용 비밀값)이 함께
 // 내려오므로, 절대 그대로 전달하지 않고 노출용 필드만 추려서 반환한다.
-const MODELBEAUTY_LIVE_URL = "https://modelbeauty.kr/api/live?status=live";
+//
+// status=live(지금 방송 중)와 status=scheduled(예고)를 각각 따로 요청한다 - 둘 중 하나가
+// 실패해도 나머지 하나는 정상 노출되도록 fetchByStatus가 실패 시 빈 배열만 반환하고 던지지 않는다.
+const MODELBEAUTY_LIVE_BASE_URL = "https://modelbeauty.kr/api/live";
+
+async function fetchByStatus(status: string): Promise<any[]> {
+  try {
+    const upstream = await fetch(`${MODELBEAUTY_LIVE_BASE_URL}?status=${status}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!upstream.ok) return [];
+    const json = await upstream.json();
+    return Array.isArray(json?.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
+const mapStream = (s: any) => ({
+  id: s.id,
+  title: s.title,
+  description: s.description,
+  streamerName: s.streamerName,
+  coverImageUrl: s.coverImageUrl,
+  viewerCount: s.viewerCount,
+  startedAt: s.startedAt,
+  scheduledAt: s.scheduledAt,
+  status: s.status,
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -17,28 +45,15 @@ serve(async (req) => {
   }
 
   try {
-    const upstream = await fetch(MODELBEAUTY_LIVE_URL, {
-      headers: { Accept: "application/json" },
-    });
+    const [liveList, scheduledList] = await Promise.all([
+      fetchByStatus("live"),
+      fetchByStatus("scheduled"),
+    ]);
 
-    if (!upstream.ok) {
-      throw new Error(`modelbeauty /api/live returned ${upstream.status}`);
-    }
-
-    const json = await upstream.json();
-    const streams = Array.isArray(json?.data) ? json.data : [];
-
-    const data = streams
-      .filter((s: any) => s.status === "live")
-      .map((s: any) => ({
-        id: s.id,
-        title: s.title,
-        description: s.description,
-        streamerName: s.streamerName,
-        coverImageUrl: s.coverImageUrl,
-        viewerCount: s.viewerCount,
-        startedAt: s.startedAt,
-      }));
+    const data = [
+      ...liveList.filter((s: any) => s.status === "live").map(mapStream),
+      ...scheduledList.filter((s: any) => s.status === "scheduled").map(mapStream),
+    ];
 
     return new Response(JSON.stringify({ success: true, data }), {
       status: 200,
