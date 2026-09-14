@@ -54,7 +54,7 @@ const UpgradePage = () => {
 
     const canApply = isAlreadyGold || (!eligibilityLoading && eligibility?.allComplete);
     const eligibilityCompletedCount = eligibility
-        ? [eligibility.profileComplete, eligibility.quizParticipated, eligibility.postComplete, eligibility.commentComplete].filter(Boolean).length
+        ? [eligibility.profileComplete, eligibility.postComplete, eligibility.commentComplete].filter(Boolean).length
         : 0;
 
     const conditionsRef = useRef(null);
@@ -303,7 +303,7 @@ const UpgradePage = () => {
                                     </p>
                                     {!eligibilityLoading && eligibility && (
                                         <span className="text-[#9333EA] text-xs font-black">
-                                            {eligibilityCompletedCount}/4 완료
+                                            {eligibilityCompletedCount}/3 완료
                                         </span>
                                     )}
                                 </div>
@@ -314,7 +314,6 @@ const UpgradePage = () => {
                                     <div className="flex flex-col gap-2.5">
                                         {[
                                             { done: eligibility?.profileComplete, label: '프로필관리 필수항목 작성하기', hint: '이름·성별·활동나이·키·몸무게·신발사이즈' },
-                                            { done: eligibility?.quizParticipated, label: '모카퀴즈 1회 이상 참여하기' },
                                             { done: eligibility?.postComplete, label: '모카그램 게시글 1개 이상 작성하기' },
                                             { done: eligibility?.commentComplete, label: '모카그램 댓글 3개 이상 작성하기' },
                                         ].map((item) => (
