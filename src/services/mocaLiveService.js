@@ -49,18 +49,24 @@ export const uploadMocaLiveCover = async (file) => {
     }
 };
 
-// 홈 대시보드용 - is_live 변경(시작/종료)을 실시간으로 반영. 배너가 마운트 시 한 번만
-// 조회하면, 이미 화면을 열어둔 사용자는 관리자가 종료해도 새로고침 전까지 썸네일이
-// 그대로 남아있게 되어(눌러도 재생 안 되는 죽은 배너) 추가함.
-export const subscribeToActiveMocaLive = (onChange) => {
+// 홈 대시보드용 - is_live 변경(시작/종료)이나 예고(scheduled_at) 등록/수정을 실시간으로
+// 반영. 배너가 마운트 시 한 번만 조회하면, 이미 화면을 열어둔 사용자는 관리자가 종료해도
+// 새로고침 전까지 썸네일이 그대로 남아있게 되어(눌러도 재생 안 되는 죽은 배너) 추가함.
+export const subscribeToMocaLiveState = (onChange) => {
     if (!isSupabaseEnabled()) return () => {};
+
+    const refetch = async () => {
+        const active = await fetchActiveMocaLive();
+        const upcoming = active ? null : await fetchUpcomingMocaLive();
+        onChange({ active, upcoming });
+    };
 
     const channel = supabase
         .channel('moca_live_streams_active')
         .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'moca_live_streams' },
-            () => { fetchActiveMocaLive().then(onChange); }
+            refetch
         )
         .subscribe();
 
@@ -84,6 +90,30 @@ export const fetchActiveMocaLive = async () => {
         return data || null;
     } catch (e) {
         console.warn('[mocaLiveService] 모카 라이브 조회 실패:', e.message || e);
+        return null;
+    }
+};
+
+// 홈 대시보드용 - 아직 라이브는 아니지만 예고(방송 예정 일시)가 등록된 방송 1건 조회.
+// 예정 시각이 지나도 관리자가 라이브 전환/삭제하기 전까지는 계속 예고로 노출한다
+// (배너 쪽에서 "곧 시작합니다"로 문구만 바꿔 보여줌).
+export const fetchUpcomingMocaLive = async () => {
+    if (!isSupabaseEnabled()) return null;
+
+    try {
+        const { data, error } = await supabase
+            .from('moca_live_streams')
+            .select('*')
+            .eq('is_live', false)
+            .not('scheduled_at', 'is', null)
+            .order('scheduled_at', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data || null;
+    } catch (e) {
+        console.warn('[mocaLiveService] 모카 라이브 예고 조회 실패:', e.message || e);
         return null;
     }
 };
@@ -122,7 +152,7 @@ export const fetchMocaLiveStreamById = async (id) => {
 };
 
 // 라이브 방송 등록
-export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl }) => {
+export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl, scheduledAt }) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
 
     const { data, error } = await supabase
@@ -136,6 +166,7 @@ export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, 
             cover_image_url: coverImageUrl || null,
             target_grade: targetGrade || 'ALL',
             vod_url: vodUrl || null,
+            scheduled_at: scheduledAt || null,
         }])
         .select()
         .single();
@@ -144,7 +175,7 @@ export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, 
 };
 
 // 라이브 방송 정보 수정
-export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl }) => {
+export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl, scheduledAt }) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
 
     const { data, error } = await supabase
@@ -158,6 +189,7 @@ export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideo
             cover_image_url: coverImageUrl || null,
             target_grade: targetGrade || 'ALL',
             vod_url: vodUrl || null,
+            scheduled_at: scheduledAt || null,
             updated_at: new Date().toISOString(),
         })
         .eq('id', id)

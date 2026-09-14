@@ -44,7 +44,17 @@ const EMPTY_FORM = {
     coverImageUrl: '',
     targetGrade: 'ALL', // 'ALL' | 'GOLD'
     vodUrl: '',
+    scheduledAt: '', // datetime-local 문자열 (예고 카운트다운용 방송 예정 일시)
 };
+
+// UTC ISO 문자열 <-> <input type="datetime-local"> 값(로컬 시각, 초 단위 없음) 상호 변환
+const isoToDatetimeLocal = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+const datetimeLocalToIso = (value) => (value ? new Date(value).toISOString() : null);
 
 // 커버 썸네일 업로더 - jpg/png 파일을 바로 올리거나, URL을 직접 붙여넣을 수도 있음
 const CoverUploader = ({ value, onChange, onError }) => {
@@ -1090,6 +1100,7 @@ const AdminMocaLive = () => {
             coverImageUrl: stream.cover_image_url || '',
             targetGrade: stream.target_grade || 'ALL',
             vodUrl: stream.vod_url || '',
+            scheduledAt: isoToDatetimeLocal(stream.scheduled_at),
         });
         setError('');
         setActiveTab('create');
@@ -1120,6 +1131,7 @@ const AdminMocaLive = () => {
             coverImageUrl: form.coverImageUrl.trim(),
             targetGrade: form.targetGrade,
             vodUrl: form.vodUrl.trim(),
+            scheduledAt: datetimeLocalToIso(form.scheduledAt),
         };
         const { error: saveError } = editingId
             ? await updateMocaLiveStream(editingId, payload)
@@ -1241,6 +1253,32 @@ const AdminMocaLive = () => {
                                 className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
                                 placeholder="예: 김대표와 함께하는 오디션 합격 Q&A"
                             />
+                        </div>
+
+                        <div>
+                            <label className="text-[11px] font-bold text-[var(--moca-text-3)]">방송 예정 일시 (선택, 예고 카운트다운용)</label>
+                            <div className="flex items-center gap-2 mt-1">
+                                <input
+                                    type="datetime-local"
+                                    value={form.scheduledAt}
+                                    onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
+                                    className="flex-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm"
+                                />
+                                {form.scheduledAt && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setForm((f) => ({ ...f, scheduledAt: '' }))}
+                                        className="text-[11px] font-bold text-[var(--moca-text-3)] hover:text-red-500 flex-shrink-0"
+                                    >
+                                        지우기
+                                    </button>
+                                )}
+                            </div>
+                            <p className="text-[10px] text-[var(--moca-text-3)] mt-1 leading-relaxed">
+                                입력해두면 라이브 시작 전에도 홈 대시보드에 썸네일과 카운트다운("N시간 N분 후 시작")이 예고로 노출됩니다.
+                                예정 시각이 지나도 "🔴 라이브 시작"을 누르기 전까지는 "곧 시작합니다"로 문구만 바뀌어 계속 노출되니,
+                                방송을 취소하면 이 항목을 지우거나 방송을 삭제해주세요.
+                            </p>
                         </div>
 
                         <div>
@@ -1395,10 +1433,15 @@ const AdminMocaLive = () => {
                                         <React.Fragment key={s.id}>
                                         <tr className="border-b border-[var(--moca-border)] last:border-0">
                                             <td className="py-2.5 pr-3 whitespace-nowrap">
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${s.is_live ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                    {s.is_live ? '🔴 라이브 중' : '대기'}
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${s.is_live ? 'bg-red-100 text-red-700' : s.scheduled_at ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                    {s.is_live ? '🔴 라이브 중' : s.scheduled_at ? '📅 예고 중' : '대기'}
                                                 </span>
                                                 {s.is_live && <LiveViewerCount liveId={s.id} />}
+                                                {!s.is_live && s.scheduled_at && (
+                                                    <p className="text-[10px] text-[var(--moca-text-3)] mt-1 whitespace-nowrap">
+                                                        {new Date(s.scheduled_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 예정
+                                                    </p>
+                                                )}
                                             </td>
                                             <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)] max-w-[240px] truncate">
                                                 <span className="inline-block mr-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-gray-100 text-gray-500 align-middle">

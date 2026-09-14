@@ -1,11 +1,41 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
-import { fetchActiveMocaLive, subscribeToActiveMocaLive } from '../services/mocaLiveService';
+import { fetchActiveMocaLive, fetchUpcomingMocaLive, subscribeToMocaLiveState } from '../services/mocaLiveService';
 import { openLiveViewerPresence, closeLiveViewerPresence } from '../services/mocaLiveEngagementService';
 import { getUserGrade } from '../services/userService';
 import MocaLiveEngagement from './MocaLiveEngagement';
 
 const GOLD_OR_ABOVE = ['GOLD', 'IMODEL', 'VIP'];
+
+// 남은 시간을 "N일 HH:MM:SS 후 시작" 형태로 매초 갱신. 예정 시각이 지나면 "곧 시작합니다"로 고정
+// (관리자가 라이브 전환/삭제하기 전까지 카운트다운이 0 밑으로 안 내려가고 문구만 바뀜).
+const useCountdownLabel = (scheduledAt) => {
+    const [label, setLabel] = useState('');
+
+    useEffect(() => {
+        if (!scheduledAt) { setLabel(''); return; }
+        const target = new Date(scheduledAt).getTime();
+
+        const tick = () => {
+            const diff = target - Date.now();
+            if (diff <= 0) { setLabel('곧 시작합니다'); return; }
+            const totalSec = Math.floor(diff / 1000);
+            const days = Math.floor(totalSec / 86400);
+            const hours = Math.floor((totalSec % 86400) / 3600);
+            const minutes = Math.floor((totalSec % 3600) / 60);
+            const seconds = totalSec % 60;
+            const pad = (n) => String(n).padStart(2, '0');
+            const clock = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+            setLabel(`${days > 0 ? `${days}일 ` : ''}${clock} 후 시작`);
+        };
+
+        tick();
+        const timer = setInterval(tick, 1000);
+        return () => clearInterval(timer);
+    }, [scheduledAt]);
+
+    return label;
+};
 
 // RTMP(AWS IVS 등) 채널의 HLS 재생 URL을 재생하는 플레이어.
 // MediaSource(hls.js)를 지원하는 브라우저는 전부 hls.js로 붙인다. Chrome/Android WebView는
@@ -47,10 +77,47 @@ export const RtmpPlayer = ({ src, title }) => {
     );
 };
 
+// 아직 라이브 시작 전, 방송 예정 일시(scheduled_at)만 등록된 상태의 예고 카드.
+// 탭해도 재생할 콘텐츠가 없으므로 버튼이 아닌 정적 카드로 표시한다.
+const UpcomingMocaLiveTeaser = ({ upcoming }) => {
+    const countdownLabel = useCountdownLabel(upcoming.scheduled_at);
+    const thumbnail = upcoming.cover_image_url
+        || (upcoming.stream_type === 'rtmp' ? null : `https://img.youtube.com/vi/${upcoming.youtube_video_id}/hqdefault.jpg`);
+
+    return (
+        <div className="px-6 mb-6">
+            <div className="flex items-center gap-1.5 mb-3">
+                <span className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+                <h3 className="text-[#1F1235] font-black text-base">모카TV LIVE 예고</h3>
+            </div>
+
+            <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-md bg-gradient-to-br from-gray-800 to-gray-900">
+                {thumbnail && (
+                    <img
+                        src={thumbnail}
+                        alt={upcoming.title}
+                        className="absolute inset-0 w-full h-full object-cover opacity-60"
+                        loading="lazy"
+                    />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <span className="absolute top-3 left-3 flex items-center gap-1 bg-violet-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
+                    📅 예고
+                </span>
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h4 className="text-white font-black text-[15px] leading-snug mb-0.5 line-clamp-1">{upcoming.title}</h4>
+                    <p className="text-amber-300 text-xs font-black">{countdownLabel}</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // 모카 자체 라이브방송(김대표 소통/교육) 배너.
 // 모델뷰티 판매방송(LiveStreamBanner)과 달리 모카 회원이면 누구나 앱 안에서 바로 시청할 수 있다.
 const MocaLiveBanner = () => {
     const [live, setLive] = useState(null);
+    const [upcoming, setUpcoming] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showPlayer, setShowPlayer] = useState(false);
     const [viewerCount, setViewerCount] = useState(0);
@@ -61,21 +128,31 @@ const MocaLiveBanner = () => {
 
     useEffect(() => {
         let mounted = true;
-        fetchActiveMocaLive().then((data) => {
+        (async () => {
+            const active = await fetchActiveMocaLive();
+            if (!mounted) return;
+            if (active) {
+                setLive(active);
+                setLoading(false);
+                return;
+            }
+            const nextUp = await fetchUpcomingMocaLive();
             if (mounted) {
-                setLive(data);
+                setUpcoming(nextUp);
                 setLoading(false);
             }
-        });
+        })();
         return () => { mounted = false; };
     }, []);
 
-    // 관리자가 방송을 시작/종료하면 즉시 반영 (안 하면 이미 화면을 열어둔 사용자에게는
-    // 종료된 뒤에도 새로고침 전까지 눌러도 재생 안 되는 죽은 썸네일이 계속 남아있게 됨)
+    // 관리자가 방송을 시작/종료하거나 예고를 등록/수정하면 즉시 반영 (안 하면 이미 화면을
+    // 열어둔 사용자에게는 종료된 뒤에도 새로고침 전까지 눌러도 재생 안 되는 죽은 썸네일이
+    // 계속 남아있게 됨)
     useEffect(() => {
-        const unsubscribe = subscribeToActiveMocaLive((data) => {
-            if (!data || data.id !== liveIdRef.current) setShowPlayer(false);
-            setLive(data);
+        const unsubscribe = subscribeToMocaLiveState(({ active, upcoming: nextUp }) => {
+            if (!active || active.id !== liveIdRef.current) setShowPlayer(false);
+            setLive(active);
+            setUpcoming(nextUp);
         });
         return unsubscribe;
     }, []);
@@ -105,7 +182,14 @@ const MocaLiveBanner = () => {
         }
     };
 
-    if (loading || !live) return null;
+    if (loading) return null;
+
+    if (!live) {
+        if (!upcoming) return null;
+        // 골드모카 등급 전용 예고는 GOLD 이상 회원에게만 노출
+        if (upcoming.target_grade === 'GOLD' && !GOLD_OR_ABOVE.includes(getUserGrade())) return null;
+        return <UpcomingMocaLiveTeaser upcoming={upcoming} />;
+    }
 
     // 골드모카 등급 전용 방송은 GOLD 이상 회원에게만 노출
     if (live.target_grade === 'GOLD' && !GOLD_OR_ABOVE.includes(getUserGrade())) return null;
