@@ -435,6 +435,26 @@ const AdminPage = () => {
         }
     };
 
+    // 오디션 심사 운영진 지정/해제 (모카클래스 오디션 투표에 회차 무관하게 참여 가능한 전역 플래그)
+    const handleToggleStaffJudge = async (userId, nextValue) => {
+        setUpdatingId(userId);
+        try {
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({ is_staff_judge: nextValue })
+                .eq('id', userId);
+            if (updateError) throw updateError;
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_staff_judge: nextValue } : u));
+            setSelectedUserForDetail(prev => (prev && prev.id === userId) ? { ...prev, is_staff_judge: nextValue } : prev);
+            setSuccessMsg(nextValue ? '운영진(오디션 판정단)으로 지정되었습니다.' : '운영진 지정이 해제되었습니다.');
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err) {
+            setError('운영진 지정 변경 실패: ' + err.message);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
     // 알리고 단체 메시지 발송
     const handleSendBulkMessage = async (e) => {
         e.preventDefault();
@@ -4343,6 +4363,8 @@ const AdminPage = () => {
                     <AdminUserDetailModal
                         user={selectedUserForDetail}
                         onClose={() => setSelectedUserForDetail(null)}
+                        onToggleStaffJudge={handleToggleStaffJudge}
+                        updatingId={updatingId}
                     />
                 )}
             </div>
@@ -4351,7 +4373,7 @@ const AdminPage = () => {
 };
 
 // 회원 상세 모달 컴포넌트
-const AdminUserDetailModal = ({ user, onClose }) => {
+const AdminUserDetailModal = ({ user, onClose, onToggleStaffJudge, updatingId }) => {
     if (!user) return null;
 
     const [classApplications, setClassApplications] = useState([]);
@@ -4470,12 +4492,22 @@ const AdminUserDetailModal = ({ user, onClose }) => {
                             <p className="text-xs text-[var(--moca-text-3)] mt-0.5">회원 상세 정보</p>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="w-9 h-9 rounded-full bg-white hover:bg-[var(--moca-primary-lt)] border border-[var(--moca-border)] flex items-center justify-center text-[var(--moca-text-3)] hover:text-[var(--moca-text)] transition"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">close</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => onToggleStaffJudge?.(user.id, !user.is_staff_judge)}
+                            disabled={updatingId === user.id}
+                            className={`px-3 py-2 rounded-xl text-[11px] font-black border transition flex items-center gap-1.5 disabled:opacity-50 ${user.is_staff_judge ? 'bg-fuchsia-500 text-white border-fuchsia-500' : 'bg-white text-[var(--moca-text-3)] border-[var(--moca-border)] hover:bg-fuchsia-50 hover:text-fuchsia-600 hover:border-fuchsia-200'}`}
+                        >
+                            <span className="material-symbols-outlined text-[16px]">theater_comedy</span>
+                            {user.is_staff_judge ? '오디션 운영진 해제' : '오디션 운영진 지정'}
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="w-9 h-9 rounded-full bg-white hover:bg-[var(--moca-primary-lt)] border border-[var(--moca-border)] flex items-center justify-center text-[var(--moca-text-3)] hover:text-[var(--moca-text)] transition"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Body (Scrollable) */}

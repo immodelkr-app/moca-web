@@ -10,6 +10,7 @@ import {
 } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
 import { sendBulkMessage } from '../services/solapiService';
+import AdminClassAudition from './AdminClassAudition';
 
 const CLASS_BUCKET = 'class-images';
 const MAX_FILE_MB = 10;
@@ -486,6 +487,16 @@ const AdminClasses = () => {
         setStatsLoading(false);
     };
 
+    // ── 오디션 심사 관리 ────────────────────────────────────────────────────────
+    const handleOpenAudition = (cls) => {
+        setSelectedClass(cls);
+        setView('audition');
+    };
+
+    const handleAuditionStatusChange = (classId, newStatus) => {
+        setClasses(prev => prev.map(c => c.id === classId ? { ...c, audition_status: newStatus } : c));
+    };
+
     // ── 승인 + 문자 발송 ────────────────────────────────────────────────────
     const handleApprove = (app) => {
         const defaultMsg = getApproveMessage(app, 'option1');
@@ -789,6 +800,10 @@ const AdminClasses = () => {
                                                     </button>
                                                 </div>
                                                 <div className="flex gap-2">
+                                                    <button onClick={() => handleOpenAudition(cls)} className="flex-1 flex flex-col items-center justify-center py-2 rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-fuchsia-600 hover:bg-fuchsia-50 hover:border-fuchsia-200 transition-all font-bold">
+                                                        <span className="material-symbols-outlined text-[18px] mb-0.5">theater_comedy</span>
+                                                        <span className="text-[9px]">오디션</span>
+                                                    </button>
                                                     <button onClick={() => { const shareUrl = `${window.location.origin}/home/class/${cls.id}`; navigator.share ? navigator.share({ title: `🎓 모카 클래스 - ${cls.title}`, url: shareUrl }).catch(() => {}) : navigator.clipboard.writeText(shareUrl).then(() => { setSuccessMsg('✅ 공유 링크가 복사되었습니다!'); setTimeout(() => setSuccessMsg(''), 2500); }); }} className="flex-1 flex flex-col items-center justify-center py-2 rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all font-bold">
                                                         <span className="material-symbols-outlined text-[18px] mb-0.5">share</span>
                                                         <span className="text-[9px]">공유</span>
@@ -808,7 +823,7 @@ const AdminClasses = () => {
                                         {/* 완료된 클래스 버튼 */}
                                         {cls.status === 'completed' && (
                                             <div className="space-y-2">
-                                                <div className="grid grid-cols-3 gap-2">
+                                                <div className="grid grid-cols-4 gap-2">
                                                     <button onClick={() => handleOpenThankYou(cls)} className="flex flex-col items-center justify-center py-3 rounded-2xl bg-amber-50 text-amber-600 font-black text-[11px] hover:bg-amber-500 hover:text-white transition-all border border-amber-100 gap-1">
                                                         <span className="material-symbols-outlined text-[18px]">notification_important</span>
                                                         후기 재알림
@@ -820,6 +835,10 @@ const AdminClasses = () => {
                                                     <button onClick={() => handleOpenStats(cls)} className="flex flex-col items-center justify-center py-3 rounded-2xl bg-blue-50 text-blue-600 font-black text-[11px] hover:bg-blue-500 hover:text-white transition-all border border-blue-100 gap-1">
                                                         <span className="material-symbols-outlined text-[18px]">bar_chart</span>
                                                         통계
+                                                    </button>
+                                                    <button onClick={() => handleOpenAudition(cls)} className="flex flex-col items-center justify-center py-3 rounded-2xl bg-fuchsia-50 text-fuchsia-600 font-black text-[11px] hover:bg-fuchsia-500 hover:text-white transition-all border border-fuchsia-100 gap-1">
+                                                        <span className="material-symbols-outlined text-[18px]">theater_comedy</span>
+                                                        오디션
                                                     </button>
                                                 </div>
                                                 <button onClick={() => handleReopenClass(cls)} className="w-full py-2 rounded-xl border border-slate-200 text-[11px] font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">
@@ -1593,6 +1612,11 @@ const AdminClasses = () => {
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* ── 오디션 심사 관리 ── */}
+            {view === 'audition' && selectedClass && (
+                <AdminClassAudition classData={selectedClass} onStatusChange={handleAuditionStatusChange} />
             )}
 
             {/* 승인 문자 발송 모달 */}

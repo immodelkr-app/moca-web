@@ -5,6 +5,7 @@ import { saveClassCalendarEvent, fetchPublicFeedback, fetchUserFeedback, fetchAc
 import { getUser, syncUserGrade } from '../services/userService';
 import ClassApplyModal from './ClassApplyModal';
 import ClassFeedbackModal from './ClassFeedbackModal';
+import ClassAuditionSection from './ClassAuditionSection';
 
 // D-day 계산 유틸리티 (상세 페이지용)
 function getDdayForDetail(cls) {
@@ -513,6 +514,9 @@ const ClassDetailPage = () => {
                             )}
                         </div>
                     )}
+
+                    {/* 5. 오디션 심사/투표 섹션 */}
+                    <ClassAuditionSection classId={cls.id} auditionStatus={cls.audition_status} currentUser={currentUser} />
                 </div>
             </div>
 
