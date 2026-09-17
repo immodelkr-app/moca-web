@@ -15,7 +15,8 @@ const AdminClassAuditionPresent = () => {
     const [cls, setCls] = useState(null);
     const [tally, setTally] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [revealed, setRevealed] = useState(false);
+    // 'none' → (결과 발표 클릭) → 'sub' → (스페이스바) → 'main'
+    const [revealStage, setRevealStage] = useState('none');
 
     const loadClass = useCallback(async () => {
         const { data } = await supabase.from('classes').select('id, title, audition_status').eq('id', classId).single();
@@ -43,6 +44,19 @@ const AdminClassAuditionPresent = () => {
             supabase.removeChannel(classChannel);
         };
     }, [authenticated, classId, loadClass, loadTally]);
+
+    // 서브 발표 단계에서 스페이스바를 누르면 메인을 공개한다
+    useEffect(() => {
+        if (revealStage !== 'sub') return;
+        const handleKeyDown = (e) => {
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                setRevealStage('main');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [revealStage]);
 
     const handlePasswordSubmit = (e) => {
         e.preventDefault();
@@ -90,9 +104,16 @@ const AdminClassAuditionPresent = () => {
     }
 
     const isClosed = cls.audition_status === 'closed';
-    const main = tally[0];
-    const sub = tally[1];
     const maxVotes = tally[0]?.voteCount || 1;
+
+    // 동률 처리: 최다득표(메인) 그룹, 그 다음 득표(서브) 그룹을 각각 묶어서 보여준다
+    const topVotes = tally[0]?.voteCount;
+    const mainGroup = topVotes !== undefined ? tally.filter(t => t.voteCount === topVotes) : [];
+    const restAfterMain = tally.filter(t => t.voteCount !== topVotes);
+    const subVotes = restAfterMain[0]?.voteCount;
+    const subGroup = subVotes !== undefined ? restAfterMain.filter(t => t.voteCount === subVotes) : [];
+
+    const startReveal = () => setRevealStage(subGroup.length > 0 ? 'sub' : 'main');
 
     return (
         <div className="min-h-screen bg-slate-950 text-white px-6 py-10 lg:px-16 lg:py-14 flex flex-col">
@@ -106,30 +127,45 @@ const AdminClassAuditionPresent = () => {
             <h1 className="text-2xl lg:text-4xl font-black text-center mb-2">{cls.title}</h1>
             <p className="text-center text-white/40 font-bold text-sm mb-12">오디션 심사 · 가상 캐스팅</p>
 
-            {isClosed && revealed ? (
+            {isClosed && revealStage !== 'none' ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-10 animate-fadeIn">
                     <div className="flex flex-col sm:flex-row items-center gap-10">
-                        {main && (
-                            <div className="flex flex-col items-center gap-4">
-                                <p className="text-amber-400 font-black text-xl tracking-widest">👑 MAIN</p>
-                                <div className="w-56 h-56 lg:w-72 lg:h-72 rounded-[32px] overflow-hidden border-4 border-amber-400 shadow-2xl shadow-amber-400/30">
-                                    {main.photo_url ? <img src={main.photo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800 flex items-center justify-center text-6xl font-black">{main.entry_number}</div>}
+                        {subGroup.length > 0 && (
+                            <div className="flex flex-col items-center gap-4 animate-fadeIn">
+                                <p className="text-slate-300 font-black text-lg tracking-widest">🥈 SUB</p>
+                                <div className="flex flex-wrap items-center justify-center gap-6">
+                                    {subGroup.map(entry => (
+                                        <div key={entry.id} className="flex flex-col items-center gap-3">
+                                            <div className="w-40 h-40 lg:w-52 lg:h-52 rounded-[28px] overflow-hidden border-4 border-slate-400 shadow-xl">
+                                                {entry.photo_url ? <img src={entry.photo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800 flex items-center justify-center text-4xl font-black">{entry.entry_number}</div>}
+                                            </div>
+                                            <p className="text-xl font-black">{entry.entry_number}번{entry.display_name ? ` · ${entry.display_name}` : ''}</p>
+                                            <p className="text-slate-300 font-bold">{entry.voteCount}표</p>
+                                        </div>
+                                    ))}
                                 </div>
-                                <p className="text-2xl font-black">{main.entry_number}번{main.display_name ? ` · ${main.display_name}` : ''}</p>
-                                <p className="text-amber-300 font-bold">{main.voteCount}표</p>
                             </div>
                         )}
-                        {sub && (
-                            <div className="flex flex-col items-center gap-4">
-                                <p className="text-slate-300 font-black text-lg tracking-widest">🥈 SUB</p>
-                                <div className="w-40 h-40 lg:w-52 lg:h-52 rounded-[28px] overflow-hidden border-4 border-slate-400 shadow-xl">
-                                    {sub.photo_url ? <img src={sub.photo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800 flex items-center justify-center text-4xl font-black">{sub.entry_number}</div>}
+                        {revealStage === 'main' && mainGroup.length > 0 && (
+                            <div className="flex flex-col items-center gap-4 animate-fadeIn">
+                                <p className="text-amber-400 font-black text-xl tracking-widest">👑 MAIN</p>
+                                <div className="flex flex-wrap items-center justify-center gap-6">
+                                    {mainGroup.map(entry => (
+                                        <div key={entry.id} className="flex flex-col items-center gap-3">
+                                            <div className="w-56 h-56 lg:w-72 lg:h-72 rounded-[32px] overflow-hidden border-4 border-amber-400 shadow-2xl shadow-amber-400/30">
+                                                {entry.photo_url ? <img src={entry.photo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800 flex items-center justify-center text-6xl font-black">{entry.entry_number}</div>}
+                                            </div>
+                                            <p className="text-2xl font-black">{entry.entry_number}번{entry.display_name ? ` · ${entry.display_name}` : ''}</p>
+                                            <p className="text-amber-300 font-bold">{entry.voteCount}표</p>
+                                        </div>
+                                    ))}
                                 </div>
-                                <p className="text-xl font-black">{sub.entry_number}번{sub.display_name ? ` · ${sub.display_name}` : ''}</p>
-                                <p className="text-slate-300 font-bold">{sub.voteCount}표</p>
                             </div>
                         )}
                     </div>
+                    {revealStage === 'sub' && (
+                        <p className="text-white/50 font-black text-sm animate-pulse">스페이스바를 누르면 메인이 공개됩니다 ␣</p>
+                    )}
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col justify-center max-w-3xl w-full mx-auto space-y-5">
@@ -149,7 +185,7 @@ const AdminClassAuditionPresent = () => {
                     ))}
                     {isClosed && (
                         <button
-                            onClick={() => setRevealed(true)}
+                            onClick={startReveal}
                             className="mt-8 mx-auto px-10 py-4 rounded-[24px] bg-fuchsia-600 text-white font-black text-lg shadow-2xl shadow-fuchsia-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
                         >
                             🎬 결과 발표

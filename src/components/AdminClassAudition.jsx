@@ -177,6 +177,38 @@ const AdminClassAudition = ({ classData, onStatusChange }) => {
                 )}
             </div>
 
+            {/* 결과 발표 (마감 시) */}
+            {auditionStatus === 'closed' && tally.length > 0 && (
+                <div className="bg-white border border-[var(--moca-border)] rounded-[24px] p-6 shadow-sm">
+                    <h4 className="font-black text-[var(--moca-text)] mb-4 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-fuchsia-500">emoji_events</span>
+                        결과 발표
+                    </h4>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        {tally[0] && (
+                            <div className="flex-1 bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-5 border border-amber-200 text-center">
+                                <p className="text-amber-500 font-black text-xs tracking-widest mb-3">👑 MAIN</p>
+                                <div className="w-24 h-24 mx-auto rounded-2xl overflow-hidden bg-white mb-3">
+                                    {tally[0].photo_url ? <img src={tally[0].photo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl font-black text-amber-300">{tally[0].entry_number}</div>}
+                                </div>
+                                <p className="font-black text-slate-700">{tally[0].entry_number}번{tally[0].display_name ? ` · ${tally[0].display_name}` : ''}</p>
+                                <p className="text-amber-500 text-xs font-bold mt-1">{tally[0].voteCount}표</p>
+                            </div>
+                        )}
+                        {tally[1] && (
+                            <div className="flex-1 bg-slate-50 rounded-2xl p-5 border border-slate-200 text-center">
+                                <p className="text-slate-500 font-black text-xs tracking-widest mb-3">🥈 SUB</p>
+                                <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden bg-white mb-3">
+                                    {tally[1].photo_url ? <img src={tally[1].photo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl font-black text-slate-300">{tally[1].entry_number}</div>}
+                                </div>
+                                <p className="font-black text-slate-700">{tally[1].entry_number}번{tally[1].display_name ? ` · ${tally[1].display_name}` : ''}</p>
+                                <p className="text-slate-400 text-xs font-bold mt-1">{tally[1].voteCount}표</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* 참가자 등록 폼 (draft 단계에서만) */}
             {(auditionStatus === 'draft' || auditionStatus === 'none') && (
                 <form onSubmit={handleRegisterEntry} className="bg-white border border-[var(--moca-border)] rounded-[24px] p-6 shadow-sm space-y-4">
