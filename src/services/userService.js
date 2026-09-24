@@ -7,6 +7,7 @@
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { Capacitor } from '@capacitor/core';
 import { syncUserWithCore, updateGradeInCore } from '../lib/imCoreAuth';
+import { notifyAdmin } from './solapiService';
 export { syncUserWithCore };
 
 const USER_KEY = 'i_model_user';
@@ -75,6 +76,10 @@ export const saveUserToSupabase = async (userData) => {
         }])
         .select()
         .single();
+
+    if (!error && data) {
+        notifyAdmin(`[모카] 신규 회원가입: ${userData.name || userData.nickname || '이름없음'} (${userData.phone || '연락처없음'})`);
+    }
 
     // 업체 계정은 등급 개념이 없는 별도 계정 유형이므로 im-core-auth(아임모델공화국) SSO 동기화 대상에서 제외
     if (!error && data && userData.phone && userData.user_type !== 'company') {

@@ -3,6 +3,7 @@
  * 모델캐스팅(업체 구인 게시판) - 게시글/역할/지원 CRUD
  */
 import { supabase } from './supabaseClient';
+import { notifyAdmin } from './solapiService';
 
 export const MONTHLY_POSTING_LIMIT = 3;
 
@@ -88,6 +89,8 @@ export const createCasting = async ({
         .single();
 
     if (castingError) return { data: null, error: castingError };
+
+    notifyAdmin(`[모카] 업체 모델캐스팅(구인) 등록: ${title}`);
 
     if (roles.length > 0) {
         const roleRows = roles.map((r) => ({

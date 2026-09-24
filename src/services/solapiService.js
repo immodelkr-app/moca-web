@@ -49,6 +49,21 @@ export const sendFriendtalk = async (receivers) => {
     }
 };
 
+// 관리자 알림 수신 번호 (회원가입/게시판질문/클래스신청/등급신청/모델캐스팅 등록 시 SMS 발송)
+const ADMIN_NOTIFY_PHONE = '01090424521';
+
+/**
+ * 관리자에게 신규 이벤트 알림 SMS 발송 (best-effort — 실패해도 원 작업 흐름에는 영향 없음)
+ * @param {string} message
+ */
+export const notifyAdmin = async (message) => {
+    try {
+        await sendBulkMessage([ADMIN_NOTIFY_PHONE], message);
+    } catch (err) {
+        console.warn('[solapiService] 관리자 알림 발송 실패:', err.message);
+    }
+};
+
 /**
  * 솔라피 일반 SMS 단체 발송
  * @param {string[]} phoneNumbers - 수신할 전화번호 배열

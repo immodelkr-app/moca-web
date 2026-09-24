@@ -3,6 +3,7 @@
  * Q&A 게시판 Supabase CRUD 서비스
  */
 import { supabase } from './supabaseClient';
+import { notifyAdmin } from './solapiService';
 
 // 카테고리 상수
 export const QNA_CATEGORIES = [
@@ -81,6 +82,7 @@ export const createQnaPost = async (postData) => {
             .single();
 
         if (error) throw error;
+        notifyAdmin(`[모카] 게시판 질문 등록: ${postData.user_name || '익명'} - ${postData.title}`);
         return { data };
     } catch (e) {
         console.error('[qnaService] createQnaPost 오류:', e);

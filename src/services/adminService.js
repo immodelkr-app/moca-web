@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
 import { updateGradeInCore } from '../lib/imCoreAuth';
 import { sendTargetedPush } from './pushNotificationService';
+import { notifyAdmin } from './solapiService';
 
 // --- Partners ---
 export const fetchPartners = async () => {
@@ -249,6 +250,9 @@ export const saveUpgradeRequest = async (requestData) => {
     };
     
     const { data, error } = await supabase.from('upgrade_requests').insert([payload]).select();
+    if (!error) {
+        notifyAdmin(`[모카] GOLD 등급신청: ${requestData.memberName} (${requestData.memberPhone})`);
+    }
     return { data, error };
 };
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { fetchMyUnusedCoupons, fetchClassCouponUsageCount, markCouponUsed } from '../services/attendanceService';
+import { notifyAdmin } from '../services/solapiService';
 
 const GRADE_EMOJI = {
     GUEST: '👤', MEMBER: '👤', SILVER: '🤍', GOLD: '👑', IMODEL: '🌸', VIP: '💎', 전속모델: '💎'
@@ -59,6 +60,8 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                 }, { onConflict: 'class_id,user_id', ignoreDuplicates: false });
 
             if (insertErr) throw insertErr;
+
+            notifyAdmin(`[모카] 클래스 신청: ${currentUser?.name || currentUser?.nickname || '회원'} - ${cls?.title || '클래스'}${isWaitlist ? ' (대기)' : ''}`);
 
             if (useCoupon && coupon) {
                 await markCouponUsed(coupon.id, cls.id);
