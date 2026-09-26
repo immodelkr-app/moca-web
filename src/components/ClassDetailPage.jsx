@@ -604,7 +604,7 @@ const ClassDetailPage = () => {
                     myPriceInfo={myPriceInfo}
                     myPrice={myPrice}
                     onClose={() => setShowApplyModal(false)}
-                    onSuccess={() => { setIsApplied(true); setMyApplicationStatus('pending'); }}
+                    onSuccess={() => { setIsApplied(true); setMyApplicationStatus('pending'); setApplicantCount(c => c + 1); }}
                 />
             )}
 
