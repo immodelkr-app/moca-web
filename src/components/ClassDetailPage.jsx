@@ -320,26 +320,6 @@ const ClassDetailPage = () => {
                         </div>
                     </div>
                 )}
-                {/* D-day 카운트다운 뱃지 */}
-                {!isCompleted && (() => {
-                    const dday = getDdayForDetail(cls);
-                    if (!dday) return null;
-                    const ddayColors = {
-                        normal: 'bg-blue-500/90',
-                        warning: 'bg-amber-500/90',
-                        urgent: 'bg-red-500/90',
-                        today: 'bg-red-500/90 animate-pulse',
-                        ended: 'bg-gray-400/90'
-                    };
-                    return (
-                        <div className="absolute bottom-4 left-4">
-                            <div className={`flex items-center gap-2 px-4 py-2 ${ddayColors[dday.type]} text-white rounded-full text-sm font-black backdrop-blur-md border border-white/20 shadow-lg`}>
-                                <span className="material-symbols-outlined text-[16px]">schedule</span>
-                                {dday.label}
-                            </div>
-                        </div>
-                    );
-                })()}
             </div>
 
             {/* Main Content */}
@@ -349,6 +329,23 @@ const ClassDetailPage = () => {
                     {/* 1. Header Info */}
                     <div className="mb-10">
                         <div className="flex flex-wrap items-center gap-2 mb-4">
+                            {/* D-day 뱃지 (포스터를 가리지 않도록 헤더 칩 줄에 표시) */}
+                            {!isCompleted && (() => {
+                                const dday = getDdayForDetail(cls);
+                                if (!dday || dday.type === 'ended') return null;
+                                const ddayColors = {
+                                    normal: 'bg-blue-500',
+                                    warning: 'bg-amber-500',
+                                    urgent: 'bg-red-500',
+                                    today: 'bg-red-500 animate-pulse'
+                                };
+                                return (
+                                    <span className={`px-3 py-1 rounded-full ${ddayColors[dday.type]} text-white text-[11px] font-black flex items-center gap-1`}>
+                                        <span className="material-symbols-outlined text-[14px]">schedule</span>
+                                        {dday.label}
+                                    </span>
+                                );
+                            })()}
                             <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-black uppercase">
                                 {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이 클래스'}
                             </span>
@@ -365,9 +362,9 @@ const ClassDetailPage = () => {
                             {isCompleted && <span className="px-3 py-1 rounded-full bg-green-500 text-white text-[11px] font-black flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">task_alt</span> 완료</span>}
                             {isFull && <span className="px-3 py-1 rounded-full bg-slate-700 text-white text-[11px] font-black flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">block</span> 모집마감</span>}
                         </div>
-                        <h1 className="text-3xl lg:text-4xl font-black mb-4 leading-tight text-[var(--moca-text)] tracking-tight">{cls.title}</h1>
+                        <h1 className="text-[22px] lg:text-3xl font-black mb-4 leading-tight text-[var(--moca-text)] tracking-tight">{cls.title}</h1>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-[var(--moca-text-3)] font-bold text-sm">
-                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">calendar_today</span>{cls.class_date?.replace(/:\d{2}$/, '')}</span>
+                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">calendar_today</span>{cls.class_date?.replace(/(\d{1,2}:\d{2}):\d{2}$/, '$1')}</span>
                             <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">location_on</span>{cls.location}</span>
                             {avgRating && (
                                 <span className="flex items-center gap-1.5 text-amber-500 font-black">
@@ -399,7 +396,7 @@ const ClassDetailPage = () => {
                                 <span className="material-symbols-outlined text-indigo-400 mt-0.5">calendar_month</span>
                                 <div>
                                     <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">일시</p>
-                                    <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.class_date?.replace(/:\d{2}$/, '')}</p>
+                                    <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.class_date?.replace(/(\d{1,2}:\d{2}):\d{2}$/, '$1')}</p>
                                     {/* D-day 카운트다운 텍스트 */}
                                     {!isCompleted && (() => {
                                         const dday = getDdayForDetail(cls);

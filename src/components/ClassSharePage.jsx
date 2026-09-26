@@ -123,7 +123,7 @@ const ClassSharePage = () => {
                                             {cls.class_date && (
                                                 <p className="text-[#7C3AED] text-[13px] font-bold flex items-center gap-1.5">
                                                     <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-                                                    {cls.class_date.replace(/:\d{2}$/, '')}
+                                                    {cls.class_date.replace(/(\d{1,2}:\d{2}):\d{2}$/, '$1')}
                                                 </p>
                                             )}
                                             {cls.location && (
