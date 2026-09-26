@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { fetchClasses } from '../services/classService';
 
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.immodel.mocapp';
+const IS_NATIVE_APP = Capacitor.isNativePlatform();
+const IS_ANDROID_WEB = !IS_NATIVE_APP && /android/i.test(navigator.userAgent || '');
+
+// 앱 안(웹뷰)이면 바로 클래스 상세로, 안드로이드 웹이면 intent 링크로 앱 실행(미설치 시 구글플레이),
+// 그 외(PC/iOS)는 웹 클래스 상세로 이동
+function getApplyHref(classId) {
+    const path = `home/class/${classId}`;
+    if (IS_ANDROID_WEB) {
+        return `intent://${path}#Intent;scheme=immodel;package=com.immodel.mocapp;S.browser_fallback_url=${encodeURIComponent(PLAY_STORE_URL)};end`;
+    }
+    return `/${path}`;
+}
 
 // D-day 계산 (ClassListPage.jsx와 동일한 로직)
 function getDday(cls) {
@@ -35,6 +49,7 @@ function getDday(cls) {
 }
 
 const ClassSharePage = () => {
+    const navigate = useNavigate();
     const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -134,9 +149,12 @@ const ClassSharePage = () => {
                                             )}
                                         </div>
                                         <a
-                                            href={PLAY_STORE_URL}
-                                            target="_blank"
-                                            rel="noreferrer"
+                                            href={getApplyHref(cls.id)}
+                                            onClick={(e) => {
+                                                if (IS_ANDROID_WEB) return; // intent 링크는 브라우저에 맡김
+                                                e.preventDefault();
+                                                navigate(`/home/class/${cls.id}`);
+                                            }}
                                             className="mt-4 w-full flex items-center justify-center gap-1.5 py-3.5 rounded-xl font-black text-[14px] bg-gradient-to-r from-[#7C3AED] to-[#9333EA] text-white shadow-md shadow-purple-400/20 active:scale-[0.98] transition-all"
                                         >
                                             앱에서 신청하기
@@ -150,8 +168,8 @@ const ClassSharePage = () => {
                 )}
             </div>
 
-            {/* 하단 앱 설치 유도 */}
-            <div className="px-5 mt-10">
+            {/* 하단 앱 설치 유도 (앱 안에서는 숨김) */}
+            {!IS_NATIVE_APP && <div className="px-5 mt-10">
                 <div className="bg-white rounded-3xl border border-[#E8E0FA] p-6 text-center shadow-sm">
                     <p className="text-[#1F1235] font-black text-base mb-1.5">모카 앱 설치하고</p>
                     <p className="text-[#5B4E7A] text-sm font-bold mb-5 break-keep">클래스 신청부터 에이전시 프로필 발송까지 한 번에</p>
@@ -165,7 +183,7 @@ const ClassSharePage = () => {
                         구글플레이에서 설치하기
                     </a>
                 </div>
-            </div>
+            </div>}
         </div>
     );
 };
