@@ -246,15 +246,17 @@ const ClassDetailPage = () => {
     };
 
     const handleShare = async () => {
+        // 카톡 미리보기에 포스터가 나오도록 서버 OG 페이지(/s/class/:id) 링크로 공유
+        const shareUrl = `https://immoca.kr/s/class/${cleanId}`;
         const shareData = {
             title: `🎓 모카 클래스 - ${cls.title}`,
             text: `✨ ${cls.title}\n📅 ${cls.class_date}\n📍 ${cls.location}\n\n지금 아임모카에서 신청하세요!`,
-            url: window.location.href,
+            url: shareUrl,
         };
         if (navigator.share) {
             try { await navigator.share(shareData); } catch (e) {}
         } else {
-            await navigator.clipboard.writeText(window.location.href);
+            await navigator.clipboard.writeText(shareUrl);
             setShareSuccess(true);
             setTimeout(() => setShareSuccess(false), 2500);
         }

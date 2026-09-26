@@ -16,6 +16,10 @@
             "dest": "/api/$1"
         },
         {
+            "src": "/s/class/([^/?]+)",
+            "dest": "/api/class-og?id=$1"
+        },
+        {
             "handle": "filesystem"
         },
         {
