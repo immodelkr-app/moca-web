@@ -7,11 +7,11 @@ const corsHeaders = {
 
 // 🔐 쏠라피 키 — Supabase Edge Function Secrets에서 로드 (절대 하드코딩 금지)
 // Supabase 대시보드 > Edge Functions > aligo-send > Secrets 에 아래 키 등록 필요:
-//   SOLAPI_API_KEY, SOLAPI_SECRET_KEY, SOLAPI_PF_ID, SOLAPI_SENDER
+//   SOLAPI_API_KEY, SOLAPI_SECRET_KEY, SOLAPI_PF_ID (발신번호는 아래 상수로 고정)
 const SOLAPI_API_KEY    = Deno.env.get("SOLAPI_API_KEY") ?? "";
 const SOLAPI_SECRET_KEY = Deno.env.get("SOLAPI_SECRET_KEY") ?? "";
 const PF_ID             = Deno.env.get("SOLAPI_PF_ID") ?? ""; // 카톡 채널 PF ID
-const SOLAPI_SENDER     = Deno.env.get("SOLAPI_SENDER") ?? "01055439674"; // 인증된 발신번호
+const SOLAPI_SENDER     = "01055439674"; // 인증된 발신번호 (고정)
 
 // 쏠라피 인증 헤더 생성기 (Web Crypto API 사용)
 async function getSolapiAuth() {
@@ -58,6 +58,45 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
     throw lastError || new Error(`Fetch failed after ${maxRetries} attempts`);
 }
 
+// 📤 쏠라피 다건 발송 (send-many/detail: 건별 접수 실패 목록을 함께 반환)
+// 일부만 실패해도 HTTP 200이므로 failedMessageList로 실제 성공/실패 건수를 계산한다.
+async function sendMany(messages: any[], label: string): Promise<Response> {
+    const response = await fetchWithRetry('https://api.solapi.com/messages/v4/send-many/detail', {
+        method: 'POST',
+        headers: {
+            'Authorization': await getSolapiAuth(),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ messages })
+    });
+    const responseData = await response.json();
+
+    if (!response.ok || responseData.errorCode) {
+        throw new Error(responseData.errorMessage || JSON.stringify(responseData));
+    }
+
+    const failed: any[] = responseData.failedMessageList || [];
+    const total = messages.length;
+    const successCount = total - failed.length;
+    const failReasons = [...new Set(failed.map((f: any) => f.statusMessage).filter(Boolean))];
+
+    console.log(`[aligo-send] ${label} 발송: 총 ${total}건 / 접수성공 ${successCount}건 / 실패 ${failed.length}건`, failReasons);
+
+    const body = {
+        success: successCount > 0,
+        message: failed.length === 0
+            ? `${label} ${total}건 발송 접수 완료`
+            : `${label} 접수성공 ${successCount}건 / 실패 ${failed.length}건${failReasons.length ? ` (${failReasons.join(', ')})` : ''}`,
+        error: successCount === 0 ? `${label} 전체 발송 실패: ${failReasons.join(', ') || '원인 미상'}` : undefined,
+        total,
+        successCount,
+        failedCount: failed.length,
+        failedList: failed.map((f: any) => ({ to: f.to, statusCode: f.statusCode, statusMessage: f.statusMessage })),
+        data: responseData.groupInfo
+    };
+    return new Response(JSON.stringify(body), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+}
+
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -78,8 +117,6 @@ serve(async (req) => {
 
         const payload = await req.json()
         const type = payload.type || 'sms'
-        
-        const authHeader = await getSolapiAuth();
 
         if (type === 'kakao') {
             const { receivers, templateCode, templateId: payloadTemplateId } = payload
@@ -135,32 +172,12 @@ serve(async (req) => {
                 }
             })
 
-            console.log(`[aligo-send] 카카오 알림톡 ${validReceivers.length}건 발송 시작`);
-            const response = await fetchWithRetry('https://api.solapi.com/messages/v4/send-many', {
-                method: 'POST',
-                headers: {
-                    'Authorization': authHeader,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ messages })
-            });
-            const responseData = await response.json();
-
-            if (!response.ok || responseData.errorCode) {
-                 throw new Error(responseData.errorMessage || JSON.stringify(responseData));
-            }
-
-            return new Response(
-                JSON.stringify({
-                    success: true,
-                    message: `${validReceivers.length}건 카카오 알림톡 발송 성공 (쏠라피)`,
-                    data: responseData
-                }),
-                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-            )
+            return await sendMany(messages, '카카오 알림톡');
 
         } else if (type === 'friendtalk') {
-            // 🟢 친구톡 (FT) - 마케팅/광고성 메시지, 템플릿 심사 불필요
+            // 🟢 친구톡 - 카카오 친구톡은 2025.12.31 종료 → 브랜드 메시지 자유형(BMS_FREE, 텍스트)으로 발송
+            // 본문은 반드시 최상위 text 필드에 넣어야 함 (kakaoOptions.content 아님)
+            // 채널 친구가 아니거나 수신 불가 시 문자(LMS)로 대체 발송 (disableSms: false)
             const { receivers } = payload
             if (!receivers || receivers.length === 0) {
                 throw new Error('친구톡은 수신자 목록(receivers)이 필수입니다.')
@@ -171,45 +188,26 @@ serve(async (req) => {
                 throw new Error('유효한 수신자(전화번호+내용)가 없습니다.');
             }
 
-            const messages = validFTReceivers.map((user: any) => {
-                const cleanPhone = user.phone.replace(/-/g, '')
-                const solapiButtons: any[] = user.buttons || []
-
-                return {
-                    to: cleanPhone,
-                    from: SOLAPI_SENDER,
-                    kakaoOptions: {
-                        pfId: PF_ID,
-                        messageType: 'FT',
-                        content: user.content,
-                        buttons: solapiButtons.length > 0 ? solapiButtons : undefined,
-                        disableSms: false
-                    }
-                }
-            })
-
-            const response = await fetchWithRetry('https://api.solapi.com/messages/v4/send-many', {
-                method: 'POST',
-                headers: {
-                    'Authorization': authHeader,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ messages })
-            })
-            const responseData = await response.json()
-
-            if (!response.ok || responseData.errorCode) {
-                throw new Error(responseData.errorMessage || JSON.stringify(responseData))
+            if (!PF_ID) {
+                throw new Error('서버 설정 오류: 카카오 채널 PF ID(SOLAPI_PF_ID)가 등록되지 않았습니다.');
             }
 
-            return new Response(
-                JSON.stringify({
-                    success: true,
-                    message: `${validFTReceivers.length}건 친구톡 발송 성공 (쏠라피)`,
-                    data: responseData
-                }),
-                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-            )
+            const messages = validFTReceivers.map((user: any) => ({
+                to: user.phone.replace(/-/g, ''),
+                from: SOLAPI_SENDER,
+                text: user.content,
+                type: 'BMS_FREE',
+                kakaoOptions: {
+                    pfId: PF_ID,
+                    disableSms: false,
+                    bms: {
+                        targeting: 'I',
+                        chatBubbleType: 'TEXT'
+                    }
+                }
+            }))
+
+            return await sendMany(messages, '친구톡(브랜드 메시지)');
 
         } else {
             // 🟢 일반 SMS도 쏠라피로 통합하여 발송
@@ -224,28 +222,7 @@ serve(async (req) => {
                 text: message
             }))
 
-            const response = await fetchWithRetry('https://api.solapi.com/messages/v4/send-many', {
-                method: 'POST',
-                headers: {
-                    'Authorization': authHeader,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ messages })
-            });
-            const responseData = await response.json();
-            
-            if (!response.ok || responseData.errorCode) {
-                 throw new Error(responseData.errorMessage || JSON.stringify(responseData));
-            }
-
-            return new Response(
-                JSON.stringify({
-                    success: true,
-                    message: `${phoneNumbers.length}건 SMS 발송 성공 (쏠라피)`,
-                    data: responseData
-                }),
-                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-            )
+            return await sendMany(messages, '문자');
         }
 
     } catch (error: any) {

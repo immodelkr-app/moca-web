@@ -501,7 +501,12 @@ const AdminPage = () => {
                 result = await sendBulkMessage(validPhones, msgContent.trim(), msgType);
             }
             if (result && result.success) {
-                setSuccessMsg(`성공적으로 발송 처리가 완료되었습니다. (${result.message})`);
+                if (result.failedCount > 0) {
+                    // 일부 실패: 성공 메시지 대신 경고로 표시 (실패 사유 포함)
+                    setError(`⚠️ 일부 발송 실패 — ${result.message}`);
+                } else {
+                    setSuccessMsg(`성공적으로 발송 처리가 완료되었습니다. (${result.message})`);
+                }
                 setMsgContent('');
             } else {
                 throw new Error(result?.error || '발송 실패');
@@ -2761,12 +2766,10 @@ const AdminPage = () => {
                         setMsgResult(null);
                         setMsgConfirmOpen(false);
                         try {
-                            if (msgForm.type === 'sms') {
-                                await sendBulkMessage(phones, msgForm.content);
-                            } else {
-                                await sendFriendtalk(phones.map(phone => ({ phone, content: msgForm.content })));
-                            }
-                            setMsgResult({ success: true, count: phones.length });
+                            const r = msgForm.type === 'sms'
+                                ? await sendBulkMessage(phones, msgForm.content)
+                                : await sendFriendtalk(phones.map(phone => ({ phone, content: msgForm.content })));
+                            setMsgResult({ success: true, count: r?.successCount ?? phones.length, failedCount: r?.failedCount || 0, message: r?.message });
                         } catch (err) {
                             setMsgResult({ success: false, error: err.message || '발송에 실패했습니다.' });
                         }
@@ -3059,7 +3062,7 @@ const AdminPage = () => {
                                             <div className={`rounded-xl p-4 text-sm font-bold flex items-start gap-3 ${msgResult.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                                                 <span className="text-xl">{msgResult.success ? '✅' : '❌'}</span>
                                                 <div>
-                                                    {msgResult.success ? <><p>메시지 발송 완료!</p><p className="text-xs font-normal mt-1 opacity-80">{msgResult.count}명에게 발송되었습니다.</p></> : <><p>발송 실패</p><p className="text-xs font-normal mt-1 opacity-80">{msgResult.error}</p></>}
+                                                    {msgResult.success ? <><p>메시지 발송 완료!</p><p className="text-xs font-normal mt-1 opacity-80">{msgResult.count}명에게 발송되었습니다.{msgResult.failedCount > 0 && <span className="block text-red-600">⚠️ {msgResult.message}</span>}</p></> : <><p>발송 실패</p><p className="text-xs font-normal mt-1 opacity-80">{msgResult.error}</p></>}
                                                 </div>
                                             </div>
                                         )}
