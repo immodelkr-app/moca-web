@@ -402,7 +402,8 @@ const AdminPage = () => {
                 const templateText = `안녕하세요 ${userName}님,\n모두의 캐스팅 매니저, 아임모카(IM MOCA)입니다.\n\n${userName}님의 모카(MOCA) 등급이 아래와 같이 변경되어 안내해 드립니다.\n\n■ 변경 등급: ${displayGrade}\n■ 적용 일자: ${todayStr}\n■ ${expiresLabel} 만료일: ${expiresStr}\n\n새로운 등급으로 상향되심을 축하드립니다!\n업그레이드된 등급으로 새롭게 제공되는 스페셜 혜택들은 아임모카(IM MOCA)에서 상세히 확인하실 수 있습니다.`;
 
 
-                sendAlimtalk('KA01TP26030909163775811k3Q5BZRBk', [{
+                sendAlimtalk('KA01TP260929033353520iilc22KpeDI', [{
+                    pfId: 'KA01PF260309085923456gdN56tP4xVG',
                     phone: userInfo.phone,
                     name: userName,
                     message: templateText,
