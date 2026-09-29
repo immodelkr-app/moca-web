@@ -154,6 +154,10 @@ const AdminClasses = () => {
     const [selectedRecipients, setSelectedRecipients] = useState([]);
     const [thankYouMessage, setThankYouMessage] = useState('');
 
+    // 확정자 일정 안내 발송 상태
+    const [noticeRecipients, setNoticeRecipients] = useState([]);
+    const [noticeMessage, setNoticeMessage] = useState('');
+
     // 피드백 관리 상태
     const [feedbacks, setFeedbacks] = useState([]);
     const [replyInputs, setReplyInputs] = useState({});
@@ -188,6 +192,18 @@ const AdminClasses = () => {
         return `[아임모델 MOCA] 수강 신청 승인 안내\n\n안녕하세요, ${name}님!\n신청하신 [${classTitle}] 수강 신청이 승인되었습니다.\n\n아래 계좌로 참가비를 입금해 주시면 확인 후 참석 확정이 완료됩니다.\n\n■ 참가비: ${price}\n■ 입금 계좌: 카카오뱅크 3333-04-2209478 김대희(아임모델)\n\n※ 참가비 입금이 확인되면 최종적으로 수강이 확정됩니다.\n\n문의: 카카오채널 @아임모델`;
     };
 
+    // 일시/장소/준비물 안내 줄 (값이 없는 항목은 생략)
+    const getClassInfoLines = (cls) => [
+        cls?.class_date && `■ 일시: ${cls.class_date}`,
+        cls?.location && `■ 장소: ${cls.location}`,
+        cls?.supplies?.trim() && `■ 준비물: ${cls.supplies.trim()}`,
+    ].filter(Boolean).join('\n');
+
+    const getNoticeMessage = (cls) => {
+        const info = getClassInfoLines(cls);
+        return `[아임모델 MOCA] 클래스 일정 안내\n\n안녕하세요!\n참석 확정된 [${cls?.title || '클래스'}] 일정을 안내드립니다.${info ? `\n\n${info}` : ''}\n\n늦지 않게 도착 부탁드리며, 수업 당일 뵙겠습니다 😊\n\n문의: 카카오채널 @아임모델`;
+    };
+
     const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
     const [newClass, setNewClass] = useState({
@@ -208,7 +224,8 @@ const AdminClasses = () => {
         start_time: '14:00',
         target_grade: 'ALL',
         price_info: '',
-        review_message: ''
+        review_message: '',
+        supplies: ''
     });
 
     const [formError, setFormError] = useState('');
@@ -229,7 +246,7 @@ const AdminClasses = () => {
     };
 
     const resetForm = () => {
-        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '' });
+        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '', supplies: '' });
         setFormError('');
         setEditingClassId(null);
         setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -266,7 +283,8 @@ const AdminClasses = () => {
             start_time: cls.start_time || '14:00',
             target_grade: cls.target_grade || 'ALL',
             price_info: cls.price_info || '',
-            review_message: cls.review_message || ''
+            review_message: cls.review_message || '',
+            supplies: cls.supplies || ''
         });
         const hasPricing = cls.class_pricing && cls.class_pricing.length > 0;
         setPricing(hasPricing ? cls.class_pricing.map(p => ({ grade_label: p.grade_label, price: p.price })) : [{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -431,6 +449,42 @@ const AdminClasses = () => {
         }
     };
 
+    // ── 확정자 일정 안내 발송 ────────────────────────────────────────────────
+    const paidInApplicants = applicants.filter(a => a.approval_status === 'paid');
+
+    const handleOpenNotice = () => {
+        setNoticeRecipients(paidInApplicants.map(a => a.id));
+        setNoticeMessage(getNoticeMessage(selectedClass));
+        setView('notice');
+    };
+
+    const handleSendNotice = async () => {
+        if (noticeRecipients.length === 0) { alert('수신자를 선택해주세요.'); return; }
+        if (!noticeMessage.trim()) { alert('발송할 메시지를 입력해주세요.'); return; }
+        if (!window.confirm(`${noticeRecipients.length}명에게 일정 안내 문자를 발송하시겠습니까?`)) return;
+
+        setIsSubmitting(true);
+        try {
+            const phones = paidInApplicants
+                .filter(a => noticeRecipients.includes(a.id))
+                .map(a => (a.users?.phone || a.user_phone || '').replace(/-/g, ''))
+                .filter(p => p.length >= 10);
+
+            if (phones.length === 0) throw new Error('유효한 전화번호가 없습니다.');
+
+            const result = await sendBulkMessage(phones, noticeMessage.trim(), 'sms');
+            setSuccessMsg(result?.failedCount
+                ? `⚠️ 일정 안내 문자: 성공 ${result.successCount}건 / 실패 ${result.failedCount}건`
+                : `✅ ${phones.length}명에게 일정 안내 문자 발송 완료!`);
+            setTimeout(() => setSuccessMsg(''), 4000);
+            setView('applicants');
+        } catch (err) {
+            alert('발송 실패: ' + err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     // ── 피드백 관리 ────────────────────────────────────────────────────────
     const handleOpenFeedback = async (cls) => {
         setSelectedClass(cls);
@@ -546,7 +600,8 @@ const AdminClasses = () => {
             const classTitle = selectedClass?.title || '클래스';
             let smsFailed = false;
             if (phone) {
-                const msg = `[아임모델 MOCA] 수강 확정 안내\n\n${name}님 참석 확정이 완료되었습니다.\n${classTitle} 수강이 최종 확정되었습니다.\n\n수업 당일 뵙겠습니다 😊`;
+                const info = getClassInfoLines(selectedClass);
+                const msg = `[아임모델 MOCA] 수강 확정 안내\n\n${name}님 참석 확정이 완료되었습니다.\n${classTitle} 수강이 최종 확정되었습니다.${info ? `\n\n${info}` : ''}\n\n수업 당일 뵙겠습니다 😊`;
                 await sendBulkMessage([phone], msg, 'sms').catch((smsErr) => {
                     console.error(smsErr);
                     smsFailed = true;
@@ -1125,6 +1180,17 @@ const AdminClasses = () => {
                                 </div>
 
                                 <div>
+                                    <label className="block text-sm font-black text-slate-700 mb-3">준비물 <span className="text-xs font-bold text-slate-400">(선택 · 입력 시 참석확정/일정안내 문자에 포함)</span></label>
+                                    <input
+                                        type="text"
+                                        value={newClass.supplies}
+                                        onChange={e => setNewClass({ ...newClass, supplies: e.target.value })}
+                                        placeholder="예: 하이힐, 편한 복장, 프로필 사진 1장"
+                                        className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-2xl px-5 py-4 text-sm font-bold transition-all outline-none focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
+                                    />
+                                </div>
+
+                                <div>
                                     <label className="block text-sm font-black text-slate-700 mb-3">클래스 상세 설명</label>
                                     <textarea
                                         rows={6}
@@ -1160,6 +1226,10 @@ const AdminClasses = () => {
                                 <p className="text-indigo-200 text-sm font-bold mt-1">{selectedClass.class_date} · {selectedClass.location}</p>
                             </div>
                             <div className="flex gap-3">
+                                <button onClick={handleOpenNotice} disabled={paidInApplicants.length === 0} className="flex items-center gap-2 px-4 py-2.5 bg-white text-indigo-700 hover:bg-indigo-50 rounded-xl text-xs font-black transition-all disabled:opacity-40">
+                                    <span className="material-symbols-outlined text-[16px]">campaign</span>
+                                    확정자 일정 안내 ({paidInApplicants.length})
+                                </button>
                                 <button onClick={handleDownloadExcel} className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs font-black transition-all backdrop-blur-md">
                                     <span className="material-symbols-outlined text-[16px]">download</span>
                                     엑셀 다운
@@ -1267,6 +1337,94 @@ const AdminClasses = () => {
                                 </tbody>
                             </table>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* ── 확정자 일정 안내 발송 화면 ── */}
+            {view === 'notice' && selectedClass && (
+                <div className="max-w-3xl mx-auto space-y-6">
+                    <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-[32px] p-8 text-white shadow-2xl shadow-indigo-500/20">
+                        <div className="flex items-center gap-3 mb-3">
+                            <span className="material-symbols-outlined text-3xl">campaign</span>
+                            <div>
+                                <p className="text-indigo-200 text-xs font-black uppercase tracking-widest">Class Notice</p>
+                                <h3 className="text-xl font-black">확정자 일정 안내 발송</h3>
+                            </div>
+                        </div>
+                        <p className="text-indigo-100 text-sm font-bold">{selectedClass.title}</p>
+                        <p className="text-indigo-200 text-xs font-bold mt-1">수강확정 {paidInApplicants.length}명</p>
+                    </div>
+
+                    {/* 수신자 선택 */}
+                    <div className="bg-white border border-[var(--moca-border)] rounded-[28px] p-6 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                            <h4 className="font-black text-[var(--moca-text)]">수신자 선택</h4>
+                            <div className="flex gap-2">
+                                <button onClick={() => setNoticeRecipients(paidInApplicants.map(a => a.id))} className="text-xs font-black text-indigo-500 hover:underline">전체 선택</button>
+                                <span className="text-slate-300">|</span>
+                                <button onClick={() => setNoticeRecipients([])} className="text-xs font-black text-slate-400 hover:underline">전체 해제</button>
+                            </div>
+                        </div>
+                        <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                            {paidInApplicants.map(app => {
+                                const isSelected = noticeRecipients.includes(app.id);
+                                const name = app.users?.name || app.users?.nickname || '회원';
+                                const phone = app.users?.phone || app.user_phone || '-';
+                                return (
+                                    <label key={app.id} className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all border ${isSelected ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-transparent hover:border-slate-200'}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => setNoticeRecipients(prev => isSelected ? prev.filter(id => id !== app.id) : [...prev, app.id])}
+                                            className="w-4 h-4 accent-indigo-600"
+                                        />
+                                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-sm flex-shrink-0">{name[0]}</div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-black text-[var(--moca-text)]">{name}</p>
+                                            <p className="text-[11px] font-bold text-[var(--moca-text-3)]">{phone}</p>
+                                        </div>
+                                        {isSelected && <span className="material-symbols-outlined text-indigo-500 text-[18px]">check_circle</span>}
+                                    </label>
+                                );
+                            })}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-400">선택된 수신자</span>
+                            <span className="text-sm font-black text-indigo-600">{noticeRecipients.length}명</span>
+                        </div>
+                    </div>
+
+                    {/* 메시지 편집 */}
+                    <div className="bg-white border border-[var(--moca-border)] rounded-[28px] p-6 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                            <h4 className="font-black text-[var(--moca-text)]">발송 메시지 편집</h4>
+                            <span className="text-[10px] font-bold text-slate-400">{noticeMessage.length}자</span>
+                        </div>
+                        <textarea
+                            value={noticeMessage}
+                            onChange={e => setNoticeMessage(e.target.value)}
+                            rows={12}
+                            className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-2xl px-4 py-3 text-xs font-bold transition-all outline-none resize-none leading-relaxed focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20"
+                        />
+                        <p className="text-[10px] text-slate-400 font-bold mt-2">* 클래스에 등록된 일시·장소·준비물이 자동으로 들어갑니다(준비물 미입력 시 생략). 장소 변경 공지 등으로 자유롭게 수정하실 수 있습니다.</p>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button onClick={() => setView('applicants')} className="px-6 py-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-sm rounded-[24px] transition-all">
+                            신청자 목록으로
+                        </button>
+                        <button
+                            onClick={handleSendNotice}
+                            disabled={isSubmitting || noticeRecipients.length === 0}
+                            className="flex-1 py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-base rounded-[24px] transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isSubmitting ? (
+                                <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />발송 중...</>
+                            ) : (
+                                <>{noticeRecipients.length}명에게 일정 안내 문자 발송</>
+                            )}
+                        </button>
                     </div>
                 </div>
             )}
