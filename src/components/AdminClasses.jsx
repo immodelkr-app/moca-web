@@ -692,11 +692,16 @@ const AdminClasses = () => {
 
     const handleDownloadExcel = () => {
         if (!selectedClass || applicants.length === 0) { alert('다운로드할 신청자 데이터가 없습니다.'); return; }
-        const headers = ['번호', '이름', '연락처', '멤버등급', '승인상태'];
+        const withConsent = !!selectedClass.consent_required;
+        const consentLabel = (agreed, at) => agreed ? `동의(${new Date(at).toLocaleString('ko-KR')})` : (agreed === false ? '미동의' : '-');
+        const headers = ['번호', '이름', '연락처', '멤버등급', '승인상태', ...(withConsent ? ['초상권·촬영물 활용', '마케팅 수신'] : [])];
         const rows = applicants.map((app, idx) => {
             const status = app.approval_status || (app.payment_status === 'paid' ? 'paid' : 'pending');
             const statusLabel = status === 'paid' ? '수강확정' : status === 'approved' ? '승인완료' : status === 'cancelled' ? '취소' : status === 'waitlisted' ? '대기중' : '신청대기';
-            return [applicants.length - idx, app.users?.name || app.users?.nickname || '-', app.users?.phone || '-', getApplicantGrade(app), statusLabel];
+            const consentCols = withConsent
+                ? [consentLabel(app.portrait_consent, app.portrait_consent_at), consentLabel(app.marketing_consent, app.marketing_consent_at)]
+                : [];
+            return [applicants.length - idx, app.users?.name || app.users?.nickname || '-', app.users?.phone || '-', getApplicantGrade(app), statusLabel, ...consentCols];
         });
         const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
         const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1318,6 +1323,12 @@ const AdminClasses = () => {
                                                 </td>
                                                 <td className="px-4 py-5">
                                                     <span className="px-2.5 py-1 rounded-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] text-[10px] font-black text-[var(--moca-text-2)] uppercase">{getApplicantGrade(app)}</span>
+                                                    {selectedClass.consent_required && (
+                                                        <div className="flex gap-1 mt-2">
+                                                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${app.portrait_consent ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'}`}>초상권 {app.portrait_consent ? '동의' : '미동의'}</span>
+                                                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${app.marketing_consent ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'}`}>마케팅 {app.marketing_consent ? '동의' : '미동의'}</span>
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-5 text-center">
                                                     <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black border ${statusBadge.cls}`}>{statusBadge.label}</span>

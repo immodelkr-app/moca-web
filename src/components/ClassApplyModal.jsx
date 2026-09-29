@@ -10,6 +10,11 @@ const GRADE_EMOJI = {
 const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSuccess, isWaitlist = false }) => {
     const [agreed1, setAgreed1] = useState(false);
     const [agreed2, setAgreed2] = useState(false);
+    // 초상권·저작권·촬영물 활용(필수) / 마케팅 수신(선택) — consent_required 클래스에만 노출
+    const consentRequired = !!cls?.consent_required;
+    const [agreedPortrait, setAgreedPortrait] = useState(false);
+    const [agreedMarketing, setAgreedMarketing] = useState(false);
+    const canSubmit = agreed1 && agreed2 && (!consentRequired || agreedPortrait);
     const [submitting, setSubmitting] = useState(false);
     const [done, setDone] = useState(false);
     const [error, setError] = useState('');
@@ -33,10 +38,11 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
     const gradeDisplay = myPriceInfo?.grade_label || currentUser?.grade || 'MEMBER';
 
     const handleSubmit = async (useCoupon = false) => {
-        if (!agreed1 || !agreed2) {
-            setError('아래 두 항목 모두 동의해야 신청이 가능합니다.');
+        if (!canSubmit) {
+            setError('필수 항목에 모두 동의해야 신청이 가능합니다.');
             return;
         }
+        const consentAt = new Date().toISOString();
         setError('');
         setSubmitting(true);
 
@@ -57,6 +63,12 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                     user_phone: currentUser.phone || '',
                     is_coupon_applied: !!useCoupon,
                     coupon_id: coupon?.id || null,
+                    ...(consentRequired && {
+                        portrait_consent: agreedPortrait,
+                        portrait_consent_at: agreedPortrait ? consentAt : null,
+                        marketing_consent: agreedMarketing,
+                        marketing_consent_at: agreedMarketing ? consentAt : null,
+                    }),
                 }, { onConflict: 'class_id,user_id', ignoreDuplicates: false });
 
             if (insertErr) throw insertErr;
@@ -202,6 +214,44 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                     상세 내용은 담당자 확인 후 카카오톡/문자로 안내를 받아 진행하겠습니다.
                                 </p>
                             </label>
+
+                            {consentRequired && (
+                                <>
+                                    <label
+                                        className={`flex items-start gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all ${agreedPortrait ? 'border-indigo-500 bg-indigo-50' : 'border-[var(--moca-border)] bg-white'}`}
+                                        onClick={() => setAgreedPortrait(!agreedPortrait)}
+                                    >
+                                        <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${agreedPortrait ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'}`}>
+                                            {agreedPortrait && <span className="material-symbols-outlined text-white text-[14px]">check</span>}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-[var(--moca-text)] leading-relaxed">
+                                                <span className="text-indigo-600 font-black">[필수]</span> 초상권·저작권 및 촬영물 활용 동의
+                                            </p>
+                                            <p className="text-[11px] font-medium text-[var(--moca-text-3)] leading-relaxed mt-1.5">
+                                                클래스 진행 중 촬영된 사진·영상의 저작권은 아임모델에 귀속되며, 본인의 초상이 담긴 촬영물을 아임모델·아임모카의 홍보 및 마케팅(홈페이지, 앱, 블로그, SNS, 유튜브 등)에 활용하고 포트폴리오·아카이브 목적으로 게시·보관하는 것에 동의합니다.
+                                            </p>
+                                        </div>
+                                    </label>
+
+                                    <label
+                                        className={`flex items-start gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all ${agreedMarketing ? 'border-indigo-500 bg-indigo-50' : 'border-[var(--moca-border)] bg-white'}`}
+                                        onClick={() => setAgreedMarketing(!agreedMarketing)}
+                                    >
+                                        <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${agreedMarketing ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'}`}>
+                                            {agreedMarketing && <span className="material-symbols-outlined text-white text-[14px]">check</span>}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-[var(--moca-text)] leading-relaxed">
+                                                <span className="text-[var(--moca-text-3)] font-black">[선택]</span> 마케팅 정보 수신 동의
+                                            </p>
+                                            <p className="text-[11px] font-medium text-[var(--moca-text-3)] leading-relaxed mt-1.5">
+                                                새로운 클래스, 캐스팅, 이벤트 소식을 문자·카카오톡으로 받아보는 것에 동의합니다. 동의하지 않아도 클래스 신청이 가능합니다.
+                                            </p>
+                                        </div>
+                                    </label>
+                                </>
+                            )}
                         </div>
 
                         {hasUnusedCoupon && !isWaitlist && (
@@ -227,9 +277,9 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                         <div className="space-y-2.5">
                             <button
                                 onClick={() => handleSubmit(false)}
-                                disabled={submitting || !agreed1 || !agreed2}
+                                disabled={submitting || !canSubmit}
                                 className={`w-full py-4 rounded-[24px] font-black text-base shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2
-                                    ${!agreed1 || !agreed2
+                                    ${!canSubmit
                                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                         : 'bg-indigo-600 text-white shadow-indigo-500/20 hover:bg-indigo-700'
                                     }`}
@@ -250,9 +300,9 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                             {hasUnusedCoupon && !isWaitlist && (
                                 <button
                                     onClick={() => handleSubmit(true)}
-                                    disabled={submitting || !agreed1 || !agreed2 || !couponSeatAvailable}
+                                    disabled={submitting || !canSubmit || !couponSeatAvailable}
                                     className={`w-full py-4 rounded-[24px] font-black text-base shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2
-                                        ${!agreed1 || !agreed2 || !couponSeatAvailable
+                                        ${!canSubmit || !couponSeatAvailable
                                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                             : 'bg-[#633AE8] text-white shadow-[#633AE8]/20 hover:bg-[#5327c9]'
                                         }`}
