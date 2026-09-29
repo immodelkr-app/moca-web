@@ -11,7 +11,7 @@ import AdminAIMarketing from './AdminAIMarketing';
 import AdminContractViewerModal from './AdminContractViewerModal';
 import { fetchAllCertPostsForAdmin, setHotStatus, setMarketingPick, deleteCertPost, parseImageUrls } from '../services/certificationService';
 import { fetchAllCurrentPhotos, updatePhotoStatus, updatePhotoFeedback, deleteCurrentPhoto, addPhotoFeedbackComment, fetchPhotoFeedbackComments } from '../services/currentPhotosService';
-import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPost, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
+import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPostAsAdmin, QNA_CATEGORIES, getCategoryInfo } from '../services/qnaService';
 import { fetchContracts, approveContract, rejectContract, deleteContract, logGradeChange, fetchGradeHistory } from '../services/adminService';
 import { AI_TREND_CATEGORIES } from '../constants/diaryCategories';
 import { sendAlimtalk, sendBulkMessage, sendFriendtalk } from '../services/solapiService';
@@ -1100,7 +1100,7 @@ const AdminPage = () => {
                         onClick={async () => {
                             setActiveTab('qna');
                             setQnaLoading(true);
-                            const data = await fetchAllQnaPostsForAdmin();
+                            const data = await fetchAllQnaPostsForAdmin(ADMIN_PASSWORD);
                             setQnaPosts(data);
                             setQnaLoading(false);
                         }}
@@ -4140,21 +4140,41 @@ const AdminPage = () => {
                         ? qnaPosts.filter(p => !p.admin_reply)
                         : qnaPosts;
 
-                    const handleReply = async (postId) => {
-                        const reply = qnaReplyInputs[postId] || '';
-                        if (!reply.trim()) return;
-                        const { data, error } = await updateAdminReply(postId, reply.trim());
-                        if (!error) {
-                            setQnaPosts(prev => prev.map(p => p.id === postId ? { ...p, admin_reply: reply.trim(), replied_at: new Date().toISOString() } : p));
-                            setQnaReplyInputs(prev => ({ ...prev, [postId]: '' }));
-                            setSuccessMsg('✅ 답변이 등록되었습니다.');
-                            setTimeout(() => setSuccessMsg(''), 3000);
+                    // 입력칸은 수정 시 기존 답변으로 채워서 시작 (입력한 적 없으면 undefined)
+                    const getReplyText = (post) => qnaReplyInputs[post.id] ?? post.admin_reply ?? '';
+
+                    const handleReply = async (post) => {
+                        const reply = getReplyText(post).trim();
+                        if (!reply) return;
+                        const { data, error } = await updateAdminReply(ADMIN_PASSWORD, post.id, reply);
+                        if (error) {
+                            alert(`답변 저장에 실패했습니다: ${error}`);
+                            return;
                         }
+                        setQnaPosts(prev => prev.map(p => p.id === post.id ? data : p));
+                        setQnaReplyInputs(prev => { const next = { ...prev }; delete next[post.id]; return next; });
+                        setSuccessMsg(post.admin_reply ? '✅ 답변이 수정되었습니다.' : '✅ 답변이 등록되었습니다.');
+                        setTimeout(() => setSuccessMsg(''), 3000);
+                    };
+
+                    const handleDeleteReply = async (post) => {
+                        if (!window.confirm('답변을 삭제하시겠습니까?')) return;
+                        const { data, error } = await updateAdminReply(ADMIN_PASSWORD, post.id, null);
+                        if (error) {
+                            alert(`답변 삭제에 실패했습니다: ${error}`);
+                            return;
+                        }
+                        setQnaPosts(prev => prev.map(p => p.id === post.id ? data : p));
+                        setQnaReplyInputs(prev => { const next = { ...prev }; delete next[post.id]; return next; });
                     };
 
                     const handleDeletePost = async (postId, title) => {
                         if (!window.confirm(`"${title}" 게시글을 삭제하시겠습니까?`)) return;
-                        await deleteQnaPost(postId);
+                        const { error } = await deleteQnaPostAsAdmin(ADMIN_PASSWORD, postId);
+                        if (error) {
+                            alert(`게시글 삭제에 실패했습니다: ${error}`);
+                            return;
+                        }
                         setQnaPosts(prev => prev.filter(p => p.id !== postId));
                     };
 
@@ -4185,7 +4205,7 @@ const AdminPage = () => {
                                     <button
                                         onClick={async () => {
                                             setQnaLoading(true);
-                                            const data = await fetchAllQnaPostsForAdmin();
+                                            const data = await fetchAllQnaPostsForAdmin(ADMIN_PASSWORD);
                                             setQnaPosts(data);
                                             setQnaLoading(false);
                                         }}
@@ -4211,7 +4231,7 @@ const AdminPage = () => {
                                     {filteredQna.map(post => {
                                         const cat = getCategoryInfo(post.category);
                                         const isExpanded = qnaExpanded[post.id];
-                                        const replyText = qnaReplyInputs[post.id] || '';
+                                        const replyText = getReplyText(post);
 
                                         return (
                                             <div key={post.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
@@ -4290,25 +4310,21 @@ const AdminPage = () => {
                                                             <textarea
                                                                 value={replyText}
                                                                 onChange={e => setQnaReplyInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                                                                placeholder={post.admin_reply || '답변을 입력해주세요...'}
+                                                                placeholder="답변을 입력해주세요..."
                                                                 rows={4}
                                                                 className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[var(--moca-primary)] focus:ring-2 focus:ring-[var(--moca-primary)]/10 resize-none transition-colors"
                                                             />
                                                             <div className="flex gap-2 mt-2">
                                                                 <button
-                                                                    onClick={() => handleReply(post.id)}
-                                                                    disabled={!replyText.trim()}
+                                                                    onClick={() => handleReply(post)}
+                                                                    disabled={!replyText.trim() || replyText.trim() === (post.admin_reply || '')}
                                                                     className="flex-1 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-black hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                                                                 >
                                                                     {post.admin_reply ? '답변 수정' : '답변 등록'}
                                                                 </button>
                                                                 {post.admin_reply && (
                                                                     <button
-                                                                        onClick={async () => {
-                                                                            if (!window.confirm('답변을 삭제하시겠습니까?')) return;
-                                                                            await updateAdminReply(post.id, null);
-                                                                            setQnaPosts(prev => prev.map(p => p.id === post.id ? { ...p, admin_reply: null, replied_at: null } : p));
-                                                                        }}
+                                                                        onClick={() => handleDeleteReply(post)}
                                                                         className="px-4 py-2.5 rounded-xl bg-red-50 text-red-500 text-sm font-bold hover:bg-red-100 transition-all"
                                                                     >
                                                                         답변 삭제

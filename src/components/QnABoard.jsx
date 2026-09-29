@@ -145,7 +145,7 @@ const WriteModal = ({ onClose, onSuccess, user }) => {
 };
 
 /* ─── 상세 모달 ─────────────────────────────────────────────── */
-const DetailModal = ({ postId, currentUserId, onClose, onDelete }) => {
+const DetailModal = ({ postId, onClose, onDelete }) => {
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -165,8 +165,8 @@ const DetailModal = ({ postId, currentUserId, onClose, onDelete }) => {
     if (!post) return null;
 
     const cat = getCategoryInfo(post.category);
-    const isOwner = post.user_id === currentUserId;
-    const isLocked = post.is_locked && !isOwner;
+    const isOwner = post.is_owner;
+    const isLocked = post.is_hidden;
 
     return (
         <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4" onClick={onClose}>
@@ -239,7 +239,6 @@ const DetailModal = ({ postId, currentUserId, onClose, onDelete }) => {
 const QnABoard = () => {
     const navigate = useNavigate();
     const user = getUser();
-    const currentUserId = user?.id || user?.nickname || '';
 
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -258,7 +257,8 @@ const QnABoard = () => {
 
     const handleDelete = async (id) => {
         if (!window.confirm('게시글을 삭제하시겠습니까?')) return;
-        await deleteQnaPost(id);
+        const { error } = await deleteQnaPost(id);
+        if (error) alert(`삭제하지 못했습니다: ${error}`);
         load();
     };
 
@@ -325,8 +325,7 @@ const QnABoard = () => {
                     <div className="space-y-3">
                         {posts.map(post => {
                             const cat = getCategoryInfo(post.category);
-                            const isOwner = post.user_id === currentUserId;
-                            const isHidden = post.is_locked && !isOwner;
+                            const isHidden = post.is_hidden;
                             return (
                                 <button
                                     key={post.id}
@@ -345,7 +344,7 @@ const QnABoard = () => {
                                                 {post.is_locked && (
                                                     <span className="material-symbols-outlined text-[13px] text-[#9CA3AF]">lock</span>
                                                 )}
-                                                {post.admin_reply ? (
+                                                {post.has_reply ? (
                                                     <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-[#9333EA] text-white ml-auto">답변완료</span>
                                                 ) : (
                                                     <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-600 ml-auto">답변대기</span>
@@ -390,7 +389,6 @@ const QnABoard = () => {
             {selectedPostId && (
                 <DetailModal
                     postId={selectedPostId}
-                    currentUserId={currentUserId}
                     onClose={() => setSelectedPostId(null)}
                     onDelete={handleDelete}
                 />
