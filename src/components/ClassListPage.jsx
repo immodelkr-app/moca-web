@@ -64,9 +64,9 @@ const ClassListPage = () => {
             // 2. 내가 신청한 클래스 목록
             const { data: apps } = await supabase
                 .from('class_applications')
-                .select('class_id')
+                .select('class_id, approval_status')
                 .eq('user_id', localUser.id);
-            if (apps) setMyApplications(apps.map(a => a.class_id));
+            if (apps) setMyApplications(apps.filter(a => a.approval_status !== 'cancelled').map(a => a.class_id));
         } else if (localUser) {
             setCurrentUser({ id: localUser.id, grade: localUser.grade || 'SILVER' });
         }
