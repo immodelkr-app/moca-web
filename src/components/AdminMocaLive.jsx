@@ -2,11 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     fetchAllMocaLiveStreams, createMocaLiveStream, updateMocaLiveStream,
-    deleteMocaLiveStream, goLive, stopLive, extractYoutubeVideoId, uploadMocaLiveCover,
+    sendLivePush, sendLivePushByLiveId, deleteMocaLiveStream, goLive, stopLive, extractYoutubeVideoId, uploadMocaLiveCover,
     fetchLiveReminderSubscriberCount,
 } from '../services/mocaLiveService';
 import { fetchClasses } from '../services/classService';
-import { sendBroadcastPush, fetchUsersWithoutPushToken } from '../services/pushNotificationService';
+import { fetchUsersWithoutPushToken } from '../services/pushNotificationService';
 import { sendFriendtalk } from '../services/solapiService';
 import {
     fetchQuizzesForLive, createLiveQuiz, openLiveQuiz, closeLiveQuiz, archiveLiveQuiz,
@@ -240,9 +240,9 @@ const AdminMocaLiveQuizPanel = ({ liveId, streamerName }) => {
     };
 
     const handleSendPush = async (quiz) => {
-        if (!window.confirm('참여 유도 앱 푸시 알림을 전체에게 보낼까요?')) return;
+        if (!window.confirm('참여 유도 앱 푸시 알림을 보낼까요? (클래스 전용 방송이면 참석 확정자에게만 발송됩니다)')) return;
         try {
-            await sendBroadcastPush({
+            await sendLivePushByLiveId(liveId, {
                 title: '🎮 지금 라이브에서 퀴즈가 진행 중이에요!',
                 body: quiz.question,
                 route: '/home/dashboard',
@@ -509,9 +509,9 @@ const AdminMocaLiveNumberGamePanel = ({ liveId, streamerName }) => {
     };
 
     const handleSendPush = async (game) => {
-        if (!window.confirm('참여 유도 앱 푸시 알림을 전체에게 보낼까요?')) return;
+        if (!window.confirm('참여 유도 앱 푸시 알림을 보낼까요? (클래스 전용 방송이면 참석 확정자에게만 발송됩니다)')) return;
         try {
-            await sendBroadcastPush({
+            await sendLivePushByLiveId(liveId, {
                 title: '🔢 지금 라이브에서 숫자맞추기가 진행 중이에요!',
                 body: `${game.min_value}~${game.max_value} 사이 숫자를 맞혀보세요!`,
                 route: '/home/dashboard',
@@ -743,9 +743,9 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId, streamerName }) => {
     };
 
     const handleSendPush = async () => {
-        if (!window.confirm('참여 유도 앱 푸시 알림을 전체에게 보낼까요?')) return;
+        if (!window.confirm('참여 유도 앱 푸시 알림을 보낼까요? (클래스 전용 방송이면 참석 확정자에게만 발송됩니다)')) return;
         try {
-            await sendBroadcastPush({
+            await sendLivePushByLiveId(liveId, {
                 title: '💬 지금 라이브에서 정답 맞추기가 진행 중이에요!',
                 body: '방송을 보고 채팅창에 정답을 쳐보세요!',
                 route: '/home/dashboard',
@@ -1414,7 +1414,8 @@ const AdminMocaLive = () => {
         setPushResult(null);
         setSolapiResult(null);
 
-        const result = await sendBroadcastPush({
+        // 클래스 전용 방송이면 참석 확정자에게만 발송 (sendLivePush가 대상을 결정)
+        const result = await sendLivePush(stream, {
             title: '🔴 모카TV 라이브 방송 중!',
             body: stream.title,
             route: '/home/dashboard',
@@ -1422,7 +1423,9 @@ const AdminMocaLive = () => {
         setPushResult(result);
 
         const { data: noPushUsers } = await fetchUsersWithoutPushToken();
-        const phones = (noPushUsers || []).map((u) => u.phone).filter(Boolean);
+        const phones = (noPushUsers || [])
+            .filter((u) => !result.audience || result.audience.userIds.has(u.id))
+            .map((u) => u.phone).filter(Boolean);
         if (phones.length > 0) {
             if (window.confirm(`앱 푸시를 못 받는 회원 ${phones.length}명에게 카카오톡/문자로도 라이브 시작 알림을 보낼까요?\n(건당 비용이 발생합니다)`)) {
                 try {
@@ -1449,7 +1452,7 @@ const AdminMocaLive = () => {
 
         const when = new Date(stream.scheduled_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-        const result = await sendBroadcastPush({
+        const result = await sendLivePush(stream, {
             title: '📅 모카TV 라이브 예고!',
             body: `${when}에 '${stream.title}' 라이브가 시작됩니다. 잊지 말고 시청하세요!`,
             route: '/home/dashboard',
@@ -1457,7 +1460,9 @@ const AdminMocaLive = () => {
         setPushResult(result);
 
         const { data: noPushUsers } = await fetchUsersWithoutPushToken();
-        const phones = (noPushUsers || []).map((u) => u.phone).filter(Boolean);
+        const phones = (noPushUsers || [])
+            .filter((u) => !result.audience || result.audience.userIds.has(u.id))
+            .map((u) => u.phone).filter(Boolean);
         if (phones.length > 0) {
             if (window.confirm(`앱 푸시를 못 받는 회원 ${phones.length}명에게 카카오톡/문자로도 라이브 예고 알림을 보낼까요?\n(건당 비용이 발생합니다)`)) {
                 try {

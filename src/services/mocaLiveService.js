@@ -1,4 +1,5 @@
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { sendBroadcastPush, sendTargetedPush } from './pushNotificationService';
 
 /**
  * 모카 자체 라이브방송(김대표 소통/교육) 서비스.
@@ -348,4 +349,48 @@ export const stopLive = async (id) => {
         .single();
 
     return { data, error };
+};
+
+// 클래스 전용 방송(class_id)의 알림 대상 - 해당 클래스 참석 확정('paid')자.
+// class_id가 없으면 null (= 전체 회원 대상).
+export const fetchClassLiveAudience = async (classId) => {
+    if (!classId) return null;
+    if (!isSupabaseEnabled()) return { userIds: new Set(), nicknames: [] };
+
+    const { data, error } = await supabase
+        .from('class_applications')
+        .select('user_id, users(nickname)')
+        .eq('class_id', classId)
+        .eq('approval_status', 'paid');
+
+    if (error) {
+        console.warn('[mocaLiveService] 클래스 확정자 조회 실패:', error.message || error);
+        return { userIds: new Set(), nicknames: [] };
+    }
+    const rows = data || [];
+    return {
+        userIds: new Set(rows.map((r) => r.user_id).filter(Boolean)),
+        nicknames: [...new Set(rows.map((r) => r.users?.nickname).filter(Boolean))],
+    };
+};
+
+// 라이브 알림 푸시 - 클래스 전용 방송이면 확정자에게만, 아니면 전체 회원에게 발송한다.
+// 반환값의 audience는 클래스 전용일 때만 { nicknames, userIds } (보완 발송 대상 필터용).
+export const sendLivePush = async (stream, { title, body, route = '/home/dashboard' }) => {
+    const audience = await fetchClassLiveAudience(stream?.class_id);
+    if (!audience) {
+        const result = await sendBroadcastPush({ title, body, route });
+        return { ...result, audience: null };
+    }
+    if (audience.nicknames.length === 0) {
+        return { success: false, error: '참석 확정자가 없습니다.', audience };
+    }
+    const result = await sendTargetedPush({ title, body, route, nicknames: audience.nicknames });
+    return { ...result, audience };
+};
+
+// liveId만 아는 곳(게임/퀴즈 패널)용
+export const sendLivePushByLiveId = async (liveId, payload) => {
+    const stream = await fetchMocaLiveStreamById(liveId);
+    return sendLivePush(stream, payload);
 };
