@@ -11,6 +11,7 @@ import {
 import { supabase } from '../services/supabaseClient';
 import { sendBulkMessage } from '../services/solapiService';
 import AdminClassAudition from './AdminClassAudition';
+import { getVideoEmbedUrl } from '../utils/videoEmbed';
 
 const CLASS_BUCKET = 'class-images';
 const MAX_FILE_MB = 10;
@@ -213,6 +214,7 @@ const AdminClasses = () => {
         capacity: 20,
         coupon_capacity: 0,
         image_url: '',
+        video_url: '',
         schedule_type: 'one_time',
         class_date: '',
         event_date: '',
@@ -246,7 +248,7 @@ const AdminClasses = () => {
     };
 
     const resetForm = () => {
-        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '', supplies: '' });
+        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', video_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '', supplies: '' });
         setFormError('');
         setEditingClassId(null);
         setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -272,6 +274,7 @@ const AdminClasses = () => {
             capacity: cls.capacity || 20,
             coupon_capacity: cls.coupon_capacity || 0,
             image_url: cls.image_url || '',
+            video_url: cls.video_url || '',
             schedule_type: cls.schedule_type || 'one_time',
             class_date: cls.class_date || '',
             event_date: eventDate,
@@ -296,6 +299,12 @@ const AdminClasses = () => {
         e.preventDefault();
         setFormError('');
         setIsSubmitting(true);
+
+        if (newClass.video_url.trim() && !getVideoEmbedUrl(newClass.video_url)) {
+            setFormError('영상 링크는 유튜브 또는 비메오 주소만 지원합니다.');
+            setIsSubmitting(false);
+            return;
+        }
 
         let finalClassDate = newClass.class_date;
         let eventDatetime = null;
@@ -1204,6 +1213,22 @@ const AdminClasses = () => {
                                         placeholder="클래스 진행 내용, 준비물, 주의사항 등을 자세하게 입력해주세요."
                                         className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-2xl px-5 py-4 text-sm font-bold transition-all outline-none resize-none leading-relaxed focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-black text-slate-700 mb-3">지난 수업 영상 링크 (선택)</label>
+                                    <input
+                                        type="url"
+                                        value={newClass.video_url}
+                                        onChange={e => setNewClass({ ...newClass, video_url: e.target.value })}
+                                        placeholder="유튜브 또는 비메오 링크 (예: https://youtu.be/xxxx, https://vimeo.com/123456)"
+                                        className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-2xl px-5 py-4 text-sm font-bold transition-all outline-none focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
+                                    />
+                                    {newClass.video_url.trim() && (
+                                        getVideoEmbedUrl(newClass.video_url)
+                                            ? <div className="mt-3 aspect-video w-full max-w-md rounded-2xl overflow-hidden bg-black"><iframe src={getVideoEmbedUrl(newClass.video_url)} title="영상 미리보기" className="w-full h-full" allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen /></div>
+                                            : <p className="text-[11px] text-red-500 font-bold mt-2">지원하지 않는 링크입니다. 유튜브/비메오 링크를 입력해주세요.</p>
+                                    )}
                                 </div>
 
                                 {formError && <p className="text-red-500 text-sm font-bold">{formError}</p>}

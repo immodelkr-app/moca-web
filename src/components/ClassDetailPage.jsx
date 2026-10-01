@@ -6,6 +6,7 @@ import { getUser, syncUserGrade } from '../services/userService';
 import ClassApplyModal from './ClassApplyModal';
 import ClassFeedbackModal from './ClassFeedbackModal';
 import ClassAuditionSection from './ClassAuditionSection';
+import { getVideoEmbedUrl } from '../utils/videoEmbed';
 
 // D-day 계산 유틸리티 (상세 페이지용)
 function getDdayForDetail(cls) {
@@ -385,6 +386,26 @@ const ClassDetailPage = () => {
                             {cls.description || '현재 상세 교육 내용이 준비 중입니다. 궁금하신 점은 고객센터로 문의주세요.'}
                         </div>
                     </div>
+
+                    {/* 2-2. 지난 수업 영상 */}
+                    {getVideoEmbedUrl(cls.video_url) && (
+                        <div className="mb-12">
+                            <h2 className="text-lg font-black text-[var(--moca-text)] flex items-center gap-2 mb-6 border-b border-[var(--moca-border)] pb-4">
+                                <span className="material-symbols-outlined text-indigo-500">play_circle</span>
+                                수업 영상
+                            </h2>
+                            <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black shadow-sm">
+                                <iframe
+                                    src={getVideoEmbedUrl(cls.video_url)}
+                                    title={`${cls.title} 수업 영상`}
+                                    className="w-full h-full"
+                                    loading="lazy"
+                                    allow="encrypted-media; picture-in-picture; fullscreen"
+                                    allowFullScreen
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {/* 3. Schedule & Capacity */}
                     <div className="mb-12">
