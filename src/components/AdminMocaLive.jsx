@@ -5,6 +5,7 @@ import {
     deleteMocaLiveStream, goLive, stopLive, extractYoutubeVideoId, uploadMocaLiveCover,
     fetchLiveReminderSubscriberCount,
 } from '../services/mocaLiveService';
+import { fetchClasses } from '../services/classService';
 import { sendBroadcastPush, fetchUsersWithoutPushToken } from '../services/pushNotificationService';
 import { sendFriendtalk } from '../services/solapiService';
 import {
@@ -66,6 +67,7 @@ const EMPTY_FORM = {
     streamerName: '김대표',
     coverImageUrl: '',
     targetGrade: 'ALL', // 'ALL' | 'GOLD'
+    classId: '', // 비어있지 않으면 해당 클래스 참석 확정자 전용
     vodUrl: '',
     scheduledAt: '', // datetime-local 문자열 (예고 카운트다운용 방송 예정 일시)
 };
@@ -165,7 +167,7 @@ const PushResultBadge = ({ result, solapiResult }) => {
 const EMPTY_QUIZ_FORM = { question: '', options: ['', ''] };
 
 // 라이브 중 실시간 퀴즈 관리 - 문제 등록/시작/마감(정답 확정+채점)/정답자 포인트 지급.
-const AdminMocaLiveQuizPanel = ({ liveId }) => {
+const AdminMocaLiveQuizPanel = ({ liveId, streamerName }) => {
     const [quizzes, setQuizzes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [form, setForm] = useState(EMPTY_QUIZ_FORM);
@@ -228,15 +230,28 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
         if (!window.confirm(`'${quiz.question}' 퀴즈를 시작할까요?\n진행 중인 다른 퀴즈는 자동으로 마감됩니다.`)) return;
         const { error } = await openLiveQuiz(quiz.id, liveId);
         if (error) { flash('시작 실패: ' + (error.message || '')); return; }
-        flash('🎮 퀴즈가 시작되었습니다. 시청자에게 실시간으로 노출됩니다.');
-        if (window.confirm('참여 유도 앱 푸시 알림을 보낼까요?')) {
-            sendBroadcastPush({
-                title: '🎮 지금 라이브에서 퀴즈가 시작됐어요!',
+        flash('🎮 퀴즈가 시작되었습니다. 설명이 채팅·고정 댓글에 올라갔어요. 앱 알림은 카드의 "🔔 알림 보내기"로 따로 보내세요.');
+        await announceGameToViewers(
+            liveId,
+            streamerName,
+            `🎮 객관식 퀴즈 진행 중! "${quiz.question}" 보기 중 정답을 골라 눌러 주세요. 한 번만 선택할 수 있어요!`
+        );
+        await load();
+    };
+
+    const handleSendPush = async (quiz) => {
+        if (!window.confirm('참여 유도 앱 푸시 알림을 전체에게 보낼까요?')) return;
+        try {
+            await sendBroadcastPush({
+                title: '🎮 지금 라이브에서 퀴즈가 진행 중이에요!',
                 body: quiz.question,
                 route: '/home/dashboard',
-            }).catch((e) => console.warn('[AdminMocaLive] 퀴즈 시작 알림 실패:', e));
+            });
+            flash('🔔 앱 알림을 보냈습니다.');
+        } catch (e) {
+            console.warn('[AdminMocaLive] 퀴즈 알림 실패:', e);
+            flash('알림 발송 실패');
         }
-        await load();
     };
 
     const startClosing = (quiz) => {
@@ -387,6 +402,9 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
                                             </button>
                                         )}
                                         {q.status === 'open' && (
+                                            <button onClick={() => handleSendPush(q)} className="text-[12px] font-black text-violet-600">🔔 알림 보내기</button>
+                                        )}
+                                        {q.status === 'open' && (
                                             <button onClick={() => startClosing(q)} className="text-[12px] font-black text-[var(--moca-primary)]">🔒 정답 확정 & 마감</button>
                                         )}
                                         {q.status === 'closed' && (
@@ -421,10 +439,21 @@ const AdminMocaLiveQuizPanel = ({ liveId }) => {
     );
 };
 
+// 게임 시작 시 시청자에게 설명을 알리는 공통 처리: 운영자 채팅으로 올리고 고정 댓글에도 건다.
+// (고정 댓글은 라이브당 1건이라 기존 고정 댓글은 교체됨. 앱 푸시 알림은 여기서 보내지 않고
+// 게임 카드의 "🔔 알림 보내기" 버튼으로 운영자가 따로 수동 발송한다.)
+const announceGameToViewers = async (liveId, hostName, text) => {
+    const author = hostName || '김대표';
+    await Promise.all([
+        sendLiveChatMessage(liveId, author, text, { isHost: true }),
+        setPinnedMessage(liveId, text, author),
+    ]);
+};
+
 const EMPTY_NUMBER_GAME_FORM = { minValue: '1', maxValue: '100', answer: '', prizeLabel: '', winnerCount: '1' };
 
 // 숫자 맞추기 관리 - 범위/정답/경품/당첨인원을 정해 등록하면 즉시 시청자에게 노출되어 진행됨.
-const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
+const AdminMocaLiveNumberGamePanel = ({ liveId, streamerName }) => {
     const [games, setGames] = useState([]);
     const [loading, setLoading] = useState(true);
     const [form, setForm] = useState(EMPTY_NUMBER_GAME_FORM);
@@ -463,20 +492,35 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
         }
 
         setSaving(true);
-        const { error } = await createNumberGame(liveId, { minValue, maxValue, answer, prizeLabel: form.prizeLabel.trim(), winnerCount });
+        const prizeLabel = form.prizeLabel.trim();
+        const { error } = await createNumberGame(liveId, { minValue, maxValue, answer, prizeLabel, winnerCount });
         setSaving(false);
         if (error) { flash('시작 실패: ' + (error.message || '')); return; }
 
         setForm(EMPTY_NUMBER_GAME_FORM);
-        flash('🔢 게임이 시작되었습니다. 시청자에게 실시간으로 노출됩니다.');
-        if (window.confirm('참여 유도 앱 푸시 알림을 보낼까요?')) {
-            sendBroadcastPush({
-                title: '🔢 지금 라이브에서 숫자맞추기가 시작됐어요!',
-                body: `${minValue}~${maxValue} 사이 숫자를 맞혀보세요!`,
-                route: '/home/dashboard',
-            }).catch((e) => console.warn('[AdminMocaLive] 숫자맞추기 시작 알림 실패:', e));
-        }
+        flash('🔢 게임이 시작되었습니다. 설명이 채팅·고정 댓글에 올라갔어요. 앱 알림은 카드의 "🔔 알림 보내기"로 따로 보내세요.');
+        const prize = prizeLabel ? ` 🎁 ${prizeLabel}` : '';
+        await announceGameToViewers(
+            liveId,
+            streamerName,
+            `🔢 숫자 맞추기 게임 진행 중! ${minValue}~${maxValue} 사이의 숫자 중 정답을 맞혀보세요. 아래 입력창에 숫자를 제출하면 됩니다. 정답자 선착순 ${winnerCount}명!${prize}`
+        );
         await load();
+    };
+
+    const handleSendPush = async (game) => {
+        if (!window.confirm('참여 유도 앱 푸시 알림을 전체에게 보낼까요?')) return;
+        try {
+            await sendBroadcastPush({
+                title: '🔢 지금 라이브에서 숫자맞추기가 진행 중이에요!',
+                body: `${game.min_value}~${game.max_value} 사이 숫자를 맞혀보세요!`,
+                route: '/home/dashboard',
+            });
+            flash('🔔 앱 알림을 보냈습니다.');
+        } catch (e) {
+            console.warn('[AdminMocaLive] 숫자맞추기 알림 실패:', e);
+            flash('알림 발송 실패');
+        }
     };
 
     const handleCancel = async (game) => {
@@ -612,6 +656,7 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
                             <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[var(--moca-border)] mt-2">
                                 {g.status === 'open' && (
                                     <>
+                                        <button onClick={() => handleSendPush(g)} className="text-[12px] font-black text-violet-600">🔔 알림 보내기</button>
                                         <button onClick={() => handleEndNow(g)} className="text-[12px] font-black text-[var(--moca-primary)]">⏹ 지금 마감</button>
                                         <button onClick={() => handleCancel(g)} className="text-[12px] font-black text-[var(--moca-text-3)]">🚫 취소</button>
                                     </>
@@ -646,11 +691,12 @@ const AdminMocaLiveNumberGamePanel = ({ liveId }) => {
     );
 };
 
-const EMPTY_KEYWORD_EVENT_FORM = { keyword: '', prizeLabel: '', winnerCount: '1' };
+// description은 DB에 저장하지 않고 시작 시 채팅/고정 댓글 문구에만 쓰는 선택 입력 (문제 내용 안내용)
+const EMPTY_KEYWORD_EVENT_FORM = { keyword: '', prizeLabel: '', winnerCount: '1', description: '' };
 
 // 키워드 정답 맞추기 관리 - 문제/보기 없이 정답 키워드 한 단어만 등록. 방송에서 말로 질문하고,
 // 시청자가 채팅에 그 단어가 들어간 메시지를 치면 (평소 채팅 그대로) 자동으로 당첨 처리됨.
-const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
+const AdminMocaLiveKeywordEventPanel = ({ liveId, streamerName }) => {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [form, setForm] = useState(EMPTY_KEYWORD_EVENT_FORM);
@@ -679,20 +725,36 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
         if (hasOpenEvent) { flash('이미 진행 중인 이벤트가 있습니다. 먼저 마감하거나 취소해주세요.'); return; }
 
         setSaving(true);
-        const { error } = await createKeywordEvent(liveId, { keyword, prizeLabel: form.prizeLabel.trim(), winnerCount });
+        const prizeLabel = form.prizeLabel.trim();
+        const description = form.description.trim();
+        const { error } = await createKeywordEvent(liveId, { keyword, prizeLabel, winnerCount });
         setSaving(false);
         if (error) { flash('시작 실패: ' + (error.message || '')); return; }
 
         setForm(EMPTY_KEYWORD_EVENT_FORM);
-        flash('💬 이벤트가 시작되었습니다. 이제 방송에서 말로 질문하시면, 채팅에 정답을 치는 시청자가 자동으로 당첨돼요.');
-        if (window.confirm('참여 유도 앱 푸시 알림을 보낼까요?')) {
-            sendBroadcastPush({
-                title: '💬 지금 라이브에서 정답 맞추기 이벤트가 시작됐어요!',
+        flash('💬 이벤트가 시작되었습니다. 설명이 채팅·고정 댓글에 올라갔어요. 앱 알림은 카드의 "🔔 알림 보내기"로 따로 보내세요.');
+        const prize = prizeLabel ? ` 🎁 ${prizeLabel}` : '';
+        await announceGameToViewers(
+            liveId,
+            streamerName,
+            `💬 정답 맞추기 게임 진행 중! ${description ? `${description} ` : '방송에서 나오는 질문을 듣고 '}정답을 채팅창에 입력해 주세요. 정답을 맞힌 선착순 ${winnerCount}명 당첨!${prize}`
+        );
+        await load();
+    };
+
+    const handleSendPush = async () => {
+        if (!window.confirm('참여 유도 앱 푸시 알림을 전체에게 보낼까요?')) return;
+        try {
+            await sendBroadcastPush({
+                title: '💬 지금 라이브에서 정답 맞추기가 진행 중이에요!',
                 body: '방송을 보고 채팅창에 정답을 쳐보세요!',
                 route: '/home/dashboard',
-            }).catch((e) => console.warn('[AdminMocaLive] 정답맞추기 시작 알림 실패:', e));
+            });
+            flash('🔔 앱 알림을 보냈습니다.');
+        } catch (e) {
+            console.warn('[AdminMocaLive] 정답맞추기 알림 실패:', e);
+            flash('알림 발송 실패');
         }
-        await load();
     };
 
     const handleCancel = async (event) => {
@@ -758,6 +820,12 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
                         placeholder="정답 키워드 (예: 아임모델)"
                         className="w-full px-4 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                     />
+                    <input
+                        value={form.description}
+                        onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                        placeholder="게임 설명 (선택, 예: 오늘 소개한 브랜드 이름은?) - 채팅/고정 댓글에 올라가요"
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
+                    />
                     <div className="flex items-center gap-2">
                         <input
                             value={form.prizeLabel}
@@ -813,6 +881,7 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId }) => {
                             <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[var(--moca-border)] mt-2">
                                 {e.status === 'open' && (
                                     <>
+                                        <button onClick={handleSendPush} className="text-[12px] font-black text-violet-600">🔔 알림 보내기</button>
                                         <button onClick={() => handleEndNow(e)} className="text-[12px] font-black text-[var(--moca-primary)]">⏹ 지금 마감</button>
                                         <button onClick={() => handleCancel(e)} className="text-[12px] font-black text-[var(--moca-text-3)]">🚫 취소</button>
                                     </>
@@ -1191,9 +1260,9 @@ export const AdminMocaLiveControlPanel = ({ liveId, streamerName, chatHeightClas
                     ))}
                 </div>
                 {tab === 'pinned' && <AdminMocaLivePinnedOnlyPanel liveId={liveId} chat={chat} />}
-                {tab === 'keyword' && <AdminMocaLiveKeywordEventPanel liveId={liveId} />}
-                {tab === 'number' && <AdminMocaLiveNumberGamePanel liveId={liveId} />}
-                {tab === 'quiz' && <AdminMocaLiveQuizPanel liveId={liveId} />}
+                {tab === 'keyword' && <AdminMocaLiveKeywordEventPanel liveId={liveId} streamerName={streamerName} />}
+                {tab === 'number' && <AdminMocaLiveNumberGamePanel liveId={liveId} streamerName={streamerName} />}
+                {tab === 'quiz' && <AdminMocaLiveQuizPanel liveId={liveId} streamerName={streamerName} />}
             </div>
             </div>
         </div>
@@ -1212,6 +1281,12 @@ const AdminMocaLive = () => {
     const [msg, setMsg] = useState('');
     const [pushResult, setPushResult] = useState(null);
     const [solapiResult, setSolapiResult] = useState(null);
+    const [classOptions, setClassOptions] = useState([]);
+
+    // "클래스 참석 확정자 전용" 선택용 클래스 목록
+    useEffect(() => {
+        fetchClasses().then(({ data }) => setClassOptions(data || []));
+    }, []);
     const [sendingPush, setSendingPush] = useState(false);
 
     const load = async () => {
@@ -1247,6 +1322,7 @@ const AdminMocaLive = () => {
             streamerName: stream.streamer_name,
             coverImageUrl: stream.cover_image_url || '',
             targetGrade: stream.target_grade || 'ALL',
+            classId: stream.class_id || '',
             vodUrl: stream.vod_url || '',
             scheduledAt: isoToDatetimeLocal(stream.scheduled_at),
         });
@@ -1278,6 +1354,7 @@ const AdminMocaLive = () => {
             streamerName: form.streamerName.trim() || '김대표',
             coverImageUrl: form.coverImageUrl.trim(),
             targetGrade: form.targetGrade,
+            classId: form.classId,
             vodUrl: form.vodUrl.trim(),
             scheduledAt: datetimeLocalToIso(form.scheduledAt),
         };
@@ -1543,6 +1620,23 @@ const AdminMocaLive = () => {
                                 ))}
                             </div>
                             <p className="text-[10px] text-[var(--moca-text-3)] mt-1">골드모카 등급 전용으로 설정하면 GOLD 이상 회원에게만 홈 대시보드에 노출됩니다.</p>
+                        </div>
+
+                        <div>
+                            <label className="text-[11px] font-bold text-[var(--moca-text-3)]">클래스 참석 확정자 전용 (선택)</label>
+                            <select
+                                value={form.classId}
+                                onChange={(e) => setForm((f) => ({ ...f, classId: e.target.value }))}
+                                className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--moca-border)] text-sm bg-white"
+                            >
+                                <option value="">제한 없음 (위 등급 설정대로 노출)</option>
+                                {classOptions.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.title}</option>
+                                ))}
+                            </select>
+                            <p className="text-[10px] text-[var(--moca-text-3)] mt-1">
+                                클래스를 고르면 그 클래스에 "참석 확정"된 신청자에게만 방송 배너·채팅·다시보기가 보입니다.
+                            </p>
                         </div>
 
                         <CoverUploader

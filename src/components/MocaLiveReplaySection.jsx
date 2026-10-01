@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { fetchPastMocaLiveStreams, extractYoutubeVideoId } from '../services/mocaLiveService';
-import { getUserGrade } from '../services/userService';
+import { fetchPastMocaLiveStreams, extractYoutubeVideoId, canAccessClassLive } from '../services/mocaLiveService';
+import { getUserGrade, getUser } from '../services/userService';
 import { RtmpPlayer } from './MocaLiveBanner';
 
 const GOLD_OR_ABOVE = ['GOLD', 'IMODEL', 'VIP'];
@@ -53,11 +53,15 @@ const MocaLiveReplaySection = ({ className = 'px-6 mb-6' }) => {
 
     useEffect(() => {
         let mounted = true;
-        fetchPastMocaLiveStreams().then((data) => {
-            if (!mounted) return;
-            const visible = (data || []).filter(
+        fetchPastMocaLiveStreams().then(async (data) => {
+            const gradeVisible = (data || []).filter(
                 (live) => !(live.target_grade === 'GOLD' && !GOLD_OR_ABOVE.includes(getUserGrade()))
             );
+            // 클래스 전용 방송의 다시보기는 해당 클래스 참석 확정자에게만 노출
+            const userId = getUser()?.id;
+            const access = await Promise.all(gradeVisible.map((live) => canAccessClassLive(userId, live.class_id)));
+            if (!mounted) return;
+            const visible = gradeVisible.filter((_, i) => access[i]);
             setReplays(visible);
             setLoading(false);
         });

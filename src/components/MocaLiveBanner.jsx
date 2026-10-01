@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import {
-    fetchActiveMocaLive, fetchUpcomingMocaLive, subscribeToMocaLiveState,
+    fetchActiveMocaLive, fetchUpcomingMocaLive, subscribeToMocaLiveState, canAccessClassLive,
     isSubscribedToLiveReminder, addLiveReminderSubscription, removeLiveReminderSubscription,
 } from '../services/mocaLiveService';
 import { openLiveViewerPresence, closeLiveViewerPresence } from '../services/mocaLiveEngagementService';
@@ -139,6 +139,18 @@ const MocaLiveBanner = () => {
     const liveIdRef = useRef(null);
     useEffect(() => { liveIdRef.current = live?.id ?? null; }, [live]);
 
+    // 클래스 전용 방송(class_id)은 해당 클래스 참석 확정자만 볼 수 있다. null = 확인 중.
+    const [classAccess, setClassAccess] = useState(null);
+    useEffect(() => {
+        const target = live || upcoming;
+        const classId = target?.class_id;
+        if (!classId) { setClassAccess(true); return; }
+        let mounted = true;
+        setClassAccess(null);
+        canAccessClassLive(getUser()?.id, classId).then((ok) => { if (mounted) setClassAccess(ok); });
+        return () => { mounted = false; };
+    }, [live?.id, live?.class_id, upcoming?.id, upcoming?.class_id]);
+
     useEffect(() => {
         let mounted = true;
         (async () => {
@@ -201,11 +213,15 @@ const MocaLiveBanner = () => {
         if (!upcoming) return null;
         // 골드모카 등급 전용 예고는 GOLD 이상 회원에게만 노출
         if (upcoming.target_grade === 'GOLD' && !GOLD_OR_ABOVE.includes(getUserGrade())) return null;
+        if (upcoming.class_id && classAccess !== true) return null;
         return <UpcomingMocaLiveTeaser upcoming={upcoming} />;
     }
 
     // 골드모카 등급 전용 방송은 GOLD 이상 회원에게만 노출
     if (live.target_grade === 'GOLD' && !GOLD_OR_ABOVE.includes(getUserGrade())) return null;
+
+    // 클래스 참석 확정자 전용 방송: 확인 중이거나 확정자가 아니면 노출하지 않음
+    if (live.class_id && classAccess !== true) return null;
 
     const thumbnail = live.cover_image_url
         || (live.stream_type === 'rtmp' ? null : `https://img.youtube.com/vi/${live.youtube_video_id}/hqdefault.jpg`);

@@ -152,7 +152,7 @@ export const fetchMocaLiveStreamById = async (id) => {
 };
 
 // 라이브 방송 등록
-export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl, scheduledAt }) => {
+export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl, scheduledAt, classId }) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
 
     const { data, error } = await supabase
@@ -167,6 +167,7 @@ export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, 
             target_grade: targetGrade || 'ALL',
             vod_url: vodUrl || null,
             scheduled_at: scheduledAt || null,
+            class_id: classId || null,
         }])
         .select()
         .single();
@@ -175,7 +176,7 @@ export const createMocaLiveStream = async ({ title, streamType, youtubeVideoId, 
 };
 
 // 라이브 방송 정보 수정
-export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl, scheduledAt }) => {
+export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideoId, playbackUrl, streamerName, coverImageUrl, targetGrade, vodUrl, scheduledAt, classId }) => {
     if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
 
     const { data, error } = await supabase
@@ -190,6 +191,7 @@ export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideo
             target_grade: targetGrade || 'ALL',
             vod_url: vodUrl || null,
             scheduled_at: scheduledAt || null,
+            class_id: classId || null,
             updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -197,6 +199,28 @@ export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideo
         .single();
 
     return { data, error };
+};
+
+// 클래스 전용 방송(class_id가 있는 방송)을 볼 수 있는지 - 해당 클래스에 참석 확정('paid')된 회원만 true.
+// SECURITY NOTE: 재생 URL 자체는 moca_live_streams 테이블에서 공개 조회되므로(이 앱은 auth.uid()
+// 세션이 없어 RLS로 회원 구분 불가) 이 검사는 앱 화면 단의 접근 제한이다.
+export const canAccessClassLive = async (userId, classId) => {
+    if (!classId) return true;
+    if (!isSupabaseEnabled() || !userId) return false;
+
+    const { data, error } = await supabase
+        .from('class_applications')
+        .select('id')
+        .eq('class_id', classId)
+        .eq('user_id', userId)
+        .eq('approval_status', 'paid')
+        .limit(1);
+
+    if (error) {
+        console.warn('[mocaLiveService] 클래스 참석 확정 조회 실패:', error.message || error);
+        return false;
+    }
+    return (data || []).length > 0;
 };
 
 // 다시보기(VOD) 목록 - 유튜브 라이브는 종료 후 같은 videoId가 자동으로 다시보기가 되고,

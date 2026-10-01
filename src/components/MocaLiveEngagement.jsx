@@ -47,10 +47,22 @@ const MocaLiveEngagement = ({ liveId }) => {
 
         fetchLiveChatMessages(liveId).then((data) => { if (mounted) setMessages(data); });
         const unsubscribe = subscribeToLiveChat(liveId, (msg) => {
-            setMessages((prev) => [...prev, msg]);
+            setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
         });
 
-        return () => { mounted = false; unsubscribe(); };
+        // Realtime 웹소켓이 조용히 끊기거나 구독에 실패해도 채팅이 멈추지 않도록 폴링으로 보강한다.
+        // id 기준으로 병합해 Realtime과 중복되지 않는다.
+        const poll = setInterval(async () => {
+            const latest = await fetchLiveChatMessages(liveId);
+            if (!mounted || latest.length === 0) return;
+            setMessages((prev) => {
+                const known = new Set(prev.map((m) => m.id));
+                const fresh = latest.filter((m) => !known.has(m.id));
+                return fresh.length ? [...prev, ...fresh] : prev;
+            });
+        }, 3000);
+
+        return () => { mounted = false; clearInterval(poll); unsubscribe(); };
     }, [liveId]);
 
     useEffect(() => {
@@ -68,7 +80,18 @@ const MocaLiveEngagement = ({ liveId }) => {
             setPinned(updated?.pinned_message ? updated : null);
         });
 
-        return () => { mounted = false; unsubscribe(); };
+        // 고정 댓글도 Realtime 누락 대비 폴링 보강
+        const poll = setInterval(async () => {
+            const data = await fetchPinnedMessage(liveId);
+            if (!mounted) return;
+            setPinned((prev) => (
+                (prev?.pinned_message || null) === (data?.pinned_message || null)
+                && (prev?.pinned_message_at || null) === (data?.pinned_message_at || null)
+                    ? prev : data
+            ));
+        }, 5000);
+
+        return () => { mounted = false; clearInterval(poll); unsubscribe(); };
     }, [liveId]);
 
     const handleSendMessage = async (e) => {
@@ -119,10 +142,14 @@ const MocaLiveEngagement = ({ liveId }) => {
             setQuiz(q);
             if (q) {
                 const ans = await fetchMyQuizAnswer(q.id, myNickname);
-                if (mounted) setMyAnswer(ans);
+                if (mounted && ans) setMyAnswer(ans);
+            } else {
+                setMyAnswer(null);
             }
         };
         load();
+        // Realtime 누락 대비 폴링 보강 (내 제출 내역은 값이 있을 때만 덮어써 낙관적 UI를 지우지 않음)
+        const poll = setInterval(load, 4000);
 
         const unsubscribe = subscribeToLiveQuiz(liveId, async (updated) => {
             if (!mounted || !updated) return;
@@ -132,7 +159,7 @@ const MocaLiveEngagement = ({ liveId }) => {
             if (mounted) setMyAnswer(ans);
         });
 
-        return () => { mounted = false; unsubscribe(); };
+        return () => { mounted = false; clearInterval(poll); unsubscribe(); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [liveId]);
 
@@ -156,10 +183,13 @@ const MocaLiveEngagement = ({ liveId }) => {
             setNumberGame(g);
             if (g) {
                 const entry = await fetchMyNumberGameEntry(g.id, myNickname);
-                if (mounted) setMyNumberEntry(entry);
+                if (mounted && entry) setMyNumberEntry(entry);
+            } else {
+                setMyNumberEntry(null);
             }
         };
         load();
+        const poll = setInterval(load, 4000);
 
         const unsubscribe = subscribeToNumberGame(liveId, async (updated) => {
             if (!mounted || !updated) return;
@@ -167,7 +197,7 @@ const MocaLiveEngagement = ({ liveId }) => {
             setNumberGame(updated);
         });
 
-        return () => { mounted = false; unsubscribe(); };
+        return () => { mounted = false; clearInterval(poll); unsubscribe(); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [liveId]);
 
@@ -205,10 +235,13 @@ const MocaLiveEngagement = ({ liveId }) => {
             setKeywordEvent(ev);
             if (ev) {
                 const entry = await fetchMyKeywordEntry(ev.id, myNickname);
-                if (mounted) setMyKeywordEntry(entry);
+                if (mounted && entry) setMyKeywordEntry(entry);
+            } else {
+                setMyKeywordEntry(null);
             }
         };
         load();
+        const poll = setInterval(load, 4000);
 
         const unsubscribeEvent = subscribeToKeywordEvent(liveId, (updated) => {
             if (!mounted || !updated) return;
@@ -220,7 +253,7 @@ const MocaLiveEngagement = ({ liveId }) => {
             setMyKeywordEntry(entry);
         });
 
-        return () => { mounted = false; unsubscribeEvent(); unsubscribeEntries(); };
+        return () => { mounted = false; clearInterval(poll); unsubscribeEvent(); unsubscribeEntries(); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [liveId]);
 
