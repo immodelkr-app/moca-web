@@ -126,6 +126,25 @@ const UpcomingMocaLiveTeaser = ({ upcoming }) => {
     );
 };
 
+// 시청 중이던 라이브가 끝났을 때 보여주는 안내 모달
+const EndedLiveModal = ({ live, onClose }) => (
+    <div
+        className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/90 px-4 py-6"
+        onClick={onClose}
+    >
+        <div className="w-full max-w-sm bg-white rounded-3xl p-6 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[40px] mb-2">📴</div>
+            <h4 className="text-[#1F1235] font-black text-base mb-1">종료된 방송입니다</h4>
+            <p className="text-[13px] font-bold text-[#6B7280] mb-1 line-clamp-2">{live.title}</p>
+            <p className="text-[12px] text-[#9CA3AF] mb-5 leading-relaxed">
+                라이브 방송이 끝났어요. 시청해 주셔서 감사합니다!<br />
+                다시보기가 등록되면 모카TV 다시보기에서 볼 수 있어요.
+            </p>
+            <button onClick={onClose} className="w-full py-3 rounded-2xl bg-[#8B5CF6] text-white font-black text-sm">확인</button>
+        </div>
+    </div>
+);
+
 // 모카 자체 라이브방송(김대표 소통/교육) 배너.
 // 모델뷰티 판매방송(LiveStreamBanner)과 달리 모카 회원이면 누구나 앱 안에서 바로 시청할 수 있다.
 const MocaLiveBanner = () => {
@@ -136,8 +155,13 @@ const MocaLiveBanner = () => {
     const [viewerCount, setViewerCount] = useState(0);
     const [shareSuccess, setShareSuccess] = useState(false);
 
-    const liveIdRef = useRef(null);
-    useEffect(() => { liveIdRef.current = live?.id ?? null; }, [live]);
+    // 시청 중이던 방송이 종료되면 모달을 그냥 닫지 않고 "종료된 방송" 안내를 보여주기 위한 스냅샷
+    const [endedLive, setEndedLive] = useState(null);
+
+    const liveRef = useRef(null);
+    const showPlayerRef = useRef(false);
+    useEffect(() => { liveRef.current = live; }, [live]);
+    useEffect(() => { showPlayerRef.current = showPlayer; }, [showPlayer]);
 
     // 클래스 전용 방송(class_id)은 해당 클래스 참석 확정자만 볼 수 있다. null = 확인 중.
     const [classAccess, setClassAccess] = useState(null);
@@ -174,12 +198,27 @@ const MocaLiveBanner = () => {
     // 열어둔 사용자에게는 종료된 뒤에도 새로고침 전까지 눌러도 재생 안 되는 죽은 썸네일이
     // 계속 남아있게 됨)
     useEffect(() => {
-        const unsubscribe = subscribeToMocaLiveState(({ active, upcoming: nextUp }) => {
-            if (!active || active.id !== liveIdRef.current) setShowPlayer(false);
+        const applyState = ({ active, upcoming: nextUp }) => {
+            const prev = liveRef.current;
+            if (prev && (!active || active.id !== prev.id)) {
+                // 보던 방송이 끝났거나 다른 방송으로 바뀜: 플레이어를 열어둔 사람에게는 종료 안내를 보여준다
+                if (showPlayerRef.current) setEndedLive(prev);
+                setShowPlayer(false);
+            }
             setLive(active);
             setUpcoming(nextUp);
-        });
-        return unsubscribe;
+        };
+        const unsubscribe = subscribeToMocaLiveState(applyState);
+
+        // Realtime이 끊겨도 종료/시작이 반영되도록 폴링 보강
+        const poll = setInterval(async () => {
+            const active = await fetchActiveMocaLive();
+            const nextUp = active ? null : await fetchUpcomingMocaLive();
+            const prev = liveRef.current;
+            if ((active?.id ?? null) !== (prev?.id ?? null)) applyState({ active, upcoming: nextUp });
+        }, 10000);
+
+        return () => { clearInterval(poll); unsubscribe(); };
     }, []);
 
     // 플레이어를 실제로 열어놓은 동안만 시청자로 집계 (닫으면 카운트에서 빠짐)
@@ -209,12 +248,22 @@ const MocaLiveBanner = () => {
 
     if (loading) return null;
 
+    const endedModal = endedLive && (
+        <EndedLiveModal live={endedLive} onClose={() => setEndedLive(null)} />
+    );
+
     if (!live) {
-        if (!upcoming) return null;
-        // 골드모카 등급 전용 예고는 GOLD 이상 회원에게만 노출
-        if (upcoming.target_grade === 'GOLD' && !GOLD_OR_ABOVE.includes(getUserGrade())) return null;
-        if (upcoming.class_id && classAccess !== true) return null;
-        return <UpcomingMocaLiveTeaser upcoming={upcoming} />;
+        // 골드모카 등급 전용 예고 / 클래스 전용 예고는 해당 회원에게만 노출
+        const showTeaser = upcoming
+            && !(upcoming.target_grade === 'GOLD' && !GOLD_OR_ABOVE.includes(getUserGrade()))
+            && !(upcoming.class_id && classAccess !== true);
+        if (!showTeaser && !endedModal) return null;
+        return (
+            <>
+                {showTeaser && <UpcomingMocaLiveTeaser upcoming={upcoming} />}
+                {endedModal}
+            </>
+        );
     }
 
     // 골드모카 등급 전용 방송은 GOLD 이상 회원에게만 노출

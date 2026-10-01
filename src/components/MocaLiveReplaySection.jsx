@@ -95,7 +95,7 @@ const MocaLiveReplaySection = ({ className = 'px-6 mb-6' }) => {
                                     </div>
                                 )}
                                 <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-black">
-                                    다시보기
+                                    종료 · 다시보기
                                 </span>
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors">
                                     <span className="material-symbols-outlined text-white/90 text-[28px] drop-shadow">play_circle</span>
@@ -120,6 +120,9 @@ const MocaLiveReplaySection = ({ className = 'px-6 mb-6' }) => {
                                 <span className="material-symbols-outlined text-[26px]">close</span>
                             </button>
                         </div>
+                        <p className="text-[11px] font-black text-white/70 mb-2 px-1">
+                            📴 종료된 라이브 방송입니다 · 녹화된 다시보기를 재생합니다
+                        </p>
                         <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black">
                             {selected.stream_type === 'rtmp' ? (
                                 resolveRtmpReplayPlayer(selected.vod_url, selected.title)

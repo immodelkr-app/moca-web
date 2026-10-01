@@ -1391,7 +1391,17 @@ const AdminMocaLive = () => {
             flashMsg('종료 중 오류가 발생했습니다: ' + (stopError.message || ''));
             return;
         }
-        flashMsg('라이브가 종료되었습니다.');
+        // 시청자에게 종료를 알린다: 운영자 채팅 + 고정 댓글(시청자 화면에는 "종료된 방송" 안내도 뜸)
+        const endText = '📴 방송이 종료되었습니다. 시청해 주셔서 감사합니다! 다시보기는 등록되는 대로 모카TV 다시보기에서 볼 수 있어요.';
+        try {
+            await Promise.all([
+                sendLiveChatMessage(stream.id, stream.streamer_name || '김대표', endText, { isHost: true }),
+                setPinnedMessage(stream.id, endText, stream.streamer_name || '김대표'),
+            ]);
+        } catch (e) {
+            console.warn('[AdminMocaLive] 종료 안내 게시 실패:', e);
+        }
+        flashMsg('라이브가 종료되었습니다. 시청 중이던 회원에게 "종료된 방송" 안내가 표시되고, 채팅·고정 댓글에도 종료 안내가 올라갔어요.');
         await load();
     };
 
