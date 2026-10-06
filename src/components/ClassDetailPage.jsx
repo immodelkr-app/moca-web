@@ -396,11 +396,11 @@ const ClassDetailPage = () => {
                             </h2>
                             <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black shadow-sm">
                                 <iframe
-                                    src={getVideoEmbedUrl(cls.video_url)}
+                                    src={getVideoEmbedUrl(cls.video_url, { autoplay: true })}
                                     title={`${cls.title} 수업 영상`}
                                     className="w-full h-full"
                                     loading="lazy"
-                                    allow="encrypted-media; picture-in-picture; fullscreen"
+                                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                                     allowFullScreen
                                 />
                             </div>
