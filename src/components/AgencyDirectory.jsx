@@ -286,6 +286,7 @@ const AgencyDirectory = () => {
     const [agencies, setAgencies] = useState([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [selectedAgency, setSelectedAgency] = useState(null);
     const [detailModalAgency, setDetailModalAgency] = useState(null);
     const [trendModalAgency, setTrendModalAgency] = useState(null);
@@ -425,11 +426,22 @@ const AgencyDirectory = () => {
         }
     };
 
-    useEffect(() => {
+    const loadAgencies = () => {
+        setLoading(true);
+        setLoadError(false);
         fetchAgencies().then(data => {
-            setAgencies(data.filter(a => a.name && a.address));
+            const list = data.filter(a => a.name && a.address);
+            setAgencies(list);
+            if (list.length === 0) setLoadError(true);
             setLoading(false);
-        }).catch(() => setLoading(false));
+        }).catch(() => {
+            setLoadError(true);
+            setLoading(false);
+        });
+    };
+
+    useEffect(() => {
+        loadAgencies();
 
         fetchMessagesList().then(data => {
             if (data && data.length > 0) setRecentMessages(data.slice(0, 3));
@@ -558,6 +570,18 @@ const AgencyDirectory = () => {
                     <div className="flex flex-col items-center justify-center py-20 gap-3">
                         <div className="w-8 h-8 rounded-full border-2 border-[#6C63FF] border-t-transparent animate-spin" />
                         <p className="text-white/30 text-sm">불러오는 중...</p>
+                    </div>
+                ) : loadError ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <span className="material-symbols-outlined text-[48px] text-white/20">cloud_off</span>
+                        <p className="text-white/50 text-sm text-center">에이전시 목록을 불러오지 못했어요.<br />네트워크 상태를 확인하고 다시 시도해 주세요.</p>
+                        <button
+                            onClick={loadAgencies}
+                            className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#6C63FF] text-white text-sm font-bold active:scale-95 transition-transform"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">refresh</span>
+                            다시 시도
+                        </button>
                     </div>
                 ) : filtered.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-3">

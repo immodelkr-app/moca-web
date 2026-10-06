@@ -2,6 +2,8 @@ import Papa from 'papaparse';
 
 const PRIMARY_CSV_URL = '/agencies.csv';
 const FALLBACK_CSV_URL = '/agencies-fallback.csv';
+// 네트워크가 멈춰 있으면 무한 로딩되므로 일정 시간 뒤 실패 처리
+const FETCH_TIMEOUT_MS = 15000;
 
 export const fetchAgencies = async () => {
     return new Promise(async (resolve, reject) => {
@@ -9,11 +11,11 @@ export const fetchAgencies = async () => {
             const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
             let response;
             try {
-                response = await fetch(`${PRIMARY_CSV_URL}?v=${cacheBuster}`, { cache: 'no-store' });
+                response = await fetch(`${PRIMARY_CSV_URL}?v=${cacheBuster}`, { cache: 'no-store', signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
                 if (!response.ok) throw new Error('Primary CSV failed');
             } catch (err) {
                 console.warn('Primary CSV fetch failed, falling back to legacy Korean CSV URL:', err);
-                response = await fetch(`${FALLBACK_CSV_URL}?v=${cacheBuster}`, { cache: 'no-store' });
+                response = await fetch(`${FALLBACK_CSV_URL}?v=${cacheBuster}`, { cache: 'no-store', signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
             }
 
             const buffer = await response.arrayBuffer();
