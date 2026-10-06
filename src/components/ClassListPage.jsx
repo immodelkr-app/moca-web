@@ -137,9 +137,9 @@ const ClassListPage = () => {
                                         모집마감
                                     </div>
                                 )}
-                                <div className="aspect-[2/1] w-full bg-[#F8F5FF] relative overflow-hidden">
+                                <div className={`${cls.image_url ? '' : 'aspect-[2/1]'} w-full bg-[#F8F5FF] relative overflow-hidden`}>
                                     {cls.image_url ? (
-                                        <img src={cls.image_url} alt={cls.title} className={`w-full h-full object-cover object-top ${isCompleted ? 'grayscale-[30%]' : 'opacity-90'}`} />
+                                        <img src={cls.image_url} alt={cls.title} className={`w-full h-auto block ${isCompleted ? 'grayscale-[30%]' : 'opacity-90'}`} />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center">
                                             <span className="material-symbols-outlined text-[#E8E0FA] text-6xl">school</span>
