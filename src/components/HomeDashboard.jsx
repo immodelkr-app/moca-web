@@ -4,6 +4,7 @@ import { getUser, getUserGrade, syncUserGrade, GRADE_INFO, GRADE_EMOJI } from '.
 import { checkGoldEligibilityWithAutoUpgrade } from '../services/goldEligibilityService';
 import { fetchMessagesList } from '../services/messageService';
 import { fetchAttendanceProgress, submitAttendanceCheck } from '../services/attendanceService';
+import { fetchNewContentFlags, markContentSeen } from '../services/newContentService';
 import ProfileEditModal from './ProfileEditModal';
 import ModelBeautyBanner from './ModelBeautyBanner';
 import TrialCampaignBanner from './TrialCampaignBanner';
@@ -20,7 +21,7 @@ const TOUR_ITEMS = [
 
 const COMMUNITY_ITEMS = [
     { icon: 'campaign', label: '모델캐스팅', route: '__casting_notice__', color: 'text-[#7C3AED]', bgLight: 'bg-[#EDE9FE]' },
-    { icon: 'photo_camera', label: '모카그램', route: '/home/cert', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
+    { icon: 'photo_camera', label: '모카그램', route: '/home/cert', newKey: 'cert', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'smart_display', label: '모카TV', route: '/home/tv', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'workspace_premium', label: '등급 신청하기', route: '/upgrade', color: 'text-[#D97706]', bgLight: 'bg-[#FEF3C7]' },
 ];
@@ -39,6 +40,20 @@ const HomeDashboard = () => {
     const [noticeIdx, setNoticeIdx] = useState(0);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [showCastingNotice, setShowCastingNotice] = useState(false);
+
+    // 새 콘텐츠 N 뱃지 (최근 3일 내 + 아직 확인 안 한 경우만)
+    const [newFlags, setNewFlags] = useState({ class: false, cert: false });
+    useEffect(() => {
+        fetchNewContentFlags(user?.nickname).then(setNewFlags).catch(() => { });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const openWithSeen = (section, route) => {
+        markContentSeen(section);
+        navigate(route);
+    };
+    const NewBadge = () => (
+        <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-[#EF4444] text-white text-[11px] font-black flex items-center justify-center shadow-md ring-2 ring-white">N</span>
+    );
 
     // GOLD 조건 충족 여부 (커뮤니티 메뉴의 "등급 신청하기" 버튼에 남은 미션 수 표시용) + 자동 승급
     const isAlreadyGold = ['GOLD', 'IMODEL', 'VIP'].includes(grade);
@@ -218,9 +233,10 @@ const HomeDashboard = () => {
 
                     {/* 카드 1: 모카클래스 */}
                     <button
-                        onClick={() => navigate('/home/class')}
+                        onClick={() => openWithSeen('class', '/home/class')}
                         className="relative flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#7C3AED] to-[#5B21B6] border border-white/10 shadow-md active:scale-95 transition-all text-center group"
                     >
+                        {newFlags.class && <NewBadge />}
                         <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
                             <span className="material-symbols-outlined text-white text-[34px]">school</span>
                         </div>
@@ -323,10 +339,12 @@ const HomeDashboard = () => {
                                 onClick={() => {
                                     if (showMissionHint) return; // 조건 미달성이면 페이지 이동 없이 남은 미션 수만 안내
                                     if (item.route === '__casting_notice__') setShowCastingNotice(true);
+                                    else if (item.newKey) openWithSeen(item.newKey, item.route);
                                     else navigate(item.route);
                                 }}
-                                className="flex items-center gap-3 p-3.5 bg-white border border-[#E8E0FA] rounded-2xl shadow-2xs hover:border-[#8B5CF6]/40 active:scale-95 transition-all text-left"
+                                className="relative flex items-center gap-3 p-3.5 bg-white border border-[#E8E0FA] rounded-2xl shadow-2xs hover:border-[#8B5CF6]/40 active:scale-95 transition-all text-left"
                             >
+                                {item.newKey && newFlags[item.newKey] && <NewBadge />}
                                 <div className={`w-10 h-10 rounded-xl ${item.bgLight} flex items-center justify-center flex-shrink-0`}>
                                     <span className={`material-symbols-outlined text-[20px] ${item.color}`}>{item.icon}</span>
                                 </div>
