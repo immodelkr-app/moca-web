@@ -12,7 +12,7 @@ import { supabase } from '../services/supabaseClient';
 import { sendBulkMessage } from '../services/solapiService';
 import AdminClassAudition from './AdminClassAudition';
 import { getVideoEmbedUrl } from '../utils/videoEmbed';
-import { CLASS_GRADE_OPTIONS } from '../utils/classGrade';
+import { CLASS_GRADE_OPTIONS, parseClassGrades, toggleClassGrade } from '../utils/classGrade';
 
 const CLASS_BUCKET = 'class-images';
 const MAX_FILE_MB = 10;
@@ -958,14 +958,17 @@ const AdminClasses = () => {
 
                                     <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200">
                                         <label className="block text-xs font-black text-slate-500 mb-4 uppercase tracking-widest">신청 가능 등급 (선택)</label>
-                                        <p className="text-[11px] font-bold text-slate-400 mb-3">전체등급이 아니면 선택한 등급 회원만 신청할 수 있습니다.</p>
+                                        <p className="text-[11px] font-bold text-slate-400 mb-3">전체등급이 아니면 선택한 등급 회원만 신청할 수 있습니다. 여러 등급을 중복 선택할 수 있어요.</p>
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                            {CLASS_GRADE_OPTIONS.map(opt => (
-                                                <label key={opt.id} className={`flex-1 cursor-pointer flex flex-col items-center justify-center p-4 border-2 rounded-2xl transition-all ${newClass.target_grade === opt.id ? 'border-moca-primary bg-moca-primary/5 text-moca-primary' : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'}`}>
-                                                    <input type="radio" name="target_grade" value={opt.id} checked={newClass.target_grade === opt.id} onChange={(e) => setNewClass({ ...newClass, target_grade: e.target.value })} className="hidden" />
-                                                    <span className="font-bold text-sm">{opt.label}</span>
-                                                </label>
-                                            ))}
+                                            {CLASS_GRADE_OPTIONS.map(opt => {
+                                                const selected = parseClassGrades(newClass.target_grade).includes(opt.id);
+                                                return (
+                                                    <label key={opt.id} className={`flex-1 cursor-pointer flex flex-col items-center justify-center p-4 border-2 rounded-2xl transition-all ${selected ? 'border-moca-primary bg-moca-primary/5 text-moca-primary' : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'}`}>
+                                                        <input type="checkbox" checked={selected} onChange={() => setNewClass({ ...newClass, target_grade: toggleClassGrade(newClass.target_grade, opt.id) })} className="hidden" />
+                                                        <span className="font-bold text-sm">{opt.label}</span>
+                                                    </label>
+                                                );
+                                            })}
                                         </div>
                                     </div>
 
