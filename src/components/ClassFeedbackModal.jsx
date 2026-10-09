@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { submitFeedback, uploadFeedbackImage } from '../services/classService';
+import { notifyAdmin } from '../services/solapiService';
 
 const ClassFeedbackModal = ({ cls, currentUser, existingFeedback, onClose, onSuccess }) => {
     const [rating, setRating] = useState(existingFeedback?.rating || 0);
@@ -45,6 +46,10 @@ const ClassFeedbackModal = ({ cls, currentUser, existingFeedback, onClose, onSuc
             });
 
             if (submitErr) throw submitErr;
+
+            const text = comment.trim();
+            const body = text.length > 200 ? `${text.slice(0, 200)}...` : text;
+            notifyAdmin(`[모카] 클래스 후기 ${existingFeedback ? '수정' : '등록'}: ${currentUser?.name || currentUser?.nickname || '회원'} - ${cls.title}\n별점 ${rating}/5${body ? `\n${body}` : ''}${imageUrl ? '\n(사진 첨부)' : ''}`);
             onSuccess?.();
             onClose();
         } catch (err) {
