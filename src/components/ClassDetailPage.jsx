@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
+import { checkClassGradeEligibility, getClassGradeBadgeClass, getClassGradeLabel } from '../utils/classGrade';
 import { saveClassCalendarEvent, fetchPublicFeedback, fetchUserFeedback, fetchActiveApplicationCount } from '../services/classService';
 import { getUser, syncUserGrade } from '../services/userService';
 import ClassApplyModal from './ClassApplyModal';
@@ -351,13 +352,8 @@ const ClassDetailPage = () => {
                             <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-black uppercase">
                                 {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이 클래스'}
                             </span>
-                            <span className={`px-3 py-1 rounded-full text-[11px] font-black ${
-                                cls.target_grade === 'EXCLUSIVE' ? 'bg-indigo-900 text-yellow-300' :
-                                cls.target_grade === 'GOLD' ? 'bg-yellow-100 text-yellow-700' :
-                                'bg-green-100 text-green-700'
-                            }`}>
-                                {cls.target_grade === 'EXCLUSIVE' ? '신청가능 등급: 전속모델' :
-                                 cls.target_grade === 'GOLD' ? '신청가능 등급: 골드멤버' : '신청가능 등급: 전체등급'}
+                            <span className={`px-3 py-1 rounded-full text-[11px] font-black ${getClassGradeBadgeClass(cls.target_grade)}`}>
+                                {getClassGradeLabel(cls.target_grade)}
                             </span>
                             {isApplied && !isWaitlisted && <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-black uppercase flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span> 신청완료</span>}
                             {isWaitlisted && <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-[11px] font-black uppercase flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">hourglass_top</span> 대기중</span>}
@@ -567,13 +563,8 @@ const ClassDetailPage = () => {
                             <button
                                 onClick={() => {
                                     if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
-                                    if (cls.target_grade && cls.target_grade !== 'ALL') {
-                                        const myGrade = (currentUser.grade || '').toUpperCase();
-                                        const isExclusive = ['VIP', 'IMODEL', '전속모델', '아임모델', 'EXCLUSIVE'].some(g => myGrade.includes(g));
-                                        const isGold = isExclusive || ['GOLD', '골드'].some(g => myGrade.includes(g));
-                                        if (cls.target_grade === 'EXCLUSIVE' && !isExclusive) { alert('전속모델 등급만 신청 가능한 클래스입니다.'); return; }
-                                        if (cls.target_grade === 'GOLD' && !isGold) { alert('골드회원 이상만 신청 가능한 클래스입니다.'); return; }
-                                    }
+                                    const eligibility = checkClassGradeEligibility(cls.target_grade, currentUser.grade);
+                                    if (!eligibility.ok) { alert(eligibility.message); return; }
                                     setShowWaitlistModal(true);
                                 }}
                                 className="flex-1 bg-amber-400 text-white py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-amber-400/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
@@ -585,13 +576,8 @@ const ClassDetailPage = () => {
                             <button
                                 onClick={() => {
                                     if (!currentUser) { alert('로그인 후 이용 가능합니다.'); navigate('/login'); return; }
-                                    if (cls.target_grade && cls.target_grade !== 'ALL') {
-                                        const myGrade = (currentUser.grade || '').toUpperCase();
-                                        const isExclusive = ['VIP', 'IMODEL', '전속모델', '아임모델', 'EXCLUSIVE'].some(g => myGrade.includes(g));
-                                        const isGold = isExclusive || ['GOLD', '골드'].some(g => myGrade.includes(g));
-                                        if (cls.target_grade === 'EXCLUSIVE' && !isExclusive) { alert('전속모델 등급만 신청 가능한 클래스입니다.'); return; }
-                                        if (cls.target_grade === 'GOLD' && !isGold) { alert('골드회원 이상만 신청 가능한 클래스입니다.'); return; }
-                                    }
+                                    const eligibility = checkClassGradeEligibility(cls.target_grade, currentUser.grade);
+                                    if (!eligibility.ok) { alert(eligibility.message); return; }
                                     setShowApplyModal(true);
                                 }}
                                 className="flex-1 bg-indigo-600 text-white py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"

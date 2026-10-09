@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchClasses, fetchActiveApplicationCounts } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
+import { getClassGradeBadgeClass, getClassGradeLabel } from '../utils/classGrade';
 
 import { getUser, syncUserGrade } from '../services/userService';
 
@@ -169,13 +170,8 @@ const ClassListPage = () => {
                                             <span className="inline-block px-3 py-1 rounded-full bg-[#F3E8FF] text-[#7C3AED] text-[10px] font-black">
                                                 {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이'}
                                             </span>
-                                            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black ${
-                                                cls.target_grade === 'EXCLUSIVE' ? 'bg-indigo-900 text-yellow-300' :
-                                                cls.target_grade === 'GOLD' ? 'bg-yellow-100 text-yellow-700' :
-                                                'bg-green-100 text-green-700'
-                                            }`}>
-                                                {cls.target_grade === 'EXCLUSIVE' ? '신청가능 등급: 전속모델' :
-                                                 cls.target_grade === 'GOLD' ? '신청가능 등급: 골드멤버' : '신청가능 등급: 전체등급'}
+                                            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black ${getClassGradeBadgeClass(cls.target_grade)}`}>
+                                                {getClassGradeLabel(cls.target_grade)}
                                             </span>
                                         </div>
                                         <h3 className="text-[#5B4E7A] font-black text-[18px] sm:text-xl leading-snug mb-2 break-keep">{cls.title}</h3>

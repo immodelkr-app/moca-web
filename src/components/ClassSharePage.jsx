@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { fetchClasses } from '../services/classService';
+import { getClassGradeBadgeClass, getClassGradeLabel } from '../utils/classGrade';
 
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.immodel.mocapp';
 const IS_NATIVE_APP = Capacitor.isNativePlatform();
@@ -121,13 +122,8 @@ const ClassSharePage = () => {
                                             <span className="inline-block px-3 py-1 rounded-full bg-[#F3E8FF] text-[#7C3AED] text-[10px] font-black">
                                                 {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이'}
                                             </span>
-                                            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black ${
-                                                cls.target_grade === 'EXCLUSIVE' ? 'bg-indigo-900 text-yellow-300' :
-                                                cls.target_grade === 'GOLD' ? 'bg-yellow-100 text-yellow-700' :
-                                                'bg-green-100 text-green-700'
-                                            }`}>
-                                                {cls.target_grade === 'EXCLUSIVE' ? '신청가능 등급: 전속모델' :
-                                                 cls.target_grade === 'GOLD' ? '신청가능 등급: 골드멤버' : '신청가능 등급: 전체등급'}
+                                            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black ${getClassGradeBadgeClass(cls.target_grade)}`}>
+                                                {getClassGradeLabel(cls.target_grade)}
                                             </span>
                                         </div>
                                         <h3 className="text-[#1F1235] font-black text-lg leading-snug mb-2 break-keep">{cls.title}</h3>
