@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchCastingDetail, fetchMyApplications, getCastingStatus, trackCastingEvent, fetchCastingViewCounts, formatDeadlineKo } from '../services/modelCastingService';
-import { getUser, getUserGrade, syncUserGrade } from '../services/userService';
+import { getUser } from '../services/userService';
 import CastingDdayBadge from './CastingDdayBadge';
 import ModelCastingApplyModal from './ModelCastingApplyModal';
 
@@ -11,9 +11,6 @@ const STATUS_LABEL = {
     cancelled: { label: '취소됨', className: 'bg-[#FEE2E2] text-[#DC2626]' },
 };
 
-// 원문 공고 버튼은 GOLD 이상 회원만 사용 (라이브 방송 등 다른 GOLD 전용 기능과 같은 기준)
-const GOLD_OR_ABOVE = ['GOLD', 'IMODEL', 'VIP'];
-
 const GENDER_LABEL = { male: '남성', female: '여성', any: '성별무관' };
 
 const ModelCastingDetailPage = () => {
@@ -22,7 +19,6 @@ const ModelCastingDetailPage = () => {
     const [casting, setCasting] = useState(null);
     const [loading, setLoading] = useState(true);
     const [viewCount, setViewCount] = useState(null);
-    const [grade, setGrade] = useState(getUserGrade());
     const [appliedRoleIds, setAppliedRoleIds] = useState([]);
     const [applyingRole, setApplyingRole] = useState(null);
     const currentUser = getUser();
@@ -40,10 +36,6 @@ const ModelCastingDetailPage = () => {
     };
 
     useEffect(() => { load(); }, [id]);
-    // 등급이 방금 오른 회원이 예전 등급으로 막히지 않도록 DB의 최신 등급으로 갱신
-    useEffect(() => {
-        syncUserGrade().then(() => setGrade(getUserGrade())).catch(() => { });
-    }, []);
     useEffect(() => {
         // 내 조회가 기록된 뒤에 조회 인원을 가져와야 방금 본 나도 숫자에 포함된다
         trackCastingEvent({ castingId: id, userId: currentUser?.id, eventType: 'view' })
@@ -62,7 +54,6 @@ const ModelCastingDetailPage = () => {
     const status = STATUS_LABEL[getCastingStatus(casting)] || STATUS_LABEL.open;
     const companyEmail = casting.companies?.users?.email || '';
     const isExternal = casting.source_type === 'external';
-    const canOpenSource = GOLD_OR_ABOVE.includes(grade);
 
     return (
         <div className="min-h-screen bg-white pb-40">
@@ -154,7 +145,7 @@ const ModelCastingDetailPage = () => {
                             </div>
                         )}
 
-                        {casting.source_url && (canOpenSource ? (
+                        {casting.source_url && (
                             <a
                                 href={casting.source_url}
                                 onClick={() => trackCastingEvent({ castingId: casting.id, userId: currentUser?.id, eventType: 'source_click' })}
@@ -165,15 +156,7 @@ const ModelCastingDetailPage = () => {
                                 <span className="material-symbols-outlined text-[18px]">open_in_new</span>
                                 원문 공고 바로가기
                             </a>
-                        ) : (
-                            <button
-                                onClick={() => navigate('/upgrade')}
-                                className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-[#F3E8FF] text-[#7C3AED] font-black text-sm active:scale-[0.98] transition-all"
-                            >
-                                <span className="material-symbols-outlined text-[18px]">lock</span>
-                                GOLD 등급부터 원문 공고를 볼 수 있어요
-                            </button>
-                        ))}
+                        )}
 
                         <p className={`text-[11px] text-[#9CA3AF] font-bold text-center ${casting.source_url ? '-mt-3' : ''}`}>
                             이 공고는 외부 공고를 모카가 요약한 것입니다. 지원은 위 안내에 따라 제작사에 직접 해주세요.
