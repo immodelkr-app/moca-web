@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CastingDdayBadge from './CastingDdayBadge';
+import CastingConsentCard from './CastingConsentCard';
 import { fetchCastings, fetchCastingViewCounts, getCastingStatus, sortCastingsByDeadline } from '../services/modelCastingService';
 
 const STATUS_LABEL = {
@@ -33,6 +34,7 @@ const ModelCastingBoard = () => {
             </div>
 
             <div className="pt-20 px-5 max-w-2xl mx-auto">
+                <CastingConsentCard />
                 {loading ? (
                     <div className="py-24 text-center text-[#9CA3AF] font-bold text-sm">불러오는 중...</div>
                 ) : castings.length === 0 ? (

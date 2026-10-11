@@ -236,6 +236,10 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                 terms_consent: formData.terms_consent,
                 marketing_consent: formData.marketing_consent,
             };
+            // 동의 상태가 바뀐 경우에만 변경 시각 기록 (동의 시각 / 철회 시 null)
+            if (!!formData.marketing_consent !== !!user?.marketing_consent) {
+                updates.marketing_consent_at = formData.marketing_consent ? new Date().toISOString() : null;
+            }
 
             if (formData.password?.trim()) {
                 updates.password = formData.password.trim();
