@@ -215,7 +215,7 @@ export const fetchUsersWithoutPushToken = async () => {
   // 2. 전화번호가 있는 전체 회원 조회 (last_platform 조회 추가)
   const { data: allUsers, error: usersError } = await supabase
     .from('users')
-    .select('id, name, phone, last_platform')
+    .select('id, name, phone, last_platform, marketing_consent')
     .not('phone', 'is', null)
     .neq('phone', '');
   if (usersError) return { data: [], error: usersError };
@@ -238,7 +238,7 @@ export const fetchAllUsersWithPhone = async () => {
   if (!supabase) return { data: [], error: 'Supabase not initialized' };
   const { data, error } = await supabase
     .from('users')
-    .select('id, name, phone')
+    .select('id, name, phone, marketing_consent')
     .not('phone', 'is', null)
     .neq('phone', '');
   return { data: data || [], error };

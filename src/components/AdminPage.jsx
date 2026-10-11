@@ -169,15 +169,18 @@ const AdminPage = () => {
     const [pushResult, setPushResult] = useState(null);
     // 앱 설치 독려 메시지
     const DEFAULT_INSTALL_MSG = `[아임모델 모카] 안녕하세요!\n앱을 설치하시면 새 공지·클래스·에이전시 소식을 푸시 알림으로 가장 먼저 받아보실 수 있습니다!\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp\n(구글플레이에서 '모두의 캐스팅' 검색)`;
-    const DEFAULT_PERMISSION_MSG = `[아임모델 모카] 안녕하세요!\n앱은 설치하셨으나 푸시 알림 수신이 차단되어 소식을 받지 못하고 계십니다.\n\n👉 알림 켜는 방법:\n1. 모카 앱 열기 > 마이페이지 > 알림 수신 동의 켜기\n2. 스마트폰 설정 > 애플리케이션 > '모두의 캐스팅' > 알림 허용`;
+    const DEFAULT_PERMISSION_MSG = `[아임모델 모카] 안녕하세요!\n앱은 설치하셨으나 푸시 알림 수신이 차단되어 소식을 받지 못하고 계십니다.\n\n👉 알림 켜는 방법:\n스마트폰 설정 > 애플리케이션 > '모두의 캐스팅' > 알림 허용`;
     const DEFAULT_TRIAL_MSG = `[아임모델 모카] 지금 모델뷰티에서 체험단 모집 중이에요! 🎁\n앱을 설치하고 바로 확인 후 신청해보세요.\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp`;
     const DEFAULT_LIVE_MSG = `[아임모델 모카] 지금 모델뷰티에서 라이브방송 진행 중이에요! 🔴\n앱을 설치하고 바로 시청해보세요.\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp`;
+    const DEFAULT_CASTING_INSTALL_MSG = `[아임모델 모카] 안녕하세요!\n모카캐스팅에 새 모델 구인 공고가 계속 올라오고 있어요. 앱을 설치하고 알림을 켜두시면 새 공고를 푸시 알림으로 가장 먼저 받아보실 수 있습니다.\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp\n(구글플레이에서 '모두의 캐스팅' 검색)\n\n설치 후 알림 허용을 눌러주세요!`;
+    const DEFAULT_CASTING_PERMISSION_MSG = `[아임모델 모카] 안녕하세요!\n모카캐스팅의 새 모델 구인 공고를 푸시 알림으로 받아보세요. 지금은 앱 알림이 꺼져 있어 새 공고 소식을 받지 못하고 계십니다.\n\n👉 알림 켜는 방법:\n스마트폰 설정 > 애플리케이션 > '모두의 캐스팅' > 알림 허용\n\n👉 모카캐스팅 바로 보기:\nhttps://immoca.kr/open-app?path=home/castings`;
     const [noPushUsers, setNoPushUsers] = useState([]);
     const [noAppUsers, setNoAppUsers] = useState([]);
     const [noPermissionUsers, setNoPermissionUsers] = useState([]);
     const [allPhoneUsers, setAllPhoneUsers] = useState([]);
     const [noPushLoading, setNoPushLoading] = useState(false);
     const [msgForm, setMsgForm] = useState({ type: 'sms', content: DEFAULT_INSTALL_MSG, target: 'noapp' });
+    const [consentOnly, setConsentOnly] = useState(true); // 마케팅 수신 동의한 회원에게만 발송
     const [isSendingEncourage, setIsSendingEncourage] = useState(false);
     const [msgConfirmOpen, setMsgConfirmOpen] = useState(false);
     const [msgResult, setMsgResult] = useState(null);
@@ -2750,17 +2753,17 @@ const AdminPage = () => {
                         const { data } = await fetchPushHistory(10);
                         setPushHistory(data || []);
                     };
+                    // 선택한 대상(+ 마케팅 수신 동의 필터) — 화면 표시와 실제 발송이 같은 목록을 쓰도록 한 곳에서 계산
+                    const getEncourageTargets = () => {
+                        const list = msgForm.target === 'noapp' ? noAppUsers
+                            : msgForm.target === 'nopermission' ? noPermissionUsers
+                            : msgForm.target === 'nopush' ? noPushUsers
+                            : allPhoneUsers;
+                        return consentOnly ? list.filter(u => u.marketing_consent) : list;
+                    };
+                    const encourageTargetName = { noapp: '앱 미설치 회원', nopermission: '알림 미승인 회원', nopush: '푸시 미수신 전체', all: '전체 회원' }[msgForm.target];
                     const handleSendMsg = async () => {
-                        let targets = [];
-                        if (msgForm.target === 'noapp') {
-                            targets = noAppUsers;
-                        } else if (msgForm.target === 'nopermission') {
-                            targets = noPermissionUsers;
-                        } else if (msgForm.target === 'nopush') {
-                            targets = noPushUsers;
-                        } else {
-                            targets = allPhoneUsers;
-                        }
+                        const targets = getEncourageTargets();
                         const phones = targets.map(u => u.phone).filter(Boolean);
                         if (!phones.length) return;
                         setIsSendingEncourage(true);
@@ -2825,10 +2828,7 @@ const AdminPage = () => {
                                         <div>
                                             <h3 className="font-black text-[var(--moca-text)] text-lg">메시지 발송 확인</h3>
                                             <p className="text-xs text-[var(--moca-text-3)]">
-                                                {msgForm.target === 'noapp' ? `앱 미설치 회원 ${noAppUsers.length}명` :
-                                                 msgForm.target === 'nopermission' ? `알림 미승인 회원 ${noPermissionUsers.length}명` :
-                                                 msgForm.target === 'nopush' ? `푸시 미수신 전체 ${noPushUsers.length}명` :
-                                                 `전체 회원 ${allPhoneUsers.length}명`}에게 즉시 발송됩니다
+                                                {encourageTargetName} {getEncourageTargets().length}명{consentOnly ? ' (마케팅 수신 동의자만)' : ''}에게 즉시 발송됩니다
                                             </p>
                                         </div>
                                     </div>
@@ -3028,11 +3028,21 @@ const AdminPage = () => {
                                                 ))}
                                             </div>
                                         </div>
+                                        <label className="flex items-start gap-2 cursor-pointer rounded-xl border border-[var(--moca-border)] bg-[var(--moca-bg)] p-3">
+                                            <input type="checkbox" className="mt-0.5" checked={consentOnly} onChange={(e) => setConsentOnly(e.target.checked)} />
+                                            <span className="text-xs font-bold text-[var(--moca-text-2)]">
+                                                마케팅 수신 동의한 회원에게만 발송 (권장)
+                                                <span className="block font-normal text-[10px] text-[var(--moca-text-3)] mt-0.5">
+                                                    동의하지 않은 회원은 대상에서 제외됩니다. 위 대상 숫자는 전체 기준이고, 실제 발송 인원은 아래 버튼에 표시됩니다.
+                                                </span>
+                                            </span>
+                                        </label>
                                         <div>
                                             <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">⚡ 빠른 문구</p>
                                             <div className="flex flex-wrap gap-2 mb-4">
                                                 <button onClick={() => setMsgForm(f => ({ ...f, content: DEFAULT_TRIAL_MSG }))} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100 transition-colors">🎁 체험단 모집</button>
                                                 <button onClick={() => setMsgForm(f => ({ ...f, content: DEFAULT_LIVE_MSG }))} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-red-50 text-red-700 border-red-200 hover:bg-red-100 transition-colors">🔴 라이브 시작</button>
+                                                <button onClick={() => setMsgForm(f => ({ ...f, content: f.target === 'nopermission' ? DEFAULT_CASTING_PERMISSION_MSG : DEFAULT_CASTING_INSTALL_MSG }))} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100 transition-colors">📢 모카캐스팅 알림 받기</button>
                                             </div>
                                         </div>
                                         <div>
@@ -3045,18 +3055,10 @@ const AdminPage = () => {
                                             <p className="text-right text-[10px] text-[var(--moca-text-3)] mt-1">{msgForm.content.length}자</p>
                                         </div>
                                         <button onClick={() => { if (msgForm.content.trim()) setMsgConfirmOpen(true); }}
-                                            disabled={isSendingEncourage || !msgForm.content.trim() || (
-                                                msgForm.target === 'noapp' ? noAppUsers.length === 0 :
-                                                msgForm.target === 'nopermission' ? noPermissionUsers.length === 0 :
-                                                msgForm.target === 'nopush' ? noPushUsers.length === 0 :
-                                                allPhoneUsers.length === 0
-                                            )}
+                                            disabled={isSendingEncourage || !msgForm.content.trim() || getEncourageTargets().length === 0}
                                             className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                                             {isSendingEncourage ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</> : <><span className="material-symbols-outlined text-[18px]">send</span>{
-                                                msgForm.target === 'noapp' ? `앱 미설치 ${noAppUsers.length}명에게 발송` :
-                                                msgForm.target === 'nopermission' ? `알림 미승인 ${noPermissionUsers.length}명에게 발송` :
-                                                msgForm.target === 'nopush' ? `푸시 미수신 ${noPushUsers.length}명에게 발송` :
-                                                `전체 ${allPhoneUsers.length}명에게 발송`
+                                                `${encourageTargetName} ${getEncourageTargets().length}명에게 발송`
                                             }</>}
                                         </button>
                                         {msgResult && (
