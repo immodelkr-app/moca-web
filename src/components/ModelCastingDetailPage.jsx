@@ -85,18 +85,6 @@ const ModelCastingDetailPage = () => {
                 </div>
 
                 <div>
-                    <p className="text-[11px] text-[#9CA3AF] font-bold mb-1.5">상세 설명</p>
-                    <p className="whitespace-pre-wrap text-[#1F1235] text-sm leading-relaxed bg-[#FAF8FF] rounded-2xl p-4">{casting.description || '작성된 설명이 없습니다.'}</p>
-                </div>
-
-                {casting.attachment_url && (
-                    <a href={casting.attachment_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-[#7C3AED] font-bold text-sm underline">
-                        <span className="material-symbols-outlined text-[16px]">attach_file</span>
-                        첨부파일 보기
-                    </a>
-                )}
-
-                <div>
                     <h3 className="text-[13px] font-black text-[#1F1235] mb-3">모집 역할</h3>
                     <div className="space-y-3">
                         {(casting.model_casting_roles || []).map((r) => {
@@ -111,9 +99,9 @@ const ModelCastingDetailPage = () => {
                                                 {GENDER_LABEL[r.gender] || '성별무관'}
                                                 {r.age_text ? ` · ${r.age_text}` : (r.age_min || r.age_max) && ` · ${r.age_min || ''}~${r.age_max || ''}세`}
                                                 {` · ${r.headcount || 1}명`}
-                                                {r.pay && ` · ${r.pay}`}
                                                 {r.schedule && ` · ${r.schedule}`}
                                             </p>
+                                            {r.pay && <p className="text-[14px] font-black text-[#7C3AED] mt-1.5">{r.pay}</p>}
                                             {r.description && <p className="text-[12px] text-[#4B3F6B] mt-2 whitespace-pre-wrap">{r.description}</p>}
                                         </div>
                                     </div>
@@ -135,6 +123,18 @@ const ModelCastingDetailPage = () => {
                         })}
                     </div>
                 </div>
+
+                <div>
+                    <p className="text-[11px] text-[#9CA3AF] font-bold mb-1.5">상세 설명</p>
+                    <p className="whitespace-pre-wrap text-[#1F1235] text-sm leading-relaxed bg-[#FAF8FF] rounded-2xl p-4">{casting.description || '작성된 설명이 없습니다.'}</p>
+                </div>
+
+                {casting.attachment_url && (
+                    <a href={casting.attachment_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-[#7C3AED] font-bold text-sm underline">
+                        <span className="material-symbols-outlined text-[16px]">attach_file</span>
+                        첨부파일 보기
+                    </a>
+                )}
 
                 {isExternal && (
                     <>
