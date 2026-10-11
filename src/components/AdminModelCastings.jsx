@@ -275,6 +275,16 @@ const STATUS_LABEL = {
     cancelled: { label: '취소됨', className: 'bg-red-100 text-red-600' },
 };
 
+// 클릭률(%) = 원문 클릭 인원 ÷ 조회 인원. 조회가 없으면 null
+const getClickRate = (stats) => {
+    if (!stats || !stats.viewUsers) return null;
+    return Math.round((stats.clickUsers / stats.viewUsers) * 1000) / 10;
+};
+const formatClickRate = (stats) => {
+    const rate = getClickRate(stats);
+    return rate === null ? '-' : `${rate}%`;
+};
+
 const getApplicantCount = (casting) => casting.model_casting_applications?.[0]?.count ?? 0;
 
 const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
@@ -339,12 +349,13 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
                         <p className="whitespace-pre-wrap text-[var(--moca-text)] bg-[var(--moca-surface-2)] rounded-xl p-3 leading-relaxed">{casting.description || '작성된 설명이 없습니다.'}</p>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-2 text-center">
+                    <div className="grid grid-cols-5 gap-2 text-center">
                         {[
                             ['조회', stats?.views ?? 0],
                             ['조회 인원', stats?.viewUsers ?? 0],
                             ['원문 클릭', stats?.clicks ?? 0],
                             ['클릭 인원', stats?.clickUsers ?? 0],
+                            ['클릭률', formatClickRate(stats)],
                         ].map(([label, value]) => (
                             <div key={label} className="rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] py-2">
                                 <p className="text-[10px] text-[var(--moca-text-3)] font-bold">{label}</p>
@@ -469,6 +480,7 @@ const AdminModelCastings = () => {
                                 <th className="py-2 pr-3">지원자</th>
                                 <th className="py-2 pr-3">조회</th>
                                 <th className="py-2 pr-3">원문 클릭</th>
+                                <th className="py-2 pr-3">클릭률</th>
                                 <th className="py-2 pr-3">마감일</th>
                                 <th className="py-2 pr-3">등록일</th>
                             </tr>
@@ -493,6 +505,7 @@ const AdminModelCastings = () => {
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{c.source_type === 'external' ? <span className="text-[var(--moca-text-3)]">-</span> : `${getApplicantCount(c)}명`}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{stats[c.id]?.views ?? 0}</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)]">{c.source_type === 'external' ? `${stats[c.id]?.clicks ?? 0}` : <span className="text-[var(--moca-text-3)]">-</span>}</td>
+                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{c.source_type === 'external' ? formatClickRate(stats[c.id]) : <span className="text-[var(--moca-text-3)]">-</span>}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{c.deadline}</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(c.created_at).toLocaleDateString('ko-KR')}</td>
                                     </tr>
