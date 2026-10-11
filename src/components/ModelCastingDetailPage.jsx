@@ -60,7 +60,7 @@ const ModelCastingDetailPage = () => {
                     <div className="flex items-center gap-1.5 mb-2">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
                         <span className="px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] text-[10px] font-bold">{casting.category}</span>
-                        {isExternal && <span className="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고{casting.source_name ? ` · ${casting.source_name}` : ''}</span>}
+                        {isExternal && <span className="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고</span>}
                     </div>
                     <h2 className="text-xl font-black text-[#1F1235] leading-snug">{casting.title}</h2>
                     <p className="text-[12px] text-[#9CA3AF] font-bold mt-1.5">{casting.companies?.company_name || casting.producer_name || '업체'}</p>
@@ -142,10 +142,10 @@ const ModelCastingDetailPage = () => {
                             className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-[#9333EA] text-white font-black text-sm active:scale-[0.98] transition-all"
                         >
                             <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-                            원문 공고 바로가기{casting.source_name ? ` (${casting.source_name})` : ''}
+                            원문 공고 바로가기
                         </a>
                         <p className="text-[11px] text-[#9CA3AF] font-bold text-center -mt-3">
-                            이 공고는 {casting.source_name || '외부 사이트'}의 공고를 모카가 요약한 것입니다. 지원은 위 안내에 따라 제작사에 직접 해주세요.
+                            이 공고는 외부 공고를 모카가 요약한 것입니다. 지원은 위 안내에 따라 제작사에 직접 해주세요.
                         </p>
 
                         <a
