@@ -41,6 +41,40 @@ export const getMonthlyPostingCount = async (companyId) => {
     return count || 0;
 };
 
+/**
+ * 마감 디데이 정보 — 모집중이고 마감일이 있을 때만 반환 (마감/마감일 없음은 null)
+ * @returns {{ days: number, label: string, tone: 'urgent'|'normal' } | null}
+ */
+export const getDdayInfo = (casting) => {
+    if (!casting.deadline || getCastingStatus(casting) !== 'open') return null;
+    const days = Math.round((Date.parse(casting.deadline) - Date.parse(todayKst())) / 86400000);
+    if (days < 0) return null;
+    return { days, label: days === 0 ? 'D-DAY' : `D-${days}`, tone: days <= 3 ? 'urgent' : 'normal' };
+};
+
+/** 'YYYY-MM-DD' → '10/31(토)까지' (마감일이 없으면 빈 문자열) */
+export const formatDeadlineKo = (deadline) => {
+    if (!deadline) return '';
+    const d = new Date(`${deadline}T00:00:00Z`);
+    const dow = ['일', '월', '화', '수', '목', '금', '토'][d.getUTCDay()];
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}(${dow})까지`;
+};
+
+/**
+ * 사용자 목록 정렬 — 마감 임박순
+ * 1) 모집중 + 마감일 있음 (마감 빠른 순) → 2) 모집중 + 마감일 없음 (최신 등록순) → 3) 마감 (최신 등록순)
+ */
+export const sortCastingsByDeadline = (castings) => {
+    const rank = (c) => (getCastingStatus(c) !== 'open' ? 2 : c.deadline ? 0 : 1);
+    return [...castings].sort((a, b) => {
+        const ra = rank(a);
+        const rb = rank(b);
+        if (ra !== rb) return ra - rb;
+        if (ra === 0 && a.deadline !== b.deadline) return a.deadline < b.deadline ? -1 : 1;
+        return new Date(b.created_at) - new Date(a.created_at);
+    });
+};
+
 // ── 게시글 등록 ────────────────────────────────────────────
 
 /**
@@ -228,7 +262,7 @@ export const updateExternalCasting = async (castingId, {
             description: description || null,
             apply_guide: applyGuide || null,
             contract_type: contractType || null,
-            deadline,
+            deadline: deadline || null,
             status: status || 'open',
             updated_at: new Date().toISOString(),
         })
@@ -326,7 +360,7 @@ export const createExternalCasting = async ({
             description: description || null,
             apply_guide: applyGuide || null,
             contract_type: contractType || null,
-            deadline,
+            deadline: deadline || null,
             status: 'open',
         }])
         .select()

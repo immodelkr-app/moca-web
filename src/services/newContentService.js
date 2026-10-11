@@ -11,7 +11,7 @@ const SEEN_KEY_PREFIX = 'new_content_seen_';
 // 섹션별 최신 콘텐츠 조회 (모카그램은 본인 글 제외)
 const SOURCES = {
     class: (since) => supabase.from('classes').select('created_at').gt('created_at', since),
-    casting: (since) => supabase.from('model_castings').select('created_at').eq('status', 'open').gte('deadline', todayKst()).gt('created_at', since),
+    casting: (since) => supabase.from('model_castings').select('created_at').eq('status', 'open').or(`deadline.gte.${todayKst()},deadline.is.null`).gt('created_at', since),
     cert: (since, nickname) => {
         let q = supabase.from('certification_posts').select('created_at').gt('created_at', since);
         if (nickname) q = q.neq('user_nickname', nickname);

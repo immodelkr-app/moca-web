@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchCastings, fetchCastingViewCounts, getCastingStatus } from '../services/modelCastingService';
+import CastingDdayBadge from './CastingDdayBadge';
+import { fetchCastings, fetchCastingViewCounts, getCastingStatus, sortCastingsByDeadline } from '../services/modelCastingService';
 
 const STATUS_LABEL = {
     open: { label: '모집중', className: 'bg-[#EDE9FE] text-[#7C3AED]' },
@@ -17,7 +18,7 @@ const ModelCastingBoard = () => {
     useEffect(() => {
         fetchCastingViewCounts().then(setViewCounts);
         fetchCastings({}).then(({ data }) => {
-            setCastings(data);
+            setCastings(sortCastingsByDeadline(data));
             setLoading(false);
         });
     }, []);
@@ -53,12 +54,13 @@ const ModelCastingBoard = () => {
                                 >
                                     <div className="flex items-center gap-1.5 mb-1.5">
                                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
+                                        <CastingDdayBadge casting={c} />
                                         <span className="px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] text-[10px] font-bold">{c.category}</span>
                                         {c.source_type === 'external' && <span className="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고</span>}
                                     </div>
                                     <h3 className="font-black text-[#1F1235] text-[15px] leading-snug">{c.title}</h3>
                                     <p className="text-[11px] text-[#9CA3AF] font-bold mt-1.5">
-                                        {c.companies?.company_name || c.producer_name || '업체'} · 모집 {totalHeadcount}명 · 마감 {c.deadline} · 조회 {viewCounts[c.id] ?? 0}명
+                                        {c.companies?.company_name || c.producer_name || '업체'} · 모집 {totalHeadcount}명 · 조회 {viewCounts[c.id] ?? 0}명
                                     </p>
                                 </button>
                             );

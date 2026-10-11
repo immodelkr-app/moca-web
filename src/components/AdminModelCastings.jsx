@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, fetchCastingClicks } from '../services/modelCastingService';
+import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, fetchCastingClicks, getDdayInfo } from '../services/modelCastingService';
 
 const CATEGORIES = [
     'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
@@ -49,7 +49,7 @@ const CastingFormFields = ({ form, setForm }) => {
                     {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
             </div>
-            <div><label className={labelCls}>마감일</label><input type="date" className={inputCls} value={form.deadline} onChange={(e) => setField('deadline', e.target.value)} /></div>
+            <div><label className={labelCls}>마감일 (비우면 앱에 표기 안 함)</label><input type="date" className={inputCls} value={form.deadline} onChange={(e) => setField('deadline', e.target.value)} /></div>
             <div><label className={labelCls}>프로젝트명</label><input className={inputCls} value={form.projectName} onChange={(e) => setField('projectName', e.target.value)} /></div>
             <div><label className={labelCls}>제작사</label><input className={inputCls} value={form.producerName} onChange={(e) => setField('producerName', e.target.value)} /></div>
             <div><label className={labelCls}>촬영기간</label><input className={inputCls} value={form.shootPeriod} onChange={(e) => setField('shootPeriod', e.target.value)} /></div>
@@ -119,8 +119,8 @@ const CastingEditModal = ({ casting, onClose, onSaved }) => {
     const [error, setError] = useState('');
 
     const handleSave = async () => {
-        if (!form.title.trim() || !form.deadline) {
-            setError('제목과 마감일은 필수입니다.');
+        if (!form.title.trim()) {
+            setError('제목은 필수입니다.');
             return;
         }
         setSaving(true);
@@ -194,11 +194,11 @@ const ExternalImportPanel = ({ onCreated }) => {
     };
 
     const handleSave = async () => {
-        if (!form.title.trim() || !form.deadline) {
-            setError('제목과 마감일은 필수입니다.');
+        if (!form.title.trim()) {
+            setError('제목은 필수입니다.');
             return;
         }
-        if (form.deadline < todayKst()) {
+        if (form.deadline && form.deadline < todayKst()) {
             setError('마감일이 이미 지났습니다. 마감일을 확인해 주세요.');
             return;
         }
@@ -340,7 +340,7 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
                         <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">계약형태</p><p className="font-bold text-[var(--moca-text)]">{casting.contract_type || '-'}</p></div>
                         <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">촬영기간</p><p className="font-bold text-[var(--moca-text)]">{casting.shoot_period || '-'}</p></div>
                         <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">촬영장소</p><p className="font-bold text-[var(--moca-text)]">{casting.shoot_location || '-'}</p></div>
-                        <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">마감일</p><p className="font-bold text-[var(--moca-text)]">{casting.deadline || '-'}</p></div>
+                        <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">마감일</p><p className="font-bold text-[var(--moca-text)]">{casting.deadline || '없음'}{getDdayInfo(casting) ? ` (${getDdayInfo(casting).label})` : ''}</p></div>
                         <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">등록일</p><p className="font-bold text-[var(--moca-text)]">{new Date(casting.created_at).toLocaleDateString('ko-KR')}</p></div>
                     </div>
 
@@ -506,7 +506,7 @@ const AdminModelCastings = () => {
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{stats[c.id]?.views ?? 0}</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)]">{c.source_type === 'external' ? `${stats[c.id]?.clicks ?? 0}` : <span className="text-[var(--moca-text-3)]">-</span>}</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{c.source_type === 'external' ? formatClickRate(stats[c.id]) : <span className="text-[var(--moca-text-3)]">-</span>}</td>
-                                        <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{c.deadline}</td>
+                                        <td className="py-2.5 pr-3 text-[var(--moca-text-3)] whitespace-nowrap">{c.deadline || '-'}{getDdayInfo(c) && <span className="ml-1 font-black text-[var(--moca-primary)]">{getDdayInfo(c).label}</span>}</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(c.created_at).toLocaleDateString('ko-KR')}</td>
                                     </tr>
                                 );

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchCastingDetail, fetchMyApplications, getCastingStatus, trackCastingEvent, fetchCastingViewCounts } from '../services/modelCastingService';
+import { fetchCastingDetail, fetchMyApplications, getCastingStatus, trackCastingEvent, fetchCastingViewCounts, formatDeadlineKo } from '../services/modelCastingService';
 import { getUser } from '../services/userService';
+import CastingDdayBadge from './CastingDdayBadge';
 import ModelCastingApplyModal from './ModelCastingApplyModal';
 
 const STATUS_LABEL = {
@@ -67,6 +68,7 @@ const ModelCastingDetailPage = () => {
                 <div>
                     <div className="flex items-center gap-1.5 mb-2">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
+                        <CastingDdayBadge casting={casting} />
                         <span className="px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] text-[10px] font-bold">{casting.category}</span>
                         {isExternal && <span className="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고</span>}
                     </div>
@@ -79,7 +81,7 @@ const ModelCastingDetailPage = () => {
                     <div><p className="text-[11px] text-[#9CA3AF] font-bold">계약형태</p><p className="font-bold text-[#1F1235]">{casting.contract_type || '-'}</p></div>
                     <div><p className="text-[11px] text-[#9CA3AF] font-bold">촬영기간</p><p className="font-bold text-[#1F1235]">{casting.shoot_period || '-'}</p></div>
                     <div><p className="text-[11px] text-[#9CA3AF] font-bold">촬영장소</p><p className="font-bold text-[#1F1235]">{casting.shoot_location || '-'}</p></div>
-                    <div><p className="text-[11px] text-[#9CA3AF] font-bold">마감일</p><p className="font-bold text-[#1F1235]">{casting.deadline}</p></div>
+                    {casting.deadline && <div><p className="text-[11px] text-[#9CA3AF] font-bold">마감일</p><p className="font-bold text-[#1F1235]">{formatDeadlineKo(casting.deadline)}</p></div>}
                 </div>
 
                 <div>
