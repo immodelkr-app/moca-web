@@ -65,8 +65,8 @@ const buildPrompt = (pageText, url) => `아래는 모델/배우 구인 공고의
 - category는 다음 중 하나: ${CATEGORIES.join(', ')}
 - deadline은 YYYY-MM-DD. 연도가 없으면 오늘 이후 가장 가까운 날짜로 추정. 마감일이 없거나 알 수 없으면 null.
 - roles 각 항목: roleName, gender("male"|"female"|"any"), ageMin, ageMax(정수, "30대 중반"→35, "40대 후반"→48처럼 대표값. 모르면 null), headcount(정수), pay(예: "건당 20만원"), schedule, description(역할 조건 요약, 없으면 null)
-- description은 프로젝트 개요와 지원 조건을 읽기 쉽게 요약한 상세 설명 (줄바꿈 가능, 800자 이내). 연락처/이메일/전화번호는 넣지 마세요.
-- applyGuide는 지원 방법 안내 문구 (이메일 주소·제목 형식·첨부서류가 원문에 있으면 포함, 제목 말머리는 원문 그대로 유지). 없으면 null.
+- description은 프로젝트 개요와 지원 조건을 읽기 쉽게 요약한 상세 설명 (줄바꿈 가능, 800자 이내). 연락처/이메일/전화번호는 description에 넣지 마세요 (지원 연락처는 applyGuide에만 넣습니다).
+- applyGuide는 지원 방법 안내 문구입니다. 원문에 지원서를 받는 이메일 주소·전화번호·카카오톡 ID·지원 링크 등 지원 연락처가 있으면 반드시 원문 그대로(한 글자도 바꾸거나 가리지 말고) 포함하세요. 지원자는 이 문구만 보고 지원하므로 연락처를 빼면 안 됩니다. 이메일 제목 형식(말머리는 원문 그대로)·제출 서류·제출물도 함께 쓰세요. 지원 방법이 원문에 없으면 null.
 - producerName은 제작사/구인자명. contractType은 계약서 작성 여부 요약(없으면 null).
 - 확실하지 않은 값은 지어내지 말고 null.
 
