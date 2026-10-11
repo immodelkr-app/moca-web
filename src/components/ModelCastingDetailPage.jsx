@@ -158,19 +158,10 @@ const ModelCastingDetailPage = () => {
                             </a>
                         )}
 
-                        <p className="text-[11px] text-[#9CA3AF] font-bold text-center -mt-3">
+                        <p className={`text-[11px] text-[#9CA3AF] font-bold text-center ${casting.source_url ? '-mt-3' : ''}`}>
                             이 공고는 외부 공고를 모카가 요약한 것입니다. 지원은 위 안내에 따라 제작사에 직접 해주세요.
                         </p>
 
-                        <a
-                            href="/"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block rounded-2xl border border-[#E8E0FA] bg-[#FAF8FF] p-4 text-center"
-                        >
-                            <p className="text-[13px] font-black text-[#1F1235]">모델 구인 공고, 모카에서도 올려보세요</p>
-                            <p className="text-[11px] text-[#7C3AED] font-bold mt-1">업체 가입하고 모카 모델들에게 바로 공고 노출하기 →</p>
-                        </a>
                     </>
                 )}
             </div>
