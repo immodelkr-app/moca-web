@@ -583,40 +583,6 @@ export const getCastingShareText = (casting) => {
     return `📢 [모카캐스팅] ${casting.title}${dday ? ` (${dday.label})` : ''}`;
 };
 
-/**
- * 공고 공유 — 앱이면 네이티브 공유창, 웹이면 Web Share API, 둘 다 안 되면 링크를 클립보드에 복사
- * @returns {Promise<'shared'|'copied'|'cancelled'|'failed'>}
- */
-export const shareCasting = async (casting) => {
-    const url = getCastingShareUrl(casting.id);
-    const text = getCastingShareText(casting);
-    try {
-        const { Capacitor } = await import('@capacitor/core');
-        if (Capacitor.isNativePlatform()) {
-            const { Share } = await import('@capacitor/share');
-            await Share.share({ title: '모카캐스팅', text, url, dialogTitle: '공고 공유하기' });
-            return 'shared';
-        }
-    } catch (err) {
-        // 공유창을 사용자가 닫은 경우는 실패가 아님. 플러그인 미탑재 등 그 외 오류는 아래 대체 방식으로 진행
-        if (/cancel/i.test(String(err?.message || err))) return 'cancelled';
-    }
-    try {
-        if (navigator.share) {
-            await navigator.share({ title: '모카캐스팅', text, url });
-            return 'shared';
-        }
-    } catch (err) {
-        if (err?.name === 'AbortError') return 'cancelled';
-    }
-    try {
-        await navigator.clipboard.writeText(`${text}\n${url}`);
-        return 'copied';
-    } catch {
-        return 'failed';
-    }
-};
-
 // ── 지원(바로지원) ────────────────────────────────────────
 
 /**
