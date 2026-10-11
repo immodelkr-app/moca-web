@@ -66,23 +66,14 @@ const ModelCastingDetailPage = () => {
 
     return (
         <div className="min-h-screen bg-white pb-40">
-            <div className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center gap-3 bg-white/90 backdrop-blur-md border-b border-[#F3F0FA]">
+            <div className="px-6 py-4 flex items-center gap-3 bg-white border-b border-[#F3F0FA]">
                 <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-[#F3E8FF] text-[#7C3AED] flex items-center justify-center active:scale-95 transition-all">
                     <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                 </button>
-                <h1 className="text-lg font-black text-[#1F1235] truncate flex-1 min-w-0">모카캐스팅 상세</h1>
-                <button
-                    onClick={handleShare}
-                    aria-label="공고 공유하기"
-                    className={`w-9 h-9 rounded-full flex items-center justify-center active:scale-95 transition-all ${
-                        shareState === 'copied' ? 'bg-green-500 text-white' : shareState === 'failed' ? 'bg-red-100 text-red-500' : 'bg-[#F3E8FF] text-[#7C3AED]'
-                    }`}
-                >
-                    <span className="material-symbols-outlined text-[20px]">{shareState === 'copied' ? 'check' : 'ios_share'}</span>
-                </button>
+                <h1 className="text-lg font-black text-[#1F1235] truncate">모카캐스팅 상세</h1>
             </div>
 
-            <div className="pt-20 px-5 max-w-2xl mx-auto space-y-6">
+            <div className="pt-5 px-5 max-w-2xl mx-auto space-y-6">
                 <div>
                     <div className="flex items-center gap-1.5 mb-2">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
@@ -185,8 +176,19 @@ const ModelCastingDetailPage = () => {
                 )}
             </div>
 
+            <button
+                onClick={handleShare}
+                aria-label="공고 공유하기"
+                className={`fixed right-5 z-[90] w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all ${
+                    shareState === 'copied' ? 'bg-green-500 text-white' : shareState === 'failed' ? 'bg-red-500 text-white' : 'bg-[#9333EA] text-white'
+                }`}
+                style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}
+            >
+                <span className="material-symbols-outlined text-[22px]">{shareState === 'copied' ? 'check' : 'ios_share'}</span>
+            </button>
+
             {shareState && (
-                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-full bg-[#1F1235]/90 text-white text-[12px] font-bold shadow-lg">
+                <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[95] px-4 py-2.5 rounded-full bg-[#1F1235]/90 text-white text-[12px] font-bold shadow-lg">
                     {shareState === 'copied' ? '링크가 복사됐어요. 붙여넣어 공유하세요!' : '공유에 실패했어요. 다시 시도해 주세요.'}
                 </div>
             )}
