@@ -219,7 +219,7 @@ const HomeDashboard = () => {
                             모카캐스팅
                         </h3>
                         <p className="text-[11px] font-bold text-[#6D28D9]/80 leading-tight">
-                            모델 구인 공고<br />확인하고 지원
+                            모델캐스팅<br />공고
                         </p>
                     </button>
 
