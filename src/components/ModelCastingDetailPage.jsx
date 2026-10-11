@@ -95,7 +95,7 @@ const ModelCastingDetailPage = () => {
                                     <div className="flex items-start justify-between gap-2">
                                         <div>
                                             <p className="font-black text-[#1F1235] text-sm">{r.role_name || '역할 미지정'}</p>
-                                            <p className="text-[11px] text-[#9CA3AF] font-bold mt-1">
+                                            <p className="text-[11px] text-[#7C3AED] font-bold mt-1">
                                                 {GENDER_LABEL[r.gender] || '성별무관'}
                                                 {r.age_text ? ` · ${r.age_text}` : (r.age_min || r.age_max) && ` · ${r.age_min || ''}~${r.age_max || ''}세`}
                                                 {` · ${r.headcount || 1}명`}
