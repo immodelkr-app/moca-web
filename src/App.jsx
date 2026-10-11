@@ -152,7 +152,7 @@ function AppContent() {
                 <Route path="/open-app" element={<OpenAppRedirect />} />
                 <Route path="/class" element={<ClassSharePage />} />
                 {/* 보호된 라우트 (로그인 필요) */}
-                {/* 업체(모델캐스팅) 전용 라우트 */}
+                {/* 업체(모카캐스팅) 전용 라우트 */}
                 <Route element={<CompanyProtectedRoute />}>
                     <Route path="/company" element={<CompanyLayout />}>
                         <Route index element={<Navigate to="/company/castings" replace />} />

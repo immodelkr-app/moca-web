@@ -1157,7 +1157,7 @@ const AdminPage = () => {
                         onClick={() => setActiveTab('model-castings')}
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'model-castings' ? 'border-violet-500 text-violet-700 bg-violet-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'}`}
                     >
-                        📋 모델캐스팅 모니터링
+                        📋 모카캐스팅 모니터링
                     </button>
                     <button
                         onClick={() => setActiveTab('attendance-coupons')}

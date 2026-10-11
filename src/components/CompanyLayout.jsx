@@ -40,7 +40,7 @@ const CompanyLayout = () => {
 
             <nav className="bg-white border-b border-[#E8E0FA] px-5 flex items-center gap-1">
                 {[
-                    { to: '/company/castings', label: '내 모델캐스팅' },
+                    { to: '/company/castings', label: '내 모카캐스팅' },
                 ].map(({ to, label }) => (
                     <NavLink
                         key={to}

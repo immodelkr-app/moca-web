@@ -344,7 +344,7 @@ const AgencyLanding = () => {
                 if (companyErr) throw companyErr;
 
                 setShowSignup(false);
-                alert('업체 가입이 완료되었습니다.\n사업자 인증 완료 후 모델캐스팅 등록이 가능합니다. (영업일 기준 1~2일 소요)');
+                alert('업체 가입이 완료되었습니다.\n사업자 인증 완료 후 모카캐스팅 등록이 가능합니다. (영업일 기준 1~2일 소요)');
                 setShowLogin(true);
                 return;
             }

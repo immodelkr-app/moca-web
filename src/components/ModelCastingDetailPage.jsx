@@ -52,7 +52,7 @@ const ModelCastingDetailPage = () => {
                 <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-[#F3E8FF] text-[#7C3AED] flex items-center justify-center active:scale-95 transition-all">
                     <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                 </button>
-                <h1 className="text-lg font-black text-[#1F1235] truncate">모델캐스팅 상세</h1>
+                <h1 className="text-lg font-black text-[#1F1235] truncate">모카캐스팅 상세</h1>
             </div>
 
             <div className="pt-20 px-5 max-w-2xl mx-auto space-y-6">

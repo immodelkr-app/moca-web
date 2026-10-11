@@ -90,7 +90,7 @@ export const createCasting = async ({
 
     if (castingError) return { data: null, error: castingError };
 
-    notifyAdmin(`[모카] 업체 모델캐스팅(구인) 등록: ${title}`);
+    notifyAdmin(`[모카] 업체 모카캐스팅(구인) 등록: ${title}`);
 
     if (roles.length > 0) {
         const roleRows = roles.map((r) => ({

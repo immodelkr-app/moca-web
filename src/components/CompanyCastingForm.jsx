@@ -183,7 +183,7 @@ const CompanyCastingForm = () => {
 
     return (
         <div className="space-y-6 pb-10">
-            <h1 className="text-xl font-black text-[#1F1235]">{isEditMode ? '모델캐스팅 수정' : '새 모델캐스팅 등록'}</h1>
+            <h1 className="text-xl font-black text-[#1F1235]">{isEditMode ? '모카캐스팅 수정' : '새 모카캐스팅 등록'}</h1>
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-1.5">

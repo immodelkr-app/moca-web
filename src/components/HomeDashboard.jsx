@@ -20,7 +20,7 @@ const TOUR_ITEMS = [
 ];
 
 const COMMUNITY_ITEMS = [
-    { icon: 'campaign', label: '모델캐스팅', route: '__casting_notice__', color: 'text-[#7C3AED]', bgLight: 'bg-[#EDE9FE]' },
+    { icon: 'campaign', label: '모카캐스팅', route: '/home/castings', color: 'text-[#7C3AED]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'photo_camera', label: '모카그램', route: '/home/cert', newKey: 'cert', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'smart_display', label: '모카TV', route: '/home/tv', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'workspace_premium', label: '등급 신청하기', route: '/upgrade', color: 'text-[#D97706]', bgLight: 'bg-[#FEF3C7]' },
@@ -39,7 +39,6 @@ const HomeDashboard = () => {
     ]);
     const [noticeIdx, setNoticeIdx] = useState(0);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const [showCastingNotice, setShowCastingNotice] = useState(false);
 
     // 새 콘텐츠 N 뱃지 (최근 3일 내 + 아직 확인 안 한 경우만)
     const [newFlags, setNewFlags] = useState({ class: false, cert: false });
@@ -338,7 +337,6 @@ const HomeDashboard = () => {
                                 key={item.label}
                                 onClick={() => {
                                     if (showMissionHint) return; // 조건 미달성이면 페이지 이동 없이 남은 미션 수만 안내
-                                    if (item.route === '__casting_notice__') setShowCastingNotice(true);
                                     else if (item.newKey) openWithSeen(item.newKey, item.route);
                                     else navigate(item.route);
                                 }}
@@ -383,30 +381,6 @@ const HomeDashboard = () => {
                         window.location.reload();
                     }}
                 />
-            )}
-
-            {/* 모델캐스팅 오픈 예정 안내 */}
-            {showCastingNotice && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6" onClick={() => setShowCastingNotice(false)}>
-                    <div
-                        className="w-full max-w-sm bg-white rounded-3xl p-6 text-center shadow-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-[#F3E8FF] flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[#8B5CF6] text-[28px]">campaign</span>
-                        </div>
-                        <h3 className="text-lg font-black text-[#1F1235] mb-2">모델캐스팅 오픈 예정</h3>
-                        <p className="text-sm font-medium text-[#6B7280] leading-relaxed mb-6">
-                            업체가 직접 올리는 모델 구인 공고 서비스는<br />현재 준비 중이에요. 곧 만나보실 수 있어요!
-                        </p>
-                        <button
-                            onClick={() => setShowCastingNotice(false)}
-                            className="w-full py-3.5 rounded-2xl bg-[#8B5CF6] text-white font-bold active:scale-95 transition-all"
-                        >
-                            확인
-                        </button>
-                    </div>
-                </div>
             )}
 
         </div>

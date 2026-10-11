@@ -179,7 +179,7 @@ const ExternalImportPanel = ({ onCreated }) => {
 
                     <div className="flex gap-2 justify-end">
                         <button onClick={handleReset} className="px-4 py-2 rounded-lg border border-[var(--moca-border)] text-xs font-black text-[var(--moca-text-3)]">취소</button>
-                        <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40">{saving ? '등록 중...' : '모델캐스팅에 등록'}</button>
+                        <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40">{saving ? '등록 중...' : '모카캐스팅에 등록'}</button>
                     </div>
                 </div>
             )}
@@ -283,7 +283,7 @@ const AdminModelCastings = () => {
         <div className="animate-fadeIn">
             <ExternalImportPanel onCreated={load} />
             <div className="flex items-center justify-between mb-5">
-                <p className="text-sm font-black text-[var(--moca-text)]">전체 모델캐스팅 게시글 <span className="text-[var(--moca-primary)]">{castings.length}</span>건</p>
+                <p className="text-sm font-black text-[var(--moca-text)]">전체 모카캐스팅 게시글 <span className="text-[var(--moca-primary)]">{castings.length}</span>건</p>
                 <button onClick={load} className="text-xs font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">새로고침</button>
             </div>
 

@@ -102,7 +102,7 @@ const CompanyCastingList = () => {
 
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-black text-[#1F1235]">{company?.company_name || '내 모델캐스팅'}</h1>
+                    <h1 className="text-xl font-black text-[#1F1235]">{company?.company_name || '내 모카캐스팅'}</h1>
                     <p className="text-[11px] text-[#9CA3AF] font-bold mt-0.5">
                         이번 달 등록 {monthlyCount}/{MONTHLY_POSTING_LIMIT}
                         {isVerified && (
