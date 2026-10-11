@@ -99,9 +99,9 @@ const ModelCastingDetailPage = () => {
                                                 {GENDER_LABEL[r.gender] || '성별무관'}
                                                 {r.age_text ? ` · ${r.age_text}` : (r.age_min || r.age_max) && ` · ${r.age_min || ''}~${r.age_max || ''}세`}
                                                 {` · ${r.headcount || 1}명`}
+                                                {r.pay && ` · ${r.pay}`}
                                                 {r.schedule && ` · ${r.schedule}`}
                                             </p>
-                                            {r.pay && <p className="text-[14px] font-black text-[#7C3AED] mt-1.5">{r.pay}</p>}
                                             {r.description && <p className="text-[12px] text-[#4B3F6B] mt-2 whitespace-pre-wrap">{r.description}</p>}
                                         </div>
                                     </div>
