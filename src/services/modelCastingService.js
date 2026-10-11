@@ -560,6 +560,18 @@ export const fetchCastingEventStats = async () => {
     }]));
 };
 
+/**
+ * 수동 푸시 알림을 보낸 시각 기록 (어드민 목록의 중복 발송 방지 표시용)
+ * @param {string} castingId
+ * @returns {Promise<string|null>} 기록된 시각(ISO), 실패 시 null
+ */
+export const markCastingPushed = async (castingId) => {
+    if (!supabase) return null;
+    const at = new Date().toISOString();
+    const { error } = await supabase.from('model_castings').update({ last_push_at: at }).eq('id', castingId);
+    return error ? null : at;
+};
+
 // ── 지원(바로지원) ────────────────────────────────────────
 
 /**

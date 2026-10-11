@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, findCastingsByTitle, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, getDdayInfo } from '../services/modelCastingService';
+import { sendBroadcastPush } from '../services/pushNotificationService';
+import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, findCastingsByTitle, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, getDdayInfo, markCastingPushed } from '../services/modelCastingService';
 
 const CATEGORIES = [
     'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
@@ -439,6 +440,8 @@ const AdminModelCastings = () => {
     const [loading, setLoading] = useState(true);
     const [selectedCasting, setSelectedCasting] = useState(null);
     const [stats, setStats] = useState({});
+    const [pushingId, setPushingId] = useState(null);
+    const [pushStatus, setPushStatus] = useState({}); // { [castingId]: '발송 완료 · 성공 N건 / 실패 M건' | '발송 실패: ...' }
 
     const load = async () => {
         setLoading(true);
@@ -449,6 +452,28 @@ const AdminModelCastings = () => {
     };
 
     useEffect(() => { load(); }, []);
+
+    // 공고 알림 수동 발송 (전체 회원 푸시 — 되돌릴 수 없으므로 내용 확인 후 발송)
+    const handleSendPush = async (c) => {
+        const dday = getDdayInfo(c);
+        const title = '📢 새 모카캐스팅 공고';
+        const body = `${c.title}${dday ? ` · ${dday.label}` : ''}`.slice(0, 80);
+        const already = c.last_push_at
+            ? `\n\n※ 이미 ${new Date(c.last_push_at).toLocaleString('ko-KR')}에 발송한 공고입니다.`
+            : '';
+        if (!window.confirm(`전체 회원에게 푸시 알림을 발송할까요?\n\n제목: ${title}\n내용: ${body}${already}`)) return;
+
+        setPushingId(c.id);
+        const result = await sendBroadcastPush({ title, body, route: `/home/castings/${c.id}` });
+        setPushingId(null);
+        if (!result.success) {
+            setPushStatus((prev) => ({ ...prev, [c.id]: `발송 실패: ${result.error}` }));
+            return;
+        }
+        const at = await markCastingPushed(c.id);
+        if (at) setCastings((prev) => prev.map((x) => (x.id === c.id ? { ...x, last_push_at: at } : x)));
+        setPushStatus((prev) => ({ ...prev, [c.id]: `발송 완료 · 성공 ${result.successCount}건 / 실패 ${result.failCount}건` }));
+    };
 
     return (
         <div className="animate-fadeIn">
@@ -478,6 +503,7 @@ const AdminModelCastings = () => {
                                 <th className="py-2 pr-3">클릭률</th>
                                 <th className="py-2 pr-3">마감일</th>
                                 <th className="py-2 pr-3">등록일</th>
+                                <th className="py-2 pr-3">알림</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -503,6 +529,27 @@ const AdminModelCastings = () => {
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{hasOutlet(c) ? formatClickRate(stats[c.id]) : <span className="text-[var(--moca-text-3)]">-</span>}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)] whitespace-nowrap">{c.deadline || '-'}{getDdayInfo(c) && <span className="ml-1 font-black text-[var(--moca-primary)]">{getDdayInfo(c).label}</span>}{getNoDeadlineAge(c) && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getNoDeadlineAge(c).stale ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>{getNoDeadlineAge(c).stale ? `정리 필요 · ${getNoDeadlineAge(c).days}일째` : `등록 ${getNoDeadlineAge(c).days}일째`}</span>}</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(c.created_at).toLocaleDateString('ko-KR')}</td>
+                                        <td className="py-2.5 pr-3" onClick={(e) => e.stopPropagation()}>
+                                            {getCastingStatus(c) === 'open' ? (
+                                                <div className="whitespace-nowrap">
+                                                    <button
+                                                        onClick={() => handleSendPush(c)}
+                                                        disabled={pushingId === c.id}
+                                                        className="px-2.5 py-1 rounded-lg border border-[var(--moca-primary)] text-[var(--moca-primary)] text-[11px] font-black hover:bg-[var(--moca-primary)] hover:text-white transition-colors disabled:opacity-40"
+                                                    >
+                                                        {pushingId === c.id ? '발송 중...' : '알림 발송'}
+                                                    </button>
+                                                    {c.last_push_at && !pushStatus[c.id] && (
+                                                        <p className="text-[10px] font-bold text-[var(--moca-text-3)] mt-0.5">
+                                                            마지막 {new Date(c.last_push_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    )}
+                                                    {pushStatus[c.id] && (
+                                                        <p className={`text-[10px] font-bold mt-0.5 ${pushStatus[c.id].startsWith('발송 실패') ? 'text-red-500' : 'text-emerald-600'}`}>{pushStatus[c.id]}</p>
+                                                    )}
+                                                </div>
+                                            ) : <span className="text-[var(--moca-text-3)]">-</span>}
+                                        </td>
                                     </tr>
                                 );
                             })}
