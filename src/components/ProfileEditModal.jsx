@@ -28,7 +28,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
     const [pointsLoading, setPointsLoading] = useState(false);
     const [pointsError, setPointsError] = useState(false);
 
-    // 참석 프리패스 (출석체크 + 모카그램 30일 리워드)
+    // 참석 프리패스 (출석체크 30일 리워드)
     const [coupons, setCoupons] = useState([]);
     const [couponsLoading, setCouponsLoading] = useState(false);
 
@@ -508,7 +508,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                             )}
                         </div>
 
-                        {/* ── 🎟️ 참석 프리패스 (출석체크+모카그램 리워드) ── */}
+                        {/* ── 🎟️ 참석 프리패스 (출석체크 리워드) ── */}
                         <div className="pt-4 border-t border-[#E8E0FA] mt-2">
                             <p className="text-[#1F1235] text-[13px] font-black uppercase tracking-wider mb-3 flex items-center gap-1">
                                 🎟️ 원데이클래스 참석 프리패스
@@ -521,7 +521,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                                     <span className="material-symbols-outlined text-[22px] text-gray-300">confirmation_number</span>
                                     <div>
                                         <p className="text-sm font-bold text-gray-400">보유한 프리패스가 없습니다</p>
-                                        <p className="text-[11px] text-gray-300 mt-0.5">출석체크 + 모카그램 업로드로 모아보세요</p>
+                                        <p className="text-[11px] text-gray-300 mt-0.5">출석체크로 모아보세요</p>
                                     </div>
                                 </div>
                             ) : (

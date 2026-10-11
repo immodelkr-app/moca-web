@@ -1,8 +1,8 @@
 /**
  * attendanceService.js
- * 출석체크 + 모카그램 업로드 기반 "참석 프리패스" 서비스
+ * 출석체크 기반 "참석 프리패스" 서비스
  *
- * 규칙: 하루 출석체크 + 모카그램 업로드를 모두 한 날 = "유효 출석일"
+ * 규칙: 하루 출석체크를 한 날 = "유효 출석일"
  *       유효 출석일 누적 30일 도달 시 어드민이 확인 후 프리패스 수동 발급
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
@@ -80,21 +80,6 @@ const fetchCheckDates = async (userId) => {
 };
 
 /**
- * 특정 유저(닉네임)의 모카그램 업로드 날짜 Set 조회
- */
-const fetchCertDates = async (userNickname) => {
-    const { data, error } = await supabase
-        .from('certification_posts')
-        .select('created_at')
-        .eq('user_nickname', userNickname);
-    if (error) {
-        console.error('[fetchCertDates] error:', error);
-        return new Set();
-    }
-    return new Set((data || []).map(r => getKSTDateStr(new Date(r.created_at))));
-};
-
-/**
  * 유저의 출석 진행 상황 계산
  * validDays: 누적 유효 출석일(전체 기간)
  * progress: 현재 사이클(마지막 프리패스 발급 이후) 누적 유효 출석일
@@ -102,17 +87,15 @@ const fetchCertDates = async (userNickname) => {
  */
 export const fetchAttendanceProgress = async (userId, userNickname) => {
     if (!isSupabaseEnabled() || !userId || !userNickname) {
-        return { validDays: 0, issuedCount: 0, progress: 0, remaining: COUPON_GOAL_DAYS, eligible: false, checkedToday: false, uploadedToday: false };
+        return { validDays: 0, issuedCount: 0, progress: 0, remaining: COUPON_GOAL_DAYS, eligible: false, checkedToday: false };
     }
 
-    const [checkDates, certDates, couponsRes] = await Promise.all([
+    const [checkDates, couponsRes] = await Promise.all([
         fetchCheckDates(userId),
-        fetchCertDates(userNickname),
         supabase.from('attendance_coupons').select('id').eq('user_id', userId),
     ]);
 
-    let validDays = 0;
-    checkDates.forEach(d => { if (certDates.has(d)) validDays += 1; });
+    const validDays = checkDates.size;
 
     const issuedCount = couponsRes.data?.length || 0;
     const consumed = issuedCount * COUPON_GOAL_DAYS;
@@ -128,7 +111,6 @@ export const fetchAttendanceProgress = async (userId, userNickname) => {
         remaining,
         eligible: progress >= COUPON_GOAL_DAYS,
         checkedToday: checkDates.has(today),
-        uploadedToday: certDates.has(today),
     };
 };
 
@@ -210,25 +192,11 @@ export const fetchAttendanceCandidates = async () => {
     if (usersRes.error) return { data: [], error: usersRes.error };
 
     const users = usersRes.data || [];
-    const nicknames = users.map(u => u.nickname).filter(Boolean);
-
-    const { data: certPosts, error: certErr } = nicknames.length > 0
-        ? await supabase.from('certification_posts').select('user_nickname, created_at').in('user_nickname', nicknames)
-        : { data: [], error: null };
-    if (certErr) return { data: [], error: certErr };
-
     // 유저별 출석일 Set
     const checksByUser = {};
     (checksRes.data || []).forEach(r => {
         if (!checksByUser[r.user_id]) checksByUser[r.user_id] = new Set();
         checksByUser[r.user_id].add(r.check_date);
-    });
-
-    // 유저(닉네임)별 업로드일 Set
-    const certsByNickname = {};
-    (certPosts || []).forEach(r => {
-        if (!certsByNickname[r.user_nickname]) certsByNickname[r.user_nickname] = new Set();
-        certsByNickname[r.user_nickname].add(getKSTDateStr(new Date(r.created_at)));
     });
 
     // 유저별 발급된 프리패스 수
@@ -239,9 +207,7 @@ export const fetchAttendanceCandidates = async () => {
 
     const candidates = users.map(u => {
         const checkDates = checksByUser[u.id] || new Set();
-        const certDates = certsByNickname[u.nickname] || new Set();
-        let validDays = 0;
-        checkDates.forEach(d => { if (certDates.has(d)) validDays += 1; });
+        const validDays = checkDates.size;
         const issuedCount = issuedCountByUser[u.id] || 0;
         const progress = Math.max(0, validDays - issuedCount * COUPON_GOAL_DAYS);
         return { ...u, validDays, issuedCount, progress };

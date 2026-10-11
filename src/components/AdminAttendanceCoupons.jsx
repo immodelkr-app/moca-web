@@ -56,7 +56,7 @@ const AdminAttendanceCoupons = () => {
                     <div>
                         <h2 className="text-2xl font-black text-[var(--moca-text)] tracking-tight">출석체크 참석 프리패스 관리</h2>
                         <p className="text-[var(--moca-text-3)] text-xs font-bold leading-none mt-1.5 opacity-70">
-                            출석체크 + 모카그램 업로드 누적 {COUPON_GOAL_DAYS}일 달성자 확인 및 프리패스 발급
+                            출석체크 누적 {COUPON_GOAL_DAYS}일 달성자 확인 및 프리패스 발급
                         </p>
                     </div>
                 </div>
