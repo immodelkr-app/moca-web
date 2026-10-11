@@ -20,7 +20,7 @@ const TOUR_ITEMS = [
 ];
 
 const COMMUNITY_ITEMS = [
-    { icon: 'campaign', label: '모카캐스팅', route: '/home/castings', color: 'text-[#7C3AED]', bgLight: 'bg-[#EDE9FE]' },
+    { icon: 'campaign', label: '모카캐스팅', route: '/home/castings', newKey: 'casting', color: 'text-[#7C3AED]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'photo_camera', label: '모카그램', route: '/home/cert', newKey: 'cert', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'smart_display', label: '모카TV', route: '/home/tv', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'workspace_premium', label: '등급 신청하기', route: '/upgrade', color: 'text-[#D97706]', bgLight: 'bg-[#FEF3C7]' },
@@ -41,7 +41,7 @@ const HomeDashboard = () => {
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     // 새 콘텐츠 N 뱃지 (최근 3일 내 + 아직 확인 안 한 경우만)
-    const [newFlags, setNewFlags] = useState({ class: false, cert: false });
+    const [newFlags, setNewFlags] = useState({ class: false, cert: false, casting: false });
     useEffect(() => {
         fetchNewContentFlags(user?.nickname).then(setNewFlags).catch(() => { });
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -209,9 +209,10 @@ const HomeDashboard = () => {
 
                     {/* 카드 2: 모카캐스팅 */}
                     <button
-                        onClick={() => navigate('/home/castings')}
-                        className="flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#F3E8FF] via-[#E9D5FF] to-[#D8B4FE] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
+                        onClick={() => openWithSeen('casting', '/home/castings')}
+                        className="relative flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#F3E8FF] via-[#E9D5FF] to-[#D8B4FE] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
                     >
+                        {newFlags.casting && <NewBadge />}
                         <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
                             <span className="material-symbols-outlined text-[#7C3AED] text-[34px]">campaign</span>
                         </div>
@@ -219,7 +220,7 @@ const HomeDashboard = () => {
                             모카캐스팅
                         </h3>
                         <p className="text-[11px] font-bold text-[#6D28D9]/80 leading-tight">
-                            모델캐스팅<br />공고
+                            모델캐스팅 공고<br />확인하기
                         </p>
                     </button>
 
