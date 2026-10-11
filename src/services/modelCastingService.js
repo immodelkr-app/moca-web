@@ -260,6 +260,7 @@ const toRoleRows = (castingId, roles) => roles.map((r) => ({
     casting_id: castingId,
     role_name: r.roleName || null,
     gender: r.gender || 'any',
+    age_text: r.ageText || null,
     age_min: r.ageMin ?? null,
     age_max: r.ageMax ?? null,
     headcount: r.headcount ?? 1,

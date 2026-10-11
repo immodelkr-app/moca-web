@@ -26,8 +26,7 @@ const toFormState = (casting) => ({
     roles: (casting.roles || []).map((r) => ({
         roleName: r.roleName || '',
         gender: ['male', 'female', 'any'].includes(r.gender) ? r.gender : 'any',
-        ageMin: r.ageMin ?? '',
-        ageMax: r.ageMax ?? '',
+        ageText: r.ageText || '',
         headcount: r.headcount ?? 1,
         pay: r.pay || '',
         schedule: r.schedule || '',
@@ -73,8 +72,7 @@ const CastingFormFields = ({ form, setForm }) => {
                                 {GENDER_OPTIONS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
                             </select>
                         </div>
-                        <div className="col-span-2"><label className={labelCls}>최소 나이</label><input type="number" className={inputCls} value={r.ageMin} onChange={(e) => setRole(idx, 'ageMin', e.target.value)} /></div>
-                        <div className="col-span-2"><label className={labelCls}>최대 나이</label><input type="number" className={inputCls} value={r.ageMax} onChange={(e) => setRole(idx, 'ageMax', e.target.value)} /></div>
+                        <div className="col-span-4"><label className={labelCls}>나이 (원문 표기 그대로)</label><input className={inputCls} value={r.ageText} onChange={(e) => setRole(idx, 'ageText', e.target.value)} placeholder="예: 20대 후반~40대 초반" /></div>
                         <div className="col-span-2"><label className={labelCls}>인원</label><input type="number" className={inputCls} value={r.headcount} onChange={(e) => setRole(idx, 'headcount', e.target.value)} /></div>
                         <div className="col-span-3"><label className={labelCls}>페이</label><input className={inputCls} value={r.pay} onChange={(e) => setRole(idx, 'pay', e.target.value)} /></div>
                         <div className="col-span-3"><label className={labelCls}>일정</label><input className={inputCls} value={r.schedule} onChange={(e) => setRole(idx, 'schedule', e.target.value)} /></div>
@@ -95,8 +93,6 @@ const toPayload = (form) => ({
     title: form.title.trim(),
     roles: form.roles.map((r) => ({
         ...r,
-        ageMin: r.ageMin === '' ? null : Number(r.ageMin),
-        ageMax: r.ageMax === '' ? null : Number(r.ageMax),
         headcount: r.headcount === '' ? 1 : Number(r.headcount),
     })),
 });
@@ -109,7 +105,7 @@ const castingToFormState = (c) => ({
         contractType: c.contract_type, description: c.description, applyGuide: c.apply_guide,
         sourceUrl: c.source_url, sourceName: c.source_name,
         roles: (c.model_casting_roles || []).map((r) => ({
-            roleName: r.role_name, gender: r.gender, ageMin: r.age_min, ageMax: r.age_max,
+            roleName: r.role_name, gender: r.gender, ageText: r.age_text,
             headcount: r.headcount, pay: r.pay, schedule: r.schedule, description: r.description,
         })),
     }),
@@ -411,7 +407,7 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
                                         </div>
                                         <p className="text-[12px] text-[var(--moca-text-3)] mt-1">
                                             {r.gender === 'male' ? '남성' : r.gender === 'female' ? '여성' : '성별무관'}
-                                            {(r.age_min || r.age_max) && ` · ${r.age_min || ''}~${r.age_max || ''}세`}
+                                            {r.age_text ? ` · ${r.age_text}` : (r.age_min || r.age_max) && ` · ${r.age_min || ''}~${r.age_max || ''}세`}
                                             {r.pay && ` · ${r.pay}`}
                                             {r.schedule && ` · ${r.schedule}`}
                                         </p>
