@@ -64,7 +64,12 @@ const buildPrompt = (pageText, url) => `아래는 모델/배우 구인 공고의
 - 원문 문장을 그대로 복사하지 말고 자연스럽게 요약해 다시 쓰세요 (사실 정보는 정확히 유지).
 - category는 다음 중 하나: ${CATEGORIES.join(', ')}
 - deadline은 YYYY-MM-DD. 연도가 없으면 오늘 이후 가장 가까운 날짜로 추정. 마감일이 없거나 알 수 없으면 null.
-- roles 각 항목: roleName, gender("male"|"female"|"any"), ageMin, ageMax(정수, "30대 중반"→35, "40대 후반"→48처럼 대표값. 모르면 null), headcount(정수), pay(예: "건당 20만원"), schedule, description(역할 조건 요약, 없으면 null)
+- roles 각 항목: roleName, gender("male"|"female"|"any"), ageMin, ageMax(정수. 아래 "나이 변환 규칙"을 따르고, 나이 정보가 없으면 null), headcount(정수), pay(예: "건당 20만원"), schedule, description(역할 조건 요약, 없으면 null)
+- 나이 변환 규칙: 연령대의 초반=일의 자리 0~3, 중반=4~7, 후반=7~9 입니다.
+  ageMin은 "시작하는 연령대 구간의 첫 숫자", ageMax는 "끝나는 연령대 구간의 끝 숫자"로 계산하세요.
+  예) "20대 후반~40대 초반" → ageMin 27, ageMax 43 / "20대 중반~40대 초반" → 24, 43 / "20대 초반~30대 중반" → 20, 37
+  예) "30대 중반" → 34, 37 / "30대 초반" → 30, 33 / "40대 후반" → 47, 49 / "20대" → 20, 29 / "30대~40대" → 30, 49
+  예) "50대 이상" 처럼 상한이 없으면 ageMin만 50, ageMax는 null / "만 25세~35세" 처럼 숫자로 적혀 있으면 그 숫자 그대로
 - description은 프로젝트 개요와 지원 조건을 읽기 쉽게 요약한 상세 설명 (줄바꿈 가능, 800자 이내). 연락처/이메일/전화번호는 description에 넣지 마세요 (지원 연락처는 applyGuide에만 넣습니다).
 - applyGuide는 지원 방법 안내 문구입니다. 원문에 지원서를 받는 이메일 주소·전화번호·카카오톡 ID·지원 링크 등 지원 연락처가 있으면 반드시 원문 그대로(한 글자도 바꾸거나 가리지 말고) 포함하세요. 지원자는 이 문구만 보고 지원하므로 연락처를 빼면 안 됩니다. 이메일 제목 형식(말머리는 원문 그대로)·제출 서류·제출물도 함께 쓰세요. 지원 방법이 원문에 없으면 null.
 - producerName은 제작사/구인자명. contractType은 계약서 작성 여부 요약(없으면 null).
