@@ -22,6 +22,7 @@ import AdminClassAuditionPresent from './components/AdminClassAuditionPresent';
 import UpgradePage from './components/UpgradePage';
 import UpgradeApplicationPage from './components/UpgradeApplicationPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import CastingGoldGuard from './components/CastingGoldGuard';
 import CompanyProtectedRoute from './components/CompanyProtectedRoute';
 import CompanyLayout from './components/CompanyLayout';
 import CompanyCastingList from './components/CompanyCastingList';
@@ -184,8 +185,8 @@ function AppContent() {
                         <Route path="class" element={<ClassListPage />} />
                         <Route path="class/:id" element={<ClassDetailPage />} />
 
-                        <Route path="castings" element={<ModelCastingBoard />} />
-                        <Route path="castings/:id" element={<ModelCastingDetailPage />} />
+                        <Route path="castings" element={<CastingGoldGuard><ModelCastingBoard /></CastingGoldGuard>} />
+                        <Route path="castings/:id" element={<CastingGoldGuard><ModelCastingDetailPage /></CastingGoldGuard>} />
                     </Route>
                 </Route>
 

@@ -10,6 +10,7 @@ import ModelBeautyBanner from './ModelBeautyBanner';
 import TrialCampaignBanner from './TrialCampaignBanner';
 import LiveStreamBanner from './LiveStreamBanner';
 import MocaLiveBanner from './MocaLiveBanner';
+import GoldGateModal from './GoldGateModal';
 import MocaLiveReplaySection from './MocaLiveReplaySection';
 
 const TOUR_ITEMS = [
@@ -41,6 +42,7 @@ const HomeDashboard = () => {
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     // 새 콘텐츠 N 뱃지 (최근 3일 내 + 아직 확인 안 한 경우만)
+    const [showCastingGate, setShowCastingGate] = useState(false); // 모카캐스팅 GOLD 안내 팝업
     const [newFlags, setNewFlags] = useState({ class: false, cert: false, casting: false });
     useEffect(() => {
         fetchNewContentFlags(user?.nickname).then(setNewFlags).catch(() => { });
@@ -56,6 +58,14 @@ const HomeDashboard = () => {
 
     // GOLD 조건 충족 여부 (커뮤니티 메뉴의 "등급 신청하기" 버튼에 남은 미션 수 표시용) + 자동 승급
     const isAlreadyGold = ['GOLD', 'IMODEL', 'VIP'].includes(grade);
+    // 모카캐스팅은 GOLD 이상만 이용 가능 — SILVER는 열지 않고(확인 처리도 하지 않음) GOLD 조건 안내 팝업을 보여준다
+    const handleOpenCasting = () => {
+        if (!isAlreadyGold) {
+            setShowCastingGate(true);
+            return;
+        }
+        openWithSeen('casting', '/home/castings');
+    };
     const [goldEligibility, setGoldEligibility] = useState(null);
     useEffect(() => {
         if (isAlreadyGold) return;
@@ -194,12 +204,12 @@ const HomeDashboard = () => {
                     {/* 카드 1: 에이전시 리스트 */}
                     <button
                         onClick={() => navigate('/agencies')}
-                        className="flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#F3E8FF] via-[#E9D5FF] to-[#D8B4FE] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
+                        className="flex flex-col items-center justify-start h-[200px] px-2 py-6 rounded-3xl bg-gradient-to-b from-[#F3E8FF] via-[#E9D5FF] to-[#D8B4FE] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
                     >
                         <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
                             <span className="material-symbols-outlined text-[#7C3AED] text-[34px]">folder_managed</span>
                         </div>
-                        <h3 className="text-lg font-black text-[#1F1235] mb-1">
+                        <h3 className="text-base whitespace-nowrap font-black text-[#1F1235] mb-1">
                             에이전시 리스트
                         </h3>
                         <p className="text-[11px] font-bold text-[#6D28D9]/80 leading-tight">
@@ -209,14 +219,14 @@ const HomeDashboard = () => {
 
                     {/* 카드 2: 모카캐스팅 */}
                     <button
-                        onClick={() => openWithSeen('casting', '/home/castings')}
-                        className="relative flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#F3E8FF] via-[#E9D5FF] to-[#D8B4FE] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
+                        onClick={handleOpenCasting}
+                        className="relative flex flex-col items-center justify-start h-[200px] px-2 py-6 rounded-3xl bg-gradient-to-b from-[#F3E8FF] via-[#E9D5FF] to-[#D8B4FE] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
                     >
-                        {newFlags.casting && <NewBadge />}
+                        {newFlags.casting && isAlreadyGold && <NewBadge />}
                         <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
                             <span className="material-symbols-outlined text-[#7C3AED] text-[34px]">campaign</span>
                         </div>
-                        <h3 className="text-lg font-black text-[#1F1235] mb-1">
+                        <h3 className="text-base whitespace-nowrap font-black text-[#1F1235] mb-1">
                             모카캐스팅
                         </h3>
                         <p className="text-[11px] font-bold text-[#6D28D9]/80 leading-tight">
@@ -234,12 +244,12 @@ const HomeDashboard = () => {
                     {/* 카드 1: 모카퀴즈 */}
                     <button
                         onClick={() => navigate('/home/quiz')}
-                        className="flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#FDF4FF] via-[#F5D0FE] to-[#F0ABFC] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
+                        className="flex flex-col items-center justify-start h-[200px] px-2 py-6 rounded-3xl bg-gradient-to-b from-[#FDF4FF] via-[#F5D0FE] to-[#F0ABFC] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
                     >
                         <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
                             <span className="material-symbols-outlined text-[#A21CAF] text-[34px]">quiz</span>
                         </div>
-                        <h3 className="text-lg font-black text-[#1F1235] mb-1">모카퀴즈</h3>
+                        <h3 className="text-base whitespace-nowrap font-black text-[#1F1235] mb-1">모카퀴즈</h3>
                         <p className="text-[11px] font-bold text-[#A21CAF]/80 leading-tight">정답 맞추고<br />상품 받아가기</p>
                     </button>
 
@@ -338,12 +348,13 @@ const HomeDashboard = () => {
                                 key={item.label}
                                 onClick={() => {
                                     if (showMissionHint) return; // 조건 미달성이면 페이지 이동 없이 남은 미션 수만 안내
+                                    if (item.newKey === 'casting') { handleOpenCasting(); return; }
                                     else if (item.newKey) openWithSeen(item.newKey, item.route);
                                     else navigate(item.route);
                                 }}
                                 className="relative flex items-center gap-3 p-3.5 bg-white border border-[#E8E0FA] rounded-2xl shadow-2xs hover:border-[#8B5CF6]/40 active:scale-95 transition-all text-left"
                             >
-                                {item.newKey && newFlags[item.newKey] && <NewBadge />}
+                                {item.newKey && newFlags[item.newKey] && (item.newKey !== 'casting' || isAlreadyGold) && <NewBadge />}
                                 <div className={`w-10 h-10 rounded-xl ${item.bgLight} flex items-center justify-center flex-shrink-0`}>
                                     <span className={`material-symbols-outlined text-[20px] ${item.color}`}>{item.icon}</span>
                                 </div>
@@ -381,6 +392,14 @@ const HomeDashboard = () => {
                         setIsProfileModalOpen(false);
                         window.location.reload();
                     }}
+                />
+            )}
+
+
+            {showCastingGate && (
+                <GoldGateModal
+                    title="모카캐스팅은 GOLD 등급부터 이용할 수 있어요"
+                    onClose={() => setShowCastingGate(false)}
                 />
             )}
 
