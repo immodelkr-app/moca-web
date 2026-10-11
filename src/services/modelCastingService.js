@@ -178,6 +178,103 @@ export const updateCasting = async (castingId, {
     return { data: casting, error: null };
 };
 
+// ── 외부 공고(링크 가져오기) ──────────────────────────────
+
+const ADMIN_TOKEN = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024';
+
+/**
+ * 외부 공고 링크를 서버(/api/import-casting)에서 읽어 등록용 JSON으로 변환
+ * @param {Object} params
+ * @param {string} params.url
+ * @param {string} [params.text] - 서버가 페이지를 못 읽을 때 어드민이 붙여넣은 본문
+ * @returns {Promise<{data: Object|null, error: string|null, needText: boolean}>}
+ */
+export const importExternalCasting = async ({ url, text }) => {
+    let res;
+    try {
+        res = await fetch('/api/import-casting', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-admin-token': ADMIN_TOKEN },
+            body: JSON.stringify({ url, text }),
+        });
+    } catch {
+        return { data: null, error: '네트워크 오류로 공고를 가져오지 못했습니다.', needText: false };
+    }
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { data: null, error: body.error || '공고를 가져오지 못했습니다.', needText: !!body.needText };
+    return { data: body, error: null, needText: false };
+};
+
+/**
+ * 외부 공고를 모델캐스팅으로 등록 (업체 계정 없이, 어드민 검수 후 호출)
+ * 같은 원문 링크가 이미 있으면 중복 등록하지 않는다.
+ */
+export const createExternalCasting = async ({
+    sourceUrl,
+    sourceName,
+    producerName,
+    category,
+    title,
+    projectName,
+    shootPeriod,
+    shootLocation,
+    description,
+    applyGuide,
+    contractType,
+    deadline,
+    roles = [],
+}) => {
+    if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+
+    const { data: existing } = await supabase
+        .from('model_castings')
+        .select('id')
+        .eq('source_url', sourceUrl)
+        .maybeSingle();
+    if (existing) return { data: null, error: new Error('이미 등록된 공고 링크입니다.') };
+
+    const { data: casting, error: castingError } = await supabase
+        .from('model_castings')
+        .insert([{
+            company_id: null,
+            source_type: 'external',
+            source_url: sourceUrl,
+            source_name: sourceName || null,
+            producer_name: producerName || null,
+            category,
+            title,
+            project_name: projectName || null,
+            shoot_period: shootPeriod || null,
+            shoot_location: shootLocation || null,
+            description: description || null,
+            apply_guide: applyGuide || null,
+            contract_type: contractType || null,
+            deadline,
+            status: 'open',
+        }])
+        .select()
+        .single();
+    if (castingError) return { data: null, error: castingError };
+
+    if (roles.length > 0) {
+        const roleRows = roles.map((r) => ({
+            casting_id: casting.id,
+            role_name: r.roleName || null,
+            gender: r.gender || 'any',
+            age_min: r.ageMin ?? null,
+            age_max: r.ageMax ?? null,
+            headcount: r.headcount ?? 1,
+            pay: r.pay || null,
+            schedule: r.schedule || null,
+            description: r.description || null,
+        }));
+        const { error: roleError } = await supabase.from('model_casting_roles').insert(roleRows);
+        if (roleError) return { data: casting, error: roleError };
+    }
+
+    return { data: casting, error: null };
+};
+
 // ── 목록/상세 조회 ────────────────────────────────────────
 
 /**

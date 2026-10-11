@@ -44,6 +44,7 @@ const ModelCastingDetailPage = () => {
 
     const status = STATUS_LABEL[casting.status] || STATUS_LABEL.open;
     const companyEmail = casting.companies?.users?.email || '';
+    const isExternal = casting.source_type === 'external';
 
     return (
         <div className="min-h-screen bg-white pb-40">
@@ -59,9 +60,10 @@ const ModelCastingDetailPage = () => {
                     <div className="flex items-center gap-1.5 mb-2">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
                         <span className="px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] text-[10px] font-bold">{casting.category}</span>
+                        {isExternal && <span className="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고{casting.source_name ? ` · ${casting.source_name}` : ''}</span>}
                     </div>
                     <h2 className="text-xl font-black text-[#1F1235] leading-snug">{casting.title}</h2>
-                    <p className="text-[12px] text-[#9CA3AF] font-bold mt-1.5">{casting.companies?.company_name || '업체'}</p>
+                    <p className="text-[12px] text-[#9CA3AF] font-bold mt-1.5">{casting.companies?.company_name || casting.producer_name || '업체'}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -105,7 +107,7 @@ const ModelCastingDetailPage = () => {
                                             {r.description && <p className="text-[12px] text-[#4B3F6B] mt-2 whitespace-pre-wrap">{r.description}</p>}
                                         </div>
                                     </div>
-                                    <button
+                                    {!isExternal && <button
                                         onClick={() => canApply && setApplyingRole(r)}
                                         disabled={!canApply}
                                         className={`w-full mt-3 py-2.5 rounded-xl font-black text-xs transition-all ${
@@ -117,12 +119,46 @@ const ModelCastingDetailPage = () => {
                                         }`}
                                     >
                                         {isApplied ? '지원완료' : canApply ? '지원하기' : '지원마감'}
-                                    </button>
+                                    </button>}
                                 </div>
                             );
                         })}
                     </div>
                 </div>
+
+                {isExternal && (
+                    <>
+                        {casting.apply_guide && (
+                            <div>
+                                <h3 className="text-[13px] font-black text-[#1F1235] mb-1.5">지원 방법</h3>
+                                <p className="whitespace-pre-wrap text-[#1F1235] text-sm leading-relaxed bg-[#FAF8FF] rounded-2xl p-4">{casting.apply_guide}</p>
+                            </div>
+                        )}
+
+                        <a
+                            href={casting.source_url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-[#9333EA] text-white font-black text-sm active:scale-[0.98] transition-all"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                            원문 공고 바로가기{casting.source_name ? ` (${casting.source_name})` : ''}
+                        </a>
+                        <p className="text-[11px] text-[#9CA3AF] font-bold text-center -mt-3">
+                            이 공고는 {casting.source_name || '외부 사이트'}의 공고를 모카가 요약한 것입니다. 지원은 위 안내에 따라 제작사에 직접 해주세요.
+                        </p>
+
+                        <a
+                            href="/"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block rounded-2xl border border-[#E8E0FA] bg-[#FAF8FF] p-4 text-center"
+                        >
+                            <p className="text-[13px] font-black text-[#1F1235]">모델 구인 공고, 모카에서도 올려보세요</p>
+                            <p className="text-[11px] text-[#7C3AED] font-bold mt-1">업체 가입하고 모카 모델들에게 바로 공고 노출하기 →</p>
+                        </a>
+                    </>
+                )}
             </div>
 
             {applyingRole && (

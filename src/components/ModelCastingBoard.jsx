@@ -52,10 +52,11 @@ const ModelCastingBoard = () => {
                                     <div className="flex items-center gap-1.5 mb-1.5">
                                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
                                         <span className="px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] text-[10px] font-bold">{c.category}</span>
+                                        {c.source_type === 'external' && <span className="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고</span>}
                                     </div>
                                     <h3 className="font-black text-[#1F1235] text-[15px] leading-snug">{c.title}</h3>
                                     <p className="text-[11px] text-[#9CA3AF] font-bold mt-1.5">
-                                        {c.companies?.company_name || '업체'} · 모집 {totalHeadcount}명 · 마감 {c.deadline}
+                                        {c.companies?.company_name || c.producer_name || '업체'} · 모집 {totalHeadcount}명 · 마감 {c.deadline}
                                     </p>
                                 </button>
                             );

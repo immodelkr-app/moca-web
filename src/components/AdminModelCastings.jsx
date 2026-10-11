@@ -1,5 +1,191 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCastings } from '../services/modelCastingService';
+import { fetchCastings, importExternalCasting, createExternalCasting } from '../services/modelCastingService';
+
+const CATEGORIES = [
+    'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
+    'SNS/온라인예능', 'SNS/온라인광고', '홈쇼핑/라이브커머스', '교육/기업/홍보영상', '기타',
+];
+const GENDER_OPTIONS = [{ value: 'any', label: '무관' }, { value: 'female', label: '여자' }, { value: 'male', label: '남자' }];
+
+const inputCls = 'w-full border border-[var(--moca-border)] rounded-lg px-2.5 py-1.5 text-sm font-bold text-[var(--moca-text)] bg-white';
+const labelCls = 'block text-[11px] text-[var(--moca-text-3)] font-bold mb-1';
+
+const toFormState = (casting) => ({
+    title: casting.title || '',
+    category: CATEGORIES.includes(casting.category) ? casting.category : '기타',
+    projectName: casting.projectName || '',
+    producerName: casting.producerName || '',
+    shootPeriod: casting.shootPeriod || '',
+    shootLocation: casting.shootLocation || '',
+    deadline: casting.deadline || '',
+    contractType: casting.contractType || '',
+    description: casting.description || '',
+    applyGuide: casting.applyGuide || '',
+    roles: (casting.roles || []).map((r) => ({
+        roleName: r.roleName || '',
+        gender: ['male', 'female', 'any'].includes(r.gender) ? r.gender : 'any',
+        ageMin: r.ageMin ?? '',
+        ageMax: r.ageMax ?? '',
+        headcount: r.headcount ?? 1,
+        pay: r.pay || '',
+        schedule: r.schedule || '',
+        description: r.description || '',
+    })),
+});
+
+// 외부 공고 링크 → AI 정리 → 검수/수정 → 등록
+const ExternalImportPanel = ({ onCreated }) => {
+    const [url, setUrl] = useState('');
+    const [pastedText, setPastedText] = useState('');
+    const [needText, setNeedText] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+    const [source, setSource] = useState(null); // { sourceUrl, sourceName }
+    const [form, setForm] = useState(null);
+
+    const setField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+    const setRole = (idx, key, value) => setForm((f) => ({
+        ...f,
+        roles: f.roles.map((r, i) => (i === idx ? { ...r, [key]: value } : r)),
+    }));
+
+    const handleImport = async () => {
+        if (!url.trim()) return;
+        setLoading(true);
+        setError('');
+        const { data, error: err, needText: nt } = await importExternalCasting({ url: url.trim(), text: needText ? pastedText : undefined });
+        setLoading(false);
+        if (err) {
+            setError(err);
+            setNeedText(nt);
+            return;
+        }
+        setNeedText(false);
+        setSource({ sourceUrl: data.sourceUrl, sourceName: data.sourceName });
+        setForm(toFormState(data.casting));
+    };
+
+    const handleReset = () => {
+        setUrl(''); setPastedText(''); setNeedText(false); setError(''); setSource(null); setForm(null);
+    };
+
+    const handleSave = async () => {
+        if (!form.title.trim() || !form.deadline) {
+            setError('제목과 마감일은 필수입니다.');
+            return;
+        }
+        setSaving(true);
+        setError('');
+        const { error: err } = await createExternalCasting({
+            sourceUrl: source.sourceUrl,
+            sourceName: source.sourceName,
+            ...form,
+            title: form.title.trim(),
+            roles: form.roles.map((r) => ({
+                ...r,
+                ageMin: r.ageMin === '' ? null : Number(r.ageMin),
+                ageMax: r.ageMax === '' ? null : Number(r.ageMax),
+                headcount: r.headcount === '' ? 1 : Number(r.headcount),
+            })),
+        });
+        setSaving(false);
+        if (err) {
+            setError(err.message || '등록에 실패했습니다.');
+            return;
+        }
+        handleReset();
+        onCreated();
+    };
+
+    return (
+        <div className="mb-6 border border-[var(--moca-border)] rounded-2xl p-4 bg-[var(--moca-surface-2)]">
+            <p className="text-sm font-black text-[var(--moca-text)] mb-0.5">외부 공고 가져오기</p>
+            <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-3">필름메이커스 공고 링크를 넣으면 AI가 요약해 아래 양식을 채웁니다. 확인·수정 후 등록하세요.</p>
+
+            {!form && (
+                <>
+                    <div className="flex gap-2">
+                        <input
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                            placeholder="https://www.filmmakers.co.kr/performerCasting/..."
+                            className={inputCls}
+                        />
+                        <button
+                            onClick={handleImport}
+                            disabled={loading || !url.trim() || (needText && !pastedText.trim())}
+                            className="shrink-0 px-4 py-1.5 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40"
+                        >
+                            {loading ? '정리 중...' : '불러오기'}
+                        </button>
+                    </div>
+                    {needText && (
+                        <textarea
+                            value={pastedText}
+                            onChange={(e) => setPastedText(e.target.value)}
+                            rows={6}
+                            placeholder="공고 페이지 본문을 복사해 붙여넣은 뒤 '불러오기'를 다시 누르세요."
+                            className={`${inputCls} mt-2`}
+                        />
+                    )}
+                </>
+            )}
+
+            {error && <p className="text-xs font-bold text-red-600 mt-2">{error}</p>}
+
+            {form && (
+                <div className="space-y-3 mt-1">
+                    <p className="text-[11px] font-bold text-[var(--moca-text-3)] break-all">출처: {source.sourceName} · {source.sourceUrl}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="col-span-2"><label className={labelCls}>제목</label><input className={inputCls} value={form.title} onChange={(e) => setField('title', e.target.value)} /></div>
+                        <div><label className={labelCls}>카테고리</label>
+                            <select className={inputCls} value={form.category} onChange={(e) => setField('category', e.target.value)}>
+                                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        </div>
+                        <div><label className={labelCls}>마감일</label><input type="date" className={inputCls} value={form.deadline} onChange={(e) => setField('deadline', e.target.value)} /></div>
+                        <div><label className={labelCls}>프로젝트명</label><input className={inputCls} value={form.projectName} onChange={(e) => setField('projectName', e.target.value)} /></div>
+                        <div><label className={labelCls}>제작사</label><input className={inputCls} value={form.producerName} onChange={(e) => setField('producerName', e.target.value)} /></div>
+                        <div><label className={labelCls}>촬영기간</label><input className={inputCls} value={form.shootPeriod} onChange={(e) => setField('shootPeriod', e.target.value)} /></div>
+                        <div><label className={labelCls}>촬영장소</label><input className={inputCls} value={form.shootLocation} onChange={(e) => setField('shootLocation', e.target.value)} /></div>
+                        <div className="col-span-2"><label className={labelCls}>계약형태</label><input className={inputCls} value={form.contractType} onChange={(e) => setField('contractType', e.target.value)} /></div>
+                        <div className="col-span-2"><label className={labelCls}>상세 설명</label><textarea rows={6} className={inputCls} value={form.description} onChange={(e) => setField('description', e.target.value)} /></div>
+                        <div className="col-span-2"><label className={labelCls}>지원 방법 안내 (앱에는 지원 버튼 대신 이 문구가 노출됩니다)</label><textarea rows={4} className={inputCls} value={form.applyGuide} onChange={(e) => setField('applyGuide', e.target.value)} /></div>
+                    </div>
+
+                    <div>
+                        <p className={labelCls}>모집 역할 ({form.roles.length})</p>
+                        <div className="space-y-2">
+                            {form.roles.map((r, idx) => (
+                                <div key={idx} className="border border-[var(--moca-border)] rounded-xl p-3 bg-white grid grid-cols-6 gap-2">
+                                    <div className="col-span-4"><label className={labelCls}>역할명</label><input className={inputCls} value={r.roleName} onChange={(e) => setRole(idx, 'roleName', e.target.value)} /></div>
+                                    <div className="col-span-2"><label className={labelCls}>성별</label>
+                                        <select className={inputCls} value={r.gender} onChange={(e) => setRole(idx, 'gender', e.target.value)}>
+                                            {GENDER_OPTIONS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="col-span-2"><label className={labelCls}>최소 나이</label><input type="number" className={inputCls} value={r.ageMin} onChange={(e) => setRole(idx, 'ageMin', e.target.value)} /></div>
+                                    <div className="col-span-2"><label className={labelCls}>최대 나이</label><input type="number" className={inputCls} value={r.ageMax} onChange={(e) => setRole(idx, 'ageMax', e.target.value)} /></div>
+                                    <div className="col-span-2"><label className={labelCls}>인원</label><input type="number" className={inputCls} value={r.headcount} onChange={(e) => setRole(idx, 'headcount', e.target.value)} /></div>
+                                    <div className="col-span-3"><label className={labelCls}>페이</label><input className={inputCls} value={r.pay} onChange={(e) => setRole(idx, 'pay', e.target.value)} /></div>
+                                    <div className="col-span-3"><label className={labelCls}>일정</label><input className={inputCls} value={r.schedule} onChange={(e) => setRole(idx, 'schedule', e.target.value)} /></div>
+                                    <div className="col-span-6"><label className={labelCls}>역할 설명</label><input className={inputCls} value={r.description} onChange={(e) => setRole(idx, 'description', e.target.value)} /></div>
+                                    <button onClick={() => setForm((f) => ({ ...f, roles: f.roles.filter((_, i) => i !== idx) }))} className="col-span-6 text-[11px] font-bold text-red-500 text-right">역할 삭제</button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2 justify-end">
+                        <button onClick={handleReset} className="px-4 py-2 rounded-lg border border-[var(--moca-border)] text-xs font-black text-[var(--moca-text-3)]">취소</button>
+                        <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40">{saving ? '등록 중...' : '모델캐스팅에 등록'}</button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const STATUS_LABEL = {
     open: { label: '모집중', className: 'bg-emerald-100 text-emerald-700' },
@@ -24,7 +210,7 @@ const CastingDetailModal = ({ casting, onClose }) => {
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
                         <span className="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-[var(--moca-primary)]/10 text-[var(--moca-primary)]">지원자 {getApplicantCount(casting)}명</span>
                         <h3 className="text-lg font-black text-[var(--moca-text)] mt-2">{casting.title}</h3>
-                        <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-0.5">{casting.companies?.company_name || '-'} · {casting.category}</p>
+                        <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-0.5">{casting.companies?.company_name || casting.producer_name || '-'} · {casting.category}</p>
                     </div>
                     <button onClick={onClose} className="text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-xl leading-none">✕</button>
                 </div>
@@ -95,6 +281,7 @@ const AdminModelCastings = () => {
 
     return (
         <div className="animate-fadeIn">
+            <ExternalImportPanel onCreated={load} />
             <div className="flex items-center justify-between mb-5">
                 <p className="text-sm font-black text-[var(--moca-text)]">전체 모델캐스팅 게시글 <span className="text-[var(--moca-primary)]">{castings.length}</span>건</p>
                 <button onClick={load} className="text-xs font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">새로고침</button>
@@ -132,7 +319,7 @@ const AdminModelCastings = () => {
                                         <td className="py-2.5 pr-3">
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
                                         </td>
-                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)]">{c.companies?.company_name || '-'}</td>
+                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)]">{c.companies?.company_name || c.producer_name || '-'}{c.source_type === 'external' && <span className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-700">외부</span>}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{c.category}</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)] max-w-[240px] truncate underline decoration-dotted underline-offset-2">{c.title}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{totalHeadcount}명</td>
