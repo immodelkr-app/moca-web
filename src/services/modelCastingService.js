@@ -192,6 +192,71 @@ export const updateCasting = async (castingId, {
 
 // ── 외부 공고(링크 가져오기) ──────────────────────────────
 
+const toRoleRows = (castingId, roles) => roles.map((r) => ({
+    casting_id: castingId,
+    role_name: r.roleName || null,
+    gender: r.gender || 'any',
+    age_min: r.ageMin ?? null,
+    age_max: r.ageMax ?? null,
+    headcount: r.headcount ?? 1,
+    pay: r.pay || null,
+    schedule: r.schedule || null,
+    description: r.description || null,
+}));
+
+/**
+ * 외부 공고 수정 (어드민) — 게시글 필드 + 역할 카드 전체 교체
+ * 역할은 새 행을 먼저 넣은 뒤 기존 행을 지워, 중간에 실패해도 역할이 통째로 사라지지 않게 한다.
+ * @param {string} castingId
+ * @param {Object} params - createExternalCasting()과 동일한 필드 + status('open'|'closed')
+ */
+export const updateExternalCasting = async (castingId, {
+    producerName, category, title, projectName, shootPeriod, shootLocation,
+    description, applyGuide, contractType, deadline, status, roles = [],
+}) => {
+    if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+
+    const { data: casting, error: castingError } = await supabase
+        .from('model_castings')
+        .update({
+            producer_name: producerName || null,
+            category,
+            title,
+            project_name: projectName || null,
+            shoot_period: shootPeriod || null,
+            shoot_location: shootLocation || null,
+            description: description || null,
+            apply_guide: applyGuide || null,
+            contract_type: contractType || null,
+            deadline,
+            status: status || 'open',
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', castingId)
+        .eq('source_type', 'external')
+        .select()
+        .single();
+    if (castingError) return { data: null, error: castingError };
+
+    const { data: oldRoles, error: oldError } = await supabase
+        .from('model_casting_roles').select('id').eq('casting_id', castingId);
+    if (oldError) return { data: casting, error: oldError };
+
+    if (roles.length > 0) {
+        const { error: insertError } = await supabase.from('model_casting_roles').insert(toRoleRows(castingId, roles));
+        if (insertError) return { data: casting, error: insertError };
+    }
+
+    const oldIds = (oldRoles || []).map((r) => r.id);
+    if (oldIds.length > 0) {
+        const { error: deleteError } = await supabase.from('model_casting_roles').delete().in('id', oldIds);
+        if (deleteError) return { data: casting, error: deleteError };
+    }
+
+    return { data: casting, error: null };
+};
+
+
 const ADMIN_TOKEN = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024';
 
 /**

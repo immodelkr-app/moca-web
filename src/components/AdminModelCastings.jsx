@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCastings, importExternalCasting, createExternalCasting, closeCasting, deleteCasting, getCastingStatus, todayKst } from '../services/modelCastingService';
+import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, closeCasting, deleteCasting, getCastingStatus, todayKst } from '../services/modelCastingService';
 
 const CATEGORIES = [
     'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
@@ -33,6 +33,135 @@ const toFormState = (casting) => ({
     })),
 });
 
+// 등록/수정 공용 입력 폼 (제목~지원방법 + 모집 역할 카드)
+const CastingFormFields = ({ form, setForm }) => {
+    const setField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+    const setRole = (idx, key, value) => setForm((f) => ({
+        ...f,
+        roles: f.roles.map((r, i) => (i === idx ? { ...r, [key]: value } : r)),
+    }));
+    return (
+        <>
+        <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2"><label className={labelCls}>제목</label><input className={inputCls} value={form.title} onChange={(e) => setField('title', e.target.value)} /></div>
+            <div><label className={labelCls}>카테고리</label>
+                <select className={inputCls} value={form.category} onChange={(e) => setField('category', e.target.value)}>
+                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+            </div>
+            <div><label className={labelCls}>마감일</label><input type="date" className={inputCls} value={form.deadline} onChange={(e) => setField('deadline', e.target.value)} /></div>
+            <div><label className={labelCls}>프로젝트명</label><input className={inputCls} value={form.projectName} onChange={(e) => setField('projectName', e.target.value)} /></div>
+            <div><label className={labelCls}>제작사</label><input className={inputCls} value={form.producerName} onChange={(e) => setField('producerName', e.target.value)} /></div>
+            <div><label className={labelCls}>촬영기간</label><input className={inputCls} value={form.shootPeriod} onChange={(e) => setField('shootPeriod', e.target.value)} /></div>
+            <div><label className={labelCls}>촬영장소</label><input className={inputCls} value={form.shootLocation} onChange={(e) => setField('shootLocation', e.target.value)} /></div>
+            <div className="col-span-2"><label className={labelCls}>계약형태</label><input className={inputCls} value={form.contractType} onChange={(e) => setField('contractType', e.target.value)} /></div>
+            <div className="col-span-2"><label className={labelCls}>상세 설명</label><textarea rows={6} className={inputCls} value={form.description} onChange={(e) => setField('description', e.target.value)} /></div>
+            <div className="col-span-2"><label className={labelCls}>지원 방법 안내 (앱에는 지원 버튼 대신 이 문구가 노출됩니다)</label><textarea rows={4} className={inputCls} value={form.applyGuide} onChange={(e) => setField('applyGuide', e.target.value)} /></div>
+        </div>
+
+        <div>
+            <p className={labelCls}>모집 역할 ({form.roles.length})</p>
+            <div className="space-y-2">
+                {form.roles.map((r, idx) => (
+                    <div key={idx} className="border border-[var(--moca-border)] rounded-xl p-3 bg-white grid grid-cols-6 gap-2">
+                        <div className="col-span-4"><label className={labelCls}>역할명</label><input className={inputCls} value={r.roleName} onChange={(e) => setRole(idx, 'roleName', e.target.value)} /></div>
+                        <div className="col-span-2"><label className={labelCls}>성별</label>
+                            <select className={inputCls} value={r.gender} onChange={(e) => setRole(idx, 'gender', e.target.value)}>
+                                {GENDER_OPTIONS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
+                            </select>
+                        </div>
+                        <div className="col-span-2"><label className={labelCls}>최소 나이</label><input type="number" className={inputCls} value={r.ageMin} onChange={(e) => setRole(idx, 'ageMin', e.target.value)} /></div>
+                        <div className="col-span-2"><label className={labelCls}>최대 나이</label><input type="number" className={inputCls} value={r.ageMax} onChange={(e) => setRole(idx, 'ageMax', e.target.value)} /></div>
+                        <div className="col-span-2"><label className={labelCls}>인원</label><input type="number" className={inputCls} value={r.headcount} onChange={(e) => setRole(idx, 'headcount', e.target.value)} /></div>
+                        <div className="col-span-3"><label className={labelCls}>페이</label><input className={inputCls} value={r.pay} onChange={(e) => setRole(idx, 'pay', e.target.value)} /></div>
+                        <div className="col-span-3"><label className={labelCls}>일정</label><input className={inputCls} value={r.schedule} onChange={(e) => setRole(idx, 'schedule', e.target.value)} /></div>
+                        <div className="col-span-6"><label className={labelCls}>역할 설명</label><input className={inputCls} value={r.description} onChange={(e) => setRole(idx, 'description', e.target.value)} /></div>
+                        <button onClick={() => setForm((f) => ({ ...f, roles: f.roles.filter((_, i) => i !== idx) }))} className="col-span-6 text-[11px] font-bold text-red-500 text-right">역할 삭제</button>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        </>
+    );
+};
+
+// 폼 상태 → 서비스 호출용 값 (숫자 변환)
+const toPayload = (form) => ({
+    ...form,
+    title: form.title.trim(),
+    roles: form.roles.map((r) => ({
+        ...r,
+        ageMin: r.ageMin === '' ? null : Number(r.ageMin),
+        ageMax: r.ageMax === '' ? null : Number(r.ageMax),
+        headcount: r.headcount === '' ? 1 : Number(r.headcount),
+    })),
+});
+
+// DB 행(snake_case) → 수정 폼 상태
+const castingToFormState = (c) => ({
+    ...toFormState({
+        title: c.title, category: c.category, projectName: c.project_name, producerName: c.producer_name,
+        shootPeriod: c.shoot_period, shootLocation: c.shoot_location, deadline: c.deadline,
+        contractType: c.contract_type, description: c.description, applyGuide: c.apply_guide,
+        roles: (c.model_casting_roles || []).map((r) => ({
+            roleName: r.role_name, gender: r.gender, ageMin: r.age_min, ageMax: r.age_max,
+            headcount: r.headcount, pay: r.pay, schedule: r.schedule, description: r.description,
+        })),
+    }),
+    status: c.status === 'closed' ? 'closed' : 'open',
+});
+
+// 외부 공고 수정 팝업
+const CastingEditModal = ({ casting, onClose, onSaved }) => {
+    const [form, setForm] = useState(() => castingToFormState(casting));
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSave = async () => {
+        if (!form.title.trim() || !form.deadline) {
+            setError('제목과 마감일은 필수입니다.');
+            return;
+        }
+        setSaving(true);
+        setError('');
+        const { error: err } = await updateExternalCasting(casting.id, toPayload(form));
+        setSaving(false);
+        if (err) {
+            setError(err.message || '수정에 실패했습니다.');
+            return;
+        }
+        onSaved();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-[#0c0714]/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-4" onClick={(e) => { e.stopPropagation(); onClose(); }}>
+            <div className="bg-white border border-[var(--moca-border)] w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="px-6 py-4 border-b border-[var(--moca-border)] flex items-center justify-between bg-[var(--moca-surface-2)]">
+                    <h3 className="text-base font-black text-[var(--moca-text)]">외부 공고 수정</h3>
+                    <button onClick={onClose} className="text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-xl leading-none">✕</button>
+                </div>
+                <div className="px-6 py-5 overflow-y-auto space-y-3">
+                    <p className="text-[11px] font-bold text-[var(--moca-text-3)] break-all">원문: {casting.source_url}</p>
+                    <div>
+                        <label className={labelCls}>상태</label>
+                        <select className={inputCls} value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>
+                            <option value="open">모집중 (마감일이 지나면 자동으로 마감 표시)</option>
+                            <option value="closed">마감</option>
+                        </select>
+                    </div>
+                    <CastingFormFields form={form} setForm={setForm} />
+                    {error && <p className="text-xs font-bold text-red-600">{error}</p>}
+                </div>
+                <div className="px-6 py-3 border-t border-[var(--moca-border)] flex justify-end gap-2 bg-[var(--moca-surface-2)]">
+                    <button onClick={onClose} className="px-4 py-2 rounded-lg border border-[var(--moca-border)] text-xs font-black text-[var(--moca-text-3)]">취소</button>
+                    <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40">{saving ? '저장 중...' : '저장'}</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // 외부 공고 링크 → AI 정리 → 검수/수정 → 등록
 const ExternalImportPanel = ({ onCreated }) => {
     const [url, setUrl] = useState('');
@@ -43,12 +172,6 @@ const ExternalImportPanel = ({ onCreated }) => {
     const [error, setError] = useState('');
     const [source, setSource] = useState(null); // { sourceUrl, sourceName }
     const [form, setForm] = useState(null);
-
-    const setField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
-    const setRole = (idx, key, value) => setForm((f) => ({
-        ...f,
-        roles: f.roles.map((r, i) => (i === idx ? { ...r, [key]: value } : r)),
-    }));
 
     const handleImport = async () => {
         if (!url.trim()) return;
@@ -84,14 +207,7 @@ const ExternalImportPanel = ({ onCreated }) => {
         const { error: err } = await createExternalCasting({
             sourceUrl: source.sourceUrl,
             sourceName: source.sourceName,
-            ...form,
-            title: form.title.trim(),
-            roles: form.roles.map((r) => ({
-                ...r,
-                ageMin: r.ageMin === '' ? null : Number(r.ageMin),
-                ageMax: r.ageMax === '' ? null : Number(r.ageMax),
-                headcount: r.headcount === '' ? 1 : Number(r.headcount),
-            })),
+            ...toPayload(form),
         });
         setSaving(false);
         if (err) {
@@ -141,45 +257,7 @@ const ExternalImportPanel = ({ onCreated }) => {
             {form && (
                 <div className="space-y-3 mt-1">
                     <p className="text-[11px] font-bold text-[var(--moca-text-3)] break-all">출처: {source.sourceName} · {source.sourceUrl}</p>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2"><label className={labelCls}>제목</label><input className={inputCls} value={form.title} onChange={(e) => setField('title', e.target.value)} /></div>
-                        <div><label className={labelCls}>카테고리</label>
-                            <select className={inputCls} value={form.category} onChange={(e) => setField('category', e.target.value)}>
-                                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                        </div>
-                        <div><label className={labelCls}>마감일</label><input type="date" className={inputCls} value={form.deadline} onChange={(e) => setField('deadline', e.target.value)} /></div>
-                        <div><label className={labelCls}>프로젝트명</label><input className={inputCls} value={form.projectName} onChange={(e) => setField('projectName', e.target.value)} /></div>
-                        <div><label className={labelCls}>제작사</label><input className={inputCls} value={form.producerName} onChange={(e) => setField('producerName', e.target.value)} /></div>
-                        <div><label className={labelCls}>촬영기간</label><input className={inputCls} value={form.shootPeriod} onChange={(e) => setField('shootPeriod', e.target.value)} /></div>
-                        <div><label className={labelCls}>촬영장소</label><input className={inputCls} value={form.shootLocation} onChange={(e) => setField('shootLocation', e.target.value)} /></div>
-                        <div className="col-span-2"><label className={labelCls}>계약형태</label><input className={inputCls} value={form.contractType} onChange={(e) => setField('contractType', e.target.value)} /></div>
-                        <div className="col-span-2"><label className={labelCls}>상세 설명</label><textarea rows={6} className={inputCls} value={form.description} onChange={(e) => setField('description', e.target.value)} /></div>
-                        <div className="col-span-2"><label className={labelCls}>지원 방법 안내 (앱에는 지원 버튼 대신 이 문구가 노출됩니다)</label><textarea rows={4} className={inputCls} value={form.applyGuide} onChange={(e) => setField('applyGuide', e.target.value)} /></div>
-                    </div>
-
-                    <div>
-                        <p className={labelCls}>모집 역할 ({form.roles.length})</p>
-                        <div className="space-y-2">
-                            {form.roles.map((r, idx) => (
-                                <div key={idx} className="border border-[var(--moca-border)] rounded-xl p-3 bg-white grid grid-cols-6 gap-2">
-                                    <div className="col-span-4"><label className={labelCls}>역할명</label><input className={inputCls} value={r.roleName} onChange={(e) => setRole(idx, 'roleName', e.target.value)} /></div>
-                                    <div className="col-span-2"><label className={labelCls}>성별</label>
-                                        <select className={inputCls} value={r.gender} onChange={(e) => setRole(idx, 'gender', e.target.value)}>
-                                            {GENDER_OPTIONS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="col-span-2"><label className={labelCls}>최소 나이</label><input type="number" className={inputCls} value={r.ageMin} onChange={(e) => setRole(idx, 'ageMin', e.target.value)} /></div>
-                                    <div className="col-span-2"><label className={labelCls}>최대 나이</label><input type="number" className={inputCls} value={r.ageMax} onChange={(e) => setRole(idx, 'ageMax', e.target.value)} /></div>
-                                    <div className="col-span-2"><label className={labelCls}>인원</label><input type="number" className={inputCls} value={r.headcount} onChange={(e) => setRole(idx, 'headcount', e.target.value)} /></div>
-                                    <div className="col-span-3"><label className={labelCls}>페이</label><input className={inputCls} value={r.pay} onChange={(e) => setRole(idx, 'pay', e.target.value)} /></div>
-                                    <div className="col-span-3"><label className={labelCls}>일정</label><input className={inputCls} value={r.schedule} onChange={(e) => setRole(idx, 'schedule', e.target.value)} /></div>
-                                    <div className="col-span-6"><label className={labelCls}>역할 설명</label><input className={inputCls} value={r.description} onChange={(e) => setRole(idx, 'description', e.target.value)} /></div>
-                                    <button onClick={() => setForm((f) => ({ ...f, roles: f.roles.filter((_, i) => i !== idx) }))} className="col-span-6 text-[11px] font-bold text-red-500 text-right">역할 삭제</button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <CastingFormFields form={form} setForm={setForm} />
 
                     <div className="flex gap-2 justify-end">
                         <button onClick={handleReset} className="px-4 py-2 rounded-lg border border-[var(--moca-border)] text-xs font-black text-[var(--moca-text-3)]">취소</button>
@@ -201,6 +279,7 @@ const getApplicantCount = (casting) => casting.model_casting_applications?.[0]?.
 
 const CastingDetailModal = ({ casting, onClose, onChanged }) => {
     const [busy, setBusy] = useState(false);
+    const [editing, setEditing] = useState(false);
     if (!casting) return null;
     const effectiveStatus = getCastingStatus(casting);
     const status = STATUS_LABEL[effectiveStatus] || STATUS_LABEL.open;
@@ -303,12 +382,16 @@ const CastingDetailModal = ({ casting, onClose, onChanged }) => {
                 </div>
 
                 <div className="px-6 py-3 border-t border-[var(--moca-border)] flex justify-between gap-2 bg-[var(--moca-surface-2)]">
-                    <button onClick={handleDelete} disabled={busy} className="px-4 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-black disabled:opacity-40">삭제</button>
+                    <div className="flex gap-2">
+                        <button onClick={handleDelete} disabled={busy} className="px-4 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-black disabled:opacity-40">삭제</button>
+                        {isExternal && <button onClick={() => setEditing(true)} disabled={busy} className="px-4 py-2 rounded-lg border border-[var(--moca-border)] text-[var(--moca-text)] text-xs font-black disabled:opacity-40">수정</button>}
+                    </div>
                     {effectiveStatus === 'open' && (
                         <button onClick={handleCloseCasting} disabled={busy} className="px-4 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40">마감 처리</button>
                     )}
                 </div>
             </div>
+            {editing && <CastingEditModal casting={casting} onClose={() => setEditing(false)} onSaved={onChanged} />}
         </div>
     );
 };
