@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { supabase } from '../services/supabaseClient';
-import { getUser, updateUserProfile } from '../services/userService';
-import { initializePushNotifications } from '../services/pushNotificationService';
+import { useMarketingConsent } from '../hooks/useMarketingConsent';
 
 const DISMISS_KEY = 'casting_consent_dismissed_at';
 const DISMISS_DAYS = 7;
@@ -23,31 +21,13 @@ const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent || '');
  * 모카캐스팅 게시판 상단 — 마케팅 수신 동의 카드 (선택 동의)
  * 새 공고/새 에이전시 리스트 소식을 받아보겠다고 동의한 회원에게만 푸시·문자·톡 안내를 보낼 수 있게 한다.
  * 동의하지 않아도 공고 열람에는 제한이 없고, "나중에"를 누르면 7일간 숨긴다.
+ * (GOLD 미만 회원은 이 화면에 들어올 수 없어, 같은 동의는 GOLD 안내 팝업에서 받는다 — GoldGateModal 참고)
  */
 const CastingConsentCard = () => {
-    const user = getUser();
-    const [checking, setChecking] = useState(true);
-    const [alreadyAgreed, setAlreadyAgreed] = useState(!!user?.marketing_consent);
+    const { user, checking, alreadyAgreed, saving, error, agree } = useMarketingConsent();
     const [dismissed, setDismissed] = useState(isDismissed());
     const [step, setStep] = useState('card'); // 'card' | 'sheet' | 'done'
     const [checked, setChecked] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
-
-    // 세션에 동의 정보가 없을 수 있어 DB의 최신 값을 확인 (확인 전에는 카드를 그리지 않아 깜빡임 방지)
-    useEffect(() => {
-        let cancelled = false;
-        const check = async () => {
-            if (user?.id && supabase) {
-                const { data } = await supabase.from('users').select('marketing_consent').eq('id', user.id).maybeSingle();
-                if (!cancelled && data) setAlreadyAgreed(!!data.marketing_consent);
-            }
-            if (!cancelled) setChecking(false);
-        };
-        check();
-        return () => { cancelled = true; };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     if (!user || user.user_type === 'company' || checking) return null;
     if (step !== 'done' && (alreadyAgreed || dismissed)) return null;
@@ -59,20 +39,7 @@ const CastingConsentCard = () => {
 
     const handleAgree = async () => {
         if (!checked) return;
-        setSaving(true);
-        setError('');
-        const { error: err } = await updateUserProfile(user.id || user.nickname, {
-            marketing_consent: true,
-            marketing_consent_at: new Date().toISOString(),
-        });
-        setSaving(false);
-        if (err) {
-            setError(err.message || '저장에 실패했습니다. 잠시 후 다시 시도해 주세요.');
-            return;
-        }
-        // 앱이면 바로 푸시 허용 요청 (실패해도 동의 저장은 유지)
-        if (Capacitor.isNativePlatform()) initializePushNotifications().catch(() => { });
-        setStep('done');
+        if (await agree()) setStep('done');
     };
 
     if (step === 'done') {
