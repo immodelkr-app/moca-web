@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchCastings, getCastingStatus } from '../services/modelCastingService';
+import { fetchCastings, fetchCastingViewCounts, getCastingStatus } from '../services/modelCastingService';
 
 const STATUS_LABEL = {
     open: { label: '모집중', className: 'bg-[#EDE9FE] text-[#7C3AED]' },
@@ -11,9 +11,11 @@ const STATUS_LABEL = {
 const ModelCastingBoard = () => {
     const navigate = useNavigate();
     const [castings, setCastings] = useState([]);
+    const [viewCounts, setViewCounts] = useState({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        fetchCastingViewCounts().then(setViewCounts);
         fetchCastings({}).then(({ data }) => {
             setCastings(data);
             setLoading(false);
@@ -56,7 +58,7 @@ const ModelCastingBoard = () => {
                                     </div>
                                     <h3 className="font-black text-[#1F1235] text-[15px] leading-snug">{c.title}</h3>
                                     <p className="text-[11px] text-[#9CA3AF] font-bold mt-1.5">
-                                        {c.companies?.company_name || c.producer_name || '업체'} · 모집 {totalHeadcount}명 · 마감 {c.deadline}
+                                        {c.companies?.company_name || c.producer_name || '업체'} · 모집 {totalHeadcount}명 · 마감 {c.deadline} · 조회 {viewCounts[c.id] ?? 0}명
                                     </p>
                                 </button>
                             );

@@ -452,6 +452,19 @@ export const trackCastingEvent = async ({ castingId, userId, eventType }) => {
 };
 
 /**
+ * 사용자 화면용 공고별 조회 인원 — { [castingId]: number } (서로 다른 조회자 수만 공개)
+ */
+export const fetchCastingViewCounts = async () => {
+    if (!supabase) return {};
+    const { data, error } = await supabase.rpc('casting_view_counts');
+    if (error) {
+        console.warn('[fetchCastingViewCounts] 오류:', error);
+        return {};
+    }
+    return Object.fromEntries((data || []).map((r) => [r.casting_id, Number(r.view_users)]));
+};
+
+/**
  * 공고별 조회/클릭 집계 (어드민) — { [castingId]: { views, viewUsers, clicks, clickUsers, lastClickAt } }
  */
 export const fetchCastingEventStats = async () => {

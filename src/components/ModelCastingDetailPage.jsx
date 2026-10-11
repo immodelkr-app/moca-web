@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchCastingDetail, fetchMyApplications, getCastingStatus, trackCastingEvent } from '../services/modelCastingService';
+import { fetchCastingDetail, fetchMyApplications, getCastingStatus, trackCastingEvent, fetchCastingViewCounts } from '../services/modelCastingService';
 import { getUser } from '../services/userService';
 import ModelCastingApplyModal from './ModelCastingApplyModal';
 
@@ -17,6 +17,7 @@ const ModelCastingDetailPage = () => {
     const navigate = useNavigate();
     const [casting, setCasting] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [viewCount, setViewCount] = useState(null);
     const [appliedRoleIds, setAppliedRoleIds] = useState([]);
     const [applyingRole, setApplyingRole] = useState(null);
     const currentUser = getUser();
@@ -35,7 +36,10 @@ const ModelCastingDetailPage = () => {
 
     useEffect(() => { load(); }, [id]);
     useEffect(() => {
-        trackCastingEvent({ castingId: id, userId: currentUser?.id, eventType: 'view' });
+        // 내 조회가 기록된 뒤에 조회 인원을 가져와야 방금 본 나도 숫자에 포함된다
+        trackCastingEvent({ castingId: id, userId: currentUser?.id, eventType: 'view' })
+            .then(() => fetchCastingViewCounts())
+            .then((counts) => setViewCount(counts[id] ?? 0));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
@@ -67,7 +71,7 @@ const ModelCastingDetailPage = () => {
                         {isExternal && <span className="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고</span>}
                     </div>
                     <h2 className="text-xl font-black text-[#1F1235] leading-snug">{casting.title}</h2>
-                    <p className="text-[12px] text-[#9CA3AF] font-bold mt-1.5">{casting.companies?.company_name || casting.producer_name || '업체'}</p>
+                    <p className="text-[12px] text-[#9CA3AF] font-bold mt-1.5">{casting.companies?.company_name || casting.producer_name || '업체'}{viewCount !== null && ` · 조회 ${viewCount}명`}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
