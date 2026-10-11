@@ -19,6 +19,7 @@ const ModelCastingDetailPage = () => {
     const [casting, setCasting] = useState(null);
     const [loading, setLoading] = useState(true);
     const [viewCount, setViewCount] = useState(null);
+    const [emailCopied, setEmailCopied] = useState(false);
     const [appliedRoleIds, setAppliedRoleIds] = useState([]);
     const [applyingRole, setApplyingRole] = useState(null);
     const currentUser = getUser();
@@ -145,16 +146,42 @@ const ModelCastingDetailPage = () => {
                             </div>
                         )}
 
-                        <a
-                            href={casting.source_url}
-                            onClick={() => trackCastingEvent({ castingId: casting.id, userId: currentUser?.id, eventType: 'source_click' })}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-[#9333EA] text-white font-black text-sm active:scale-[0.98] transition-all"
-                        >
-                            <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-                            원문 공고 바로가기
-                        </a>
+                        {casting.source_url && (
+                            <a
+                                href={casting.source_url}
+                                onClick={() => trackCastingEvent({ castingId: casting.id, userId: currentUser?.id, eventType: 'source_click' })}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-[#9333EA] text-white font-black text-sm active:scale-[0.98] transition-all"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                                원문 공고 바로가기
+                            </a>
+                        )}
+
+                        {casting.apply_email && (
+                            <div className="flex gap-2">
+                                <a
+                                    href={`mailto:${casting.apply_email}${casting.apply_subject ? `?subject=${encodeURIComponent(casting.apply_subject)}` : ''}`}
+                                    onClick={() => trackCastingEvent({ castingId: casting.id, userId: currentUser?.id, eventType: 'source_click' })}
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-[#9333EA] text-white font-black text-sm active:scale-[0.98] transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">mail</span>
+                                    이메일로 지원하기
+                                </a>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard?.writeText(casting.apply_email).then(() => {
+                                            setEmailCopied(true);
+                                            setTimeout(() => setEmailCopied(false), 2000);
+                                        }).catch(() => { });
+                                    }}
+                                    className="shrink-0 px-4 py-3 rounded-xl border border-[#E8E0FA] text-[#7C3AED] font-black text-sm active:scale-[0.98] transition-all"
+                                >
+                                    {emailCopied ? '복사됨' : '주소 복사'}
+                                </button>
+                            </div>
+                        )}
                         <p className="text-[11px] text-[#9CA3AF] font-bold text-center -mt-3">
                             이 공고는 외부 공고를 모카가 요약한 것입니다. 지원은 위 안내에 따라 제작사에 직접 해주세요.
                         </p>

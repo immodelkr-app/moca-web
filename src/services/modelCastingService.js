@@ -226,6 +226,36 @@ export const updateCasting = async (castingId, {
 
 // ── 외부 공고(링크 가져오기) ──────────────────────────────
 
+// 원문 링크는 http(s)만, 지원 이메일은 형식 검증 (href/mailto에 그대로 쓰이므로 javascript: 등 차단)
+const validateExternalContacts = ({ sourceUrl, applyEmail }) => {
+    let url = null;
+    if (sourceUrl && sourceUrl.trim()) {
+        try {
+            const parsed = new URL(sourceUrl.trim());
+            if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error('protocol');
+            url = parsed.href;
+        } catch {
+            return { error: new Error('원문 링크 형식이 올바르지 않습니다. (http:// 또는 https:// 로 시작)') };
+        }
+    }
+    let email = null;
+    if (applyEmail && applyEmail.trim()) {
+        email = applyEmail.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: new Error('지원 이메일 형식이 올바르지 않습니다.') };
+    }
+    return { url, email };
+};
+
+/**
+ * 같은 제목의 공고가 이미 있는지 (링크가 없는 공고의 중복 등록 경고용)
+ * @returns {Promise<Array<{id: string, title: string}>>}
+ */
+export const findCastingsByTitle = async (title) => {
+    if (!supabase || !title) return [];
+    const { data } = await supabase.from('model_castings').select('id, title').eq('title', title.trim()).limit(3);
+    return data || [];
+};
+
 const toRoleRows = (castingId, roles) => roles.map((r) => ({
     casting_id: castingId,
     role_name: r.roleName || null,
@@ -247,13 +277,21 @@ const toRoleRows = (castingId, roles) => roles.map((r) => ({
 export const updateExternalCasting = async (castingId, {
     producerName, category, title, projectName, shootPeriod, shootLocation,
     description, applyGuide, contractType, deadline, status, roles = [],
+    sourceUrl, sourceName, applyEmail, applySubject,
 }) => {
     if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+
+    const contacts = validateExternalContacts({ sourceUrl, applyEmail });
+    if (contacts.error) return { data: null, error: contacts.error };
 
     const { data: casting, error: castingError } = await supabase
         .from('model_castings')
         .update({
             producer_name: producerName || null,
+            source_url: contacts.url,
+            source_name: sourceName || null,
+            apply_email: contacts.email,
+            apply_subject: applySubject || null,
             category,
             title,
             project_name: projectName || null,
@@ -270,7 +308,10 @@ export const updateExternalCasting = async (castingId, {
         .eq('source_type', 'external')
         .select()
         .single();
-    if (castingError) return { data: null, error: castingError };
+    if (castingError) {
+        if (castingError.code === '23505') return { data: null, error: new Error('이미 같은 원문 링크로 등록된 다른 공고가 있습니다.') };
+        return { data: null, error: castingError };
+    }
 
     const { data: oldRoles, error: oldError } = await supabase
         .from('model_casting_roles').select('id').eq('casting_id', castingId);
@@ -317,8 +358,8 @@ export const importExternalCasting = async ({ url, text }) => {
 };
 
 /**
- * 외부 공고를 모델캐스팅으로 등록 (업체 계정 없이, 어드민 검수 후 호출)
- * 같은 원문 링크가 이미 있으면 중복 등록하지 않는다.
+ * 외부 공고를 모카캐스팅으로 등록 (업체 계정 없이, 어드민 검수 후 호출)
+ * 원문 링크는 선택(카페·밴드 글처럼 링크가 없을 수 있음). 링크가 있고 이미 등록된 링크면 중복 등록하지 않는다.
  */
 export const createExternalCasting = async ({
     sourceUrl,
@@ -331,27 +372,36 @@ export const createExternalCasting = async ({
     shootLocation,
     description,
     applyGuide,
+    applyEmail,
+    applySubject,
     contractType,
     deadline,
     roles = [],
 }) => {
     if (!supabase) return { data: null, error: new Error('Supabase not configured') };
 
-    const { data: existing } = await supabase
-        .from('model_castings')
-        .select('id')
-        .eq('source_url', sourceUrl)
-        .maybeSingle();
-    if (existing) return { data: null, error: new Error('이미 등록된 공고 링크입니다.') };
+    const contacts = validateExternalContacts({ sourceUrl, applyEmail });
+    if (contacts.error) return { data: null, error: contacts.error };
+
+    if (contacts.url) {
+        const { data: existing } = await supabase
+            .from('model_castings')
+            .select('id')
+            .eq('source_url', contacts.url)
+            .maybeSingle();
+        if (existing) return { data: null, error: new Error('이미 등록된 공고 링크입니다.') };
+    }
 
     const { data: casting, error: castingError } = await supabase
         .from('model_castings')
         .insert([{
             company_id: null,
             source_type: 'external',
-            source_url: sourceUrl,
+            source_url: contacts.url,
             source_name: sourceName || null,
             producer_name: producerName || null,
+            apply_email: contacts.email,
+            apply_subject: applySubject || null,
             category,
             title,
             project_name: projectName || null,
@@ -365,21 +415,13 @@ export const createExternalCasting = async ({
         }])
         .select()
         .single();
-    if (castingError) return { data: null, error: castingError };
+    if (castingError) {
+        if (castingError.code === '23505') return { data: null, error: new Error('이미 같은 원문 링크로 등록된 공고입니다.') };
+        return { data: null, error: castingError };
+    }
 
     if (roles.length > 0) {
-        const roleRows = roles.map((r) => ({
-            casting_id: casting.id,
-            role_name: r.roleName || null,
-            gender: r.gender || 'any',
-            age_min: r.ageMin ?? null,
-            age_max: r.ageMax ?? null,
-            headcount: r.headcount ?? 1,
-            pay: r.pay || null,
-            schedule: r.schedule || null,
-            description: r.description || null,
-        }));
-        const { error: roleError } = await supabase.from('model_casting_roles').insert(roleRows);
+        const { error: roleError } = await supabase.from('model_casting_roles').insert(toRoleRows(casting.id, roles));
         if (roleError) return { data: casting, error: roleError };
     }
 
