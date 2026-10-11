@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchCastingDetail, fetchMyApplications, getCastingStatus, trackCastingEvent, fetchCastingViewCounts, formatDeadlineKo } from '../services/modelCastingService';
+import { fetchCastingDetail, fetchMyApplications, getCastingStatus, trackCastingEvent, fetchCastingViewCounts, formatDeadlineKo, shareCasting } from '../services/modelCastingService';
 import { getUser } from '../services/userService';
 import CastingDdayBadge from './CastingDdayBadge';
 import ModelCastingApplyModal from './ModelCastingApplyModal';
@@ -19,6 +19,7 @@ const ModelCastingDetailPage = () => {
     const [casting, setCasting] = useState(null);
     const [loading, setLoading] = useState(true);
     const [viewCount, setViewCount] = useState(null);
+    const [shareState, setShareState] = useState(''); // '' | 'copied' | 'failed'
     const [appliedRoleIds, setAppliedRoleIds] = useState([]);
     const [applyingRole, setApplyingRole] = useState(null);
     const currentUser = getUser();
@@ -44,6 +45,14 @@ const ModelCastingDetailPage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
+    const handleShare = async () => {
+        const result = await shareCasting(casting);
+        if (result === 'copied' || result === 'failed') {
+            setShareState(result);
+            setTimeout(() => setShareState(''), 2500);
+        }
+    };
+
     if (loading) {
         return <div className="flex items-center justify-center min-h-screen bg-white text-[#9CA3AF] font-bold text-sm">불러오는 중...</div>;
     }
@@ -61,7 +70,16 @@ const ModelCastingDetailPage = () => {
                 <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-[#F3E8FF] text-[#7C3AED] flex items-center justify-center active:scale-95 transition-all">
                     <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                 </button>
-                <h1 className="text-lg font-black text-[#1F1235] truncate">모카캐스팅 상세</h1>
+                <h1 className="text-lg font-black text-[#1F1235] truncate flex-1 min-w-0">모카캐스팅 상세</h1>
+                <button
+                    onClick={handleShare}
+                    aria-label="공고 공유하기"
+                    className={`w-9 h-9 rounded-full flex items-center justify-center active:scale-95 transition-all ${
+                        shareState === 'copied' ? 'bg-green-500 text-white' : shareState === 'failed' ? 'bg-red-100 text-red-500' : 'bg-[#F3E8FF] text-[#7C3AED]'
+                    }`}
+                >
+                    <span className="material-symbols-outlined text-[20px]">{shareState === 'copied' ? 'check' : 'ios_share'}</span>
+                </button>
             </div>
 
             <div className="pt-20 px-5 max-w-2xl mx-auto space-y-6">
@@ -166,6 +184,12 @@ const ModelCastingDetailPage = () => {
                     </>
                 )}
             </div>
+
+            {shareState && (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-full bg-[#1F1235]/90 text-white text-[12px] font-bold shadow-lg">
+                    {shareState === 'copied' ? '링크가 복사됐어요. 붙여넣어 공유하세요!' : '공유에 실패했어요. 다시 시도해 주세요.'}
+                </div>
+            )}
 
             {applyingRole && (
                 <ModelCastingApplyModal

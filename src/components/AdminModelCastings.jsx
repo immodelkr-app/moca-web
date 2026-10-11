@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { sendBroadcastPush } from '../services/pushNotificationService';
-import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, findCastingsByTitle, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, getDdayInfo, markCastingPushed } from '../services/modelCastingService';
+import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, findCastingsByTitle, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, getDdayInfo, markCastingPushed, getCastingShareUrl, getCastingShareText } from '../services/modelCastingService';
 
 const CATEGORIES = [
     'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
@@ -304,6 +304,7 @@ const getApplicantCount = (casting) => casting.model_casting_applications?.[0]?.
 const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
     const [busy, setBusy] = useState(false);
     const [editing, setEditing] = useState(false);
+    const [linkCopied, setLinkCopied] = useState(false);
     if (!casting) return null;
     const effectiveStatus = getCastingStatus(casting);
     const status = STATUS_LABEL[effectiveStatus] || STATUS_LABEL.open;
@@ -316,6 +317,16 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
         setBusy(false);
         if (error) { alert('마감 처리에 실패했습니다: ' + error.message); return; }
         onChanged();
+    };
+    // 카톡 오픈채팅/카페/밴드 등에 바로 붙여넣을 수 있게 "제목(디데이) + 공유 링크"를 복사
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(`${getCastingShareText(casting)}\n${getCastingShareUrl(casting.id)}`);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+        } catch {
+            window.prompt('아래 링크를 복사하세요', getCastingShareUrl(casting.id));
+        }
     };
     const handleDelete = async () => {
         if (!window.confirm('이 공고를 완전히 삭제할까요? 역할·지원 내역도 함께 삭제되며 되돌릴 수 없습니다.')) return;
@@ -423,6 +434,7 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
                 <div className="px-6 py-3 border-t border-[var(--moca-border)] flex justify-between gap-2 bg-[var(--moca-surface-2)]">
                     <div className="flex gap-2">
                         <button onClick={handleDelete} disabled={busy} className="px-4 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-black disabled:opacity-40">삭제</button>
+                        <button onClick={handleCopyLink} className="px-4 py-2 rounded-lg border border-[var(--moca-border)] text-[var(--moca-text)] text-xs font-black">{linkCopied ? '복사됨 ✓' : '링크 복사'}</button>
                         {isExternal && <button onClick={() => setEditing(true)} disabled={busy} className="px-4 py-2 rounded-lg border border-[var(--moca-border)] text-[var(--moca-text)] text-xs font-black disabled:opacity-40">수정</button>}
                     </div>
                     {effectiveStatus === 'open' && (

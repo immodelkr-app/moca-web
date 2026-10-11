@@ -20,6 +20,10 @@
             "dest": "/api/class-og?id=$1"
         },
         {
+            "src": "/s/casting/([^/?]+)",
+            "dest": "/api/casting-og?id=$1"
+        },
+        {
             "handle": "filesystem"
         },
         {
