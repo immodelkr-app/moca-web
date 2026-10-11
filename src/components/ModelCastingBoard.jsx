@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchCastings } from '../services/modelCastingService';
+import { fetchCastings, getCastingStatus } from '../services/modelCastingService';
 
 const STATUS_LABEL = {
     open: { label: '모집중', className: 'bg-[#EDE9FE] text-[#7C3AED]' },
@@ -41,7 +41,7 @@ const ModelCastingBoard = () => {
                 ) : (
                     <div className="space-y-3">
                         {castings.map((c) => {
-                            const status = STATUS_LABEL[c.status] || STATUS_LABEL.open;
+                            const status = STATUS_LABEL[getCastingStatus(c)] || STATUS_LABEL.open;
                             const totalHeadcount = (c.model_casting_roles || []).reduce((sum, r) => sum + (r.headcount || 0), 0);
                             return (
                                 <button

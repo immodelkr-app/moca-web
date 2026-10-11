@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchCastingDetail, fetchMyApplications } from '../services/modelCastingService';
+import { fetchCastingDetail, fetchMyApplications, getCastingStatus } from '../services/modelCastingService';
 import { getUser } from '../services/userService';
 import ModelCastingApplyModal from './ModelCastingApplyModal';
 
@@ -42,7 +42,7 @@ const ModelCastingDetailPage = () => {
         return <div className="text-center py-24 text-[#1F1235] font-black">공고를 찾을 수 없습니다.</div>;
     }
 
-    const status = STATUS_LABEL[casting.status] || STATUS_LABEL.open;
+    const status = STATUS_LABEL[getCastingStatus(casting)] || STATUS_LABEL.open;
     const companyEmail = casting.companies?.users?.email || '';
     const isExternal = casting.source_type === 'external';
 
@@ -91,7 +91,7 @@ const ModelCastingDetailPage = () => {
                     <div className="space-y-3">
                         {(casting.model_casting_roles || []).map((r) => {
                             const isApplied = appliedRoleIds.includes(r.id);
-                            const canApply = casting.status === 'open' && !isApplied;
+                            const canApply = getCastingStatus(casting) === 'open' && !isApplied;
                             return (
                                 <div key={r.id} className="border border-[#E8E0FA] rounded-2xl p-4">
                                     <div className="flex items-start justify-between gap-2">

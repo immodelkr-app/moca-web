@@ -7,6 +7,18 @@ import { notifyAdmin } from './solapiService';
 
 export const MONTHLY_POSTING_LIMIT = 3;
 
+// 한국 시간 기준 오늘 (YYYY-MM-DD)
+export const todayKst = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+
+/**
+ * 화면 표시용 실제 상태 — DB status는 'open'이어도 마감일(당일 포함)이 지났으면 'closed'로 취급
+ * (마감일 지나면 DB status를 바꿔주는 자동 처리는 없으므로 표시/지원 가능 여부는 이 함수로 판단)
+ */
+export const getCastingStatus = (casting) => {
+    if (casting.status === 'open' && casting.deadline && casting.deadline < todayKst()) return 'closed';
+    return casting.status;
+};
+
 // ── 스팸 방지: 이번 달 게시글 수 ──────────────────────────────
 
 /**
@@ -337,6 +349,16 @@ export const closeCasting = async (castingId) => {
         .from('model_castings')
         .update({ status: 'closed' })
         .eq('id', castingId);
+    return { error };
+};
+
+/**
+ * 게시글 삭제 (역할/지원 내역은 FK CASCADE로 함께 삭제) — 어드민 전용
+ * @param {string} castingId
+ */
+export const deleteCasting = async (castingId) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+    const { error } = await supabase.from('model_castings').delete().eq('id', castingId);
     return { error };
 };
 

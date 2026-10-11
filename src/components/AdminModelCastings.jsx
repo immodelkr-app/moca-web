@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCastings, importExternalCasting, createExternalCasting } from '../services/modelCastingService';
+import { fetchCastings, importExternalCasting, createExternalCasting, closeCasting, deleteCasting, getCastingStatus, todayKst } from '../services/modelCastingService';
 
 const CATEGORIES = [
     'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
@@ -73,6 +73,10 @@ const ExternalImportPanel = ({ onCreated }) => {
     const handleSave = async () => {
         if (!form.title.trim() || !form.deadline) {
             setError('제목과 마감일은 필수입니다.');
+            return;
+        }
+        if (form.deadline < todayKst()) {
+            setError('마감일이 이미 지났습니다. 마감일을 확인해 주세요.');
             return;
         }
         setSaving(true);
@@ -195,9 +199,29 @@ const STATUS_LABEL = {
 
 const getApplicantCount = (casting) => casting.model_casting_applications?.[0]?.count ?? 0;
 
-const CastingDetailModal = ({ casting, onClose }) => {
+const CastingDetailModal = ({ casting, onClose, onChanged }) => {
+    const [busy, setBusy] = useState(false);
     if (!casting) return null;
-    const status = STATUS_LABEL[casting.status] || STATUS_LABEL.open;
+    const effectiveStatus = getCastingStatus(casting);
+    const status = STATUS_LABEL[effectiveStatus] || STATUS_LABEL.open;
+    const isExternal = casting.source_type === 'external';
+
+    const handleCloseCasting = async () => {
+        if (!window.confirm('이 공고를 마감 처리할까요? 앱에서 "마감"으로 표시됩니다.')) return;
+        setBusy(true);
+        const { error } = await closeCasting(casting.id);
+        setBusy(false);
+        if (error) { alert('마감 처리에 실패했습니다: ' + error.message); return; }
+        onChanged();
+    };
+    const handleDelete = async () => {
+        if (!window.confirm('이 공고를 완전히 삭제할까요? 역할·지원 내역도 함께 삭제되며 되돌릴 수 없습니다.')) return;
+        setBusy(true);
+        const { error } = await deleteCasting(casting.id);
+        setBusy(false);
+        if (error) { alert('삭제에 실패했습니다: ' + error.message); return; }
+        onChanged();
+    };
 
     return (
         <div className="fixed inset-0 bg-[#0c0714]/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fadeIn" onClick={onClose}>
@@ -208,7 +232,9 @@ const CastingDetailModal = ({ casting, onClose }) => {
                 <div className="px-6 py-5 border-b border-[var(--moca-border)] flex items-start justify-between gap-3 bg-[var(--moca-surface-2)]">
                     <div>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
-                        <span className="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-[var(--moca-primary)]/10 text-[var(--moca-primary)]">지원자 {getApplicantCount(casting)}명</span>
+                        {isExternal
+                            ? <span className="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700">외부 공고</span>
+                            : <span className="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-[var(--moca-primary)]/10 text-[var(--moca-primary)]">지원자 {getApplicantCount(casting)}명</span>}
                         <h3 className="text-lg font-black text-[var(--moca-text)] mt-2">{casting.title}</h3>
                         <p className="text-[12px] text-[var(--moca-text-3)] font-bold mt-0.5">{casting.companies?.company_name || casting.producer_name || '-'} · {casting.category}</p>
                     </div>
@@ -229,6 +255,21 @@ const CastingDetailModal = ({ casting, onClose }) => {
                         <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-1">상세 설명</p>
                         <p className="whitespace-pre-wrap text-[var(--moca-text)] bg-[var(--moca-surface-2)] rounded-xl p-3 leading-relaxed">{casting.description || '작성된 설명이 없습니다.'}</p>
                     </div>
+
+                    {isExternal && (
+                        <>
+                            {casting.apply_guide && (
+                                <div>
+                                    <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-1">지원 방법 안내 (앱 노출)</p>
+                                    <p className="whitespace-pre-wrap text-[var(--moca-text)] bg-[var(--moca-surface-2)] rounded-xl p-3 leading-relaxed">{casting.apply_guide}</p>
+                                </div>
+                            )}
+                            <div>
+                                <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-1">원문 링크 {casting.source_name ? `· ${casting.source_name}` : ''}</p>
+                                <a href={casting.source_url} target="_blank" rel="noreferrer noopener" className="text-[var(--moca-primary)] font-bold underline break-all">{casting.source_url}</a>
+                            </div>
+                        </>
+                    )}
 
                     {casting.attachment_url && (
                         <div>
@@ -258,6 +299,13 @@ const CastingDetailModal = ({ casting, onClose }) => {
                                 ))}
                             </div>
                         </div>
+                    )}
+                </div>
+
+                <div className="px-6 py-3 border-t border-[var(--moca-border)] flex justify-between gap-2 bg-[var(--moca-surface-2)]">
+                    <button onClick={handleDelete} disabled={busy} className="px-4 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-black disabled:opacity-40">삭제</button>
+                    {effectiveStatus === 'open' && (
+                        <button onClick={handleCloseCasting} disabled={busy} className="px-4 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40">마감 처리</button>
                     )}
                 </div>
             </div>
@@ -308,7 +356,7 @@ const AdminModelCastings = () => {
                         </thead>
                         <tbody>
                             {castings.map((c) => {
-                                const status = STATUS_LABEL[c.status] || STATUS_LABEL.open;
+                                const status = STATUS_LABEL[getCastingStatus(c)] || STATUS_LABEL.open;
                                 const totalHeadcount = (c.model_casting_roles || []).reduce((sum, r) => sum + (r.headcount || 0), 0);
                                 return (
                                     <tr
@@ -323,7 +371,7 @@ const AdminModelCastings = () => {
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{c.category}</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)] max-w-[240px] truncate underline decoration-dotted underline-offset-2">{c.title}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{totalHeadcount}명</td>
-                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{getApplicantCount(c)}명</td>
+                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{c.source_type === 'external' ? <span className="text-[var(--moca-text-3)]">-</span> : `${getApplicantCount(c)}명`}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{c.deadline}</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(c.created_at).toLocaleDateString('ko-KR')}</td>
                                     </tr>
@@ -335,7 +383,11 @@ const AdminModelCastings = () => {
             )}
 
             {selectedCasting && (
-                <CastingDetailModal casting={selectedCasting} onClose={() => setSelectedCasting(null)} />
+                <CastingDetailModal
+                    casting={selectedCasting}
+                    onClose={() => setSelectedCasting(null)}
+                    onChanged={() => { setSelectedCasting(null); load(); }}
+                />
             )}
         </div>
     );

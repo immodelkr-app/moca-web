@@ -3,6 +3,7 @@
  * 대시보드 버튼의 N 뱃지 — 최근 3일 내 새 콘텐츠가 있고, 사용자가 아직 확인하지 않았을 때만 표시
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { todayKst } from './modelCastingService';
 
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 const SEEN_KEY_PREFIX = 'new_content_seen_';
@@ -10,7 +11,7 @@ const SEEN_KEY_PREFIX = 'new_content_seen_';
 // 섹션별 최신 콘텐츠 조회 (모카그램은 본인 글 제외)
 const SOURCES = {
     class: (since) => supabase.from('classes').select('created_at').gt('created_at', since),
-    casting: (since) => supabase.from('model_castings').select('created_at').eq('status', 'open').gt('created_at', since),
+    casting: (since) => supabase.from('model_castings').select('created_at').eq('status', 'open').gte('deadline', todayKst()).gt('created_at', since),
     cert: (since, nickname) => {
         let q = supabase.from('certification_posts').select('created_at').gt('created_at', since);
         if (nickname) q = q.neq('user_nickname', nickname);
