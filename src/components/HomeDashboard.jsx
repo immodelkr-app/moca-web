@@ -208,30 +208,42 @@ const HomeDashboard = () => {
                         </p>
                     </button>
 
-                    {/* 카드 2: 프로필 메일발송 */}
+                    {/* 카드 2: 모카캐스팅 */}
                     <button
-                        onClick={() => navigate('/home/smart-profile')}
+                        onClick={() => navigate('/home/castings')}
                         className="flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#F3E8FF] via-[#E9D5FF] to-[#D8B4FE] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
                     >
                         <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
-                            <span className="material-symbols-outlined text-[#7C3AED] text-[34px]">mark_email_read</span>
+                            <span className="material-symbols-outlined text-[#7C3AED] text-[34px]">campaign</span>
                         </div>
                         <h3 className="text-lg font-black text-[#1F1235] mb-1">
-                            프로필 메일발송
+                            모카캐스팅
                         </h3>
                         <p className="text-[11px] font-bold text-[#6D28D9]/80 leading-tight">
-                            에이전시에<br />프로필 발송
+                            모델 구인 공고<br />확인하고 지원
                         </p>
                     </button>
 
                 </div>
             </div>
 
-            {/* ── 4-1. 모델캐스팅 / 모카퀴즈 2열 카드 ── */}
+            {/* ── 4-1. 모카퀴즈 / 모카클래스 2열 카드 ── */}
             <div className="px-6 mb-8">
                 <div className="grid grid-cols-2 gap-4">
 
-                    {/* 카드 1: 모카클래스 */}
+                    {/* 카드 1: 모카퀴즈 */}
+                    <button
+                        onClick={() => navigate('/home/quiz')}
+                        className="flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#D946EF] to-[#A21CAF] border border-white/10 shadow-md active:scale-95 transition-all text-center group"
+                    >
+                        <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
+                            <span className="material-symbols-outlined text-white text-[34px]">quiz</span>
+                        </div>
+                        <h3 className="text-lg font-black text-white mb-1">모카퀴즈</h3>
+                        <p className="text-[11px] font-bold text-white/75 leading-tight">정답 맞추고<br />상품 받아가기</p>
+                    </button>
+
+                    {/* 카드 2: 모카클래스 */}
                     <button
                         onClick={() => openWithSeen('class', '/home/class')}
                         className="relative flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#7C3AED] to-[#5B21B6] border border-white/10 shadow-md active:scale-95 transition-all text-center group"
@@ -242,18 +254,6 @@ const HomeDashboard = () => {
                         </div>
                         <h3 className="text-lg font-black text-white mb-1">모카 클래스</h3>
                         <p className="text-[11px] font-bold text-white/75 leading-tight">실전 커리큘럼으로<br />배우는 모델 클래스</p>
-                    </button>
-
-                    {/* 카드 2: 모카퀴즈 */}
-                    <button
-                        onClick={() => navigate('/home/quiz')}
-                        className="flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-b from-[#D946EF] to-[#A21CAF] border border-white/10 shadow-md active:scale-95 transition-all text-center group"
-                    >
-                        <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
-                            <span className="material-symbols-outlined text-white text-[34px]">quiz</span>
-                        </div>
-                        <h3 className="text-lg font-black text-white mb-1">모카퀴즈</h3>
-                        <p className="text-[11px] font-bold text-white/75 leading-tight">정답 맞추고<br />상품 받아가기</p>
                     </button>
 
                 </div>
