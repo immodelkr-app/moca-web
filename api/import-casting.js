@@ -29,8 +29,6 @@ const MAX_TEXT_CHARS = 9000;
 
 const CATEGORIES = ['TV광고', '뮤직비디오', '화보촬영', 'TV프로그램', 'SNS/온라인예능', 'SNS/온라인광고', '홈쇼핑/라이브커머스', '교육/기업/홍보영상', '기타'];
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const decodeEntities = (s) => s
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
@@ -69,12 +67,11 @@ const buildPrompt = (pageText, url) => `아래는 모델/배우 구인 공고의
 - roles 각 항목: roleName, gender("male"|"female"|"any"), ageMin, ageMax(정수, "30대 중반"→35, "40대 후반"→48처럼 대표값. 모르면 null), headcount(정수), pay(예: "건당 20만원"), schedule, description(역할 조건 요약, 없으면 null)
 - description은 프로젝트 개요와 지원 조건을 읽기 쉽게 요약한 상세 설명 (줄바꿈 가능, 800자 이내). 연락처/이메일/전화번호는 넣지 마세요.
 - applyGuide는 지원 방법 안내 문구 (이메일 주소·제목 형식·첨부서류가 원문에 있으면 포함, 제목 말머리는 원문 그대로 유지). 없으면 null.
-- applyEmail은 지원서를 받는 이메일 주소 1개 (원문에 명시된 것만, 없으면 null). applySubject는 이메일 제목 형식 안내가 있으면 원문 그대로 (예: "[말머리] 작품명 / 이름 / 나이"), 없으면 null.
 - producerName은 제작사/구인자명. contractType은 계약서 작성 여부 요약(없으면 null).
 - 확실하지 않은 값은 지어내지 말고 null.
 
 출력 형식(JSON만, 코드블록·설명 금지):
-{"title":"","category":"","projectName":"","producerName":"","shootPeriod":"","shootLocation":"","deadline":"","contractType":"","description":"","applyGuide":"","applyEmail":"","applySubject":"","roles":[{"roleName":"","gender":"any","ageMin":null,"ageMax":null,"headcount":1,"pay":"","schedule":"","description":""}]}
+{"title":"","category":"","projectName":"","producerName":"","shootPeriod":"","shootLocation":"","deadline":"","contractType":"","description":"","applyGuide":"","roles":[{"roleName":"","gender":"any","ageMin":null,"ageMax":null,"headcount":1,"pay":"","schedule":"","description":""}]}
 
 --- 공고 본문 ---
 ${pageText}`;
@@ -176,8 +173,6 @@ export default async function handler(req, res) {
 
         const raw = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n');
         const casting = parseJson(raw);
-        // 형식이 올바른 이메일만 통과 (이상한 값은 비워서 어드민이 직접 입력하게 함)
-        casting.applyEmail = typeof casting.applyEmail === 'string' && EMAIL_RE.test(casting.applyEmail.trim()) ? casting.applyEmail.trim() : null;
 
         return res.status(200).json({ casting, sourceUrl, sourceName });
     } catch (error) {

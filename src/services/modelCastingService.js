@@ -559,19 +559,6 @@ export const fetchCastingEventStats = async () => {
     }]));
 };
 
-/**
- * 특정 공고의 원문 버튼 클릭 상세 (어드민) — 누가/언제
- */
-export const fetchCastingClicks = async (castingId) => {
-    if (!supabase) return [];
-    const { data, error } = await supabase.rpc('casting_events_admin_clicks', { p_admin_key: ADMIN_TOKEN, p_casting_id: castingId });
-    if (error) {
-        console.warn('[fetchCastingClicks] 오류:', error);
-        return [];
-    }
-    return data || [];
-};
-
 // ── 지원(바로지원) ────────────────────────────────────────
 
 /**

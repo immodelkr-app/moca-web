@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, findCastingsByTitle, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, fetchCastingClicks, getDdayInfo } from '../services/modelCastingService';
+import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, findCastingsByTitle, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, getDdayInfo } from '../services/modelCastingService';
 
 const CATEGORIES = [
     'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
     'SNS/온라인예능', 'SNS/온라인광고', '홈쇼핑/라이브커머스', '교육/기업/홍보영상', '기타',
 ];
-const SOURCE_CHANNELS = ['필름메이커스', '아임모델 카페', '밴드', '기타'];
 const GENDER_OPTIONS = [{ value: 'any', label: '무관' }, { value: 'female', label: '여자' }, { value: 'male', label: '남자' }];
 
 const inputCls = 'w-full border border-[var(--moca-border)] rounded-lg px-2.5 py-1.5 text-sm font-bold text-[var(--moca-text)] bg-white';
@@ -24,8 +23,6 @@ const toFormState = (casting) => ({
     applyGuide: casting.applyGuide || '',
     sourceUrl: casting.sourceUrl || '',
     sourceName: casting.sourceName || '',
-    applyEmail: casting.applyEmail || '',
-    applySubject: casting.applySubject || '',
     roles: (casting.roles || []).map((r) => ({
         roleName: r.roleName || '',
         gender: ['male', 'female', 'any'].includes(r.gender) ? r.gender : 'any',
@@ -62,16 +59,7 @@ const CastingFormFields = ({ form, setForm }) => {
             <div className="col-span-2"><label className={labelCls}>계약형태</label><input className={inputCls} value={form.contractType} onChange={(e) => setField('contractType', e.target.value)} /></div>
             <div className="col-span-2"><label className={labelCls}>상세 설명</label><textarea rows={6} className={inputCls} value={form.description} onChange={(e) => setField('description', e.target.value)} /></div>
             <div className="col-span-2"><label className={labelCls}>지원 방법 안내 (앱 상세에 문구로 노출됩니다)</label><textarea rows={4} className={inputCls} value={form.applyGuide} onChange={(e) => setField('applyGuide', e.target.value)} /></div>
-            <div><label className={labelCls}>출처 채널 (어드민 전용)</label>
-                <select className={inputCls} value={form.sourceName} onChange={(e) => setField('sourceName', e.target.value)}>
-                    <option value="">선택 안 함</option>
-                    {SOURCE_CHANNELS.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-            </div>
-            <div><label className={labelCls}>원문 링크 (비우면 "원문 공고 바로가기" 버튼 숨김)</label><input className={inputCls} value={form.sourceUrl} onChange={(e) => setField('sourceUrl', e.target.value)} placeholder="https://..." /></div>
-            <div><label className={labelCls}>지원 이메일 (입력 시 "이메일로 지원하기" 버튼 노출)</label><input type="email" className={inputCls} value={form.applyEmail} onChange={(e) => setField('applyEmail', e.target.value)} placeholder="example@company.com" /></div>
-            <div><label className={labelCls}>이메일 제목 (버튼 누르면 미리 입력됨)</label><input className={inputCls} value={form.applySubject} onChange={(e) => setField('applySubject', e.target.value)} placeholder="[말머리] 작품명 / 이름 / 나이" /></div>
-            <p className="col-span-2 text-[10px] font-bold text-[var(--moca-text-3)] -mt-1">※ 지원 이메일은 앱의 지원 버튼 표시에만 사용합니다. 영업·홍보 목적의 수집/발송에는 사용하지 마세요.</p>
+            <div className="col-span-2"><label className={labelCls}>원문 링크 (비우면 앱의 "원문 공고 바로가기" 버튼 숨김)</label><input className={inputCls} value={form.sourceUrl} onChange={(e) => setField('sourceUrl', e.target.value)} placeholder="https://..." /></div>
         </div>
 
         <div>
@@ -119,7 +107,7 @@ const castingToFormState = (c) => ({
         title: c.title, category: c.category, projectName: c.project_name, producerName: c.producer_name,
         shootPeriod: c.shoot_period, shootLocation: c.shoot_location, deadline: c.deadline,
         contractType: c.contract_type, description: c.description, applyGuide: c.apply_guide,
-        sourceUrl: c.source_url, sourceName: c.source_name, applyEmail: c.apply_email, applySubject: c.apply_subject,
+        sourceUrl: c.source_url, sourceName: c.source_name,
         roles: (c.model_casting_roles || []).map((r) => ({
             roleName: r.role_name, gender: r.gender, ageMin: r.age_min, ageMax: r.age_max,
             headcount: r.headcount, pay: r.pay, schedule: r.schedule, description: r.description,
@@ -181,38 +169,35 @@ const CastingEditModal = ({ casting, onClose, onSaved }) => {
 const ExternalImportPanel = ({ onCreated }) => {
     const [url, setUrl] = useState('');
     const [pastedText, setPastedText] = useState('');
-    const [pasteMode, setPasteMode] = useState(false);
-    const [channel, setChannel] = useState(SOURCE_CHANNELS[1]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [form, setForm] = useState(null);
 
-    const canImport = pasteMode ? pastedText.trim().length > 0 : url.trim().length > 0;
+    const canImport = url.trim().length > 0 || pastedText.trim().length > 0;
 
     const handleImport = async () => {
         if (!canImport) return;
         setLoading(true);
         setError('');
-        const { data, error: err, needText } = await importExternalCasting({
+        const { data, error: err } = await importExternalCasting({
             url: url.trim(),
-            text: pasteMode ? pastedText : undefined,
+            text: pastedText.trim() || undefined,
         });
         setLoading(false);
         if (err) {
             setError(err);
-            if (needText) setPasteMode(true);
             return;
         }
         setForm(toFormState({
             ...data.casting,
             sourceUrl: data.sourceUrl || '',
-            sourceName: data.sourceName || channel,
+            sourceName: data.sourceName || '',
         }));
     };
 
     const handleReset = () => {
-        setUrl(''); setPastedText(''); setPasteMode(false); setError(''); setForm(null);
+        setUrl(''); setPastedText(''); setError(''); setForm(null);
     };
 
     const handleSave = async () => {
@@ -244,44 +229,33 @@ const ExternalImportPanel = ({ onCreated }) => {
     return (
         <div className="mb-6 border border-[var(--moca-border)] rounded-2xl p-4 bg-[var(--moca-surface-2)]">
             <p className="text-sm font-black text-[var(--moca-text)] mb-0.5">외부 공고 가져오기</p>
-            <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-3">필름메이커스는 링크만 넣어도 되고, 카페·밴드처럼 링크로 읽을 수 없는 글은 본문을 붙여넣으면 AI가 요약해 아래 양식을 채웁니다. 확인·수정 후 등록하세요.</p>
+            <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-3">필름메이커스 링크를 넣고 [불러오기]를 누르세요. 읽어오지 못하거나 카페·밴드 글이면 아래 칸에 본문을 붙여넣으세요(링크는 비워도 됩니다). AI가 요약해 양식을 채우면 확인·수정 후 등록합니다.</p>
 
             {!form && (
-                <>
-                    <div className="flex gap-2">
-                        <input
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
-                            placeholder={pasteMode ? '원문 링크 (선택)' : 'https://www.filmmakers.co.kr/performerCasting/...'}
-                            className={inputCls}
-                        />
+                <div className="space-y-2">
+                    <input
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        placeholder="공고 링크 (선택) https://www.filmmakers.co.kr/performerCasting/..."
+                        className={inputCls}
+                    />
+                    <textarea
+                        value={pastedText}
+                        onChange={(e) => setPastedText(e.target.value)}
+                        rows={5}
+                        placeholder="공고 본문 붙여넣기 (링크로 못 읽었을 때 / 카페·밴드 글)"
+                        className={inputCls}
+                    />
+                    <div className="flex justify-end">
                         <button
                             onClick={handleImport}
                             disabled={loading || !canImport}
-                            className="shrink-0 px-4 py-1.5 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40"
+                            className="px-5 py-2 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40"
                         >
                             {loading ? '정리 중...' : '불러오기'}
                         </button>
                     </div>
-                    <label className="flex items-center gap-1.5 mt-2 text-[11px] font-bold text-[var(--moca-text-3)] cursor-pointer">
-                        <input type="checkbox" checked={pasteMode} onChange={(e) => setPasteMode(e.target.checked)} />
-                        본문을 직접 붙여넣어 등록 (링크가 없거나 읽을 수 없는 카페·밴드 글)
-                    </label>
-                    {pasteMode && (
-                        <>
-                            <select value={channel} onChange={(e) => setChannel(e.target.value)} className={`${inputCls} mt-2`}>
-                                {SOURCE_CHANNELS.map((c) => <option key={c} value={c}>출처: {c}</option>)}
-                            </select>
-                            <textarea
-                                value={pastedText}
-                                onChange={(e) => setPastedText(e.target.value)}
-                                rows={8}
-                                placeholder="공고 본문을 복사해 붙여넣은 뒤 '불러오기'를 누르세요."
-                                className={`${inputCls} mt-2`}
-                            />
-                        </>
-                    )}
-                </>
+                </div>
             )}
 
             {error && <p className="text-xs font-bold text-red-600 mt-2">{error}</p>}
@@ -326,16 +300,12 @@ const formatClickRate = (stats) => {
 };
 
 // 사용자가 눌러볼 외부 이동 버튼(원문 링크 / 이메일 지원)이 있는 외부 공고인지
-const hasOutlet = (c) => c.source_type === 'external' && !!(c.source_url || c.apply_email);
+const hasOutlet = (c) => c.source_type === 'external' && !!c.source_url;
 
 const getApplicantCount = (casting) => casting.model_casting_applications?.[0]?.count ?? 0;
 
 const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
     const [busy, setBusy] = useState(false);
-    const [clicks, setClicks] = useState(null);
-    useEffect(() => {
-        fetchCastingClicks(casting.id).then(setClicks);
-    }, [casting.id]);
     const [editing, setEditing] = useState(false);
     if (!casting) return null;
     const effectiveStatus = getCastingStatus(casting);
@@ -392,12 +362,10 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
                         <p className="whitespace-pre-wrap text-[var(--moca-text)] bg-[var(--moca-surface-2)] rounded-xl p-3 leading-relaxed">{casting.description || '작성된 설명이 없습니다.'}</p>
                     </div>
 
-                    <div className="grid grid-cols-5 gap-2 text-center">
+                    <div className="grid grid-cols-3 gap-2 text-center">
                         {[
-                            ['조회', stats?.views ?? 0],
                             ['조회 인원', stats?.viewUsers ?? 0],
-                            ['외부이동 클릭', hasOutlet(casting) ? (stats?.clicks ?? 0) : '-'],
-                            ['클릭 인원', stats?.clickUsers ?? 0],
+                            ['클릭 인원', hasOutlet(casting) ? (stats?.clickUsers ?? 0) : '-'],
                             ['클릭률', hasOutlet(casting) ? formatClickRate(stats) : '-'],
                         ].map(([label, value]) => (
                             <div key={label} className="rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] py-2">
@@ -406,20 +374,6 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
                             </div>
                         ))}
                     </div>
-
-                    {clicks && clicks.length > 0 && (
-                        <div>
-                            <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-1">원문 링크·이메일 지원 버튼을 누른 사람 ({clicks.length}건)</p>
-                            <div className="max-h-40 overflow-y-auto border border-[var(--moca-border)] rounded-xl divide-y divide-[var(--moca-border)]">
-                                {clicks.map((c, i) => (
-                                    <div key={i} className="px-3 py-1.5 flex items-center justify-between text-[12px]">
-                                        <span className="font-bold text-[var(--moca-text)]">{c.user_nickname || c.user_name || '(알 수 없음)'}{c.user_grade ? <span className="ml-1 text-[10px] text-[var(--moca-text-3)]">{c.user_grade}</span> : null}</span>
-                                        <span className="text-[10px] text-[var(--moca-text-3)]">{new Date(c.clicked_at).toLocaleString('ko-KR')}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
 
                     {isExternal && (
                         <>
@@ -430,11 +384,10 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
                                 </div>
                             )}
                             <div>
-                                <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-1">출처 {casting.source_name ? `· ${casting.source_name}` : '· 미지정'}</p>
+                                <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-1">원문 링크</p>
                                 {casting.source_url
                                     ? <a href={casting.source_url} target="_blank" rel="noreferrer noopener" className="text-[var(--moca-primary)] font-bold underline break-all">{casting.source_url}</a>
                                     : <p className="text-[12px] font-bold text-[var(--moca-text-3)]">원문 링크 없음 (앱에 원문 버튼 숨김)</p>}
-                                {casting.apply_email && <p className="text-[12px] font-bold text-[var(--moca-text)] mt-1 break-all">지원 이메일: {casting.apply_email}</p>}
                             </div>
                         </>
                     )}
@@ -524,8 +477,8 @@ const AdminModelCastings = () => {
                                 <th className="py-2 pr-3">제목</th>
                                 <th className="py-2 pr-3">모집인원</th>
                                 <th className="py-2 pr-3">지원자</th>
-                                <th className="py-2 pr-3">조회</th>
-                                <th className="py-2 pr-3" title="원문 링크 또는 이메일 지원 버튼을 누른 횟수">외부이동 클릭</th>
+                                <th className="py-2 pr-3">조회 인원</th>
+                                <th className="py-2 pr-3" title="원문 링크 버튼을 누른 사람 수">클릭 인원</th>
                                 <th className="py-2 pr-3">클릭률</th>
                                 <th className="py-2 pr-3">마감일</th>
                                 <th className="py-2 pr-3">등록일</th>
@@ -549,8 +502,8 @@ const AdminModelCastings = () => {
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)] max-w-[240px] truncate underline decoration-dotted underline-offset-2">{c.title}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{totalHeadcount}명</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{c.source_type === 'external' ? <span className="text-[var(--moca-text-3)]">-</span> : `${getApplicantCount(c)}명`}</td>
-                                        <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{stats[c.id]?.views ?? 0}</td>
-                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)]">{hasOutlet(c) ? `${stats[c.id]?.clicks ?? 0}` : <span className="text-[var(--moca-text-3)]">-</span>}</td>
+                                        <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{stats[c.id]?.viewUsers ?? 0}</td>
+                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)]">{hasOutlet(c) ? `${stats[c.id]?.clickUsers ?? 0}` : <span className="text-[var(--moca-text-3)]">-</span>}</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{hasOutlet(c) ? formatClickRate(stats[c.id]) : <span className="text-[var(--moca-text-3)]">-</span>}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)] whitespace-nowrap">{c.deadline || '-'}{getDdayInfo(c) && <span className="ml-1 font-black text-[var(--moca-primary)]">{getDdayInfo(c).label}</span>}{getNoDeadlineAge(c) && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getNoDeadlineAge(c).stale ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>{getNoDeadlineAge(c).stale ? `정리 필요 · ${getNoDeadlineAge(c).days}일째` : `등록 ${getNoDeadlineAge(c).days}일째`}</span>}</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(c.created_at).toLocaleDateString('ko-KR')}</td>
