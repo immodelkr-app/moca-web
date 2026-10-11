@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, closeCasting, deleteCasting, getCastingStatus, todayKst } from '../services/modelCastingService';
+import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, fetchCastingClicks } from '../services/modelCastingService';
 
 const CATEGORIES = [
     'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
@@ -277,8 +277,12 @@ const STATUS_LABEL = {
 
 const getApplicantCount = (casting) => casting.model_casting_applications?.[0]?.count ?? 0;
 
-const CastingDetailModal = ({ casting, onClose, onChanged }) => {
+const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
     const [busy, setBusy] = useState(false);
+    const [clicks, setClicks] = useState(null);
+    useEffect(() => {
+        fetchCastingClicks(casting.id).then(setClicks);
+    }, [casting.id]);
     const [editing, setEditing] = useState(false);
     if (!casting) return null;
     const effectiveStatus = getCastingStatus(casting);
@@ -334,6 +338,34 @@ const CastingDetailModal = ({ casting, onClose, onChanged }) => {
                         <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-1">상세 설명</p>
                         <p className="whitespace-pre-wrap text-[var(--moca-text)] bg-[var(--moca-surface-2)] rounded-xl p-3 leading-relaxed">{casting.description || '작성된 설명이 없습니다.'}</p>
                     </div>
+
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                        {[
+                            ['조회', stats?.views ?? 0],
+                            ['조회 인원', stats?.viewUsers ?? 0],
+                            ['원문 클릭', stats?.clicks ?? 0],
+                            ['클릭 인원', stats?.clickUsers ?? 0],
+                        ].map(([label, value]) => (
+                            <div key={label} className="rounded-xl bg-[var(--moca-surface-2)] border border-[var(--moca-border)] py-2">
+                                <p className="text-[10px] text-[var(--moca-text-3)] font-bold">{label}</p>
+                                <p className="text-lg font-black text-[var(--moca-primary)]">{value}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {clicks && clicks.length > 0 && (
+                        <div>
+                            <p className="text-[11px] text-[var(--moca-text-3)] font-bold mb-1">원문 공고 버튼을 누른 사람 ({clicks.length}건)</p>
+                            <div className="max-h-40 overflow-y-auto border border-[var(--moca-border)] rounded-xl divide-y divide-[var(--moca-border)]">
+                                {clicks.map((c, i) => (
+                                    <div key={i} className="px-3 py-1.5 flex items-center justify-between text-[12px]">
+                                        <span className="font-bold text-[var(--moca-text)]">{c.user_nickname || c.user_name || '(알 수 없음)'}{c.user_grade ? <span className="ml-1 text-[10px] text-[var(--moca-text-3)]">{c.user_grade}</span> : null}</span>
+                                        <span className="text-[10px] text-[var(--moca-text-3)]">{new Date(c.clicked_at).toLocaleString('ko-KR')}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {isExternal && (
                         <>
@@ -400,11 +432,13 @@ const AdminModelCastings = () => {
     const [castings, setCastings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCasting, setSelectedCasting] = useState(null);
+    const [stats, setStats] = useState({});
 
     const load = async () => {
         setLoading(true);
-        const { data } = await fetchCastings({});
+        const [{ data }, eventStats] = await Promise.all([fetchCastings({}), fetchCastingEventStats()]);
         setCastings(data);
+        setStats(eventStats);
         setLoading(false);
     };
 
@@ -433,6 +467,8 @@ const AdminModelCastings = () => {
                                 <th className="py-2 pr-3">제목</th>
                                 <th className="py-2 pr-3">모집인원</th>
                                 <th className="py-2 pr-3">지원자</th>
+                                <th className="py-2 pr-3">조회</th>
+                                <th className="py-2 pr-3">원문 클릭</th>
                                 <th className="py-2 pr-3">마감일</th>
                                 <th className="py-2 pr-3">등록일</th>
                             </tr>
@@ -455,6 +491,8 @@ const AdminModelCastings = () => {
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)] max-w-[240px] truncate underline decoration-dotted underline-offset-2">{c.title}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{totalHeadcount}명</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{c.source_type === 'external' ? <span className="text-[var(--moca-text-3)]">-</span> : `${getApplicantCount(c)}명`}</td>
+                                        <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{stats[c.id]?.views ?? 0}</td>
+                                        <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)]">{c.source_type === 'external' ? `${stats[c.id]?.clicks ?? 0}` : <span className="text-[var(--moca-text-3)]">-</span>}</td>
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{c.deadline}</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(c.created_at).toLocaleDateString('ko-KR')}</td>
                                     </tr>
@@ -468,6 +506,7 @@ const AdminModelCastings = () => {
             {selectedCasting && (
                 <CastingDetailModal
                     casting={selectedCasting}
+                    stats={stats[selectedCasting.id]}
                     onClose={() => setSelectedCasting(null)}
                     onChanged={() => { setSelectedCasting(null); load(); }}
                 />

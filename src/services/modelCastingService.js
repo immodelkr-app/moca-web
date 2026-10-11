@@ -427,6 +427,62 @@ export const deleteCasting = async (castingId) => {
     return { error };
 };
 
+// ── 조회/원문 클릭 기록 ───────────────────────────────────
+
+/**
+ * 공고 상세 조회('view') / 원문 공고 바로가기 클릭('source_click') 기록 — best-effort, 실패해도 화면엔 영향 없음
+ * 조회는 같은 브라우저 세션에서 공고당 1회만 기록 (새로고침으로 부풀려지는 것 방지)
+ */
+export const trackCastingEvent = async ({ castingId, userId, eventType }) => {
+    if (!supabase || !castingId) return;
+    try {
+        if (eventType === 'view') {
+            const key = `casting_view_${castingId}`;
+            if (sessionStorage.getItem(key)) return;
+            sessionStorage.setItem(key, '1');
+        }
+        await supabase.from('model_casting_events').insert([{
+            casting_id: castingId,
+            user_id: userId || null,
+            event_type: eventType,
+        }]);
+    } catch (err) {
+        console.warn('[trackCastingEvent] 기록 실패:', err);
+    }
+};
+
+/**
+ * 공고별 조회/클릭 집계 (어드민) — { [castingId]: { views, viewUsers, clicks, clickUsers, lastClickAt } }
+ */
+export const fetchCastingEventStats = async () => {
+    if (!supabase) return {};
+    const { data, error } = await supabase.rpc('casting_events_admin_stats', { p_admin_key: ADMIN_TOKEN });
+    if (error) {
+        console.warn('[fetchCastingEventStats] 오류:', error);
+        return {};
+    }
+    return Object.fromEntries((data || []).map((r) => [r.casting_id, {
+        views: Number(r.views),
+        viewUsers: Number(r.view_users),
+        clicks: Number(r.clicks),
+        clickUsers: Number(r.click_users),
+        lastClickAt: r.last_click_at,
+    }]));
+};
+
+/**
+ * 특정 공고의 원문 버튼 클릭 상세 (어드민) — 누가/언제
+ */
+export const fetchCastingClicks = async (castingId) => {
+    if (!supabase) return [];
+    const { data, error } = await supabase.rpc('casting_events_admin_clicks', { p_admin_key: ADMIN_TOKEN, p_casting_id: castingId });
+    if (error) {
+        console.warn('[fetchCastingClicks] 오류:', error);
+        return [];
+    }
+    return data || [];
+};
+
 // ── 지원(바로지원) ────────────────────────────────────────
 
 /**

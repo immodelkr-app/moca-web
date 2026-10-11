@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchCastingDetail, fetchMyApplications, getCastingStatus } from '../services/modelCastingService';
+import { fetchCastingDetail, fetchMyApplications, getCastingStatus, trackCastingEvent } from '../services/modelCastingService';
 import { getUser } from '../services/userService';
 import ModelCastingApplyModal from './ModelCastingApplyModal';
 
@@ -34,6 +34,10 @@ const ModelCastingDetailPage = () => {
     };
 
     useEffect(() => { load(); }, [id]);
+    useEffect(() => {
+        trackCastingEvent({ castingId: id, userId: currentUser?.id, eventType: 'view' });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
 
     if (loading) {
         return <div className="flex items-center justify-center min-h-screen bg-white text-[#9CA3AF] font-bold text-sm">불러오는 중...</div>;
@@ -137,6 +141,7 @@ const ModelCastingDetailPage = () => {
 
                         <a
                             href={casting.source_url}
+                            onClick={() => trackCastingEvent({ castingId: casting.id, userId: currentUser?.id, eventType: 'source_click' })}
                             target="_blank"
                             rel="noreferrer noopener"
                             className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-[#9333EA] text-white font-black text-sm active:scale-[0.98] transition-all"
