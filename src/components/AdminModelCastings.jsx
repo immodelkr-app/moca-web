@@ -275,6 +275,15 @@ const STATUS_LABEL = {
     cancelled: { label: '취소됨', className: 'bg-red-100 text-red-600' },
 };
 
+// 마감일 없는 모집중 공고는 자동 마감되지 않으므로, 등록 경과일을 보여 주고 일정 기간이 지나면 정리 대상으로 표시
+const STALE_DAYS = 30;
+const getNoDeadlineAge = (casting) => {
+    if (casting.deadline || getCastingStatus(casting) !== 'open') return null;
+    const createdKst = new Date(new Date(casting.created_at).getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+    const days = Math.max(0, Math.round((Date.parse(todayKst()) - Date.parse(createdKst)) / 86400000));
+    return { days, stale: days >= STALE_DAYS };
+};
+
 // 클릭률(%) = 원문 클릭 인원 ÷ 조회 인원. 조회가 없으면 null
 const getClickRate = (stats) => {
     if (!stats || !stats.viewUsers) return null;
@@ -340,7 +349,7 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
                         <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">계약형태</p><p className="font-bold text-[var(--moca-text)]">{casting.contract_type || '-'}</p></div>
                         <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">촬영기간</p><p className="font-bold text-[var(--moca-text)]">{casting.shoot_period || '-'}</p></div>
                         <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">촬영장소</p><p className="font-bold text-[var(--moca-text)]">{casting.shoot_location || '-'}</p></div>
-                        <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">마감일</p><p className="font-bold text-[var(--moca-text)]">{casting.deadline || '없음'}{getDdayInfo(casting) ? ` (${getDdayInfo(casting).label})` : ''}</p></div>
+                        <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">마감일</p><p className="font-bold text-[var(--moca-text)]">{casting.deadline || '없음'}{getDdayInfo(casting) ? ` (${getDdayInfo(casting).label})` : ''}{getNoDeadlineAge(casting) ? ` · 등록 ${getNoDeadlineAge(casting).days}일째${getNoDeadlineAge(casting).stale ? ' (정리 필요)' : ''}` : ''}</p></div>
                         <div><p className="text-[11px] text-[var(--moca-text-3)] font-bold">등록일</p><p className="font-bold text-[var(--moca-text)]">{new Date(casting.created_at).toLocaleDateString('ko-KR')}</p></div>
                     </div>
 
@@ -506,7 +515,7 @@ const AdminModelCastings = () => {
                                         <td className="py-2.5 pr-3 text-[var(--moca-text-3)]">{stats[c.id]?.views ?? 0}</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-text)]">{c.source_type === 'external' ? `${stats[c.id]?.clicks ?? 0}` : <span className="text-[var(--moca-text-3)]">-</span>}</td>
                                         <td className="py-2.5 pr-3 font-bold text-[var(--moca-primary)]">{c.source_type === 'external' ? formatClickRate(stats[c.id]) : <span className="text-[var(--moca-text-3)]">-</span>}</td>
-                                        <td className="py-2.5 pr-3 text-[var(--moca-text-3)] whitespace-nowrap">{c.deadline || '-'}{getDdayInfo(c) && <span className="ml-1 font-black text-[var(--moca-primary)]">{getDdayInfo(c).label}</span>}</td>
+                                        <td className="py-2.5 pr-3 text-[var(--moca-text-3)] whitespace-nowrap">{c.deadline || '-'}{getDdayInfo(c) && <span className="ml-1 font-black text-[var(--moca-primary)]">{getDdayInfo(c).label}</span>}{getNoDeadlineAge(c) && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getNoDeadlineAge(c).stale ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>{getNoDeadlineAge(c).stale ? `정리 필요 · ${getNoDeadlineAge(c).days}일째` : `등록 ${getNoDeadlineAge(c).days}일째`}</span>}</td>
                                         <td className="py-2.5 pr-3 text-[10px] text-[var(--moca-text-3)]">{new Date(c.created_at).toLocaleDateString('ko-KR')}</td>
                                     </tr>
                                 );
