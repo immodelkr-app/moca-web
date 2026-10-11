@@ -160,6 +160,7 @@ const ModelCastingDetailPage = () => {
 
                         <p className={`text-[11px] text-[#9CA3AF] font-bold text-center ${casting.source_url ? '-mt-3' : ''}`}>
                             이 공고는 외부 공고를 모카가 요약한 것입니다. 지원은 위 안내에 따라 제작사에 직접 해주세요.
+                            <br />공고의 진위와 계약 조건은 모카가 보증하지 않으니, 지원 전 직접 확인해 주세요.
                         </p>
 
                     </>
