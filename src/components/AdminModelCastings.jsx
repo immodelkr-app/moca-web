@@ -468,7 +468,7 @@ const AdminModelCastings = () => {
     // 공고 알림 수동 발송 (전체 회원 푸시 — 되돌릴 수 없으므로 내용 확인 후 발송)
     const handleSendPush = async (c) => {
         const dday = getDdayInfo(c);
-        const title = '📢 새 모카캐스팅 공고';
+        const title = '📢 NEW 모카캐스팅 공고';
         const body = `${c.title}${dday ? ` · ${dday.label}` : ''}`.slice(0, 80);
         const already = c.last_push_at
             ? `\n\n※ 이미 ${new Date(c.last_push_at).toLocaleString('ko-KR')}에 발송한 공고입니다.`
