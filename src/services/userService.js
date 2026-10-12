@@ -59,6 +59,25 @@ export const saveUserToSupabase = async (userData) => {
         return { data: null, error: { message: 'Supabase not configured – using localStorage' } };
     }
 
+    // 같은 전화번호로 이미 가입한 같은 유형(모델/업체) 계정이 있으면 가입 차단
+    // (기존 DB에 하이픈 유무가 섞여 있어 두 형태 모두 비교)
+    const phoneDigits = (userData.phone || '').replace(/\D/g, '');
+    if (phoneDigits.length >= 10) {
+        const hyphenated = phoneDigits.length === 11
+            ? `${phoneDigits.slice(0, 3)}-${phoneDigits.slice(3, 7)}-${phoneDigits.slice(7)}`
+            : phoneDigits;
+        const { data: dupRows, error: dupErr } = await supabase
+            .from('users')
+            .select('id')
+            .in('phone', [phoneDigits, hyphenated])
+            .eq('user_type', userData.user_type || 'model')
+            .limit(1);
+        if (dupErr) return { data: null, error: dupErr };
+        if (dupRows && dupRows.length > 0) {
+            return { data: null, error: { message: '이미 가입된 전화번호입니다. 아이디·비밀번호 찾기를 이용해 주세요.' } };
+        }
+    }
+
     const { data, error } = await supabase
         .from('users')
         .insert([{
