@@ -174,6 +174,8 @@ const AdminPage = () => {
     const DEFAULT_LIVE_MSG = `[아임모델 모카] 지금 모델뷰티에서 라이브방송 진행 중이에요! 🔴\n앱을 설치하고 바로 시청해보세요.\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp`;
     const DEFAULT_CASTING_INSTALL_MSG = `[아임모델 모카] 안녕하세요!\n모카캐스팅에 새 모델 구인 공고가 계속 올라오고 있어요. 앱을 설치하고 알림을 켜두시면 새 공고를 푸시 알림으로 가장 먼저 받아보실 수 있습니다.\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp\n(구글플레이에서 '모두의 캐스팅' 검색)\n\n설치 후 알림 허용을 눌러주세요!`;
     const DEFAULT_CASTING_PERMISSION_MSG = `[아임모델 모카] 안녕하세요!\n모카캐스팅의 새 모델 구인 공고를 푸시 알림으로 받아보세요. 지금은 앱 알림이 꺼져 있어 새 공고 소식을 받지 못하고 계십니다.\n\n👉 알림 켜는 방법:\n스마트폰 설정 > 애플리케이션 > '모두의 캐스팅' > 알림 허용\n\n👉 모카캐스팅 바로 보기:\nhttps://immoca.kr/open-app?path=home/castings`;
+    const DEFAULT_CLASS_INSTALL_MSG = `[아임모델 모카] 안녕하세요!\n모카클래스에 새 수업이 계속 열리고 있어요. 앱을 설치하고 알림을 켜두시면 새 클래스를 푸시 알림으로 가장 먼저 받아보실 수 있습니다.\n\n👉 구글 플레이 설치:\nhttps://play.google.com/store/apps/details?id=com.immodel.mocapp\n(구글플레이에서 '모두의 캐스팅' 검색)\n\n설치 후 알림 허용을 눌러주세요!`;
+    const DEFAULT_CLASS_PERMISSION_MSG = `[아임모델 모카] 안녕하세요!\n모카클래스의 새 수업 소식을 푸시 알림으로 받아보세요. 지금은 앱 알림이 꺼져 있어 새 클래스 소식을 받지 못하고 계십니다.\n\n👉 알림 켜는 방법:\n스마트폰 설정 > 애플리케이션 > '모두의 캐스팅' > 알림 허용\n\n👉 모카클래스 바로 보기:\nhttps://immoca.kr/open-app?path=home/class`;
     const [noPushUsers, setNoPushUsers] = useState([]);
     const [noAppUsers, setNoAppUsers] = useState([]);
     const [noPermissionUsers, setNoPermissionUsers] = useState([]);
@@ -2763,7 +2765,10 @@ const AdminPage = () => {
                         return consentOnly ? list.filter(u => u.marketing_consent) : list;
                     };
                     const encourageTargetName = { noapp: '앱 미설치 회원', nopermission: '알림 미승인 회원', nopush: '푸시 미수신 전체', all: '전체 회원' }[msgForm.target];
+                    // 정보통신망법 준수: 21:00~08:00(야간)에는 광고/정보성 문자·친구톡 발송 금지
+                    const isQuietHours = () => { const h = new Date().getHours(); return h >= 21 || h < 8; };
                     const handleSendMsg = async () => {
+                        if (isQuietHours()) { setMsgConfirmOpen(false); setMsgResult({ success: false, error: '21:00~08:00에는 문자·친구톡을 발송할 수 없습니다. 08:00 이후 다시 시도해주세요.' }); return; }
                         const targets = getEncourageTargets();
                         const phones = targets.map(u => u.phone).filter(Boolean);
                         if (!phones.length) return;
@@ -3045,6 +3050,7 @@ const AdminPage = () => {
                                                 <button onClick={() => setMsgForm(f => ({ ...f, content: DEFAULT_TRIAL_MSG }))} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100 transition-colors">🎁 체험단 모집</button>
                                                 <button onClick={() => setMsgForm(f => ({ ...f, content: DEFAULT_LIVE_MSG }))} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-red-50 text-red-700 border-red-200 hover:bg-red-100 transition-colors">🔴 라이브 시작</button>
                                                 <button onClick={() => setMsgForm(f => ({ ...f, content: f.target === 'nopermission' ? DEFAULT_CASTING_PERMISSION_MSG : DEFAULT_CASTING_INSTALL_MSG }))} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100 transition-colors">📢 모카캐스팅 알림 받기</button>
+                                                <button onClick={() => setMsgForm(f => ({ ...f, content: f.target === 'nopermission' ? DEFAULT_CLASS_PERMISSION_MSG : DEFAULT_CLASS_INSTALL_MSG }))} className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 transition-colors">🆕 모카클래스 알림 받기</button>
                                             </div>
                                         </div>
                                         <div>
@@ -3056,8 +3062,14 @@ const AdminPage = () => {
                                                 className="w-full bg-[var(--moca-surface-2)] border border-[var(--moca-border)] rounded-xl px-4 py-3 text-sm text-[var(--moca-text)] focus:outline-none focus:border-orange-400 transition-colors resize-none" />
                                             <p className="text-right text-[10px] text-[var(--moca-text-3)] mt-1">{msgForm.content.length}자</p>
                                         </div>
+                                        {isQuietHours() && (
+                                            <div className="rounded-xl bg-slate-100 border border-slate-200 px-4 py-2.5 text-[11px] font-bold text-slate-500 flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-[16px]">bedtime</span>
+                                                21:00~08:00에는 문자·친구톡 발송이 제한됩니다. 08:00 이후 다시 시도해주세요.
+                                            </div>
+                                        )}
                                         <button onClick={() => { if (msgForm.content.trim()) setMsgConfirmOpen(true); }}
-                                            disabled={isSendingEncourage || !msgForm.content.trim() || getEncourageTargets().length === 0}
+                                            disabled={isSendingEncourage || !msgForm.content.trim() || getEncourageTargets().length === 0 || isQuietHours()}
                                             className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                                             {isSendingEncourage ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</> : <><span className="material-symbols-outlined text-[18px]">send</span>{
                                                 `${encourageTargetName} ${getEncourageTargets().length}명에게 발송`
