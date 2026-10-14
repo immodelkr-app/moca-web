@@ -447,6 +447,86 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
     );
 };
 
+// 등록된 공고에서 업체명/연락처/지원 이메일을 중복 없이 모아 보여주는 패널 (내부 참고/내보내기 전용).
+// 주의: apply_email은 모델이 "이메일로 지원하기"를 누를 때 쓰라고 만든 값(20261011_05 마이그레이션 주석)이라
+// 여기서도 화면에 보여주고 CSV로 내려받는 것만 하고, 발송 기능은 붙이지 않는다.
+const CastingContactsPanel = ({ castings }) => {
+    const rows = React.useMemo(() => {
+        const list = (castings || []).map((c) => ({
+            castingId: c.id,
+            title: c.title,
+            type: c.source_type === 'external' ? '외부' : '내부(업체계정)',
+            companyName: c.companies?.company_name || c.producer_name || c.source_name || '-',
+            contactName: c.companies?.contact_name || '-',
+            contactPhone: c.companies?.contact_phone || c.companies?.company_phone || '-',
+            applyEmail: c.apply_email || '-',
+            verification: c.companies?.verification_status || (c.source_type === 'external' ? '-' : '-'),
+            createdAt: c.created_at,
+        }));
+        // 같은 업체/연락처가 여러 공고를 올린 경우 최신 공고 1건만 대표로 남김
+        const seen = new Map();
+        for (const r of list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))) {
+            const key = `${r.companyName}|${r.contactPhone}|${r.applyEmail}`;
+            if (!seen.has(key)) seen.set(key, r);
+        }
+        return Array.from(seen.values());
+    }, [castings]);
+
+    const handleExportCsv = () => {
+        const header = ['업체명', '담당자', '연락처', '지원 이메일', '유형', '인증상태', '최근 공고명', '최근 등록일'];
+        const body = rows.map((r) => [
+            r.companyName, r.contactName, r.contactPhone, r.applyEmail, r.type, r.verification, r.title,
+            new Date(r.createdAt).toLocaleDateString('ko-KR'),
+        ]);
+        const csv = [header, ...body]
+            .map((cols) => cols.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+        const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `모카캐스팅_업체연락처_${todayKst()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    return (
+        <div className="mb-5 border border-[var(--moca-border)] rounded-xl p-4 bg-[var(--moca-surface-2)]">
+            <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-black text-[var(--moca-text)]">📇 업체 연락처 모음 <span className="text-[var(--moca-primary)]">{rows.length}</span>건 (업체·연락처 기준 중복 제거)</p>
+                <button onClick={handleExportCsv} disabled={rows.length === 0} className="px-3 py-1.5 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40">CSV로 내보내기</button>
+            </div>
+            <p className="text-[11px] text-[var(--moca-text-3)] mb-3">내부 참고/내보내기 용도입니다. 지원 이메일은 영업·홍보 발송에 쓰지 않습니다.</p>
+            <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                    <thead>
+                        <tr className="text-left text-[10px] text-[var(--moca-text-3)] font-bold border-b border-[var(--moca-border)]">
+                            <th className="py-1.5 pr-3">업체명</th>
+                            <th className="py-1.5 pr-3">담당자</th>
+                            <th className="py-1.5 pr-3">연락처</th>
+                            <th className="py-1.5 pr-3">지원 이메일</th>
+                            <th className="py-1.5 pr-3">유형</th>
+                            <th className="py-1.5 pr-3">최근 공고</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows.map((r) => (
+                            <tr key={r.castingId} className="border-b border-[var(--moca-border)] last:border-0">
+                                <td className="py-1.5 pr-3 font-bold text-[var(--moca-text)]">{r.companyName}</td>
+                                <td className="py-1.5 pr-3 text-[var(--moca-text-3)]">{r.contactName}</td>
+                                <td className="py-1.5 pr-3 text-[var(--moca-text-3)]">{r.contactPhone}</td>
+                                <td className="py-1.5 pr-3 text-[var(--moca-text-3)]">{r.applyEmail}</td>
+                                <td className="py-1.5 pr-3 text-[var(--moca-text-3)]">{r.type}</td>
+                                <td className="py-1.5 pr-3 max-w-[200px] truncate text-[var(--moca-text-3)]">{r.title}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
 const AdminModelCastings = () => {
     const [castings, setCastings] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -454,6 +534,7 @@ const AdminModelCastings = () => {
     const [stats, setStats] = useState({});
     const [pushingId, setPushingId] = useState(null);
     const [pushStatus, setPushStatus] = useState({}); // { [castingId]: '발송 완료 · 성공 N건 / 실패 M건' | '발송 실패: ...' }
+    const [showContacts, setShowContacts] = useState(false);
 
     const load = async () => {
         setLoading(true);
@@ -492,8 +573,13 @@ const AdminModelCastings = () => {
             <ExternalImportPanel onCreated={load} />
             <div className="flex items-center justify-between mb-5">
                 <p className="text-sm font-black text-[var(--moca-text)]">전체 모카캐스팅 게시글 <span className="text-[var(--moca-primary)]">{castings.length}</span>건</p>
-                <button onClick={load} className="text-xs font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">새로고침</button>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => setShowContacts((v) => !v)} className="text-xs font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">📇 업체 연락처 모음 {showContacts ? '숨기기' : '보기'}</button>
+                    <button onClick={load} className="text-xs font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">새로고침</button>
+                </div>
             </div>
+
+            {showContacts && <CastingContactsPanel castings={castings} />}
 
             {loading ? (
                 <p className="text-sm text-[var(--moca-text-3)] font-bold py-10 text-center">불러오는 중...</p>

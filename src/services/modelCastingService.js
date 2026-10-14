@@ -443,7 +443,7 @@ export const fetchCastings = async ({ category, excludeClosed } = {}) => {
 
     let query = supabase
         .from('model_castings')
-        .select('*, companies(company_name), model_casting_roles(*), model_casting_applications(count)')
+        .select('*, companies(company_name, contact_name, contact_phone, company_phone, verification_status), model_casting_roles(*), model_casting_applications(count)')
         .order('created_at', { ascending: false });
 
     if (category) query = query.eq('category', category);
