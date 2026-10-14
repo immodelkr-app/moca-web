@@ -3017,10 +3017,10 @@ const AdminPage = () => {
                                             <p className="text-xs font-bold text-[var(--moca-text-2)] mb-2">👥 발송 대상</p>
                                             <div className="grid grid-cols-2 gap-2">
                                                 {[
-                                                    { key: 'noapp', label: `앱 미설치 (${noAppUsers.length}명)`, color: 'bg-orange-500' },
-                                                    { key: 'nopermission', label: `알림 미승인 (${noPermissionUsers.length}명)`, color: 'bg-red-500' },
-                                                    { key: 'nopush', label: `전체 미등록 (${noPushUsers.length}명)`, color: 'bg-gray-700' },
-                                                    { key: 'all', label: `전체 회원 (${allPhoneUsers.length}명)`, color: 'bg-blue-500' },
+                                                    { key: 'noapp', label: `앱 미설치 (${noAppUsers.length}명 · 동의 ${noAppUsers.filter(u => u.marketing_consent).length}명)`, color: 'bg-orange-500' },
+                                                    { key: 'nopermission', label: `알림 미승인 (${noPermissionUsers.length}명 · 동의 ${noPermissionUsers.filter(u => u.marketing_consent).length}명)`, color: 'bg-red-500' },
+                                                    { key: 'nopush', label: `전체 미등록 (${noPushUsers.length}명 · 동의 ${noPushUsers.filter(u => u.marketing_consent).length}명)`, color: 'bg-gray-700' },
+                                                    { key: 'all', label: `전체 회원 (${allPhoneUsers.length}명 · 동의 ${allPhoneUsers.filter(u => u.marketing_consent).length}명)`, color: 'bg-blue-500' },
                                                 ].map(t => (
                                                     <button key={t.key} onClick={() => {
                                                         let defaultContent = DEFAULT_INSTALL_MSG;
