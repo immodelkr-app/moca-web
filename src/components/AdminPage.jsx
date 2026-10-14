@@ -981,31 +981,33 @@ const AdminPage = () => {
 
     // 인증 후 - 어드민 대시보드
     return (
-        <div className="min-h-screen bg-[var(--moca-bg)]">
+        <div className="admin-root min-h-screen bg-[var(--moca-bg)]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[var(--moca-border)] px-6 py-4">
-                <div className="max-w-6xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[var(--moca-border)] px-3 sm:px-6 py-3 sm:py-4">
+                <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <span className="material-symbols-outlined text-[var(--moca-primary)]">admin_panel_settings</span>
-                        <h1 className="text-lg font-black text-[var(--moca-text)]">아임모델 어드민</h1>
+                        <h1 className="text-base sm:text-lg font-black text-[var(--moca-text)] truncate">아임모델 어드민</h1>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                         {successMsg && (
-                            <span className="text-green-400 text-sm font-bold animate-pulse">{successMsg}</span>
+                            <span className="text-green-400 text-xs sm:text-sm font-bold animate-pulse">{successMsg}</span>
                         )}
                         <button
                             onClick={fetchData}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--moca-surface-2)] hover:bg-[var(--moca-primary-lt)] border border-[var(--moca-border)] text-sm font-bold transition-all"
+                            className="flex items-center gap-1.5 px-2.5 sm:px-4 py-2 rounded-xl bg-[var(--moca-surface-2)] hover:bg-[var(--moca-primary-lt)] border border-[var(--moca-border)] text-sm font-bold transition-all"
+                            aria-label="새로고침"
                         >
                             <span className="material-symbols-outlined text-[16px]">refresh</span>
-                            새로고침
+                            <span className="hidden sm:inline">새로고침</span>
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-1 text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-sm transition-colors mr-2"
+                            className="flex items-center gap-1 text-[var(--moca-text-3)] hover:text-[var(--moca-text)] text-sm transition-colors sm:mr-2"
+                            aria-label="로그아웃"
                         >
                             <span className="material-symbols-outlined text-[16px]">logout</span>
-                            로그아웃
+                            <span className="hidden sm:inline">로그아웃</span>
                         </button>
                         <button
                             onClick={() => navigate('/')}
@@ -1017,10 +1019,10 @@ const AdminPage = () => {
                 </div>
             </header>
 
-            <div className="max-w-6xl mx-auto px-6 py-8">
+            <div className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
 
                 {/* 탭 네비게이션 */}
-                <div className="flex gap-1 mb-8 border-b border-[var(--moca-border)] overflow-x-auto admin-tab-scrollbar whitespace-nowrap pb-0 scroll-smooth">
+                <div className="flex gap-1 mb-5 sm:mb-8border-b border-[var(--moca-border)] overflow-x-auto admin-tab-scrollbar whitespace-nowrap pb-0 scroll-smooth">
                     <button
                         onClick={() => setActiveTab('users')}
                         className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'users' ? 'border-[var(--moca-primary)] text-[var(--moca-primary)] bg-[var(--moca-primary)]/5' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'

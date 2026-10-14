@@ -116,6 +116,16 @@
     padding-right: 16px; /* 마지막 탭이 잘리지 않도록 여백 */
   }
 
+  /* 모바일 어드민 최적화: 가로 넘침 방지, 고정 그리드 축소, 모달 스크롤, 터치 영역 확보 */
+  @media (max-width: 640px) {
+    .admin-root { overflow-x: hidden; }
+    .admin-root .grid.grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .admin-root .fixed.inset-0 > div { max-height: 92vh; overflow-y: auto; }
+    .admin-root input, .admin-root select, .admin-root textarea { font-size: 16px; } /* iOS 자동 확대 방지 */
+    .admin-root .admin-tab-scrollbar button { padding-top: 10px; padding-bottom: 12px; }
+    .admin-root .rounded-2xl.p-8 { padding: 1.25rem; }
+  }
+
   /* Fixed bottom position for CTA above bottom navigation tab */
   .custom-cta-bottom {
     bottom: calc(64px + env(safe-area-inset-bottom, 0px));
