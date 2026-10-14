@@ -450,16 +450,31 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
 // 등록된 공고에서 업체명/연락처/지원 이메일을 중복 없이 모아 보여주는 패널 (내부 참고/내보내기 전용).
 // 주의: apply_email은 모델이 "이메일로 지원하기"를 누를 때 쓰라고 만든 값(20261011_05 마이그레이션 주석)이라
 // 여기서도 화면에 보여주고 CSV로 내려받는 것만 하고, 발송 기능은 붙이지 않는다.
+// 외부 공고는 apply_email 컬럼이 비어 있고 연락처가 "지원 방법 안내" 문구에만 있어서, 문구에서 이메일/전화번호를 뽑아 쓴다.
+const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g;
+const PHONE_RE = /(?:\+?82[-.\s]?)?0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}/g;
+const extractContacts = (text) => {
+    const src = text || '';
+    const emails = [...new Set(src.match(EMAIL_RE) || [])];
+    const phones = [...new Set((src.replace(EMAIL_RE, ' ').match(PHONE_RE) || []).map((p) => p.trim()))];
+    return { emails, phones };
+};
+
 const CastingContactsPanel = ({ castings }) => {
     const rows = React.useMemo(() => {
-        const list = (castings || []).map((c) => ({
+        const list = (castings || []).map((c) => {
+            const found = extractContacts(`${c.apply_guide || ''}\n${c.description || ''}`);
+            const phone = c.companies?.contact_phone || c.companies?.company_phone || found.phones.join(', ');
+            const email = c.apply_email || found.emails.join(', ');
+            return { c, phone, email };
+        }).map(({ c, phone, email }) => ({
             castingId: c.id,
             title: c.title,
             type: c.source_type === 'external' ? '외부' : '내부(업체계정)',
             companyName: c.companies?.company_name || c.producer_name || c.source_name || '-',
             contactName: c.companies?.contact_name || '-',
-            contactPhone: c.companies?.contact_phone || c.companies?.company_phone || '-',
-            applyEmail: c.apply_email || '-',
+            contactPhone: phone || '-',
+            applyEmail: email || '-',
             verification: c.companies?.verification_status || (c.source_type === 'external' ? '-' : '-'),
             createdAt: c.created_at,
         }));
@@ -472,9 +487,20 @@ const CastingContactsPanel = ({ castings }) => {
         return Array.from(seen.values());
     }, [castings]);
 
+    const [filter, setFilter] = React.useState('all');
+    const hasPhone = (r) => r.contactPhone !== '-';
+    const hasEmail = (r) => r.applyEmail !== '-';
+    const FILTERS = [
+        { key: 'all', label: '전체', test: () => true },
+        { key: 'phone', label: '연락처 있음', test: hasPhone },
+        { key: 'email', label: '이메일 있음', test: hasEmail },
+        { key: 'both', label: '둘 다 있음', test: (r) => hasPhone(r) && hasEmail(r) },
+    ];
+    const visibleRows = rows.filter(FILTERS.find((f) => f.key === filter).test);
+
     const handleExportCsv = () => {
         const header = ['업체명', '담당자', '연락처', '지원 이메일', '유형', '인증상태', '최근 공고명', '최근 등록일'];
-        const body = rows.map((r) => [
+        const body = visibleRows.map((r) => [
             r.companyName, r.contactName, r.contactPhone, r.applyEmail, r.type, r.verification, r.title,
             new Date(r.createdAt).toLocaleDateString('ko-KR'),
         ]);
@@ -493,8 +519,16 @@ const CastingContactsPanel = ({ castings }) => {
     return (
         <div className="mb-5 border border-[var(--moca-border)] rounded-xl p-4 bg-[var(--moca-surface-2)]">
             <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-black text-[var(--moca-text)]">📇 업체 연락처 모음 <span className="text-[var(--moca-primary)]">{rows.length}</span>건 (업체·연락처 기준 중복 제거)</p>
-                <button onClick={handleExportCsv} disabled={rows.length === 0} className="px-3 py-1.5 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40">CSV로 내보내기</button>
+                <p className="text-sm font-black text-[var(--moca-text)]">📇 업체 연락처 모음 <span className="text-[var(--moca-primary)]">{visibleRows.length}</span>건 (업체·연락처 기준 중복 제거)</p>
+                <button onClick={handleExportCsv} disabled={visibleRows.length === 0} className="px-3 py-1.5 rounded-lg bg-[var(--moca-primary)] text-white text-xs font-black disabled:opacity-40">CSV로 내보내기</button>
+            </div>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+                {FILTERS.map((f) => (
+                    <button key={f.key} onClick={() => setFilter(f.key)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-black border ${filter === f.key ? 'bg-[var(--moca-primary)] text-white border-transparent' : 'bg-white text-[var(--moca-text-3)] border-[var(--moca-border)]'}`}>
+                        {f.label} {rows.filter(f.test).length}
+                    </button>
+                ))}
             </div>
             <p className="text-[11px] text-[var(--moca-text-3)] mb-3">내부 참고/내보내기 용도입니다. 지원 이메일은 영업·홍보 발송에 쓰지 않습니다.</p>
             <div className="overflow-x-auto">
@@ -510,7 +544,7 @@ const CastingContactsPanel = ({ castings }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {rows.map((r) => (
+                        {visibleRows.map((r) => (
                             <tr key={r.castingId} className="border-b border-[var(--moca-border)] last:border-0">
                                 <td className="py-1.5 pr-3 font-bold text-[var(--moca-text)]">{r.companyName}</td>
                                 <td className="py-1.5 pr-3 text-[var(--moca-text-3)]">{r.contactName}</td>
