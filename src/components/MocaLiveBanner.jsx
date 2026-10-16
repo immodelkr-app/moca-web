@@ -4,7 +4,7 @@ import {
     fetchActiveMocaLive, fetchUpcomingMocaLive, subscribeToMocaLiveState, canAccessClassLive,
     isSubscribedToLiveReminder, addLiveReminderSubscription, removeLiveReminderSubscription,
 } from '../services/mocaLiveService';
-import { openLiveViewerPresence, closeLiveViewerPresence } from '../services/mocaLiveEngagementService';
+import { openLiveViewerPresence, closeLiveViewerPresence, bumpLivePeakViewers } from '../services/mocaLiveEngagementService';
 import { getUserGrade, getUser } from '../services/userService';
 import { useCountdownLabel } from '../hooks/useCountdownLabel';
 import MocaLiveEngagement from './MocaLiveEngagement';
@@ -224,7 +224,12 @@ const MocaLiveBanner = () => {
     // 플레이어를 실제로 열어놓은 동안만 시청자로 집계 (닫으면 카운트에서 빠짐)
     useEffect(() => {
         if (!showPlayer || !live?.id) return;
-        const channel = openLiveViewerPresence(live.id, setViewerCount, true);
+        // 어드민 화면이 닫혀 있어도 피크가 남도록 시청자 쪽에서도 기록 (이 탭에서 본 최댓값을 넘을 때만 전송)
+        let seenMax = 0;
+        const channel = openLiveViewerPresence(live.id, (n) => {
+            setViewerCount(n);
+            if (n > seenMax) { seenMax = n; bumpLivePeakViewers(live.id, n); }
+        }, true);
         return () => {
             closeLiveViewerPresence(channel);
             setViewerCount(0);
