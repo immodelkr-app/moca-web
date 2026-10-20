@@ -195,8 +195,10 @@ const AdminClasses = () => {
     };
 
     // 일시/장소/준비물 안내 줄 (값이 없는 항목은 생략)
-    const getClassInfoLines = (cls) => [
-        cls?.class_date && `■ 일시: ${cls.class_date}`,
+    // app이 있고 날짜 옵션을 선택했다면 클래스 전체 일시 대신 신청자가 고른 날짜를 안내
+    const getClassInfoLines = (cls, app) => [
+        (app?.selected_dates?.length ? app.selected_dates.map(d => d.label).join(' / ') : cls?.class_date) &&
+            `■ 일시: ${app?.selected_dates?.length ? app.selected_dates.map(d => d.label).join(' / ') : cls.class_date}`,
         cls?.location && `■ 장소: ${cls.location}`,
         cls?.supplies?.trim() && `■ 준비물: ${cls.supplies.trim()}`,
     ].filter(Boolean).join('\n');
@@ -228,10 +230,20 @@ const AdminClasses = () => {
         target_grade: 'ALL',
         price_info: '',
         review_message: '',
-        supplies: ''
+        supplies: '',
+        date_options: []
     });
 
     const [formError, setFormError] = useState('');
+
+    // 날짜 옵션 행 편집: [{ id, date, time, capacity }]
+    const addDateOption = () => setNewClass(c => ({ ...c, date_options: [...c.date_options, { id: Math.random().toString(36).slice(2, 10), date: '', time: '', capacity: 10 }] }));
+    const updateDateOption = (id, patch) => setNewClass(c => ({ ...c, date_options: c.date_options.map(o => o.id === id ? { ...o, ...patch } : o) }));
+    const removeDateOption = (id) => setNewClass(c => ({ ...c, date_options: c.date_options.filter(o => o.id !== id) }));
+    const formatOptionLabel = (date, time) => {
+        const dt = new Date(`${date}T${time}:00`);
+        return `${dt.getMonth() + 1}월 ${dt.getDate()}일(${DAYS[dt.getDay()]}) ${time}`;
+    };
 
     useEffect(() => { loadClasses(); }, []);
 
@@ -249,7 +261,7 @@ const AdminClasses = () => {
     };
 
     const resetForm = () => {
-        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', video_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '', supplies: '' });
+        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', video_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '', supplies: '', date_options: [] });
         setFormError('');
         setEditingClassId(null);
         setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -288,7 +300,8 @@ const AdminClasses = () => {
             target_grade: cls.target_grade || 'ALL',
             price_info: cls.price_info || '',
             review_message: cls.review_message || '',
-            supplies: cls.supplies || ''
+            supplies: cls.supplies || '',
+            date_options: (cls.date_options || []).map(o => ({ id: o.id, date: o.date, time: o.time, capacity: o.capacity }))
         });
         const hasPricing = cls.class_pricing && cls.class_pricing.length > 0;
         setPricing(hasPricing ? cls.class_pricing.map(p => ({ grade_label: p.grade_label, price: p.price })) : [{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -310,7 +323,22 @@ const AdminClasses = () => {
         let finalClassDate = newClass.class_date;
         let eventDatetime = null;
 
-        if (newClass.schedule_type === 'one_time' && newClass.use_datetime_picker && newClass.event_date && newClass.event_time) {
+        const useOptions = newClass.schedule_type === 'one_time' && newClass.date_options.length > 0;
+        let dateOptions = [];
+        if (useOptions) {
+            if (newClass.date_options.some(o => !o.date || !o.time || !(parseInt(o.capacity, 10) > 0))) {
+                setFormError('날짜 옵션의 날짜·시간·정원을 모두 입력해주세요.');
+                setIsSubmitting(false);
+                return;
+            }
+            dateOptions = [...newClass.date_options]
+                .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))
+                .map(o => ({ id: o.id, date: o.date, time: o.time, capacity: parseInt(o.capacity, 10), label: formatOptionLabel(o.date, o.time) }));
+            finalClassDate = dateOptions.map(o => o.label).join(' / ');
+            // 후기 알림은 마지막 날짜 +4시간에 전체 수강생에게 1회 발송
+            const last = dateOptions[dateOptions.length - 1];
+            eventDatetime = new Date(`${last.date}T${last.time}:00`).toISOString();
+        } else if (newClass.schedule_type === 'one_time' && newClass.use_datetime_picker && newClass.event_date && newClass.event_time) {
             // 구조화된 날짜/시간 picker 사용
             eventDatetime = new Date(`${newClass.event_date}T${newClass.event_time}:00`).toISOString();
             // 한국어 형식 class_date 자동 생성
@@ -332,7 +360,8 @@ const AdminClasses = () => {
         }
         const finalPricing = priceType === 'grade' ? pricing : [];
 
-        const classPayload = { ...newClass, class_date: finalClassDate, price_info: finalPriceInfo, event_datetime: eventDatetime, review_message: newClass.review_message || null };
+        // 날짜 옵션형의 총 정원은 날짜별 정원 합계
+        const classPayload = { ...newClass, class_date: finalClassDate, price_info: finalPriceInfo, event_datetime: eventDatetime, review_message: newClass.review_message || null, date_options: dateOptions, ...(useOptions && { capacity: dateOptions.reduce((s, o) => s + o.capacity, 0) }) };
 
         if (editingClassId) {
             const { error } = await updateClass(editingClassId, classPayload, finalPricing);
@@ -610,7 +639,7 @@ const AdminClasses = () => {
             const classTitle = selectedClass?.title || '클래스';
             let smsFailed = false;
             if (phone) {
-                const info = getClassInfoLines(selectedClass);
+                const info = getClassInfoLines(selectedClass, app);
                 const msg = `[아임모델 MOCA] 수강 확정 안내\n\n${name}님 참석 확정이 완료되었습니다.\n${classTitle} 수강이 최종 확정되었습니다.${info ? `\n\n${info}` : ''}\n\n수업 당일 뵙겠습니다 😊`;
                 await sendBulkMessage([phone], msg, 'sms').catch((smsErr) => {
                     console.error(smsErr);
@@ -704,14 +733,15 @@ const AdminClasses = () => {
         if (!selectedClass || applicants.length === 0) { alert('다운로드할 신청자 데이터가 없습니다.'); return; }
         const withConsent = !!selectedClass.consent_required;
         const consentLabel = (agreed, at) => agreed ? `동의(${new Date(at).toLocaleString('ko-KR')})` : (agreed === false ? '미동의' : '-');
-        const headers = ['번호', '이름', '연락처', '멤버등급', '승인상태', ...(withConsent ? ['초상권·촬영물 활용', '마케팅 수신'] : [])];
+        const withDates = !!selectedClass.date_options?.length;
+        const headers = ['번호', '이름', '연락처', '멤버등급', '승인상태', ...(withDates ? ['선택 날짜'] : []), ...(withConsent ? ['초상권·촬영물 활용', '마케팅 수신'] : [])];
         const rows = applicants.map((app, idx) => {
             const status = app.approval_status || (app.payment_status === 'paid' ? 'paid' : 'pending');
             const statusLabel = status === 'paid' ? '수강확정' : status === 'approved' ? '승인완료' : status === 'cancelled' ? '취소' : status === 'waitlisted' ? '대기중' : '신청대기';
             const consentCols = withConsent
                 ? [consentLabel(app.portrait_consent, app.portrait_consent_at), consentLabel(app.marketing_consent, app.marketing_consent_at)]
                 : [];
-            return [applicants.length - idx, app.users?.name || app.users?.nickname || '-', app.users?.phone || '-', getApplicantGrade(app), statusLabel, ...consentCols];
+            return [applicants.length - idx, app.users?.name || app.users?.nickname || '-', app.users?.phone || '-', getApplicantGrade(app), statusLabel, ...(withDates ? [(app.selected_dates || []).map(d => d.label).join(' / ')] : []), ...consentCols];
         });
         const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
         const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -973,10 +1003,34 @@ const AdminClasses = () => {
                                     </div>
 
                                     <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-6">
-                                        {newClass.schedule_type === 'one_time' ? (
+                                        {newClass.schedule_type === 'one_time' && newClass.date_options.length > 0 ? (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest">📅 날짜 옵션 (신청자가 선택)</label>
+                                                    <button type="button" onClick={() => setNewClass({ ...newClass, date_options: [] })} className="text-xs font-bold text-slate-400 hover:text-red-500">단일 일정으로 되돌리기</button>
+                                                </div>
+                                                <p className="text-[11px] font-bold text-slate-400">신청자는 아래 날짜 중 1개 이상 선택하고, 날짜마다 정원이 따로 적용됩니다.</p>
+                                                {newClass.date_options.map((o, i) => (
+                                                    <div key={o.id} className="grid grid-cols-[1fr_1fr_80px_auto] gap-2 items-center">
+                                                        <input type="date" required value={o.date} onChange={e => updateDateOption(o.id, { date: e.target.value })} aria-label={`옵션 ${i + 1} 날짜`} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-3 text-sm font-bold outline-none focus:border-[var(--moca-primary)]" />
+                                                        <input type="time" required value={o.time} onChange={e => updateDateOption(o.id, { time: e.target.value })} aria-label={`옵션 ${i + 1} 시간`} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-3 text-sm font-bold outline-none focus:border-[var(--moca-primary)]" />
+                                                        <div className="flex items-center gap-1">
+                                                            <input type="number" required min="1" value={o.capacity} onChange={e => updateDateOption(o.id, { capacity: e.target.value })} aria-label={`옵션 ${i + 1} 정원`} className="w-full bg-white border border-slate-200 rounded-xl px-2 py-3 text-sm font-bold outline-none focus:border-[var(--moca-primary)]" />
+                                                            <span className="text-xs font-bold text-slate-400">명</span>
+                                                        </div>
+                                                        <button type="button" onClick={() => removeDateOption(o.id)} aria-label={`옵션 ${i + 1} 삭제`} className="w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 flex items-center justify-center">
+                                                            <span className="material-symbols-outlined text-[18px]">close</span>
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                <button type="button" onClick={addDateOption} className="w-full py-3 rounded-xl border-2 border-dashed border-slate-300 text-sm font-black text-slate-500 hover:border-[var(--moca-primary)] hover:text-[var(--moca-primary)]">+ 날짜 추가</button>
+                                                <p className="text-[10px] text-amber-500 font-bold">💡 후기 자동 알림은 마지막 날짜 시작 +4시간 후, 모든 수강생에게 1회만 발송됩니다.</p>
+                                            </div>
+                                        ) : newClass.schedule_type === 'one_time' ? (
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest">📅 일시 설정</label>
+                                                    <button type="button" onClick={addDateOption} className="text-xs font-black text-[var(--moca-primary)]">+ 여러 날짜 중 선택받기</button>
                                                     <label className="flex items-center gap-2 cursor-pointer">
                                                         <input
                                                             type="checkbox"
@@ -1107,13 +1161,13 @@ const AdminClasses = () => {
                                                 </div>
                                             </div>
                                         )}
-                                        <div className="pt-2">
+                                        {!(newClass.schedule_type === 'one_time' && newClass.date_options.length > 0) && <div className="pt-2">
                                             <div className="flex justify-between items-center mb-2">
                                                 <label className="block text-xs font-black text-slate-500 uppercase tracking-widest">수강 정원</label>
                                                 <span className="text-sm font-black text-moca-primary">{newClass.capacity}명</span>
                                             </div>
                                             <input type="range" min="1" max="100" value={newClass.capacity} onChange={e => setNewClass({ ...newClass, capacity: e.target.value })} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-moca-primary" />
-                                        </div>
+                                        </div>}
 
                                         <div className="pt-2">
                                             <div className="flex justify-between items-center mb-2">
@@ -1348,6 +1402,9 @@ const AdminClasses = () => {
                                                                 )}
                                                             </p>
                                                             <p className="text-[11px] font-bold text-[var(--moca-text-3)]">{app.users?.phone || app.user_phone}</p>
+                                                            {app.selected_dates?.length > 0 && (
+                                                                <p className="text-[11px] font-black text-indigo-500 mt-0.5">📅 {app.selected_dates.map(d => d.label).join(' / ')}</p>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>

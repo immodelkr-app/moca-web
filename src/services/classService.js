@@ -42,7 +42,8 @@ export const createClass = async (classData, pricingArray) => {
             target_grade: classData.target_grade || 'ALL',
             price_info: classData.price_info || null,
             review_message: classData.review_message || null,
-            supplies: classData.supplies?.trim() || null
+            supplies: classData.supplies?.trim() || null,
+            date_options: classData.date_options?.length ? classData.date_options : null
         }])
         .select()
         .single();
@@ -93,7 +94,8 @@ export const updateClass = async (classId, classData, pricingArray) => {
             target_grade: classData.target_grade || 'ALL',
             price_info: classData.price_info || null,
             review_message: classData.review_message || null,
-            supplies: classData.supplies?.trim() || null
+            supplies: classData.supplies?.trim() || null,
+            date_options: classData.date_options?.length ? classData.date_options : null
         })
         .eq('id', classId)
         .select()
@@ -157,6 +159,19 @@ export const fetchActiveApplicationCount = async (classId) => {
         .eq('class_id', classId)
         .in('approval_status', ['pending', 'approved', 'paid']);
     return { count: count || 0, error };
+};
+
+// 날짜 옵션별 활성 신청자 수 { [optionId]: count } - 날짜 선택형 클래스의 정원 표시/마감 체크용
+export const fetchDateOptionCounts = async (classId) => {
+    if (!isSupabaseEnabled()) return { data: {}, error: null };
+    const { data, error } = await supabase
+        .from('class_applications')
+        .select('selected_dates')
+        .eq('class_id', classId)
+        .in('approval_status', ['pending', 'approved', 'paid']);
+    const counts = {};
+    (data || []).forEach(a => (a.selected_dates || []).forEach(d => { counts[d.id] = (counts[d.id] || 0) + 1; }));
+    return { data: counts, error };
 };
 
 // 신청자 목록 가져오기 (특정 클래스)

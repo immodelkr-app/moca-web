@@ -7,14 +7,20 @@ const GRADE_EMOJI = {
     GUEST: '👤', MEMBER: '👤', SILVER: '🤍', GOLD: '👑', IMODEL: '🌸', VIP: '💎', 전속모델: '💎'
 };
 
-const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSuccess, isWaitlist = false }) => {
+const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSuccess, isWaitlist = false, dateCounts = {} }) => {
     const [agreed1, setAgreed1] = useState(false);
     const [agreed2, setAgreed2] = useState(false);
+    // 날짜 옵션형 클래스: 1개 이상 선택 (정원 찬 날짜는 선택 불가, 대기신청은 전체 선택 가능)
+    const dateOptions = cls?.date_options || [];
+    const hasDateOptions = dateOptions.length > 0;
+    const [selectedDateIds, setSelectedDateIds] = useState([]);
+    const isOptionFull = (o) => (dateCounts[o.id] || 0) >= o.capacity;
+    const toggleDate = (id) => setSelectedDateIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
     // 초상권·저작권·촬영물 활용(필수) / 마케팅 수신(선택) — consent_required 클래스에만 노출
     const consentRequired = !!cls?.consent_required;
     const [agreedPortrait, setAgreedPortrait] = useState(false);
     const [agreedMarketing, setAgreedMarketing] = useState(false);
-    const canSubmit = agreed1 && agreed2 && (!consentRequired || agreedPortrait);
+    const canSubmit = agreed1 && agreed2 && (!consentRequired || agreedPortrait) && (!hasDateOptions || selectedDateIds.length > 0);
     const [submitting, setSubmitting] = useState(false);
     const [done, setDone] = useState(false);
     const [error, setError] = useState('');
@@ -39,7 +45,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
 
     const handleSubmit = async (useCoupon = false) => {
         if (!canSubmit) {
-            setError('필수 항목에 모두 동의해야 신청이 가능합니다.');
+            setError(hasDateOptions && selectedDateIds.length === 0 ? '참석할 날짜를 1개 이상 선택해주세요.' : '필수 항목에 모두 동의해야 신청이 가능합니다.');
             return;
         }
         const consentAt = new Date().toISOString();
@@ -63,6 +69,9 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                     user_phone: currentUser.phone || '',
                     is_coupon_applied: !!useCoupon,
                     coupon_id: coupon?.id || null,
+                    selected_dates: hasDateOptions
+                        ? dateOptions.filter(o => selectedDateIds.includes(o.id)).map(({ id, label }) => ({ id, label }))
+                        : null,
                     ...(consentRequired && {
                         portrait_consent: agreedPortrait,
                         portrait_consent_at: agreedPortrait ? consentAt : null,
@@ -73,7 +82,8 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
 
             if (insertErr) throw insertErr;
 
-            notifyAdmin(`[모카] 클래스 신청: ${currentUser?.name || currentUser?.nickname || '회원'} - ${cls?.title || '클래스'}${isWaitlist ? ' (대기)' : ''}`);
+            const dateText = hasDateOptions ? ` [${dateOptions.filter(o => selectedDateIds.includes(o.id)).map(o => o.label).join(', ')}]` : '';
+            notifyAdmin(`[모카] 클래스 신청: ${currentUser?.name || currentUser?.nickname || '회원'} - ${cls?.title || '클래스'}${dateText}${isWaitlist ? ' (대기)' : ''}`);
 
             if (useCoupon && coupon) {
                 await markCouponUsed(coupon.id, cls.id);
@@ -174,10 +184,12 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                     <span className="text-xs font-bold text-indigo-400 flex-shrink-0">클래스</span>
                                     <span className="text-sm font-black text-[var(--moca-text)] text-right">{cls.title}</span>
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs font-bold text-indigo-400">일시</span>
-                                    <span className="text-sm font-black text-[var(--moca-text)]">{cls.class_date}</span>
-                                </div>
+                                {!hasDateOptions && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs font-bold text-indigo-400">일시</span>
+                                        <span className="text-sm font-black text-[var(--moca-text)]">{cls.class_date}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs font-bold text-indigo-400">장소</span>
                                     <span className="text-sm font-black text-[var(--moca-text)]">{cls.location}</span>
@@ -188,6 +200,36 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                 </div>
                             </div>
                         </div>
+
+                        {/* 참석 날짜 선택 (날짜 옵션형 클래스) */}
+                        {hasDateOptions && (
+                            <div className="mb-6">
+                                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">참석 날짜 선택</p>
+                                <p className="text-[11px] font-bold text-[var(--moca-text-3)] mb-3">참석 가능한 날짜를 모두 선택해주세요. (복수 선택 가능)</p>
+                                <div className="space-y-2">
+                                    {dateOptions.map(o => {
+                                        const full = isOptionFull(o);
+                                        const disabled = full && !isWaitlist;
+                                        const on = selectedDateIds.includes(o.id);
+                                        return (
+                                            <label
+                                                key={o.id}
+                                                className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${disabled ? 'opacity-50 cursor-not-allowed border-[var(--moca-border)] bg-gray-50' : on ? 'cursor-pointer border-indigo-500 bg-indigo-50' : 'cursor-pointer border-[var(--moca-border)] bg-white'}`}
+                                                onClick={(e) => { e.preventDefault(); if (!disabled) toggleDate(o.id); }}
+                                            >
+                                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${on ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'}`}>
+                                                    {on && <span className="material-symbols-outlined text-white text-[14px]">check</span>}
+                                                </div>
+                                                <p className="flex-1 text-sm font-black text-[var(--moca-text)]">{o.label}</p>
+                                                <span className={`text-[11px] font-black ${full ? 'text-red-500' : 'text-[var(--moca-text-3)]'}`}>
+                                                    {full ? '마감' : `${dateCounts[o.id] || 0}/${o.capacity}명`}
+                                                </span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
                         {/* 약관 동의 체크박스 */}
                         <div className="space-y-3 mb-6">

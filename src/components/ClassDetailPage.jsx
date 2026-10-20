@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { checkClassGradeEligibility, getClassGradeBadgeClass, getClassGradeLabel } from '../utils/classGrade';
-import { saveClassCalendarEvent, fetchPublicFeedback, fetchUserFeedback, fetchActiveApplicationCount } from '../services/classService';
+import { saveClassCalendarEvent, fetchPublicFeedback, fetchUserFeedback, fetchActiveApplicationCount, fetchDateOptionCounts } from '../services/classService';
 import { getUser, syncUserGrade } from '../services/userService';
 import ClassApplyModal from './ClassApplyModal';
 import ClassFeedbackModal from './ClassFeedbackModal';
@@ -56,6 +56,7 @@ const ClassDetailPage = () => {
     const [myApplicationStatus, setMyApplicationStatus] = useState(null);
     const [showWaitlistModal, setShowWaitlistModal] = useState(false);
     const [applicantCount, setApplicantCount] = useState(0);
+    const [dateCounts, setDateCounts] = useState({});
     const [shareSuccess, setShareSuccess] = useState(false);
     const [calendarSaved, setCalendarSaved] = useState(false);
 
@@ -115,6 +116,10 @@ const ClassDetailPage = () => {
             // 정원마감 체크용 활성 신청자 수
             const { count } = await fetchActiveApplicationCount(cleanId);
             setApplicantCount(count || 0);
+            if (classData?.date_options?.length) {
+                const { data: dc } = await fetchDateOptionCounts(cleanId);
+                setDateCounts(dc || {});
+            }
 
             // 피드백 로드
             let userFeedback = null;
@@ -277,7 +282,13 @@ const ClassDetailPage = () => {
 
     const isCompleted = cls?.status === 'completed';
     const isWaitlisted = myApplicationStatus === 'waitlisted';
-    const isFull = !isCompleted && !isApplied && !!cls?.capacity && applicantCount >= cls.capacity;
+    const dateOptions = cls?.date_options || [];
+    const hasDateOptions = dateOptions.length > 0;
+    // 날짜 옵션형은 모든 날짜가 마감일 때만 클래스 마감 (날짜별 정원)
+    const isFull = !isCompleted && !isApplied && (hasDateOptions
+        ? dateOptions.every(o => (dateCounts[o.id] || 0) >= o.capacity)
+        : !!cls?.capacity && applicantCount >= cls.capacity);
+    const refreshDateCounts = () => { if (hasDateOptions) fetchDateOptionCounts(cls.id).then(({ data }) => setDateCounts(data || {})); };
     const avgRating = feedbacks.length > 0
         ? (feedbacks.reduce((s, f) => s + f.rating, 0) / feedbacks.length).toFixed(1)
         : null;
@@ -414,9 +425,26 @@ const ClassDetailPage = () => {
                                 <span className="material-symbols-outlined text-indigo-400 mt-0.5">calendar_month</span>
                                 <div>
                                     <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">일시</p>
-                                    <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.class_date?.replace(/(\d{1,2}:\d{2}):\d{2}$/, '$1')}</p>
+                                    {hasDateOptions ? (
+                                        <div className="space-y-1.5">
+                                            {dateOptions.map(o => {
+                                                const full = (dateCounts[o.id] || 0) >= o.capacity;
+                                                return (
+                                                    <p key={o.id} className="text-[15px] font-black text-[var(--moca-text)] flex items-center gap-2 flex-wrap">
+                                                        {o.label}
+                                                        <span className={`text-[11px] font-black ${full ? 'text-red-500' : 'text-[var(--moca-text-3)]'}`}>
+                                                            {full ? '마감' : `${dateCounts[o.id] || 0}/${o.capacity}명`}
+                                                        </span>
+                                                    </p>
+                                                );
+                                            })}
+                                            <p className="text-[11px] font-bold text-indigo-500 pt-1">신청 시 참석 가능한 날짜를 선택할 수 있어요 (복수 선택 가능)</p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.class_date?.replace(/(\d{1,2}:\d{2}):\d{2}$/, '$1')}</p>
+                                    )}
                                     {/* D-day 카운트다운 텍스트 */}
-                                    {!isCompleted && (() => {
+                                    {!isCompleted && !hasDateOptions && (() => {
                                         const dday = getDdayForDetail(cls);
                                         if (!dday || dday.type === 'ended') return null;
                                         const ddayTextColors = {
@@ -443,7 +471,7 @@ const ClassDetailPage = () => {
                                     <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.location}</p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-4">
+                            {!hasDateOptions && <div className="flex items-start gap-4">
                                 <span className="material-symbols-outlined text-indigo-400 mt-0.5">group</span>
                                 <div>
                                     <p className="text-xs font-bold text-[var(--moca-text-3)] mb-1">모집 정원</p>
@@ -452,7 +480,7 @@ const ClassDetailPage = () => {
                                         {isFull && <span className="ml-2 text-[11px] font-black text-red-500">마감</span>}
                                     </p>
                                 </div>
-                            </div>
+                            </div>}
                             <div className="flex items-start gap-4">
                                 <span className="material-symbols-outlined text-indigo-400 mt-0.5">payments</span>
                                 <div>
@@ -611,8 +639,9 @@ const ClassDetailPage = () => {
                     currentUser={currentUser}
                     myPriceInfo={myPriceInfo}
                     myPrice={myPrice}
+                    dateCounts={dateCounts}
                     onClose={() => setShowApplyModal(false)}
-                    onSuccess={() => { setIsApplied(true); setMyApplicationStatus('pending'); setApplicantCount(c => c + 1); }}
+                    onSuccess={() => { setIsApplied(true); setMyApplicationStatus('pending'); setApplicantCount(c => c + 1); refreshDateCounts(); }}
                 />
             )}
 
@@ -624,6 +653,7 @@ const ClassDetailPage = () => {
                     myPriceInfo={myPriceInfo}
                     myPrice={myPrice}
                     isWaitlist
+                    dateCounts={dateCounts}
                     onClose={() => setShowWaitlistModal(false)}
                     onSuccess={() => { setIsApplied(true); setMyApplicationStatus('waitlisted'); }}
                 />

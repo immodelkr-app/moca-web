@@ -110,7 +110,7 @@ const ClassListPage = () => {
                     const ClassCard = ({ cls }) => {
                         const isApplied = myApplications.includes(cls.id);
                         const isCompleted = cls.status === 'completed';
-                        const isFull = !isCompleted && !isApplied && !!cls.capacity && (applicantCounts[cls.id] || 0) >= cls.capacity;
+                        const isFull = !isCompleted && !isApplied && !cls.date_options?.length && !!cls.capacity &&(applicantCounts[cls.id] || 0) >= cls.capacity;
                         return (
                             <div
                                 key={cls.id}
