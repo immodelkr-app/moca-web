@@ -5,6 +5,7 @@ import { checkClassGradeEligibility, getClassGradeBadgeClass, getClassGradeLabel
 import { saveClassCalendarEvent, fetchPublicFeedback, fetchUserFeedback, fetchActiveApplicationCount, fetchDateOptionCounts } from '../services/classService';
 import { getUser, syncUserGrade } from '../services/userService';
 import ClassApplyModal from './ClassApplyModal';
+import ClassDescription from './ClassDescription';
 import ClassFeedbackModal from './ClassFeedbackModal';
 import ClassAuditionSection from './ClassAuditionSection';
 import { getVideoEmbedUrl } from '../utils/videoEmbed';
@@ -389,9 +390,7 @@ const ClassDetailPage = () => {
                             <span className="material-symbols-outlined text-indigo-500">menu_book</span>
                             프로그램 상세 안내
                         </h2>
-                        <div className="text-[var(--moca-text-2)] text-[15px] font-medium leading-[1.8] whitespace-pre-wrap px-1">
-                            {cls.description || '현재 상세 교육 내용이 준비 중입니다. 궁금하신 점은 고객센터로 문의주세요.'}
-                        </div>
+                        <ClassDescription text={cls.description || '현재 상세 교육 내용이 준비 중입니다. 궁금하신 점은 고객센터로 문의주세요.'} />
                     </div>
 
                     {/* 2-2. 지난 수업 영상 */}

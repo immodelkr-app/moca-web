@@ -11,6 +11,7 @@ import {
 import { supabase } from '../services/supabaseClient';
 import { sendBulkMessage } from '../services/solapiService';
 import AdminClassAudition from './AdminClassAudition';
+import ClassDescription from './ClassDescription';
 import { getVideoEmbedUrl } from '../utils/videoEmbed';
 import { CLASS_GRADE_OPTIONS, parseClassGrades, toggleClassGrade } from '../utils/classGrade';
 
@@ -1280,6 +1281,15 @@ const AdminClasses = () => {
                                         placeholder="클래스 진행 내용, 준비물, 주의사항 등을 자세하게 입력해주세요."
                                         className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-2xl px-5 py-4 text-sm font-bold transition-all outline-none resize-none leading-relaxed focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
                                     />
+                                    <p className="text-[11px] font-bold text-slate-400 mt-2 leading-relaxed">
+                                        서식: <b>*제목</b> 굵은 소제목 · <b>1) 제목</b> 번호 소제목 · <b>-항목</b> 불릿(앞에 공백 2칸이면 들여쓰기) · <b>: 설명</b> 보조 설명 · <b>**강조**</b> 굵게
+                                    </p>
+                                    {newClass.description.trim() && (
+                                        <div className="mt-3 p-4 bg-white border border-slate-200 rounded-2xl">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">앱 미리보기</p>
+                                            <ClassDescription text={newClass.description} />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
