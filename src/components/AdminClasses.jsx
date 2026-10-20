@@ -231,7 +231,8 @@ const AdminClasses = () => {
         price_info: '',
         review_message: '',
         supplies: '',
-        date_options: []
+        date_options: [],
+        date_select_mode: 'multi'
     });
 
     const [formError, setFormError] = useState('');
@@ -261,7 +262,7 @@ const AdminClasses = () => {
     };
 
     const resetForm = () => {
-        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', video_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '', supplies: '', date_options: [] });
+        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', video_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '', supplies: '', date_options: [], date_select_mode: 'multi' });
         setFormError('');
         setEditingClassId(null);
         setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -301,7 +302,8 @@ const AdminClasses = () => {
             price_info: cls.price_info || '',
             review_message: cls.review_message || '',
             supplies: cls.supplies || '',
-            date_options: (cls.date_options || []).map(o => ({ id: o.id, date: o.date, time: o.time, capacity: o.capacity }))
+            date_options: (cls.date_options || []).map(o => ({ id: o.id, date: o.date, time: o.time, capacity: o.capacity })),
+            date_select_mode: cls.date_select_mode === 'single' ? 'single' : 'multi'
         });
         const hasPricing = cls.class_pricing && cls.class_pricing.length > 0;
         setPricing(hasPricing ? cls.class_pricing.map(p => ({ grade_label: p.grade_label, price: p.price })) : [{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
@@ -1009,7 +1011,13 @@ const AdminClasses = () => {
                                                     <label className="block text-xs font-black text-slate-500 uppercase tracking-widest">📅 날짜 옵션 (신청자가 선택)</label>
                                                     <button type="button" onClick={() => setNewClass({ ...newClass, date_options: [] })} className="text-xs font-bold text-slate-400 hover:text-red-500">단일 일정으로 되돌리기</button>
                                                 </div>
-                                                <p className="text-[11px] font-bold text-slate-400">신청자는 아래 날짜 중 1개 이상 선택하고, 날짜마다 정원이 따로 적용됩니다.</p>
+                                                <div className="flex gap-2">
+                                                    {[['multi', '복수 선택 가능 (1개 이상)'], ['single', '단일 선택 (1개만)']].map(([mode, label]) => (
+                                                        <button key={mode} type="button" onClick={() => setNewClass({ ...newClass, date_select_mode: mode })}
+                                                            className={`flex-1 py-2.5 rounded-xl border-2 text-xs font-black transition-all ${newClass.date_select_mode === mode ? 'border-moca-primary bg-moca-primary/5 text-moca-primary' : 'border-slate-200 bg-white text-slate-500'}`}>{label}</button>
+                                                    ))}
+                                                </div>
+                                                <p className="text-[11px] font-bold text-slate-400">날짜마다 정원이 따로 적용됩니다.</p>
                                                 {newClass.date_options.map((o, i) => (
                                                     <div key={o.id} className="grid grid-cols-[1fr_1fr_80px_auto] gap-2 items-center">
                                                         <input type="date" required value={o.date} onChange={e => updateDateOption(o.id, { date: e.target.value })} aria-label={`옵션 ${i + 1} 날짜`} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-3 text-sm font-bold outline-none focus:border-[var(--moca-primary)]" />

@@ -15,7 +15,10 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
     const hasDateOptions = dateOptions.length > 0;
     const [selectedDateIds, setSelectedDateIds] = useState([]);
     const isOptionFull = (o) => (dateCounts[o.id] || 0) >= o.capacity;
-    const toggleDate = (id) => setSelectedDateIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    const singleSelect = cls?.date_select_mode === 'single';
+    const toggleDate = (id) => setSelectedDateIds(prev => singleSelect
+        ? (prev.includes(id) ? [] : [id])
+        : (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
     // 초상권·저작권·촬영물 활용(필수) / 마케팅 수신(선택) — consent_required 클래스에만 노출
     const consentRequired = !!cls?.consent_required;
     const [agreedPortrait, setAgreedPortrait] = useState(false);
@@ -205,7 +208,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                         {hasDateOptions && (
                             <div className="mb-6">
                                 <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">참석 날짜 선택</p>
-                                <p className="text-[11px] font-bold text-[var(--moca-text-3)] mb-3">참석 가능한 날짜를 모두 선택해주세요. (복수 선택 가능)</p>
+                                <p className="text-[11px] font-bold text-[var(--moca-text-3)] mb-3">{singleSelect ? '참석할 날짜를 1개 선택해주세요.' : '참석 가능한 날짜를 모두 선택해주세요. (복수 선택 가능)'}</p>
                                 <div className="space-y-2">
                                     {dateOptions.map(o => {
                                         const full = isOptionFull(o);

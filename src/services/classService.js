@@ -43,7 +43,8 @@ export const createClass = async (classData, pricingArray) => {
             price_info: classData.price_info || null,
             review_message: classData.review_message || null,
             supplies: classData.supplies?.trim() || null,
-            date_options: classData.date_options?.length ? classData.date_options : null
+            date_options: classData.date_options?.length ? classData.date_options : null,
+            date_select_mode: classData.date_select_mode === 'single' ? 'single' : 'multi'
         }])
         .select()
         .single();
@@ -95,7 +96,8 @@ export const updateClass = async (classId, classData, pricingArray) => {
             price_info: classData.price_info || null,
             review_message: classData.review_message || null,
             supplies: classData.supplies?.trim() || null,
-            date_options: classData.date_options?.length ? classData.date_options : null
+            date_options: classData.date_options?.length ? classData.date_options : null,
+            date_select_mode: classData.date_select_mode === 'single' ? 'single' : 'multi'
         })
         .eq('id', classId)
         .select()

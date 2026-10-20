@@ -438,7 +438,7 @@ const ClassDetailPage = () => {
                                                     </p>
                                                 );
                                             })}
-                                            <p className="text-[11px] font-bold text-indigo-500 pt-1">신청 시 참석 가능한 날짜를 선택할 수 있어요 (복수 선택 가능)</p>
+                                            <p className="text-[11px] font-bold text-indigo-500 pt-1">{cls.date_select_mode === 'single' ? '신청 시 참석할 날짜를 1개 선택해주세요' : '신청 시 참석 가능한 날짜를 선택할 수 있어요 (복수 선택 가능)'}</p>
                                         </div>
                                     ) : (
                                         <p className="text-[15px] font-black text-[var(--moca-text)]">{cls.class_date?.replace(/(\d{1,2}:\d{2}):\d{2}$/, '$1')}</p>
