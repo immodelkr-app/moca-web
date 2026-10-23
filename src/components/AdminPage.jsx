@@ -15,7 +15,7 @@ import { fetchAllQnaPostsForAdmin, updateAdminReply, deleteQnaPostAsAdmin, QNA_C
 import { fetchContracts, approveContract, rejectContract, deleteContract, logGradeChange, fetchGradeHistory } from '../services/adminService';
 import { AI_TREND_CATEGORIES } from '../constants/diaryCategories';
 import { sendAlimtalk, sendBulkMessage, sendFriendtalk } from '../services/solapiService';
-import { fetchPushHistory, sendBroadcastPush, fetchUsersWithoutPushToken, fetchAllUsersWithPhone } from '../services/pushNotificationService';
+import { fetchPushHistory, sendBroadcastPush, sendTargetedPush, fetchNicknamesByGrades, fetchUsersWithoutPushToken, fetchAllUsersWithPhone } from '../services/pushNotificationService';
 import { fetchMessagesList, createAnnouncementMessage, updateMessage, deleteMessage } from '../services/messageService';
 import { getPointsBalance, getPointsHistory, rewardPoints, deductPoints } from '../lib/imCoreAuth';
 import * as XLSX from 'xlsx';
@@ -165,6 +165,7 @@ const AdminPage = () => {
     // 앱 푸시 알림 발송
     const [pushForm, setPushForm] = useState({ title: '', body: '', route: '/agencies' });
     const [isSendingPush, setIsSendingPush] = useState(false);
+    const [pushGrades, setPushGrades] = useState([]); // 비어 있으면 전체 발송
     const [pushConfirmOpen, setPushConfirmOpen] = useState(false);
     const [pushResult, setPushResult] = useState(null);
     // 앱 설치 독려 메시지
@@ -2751,7 +2752,17 @@ const AdminPage = () => {
                         setIsSendingPush(true);
                         setPushResult(null);
                         setPushConfirmOpen(false);
-                        const result = await sendBroadcastPush(pushForm);
+                        let result;
+                        if (pushGrades.length === 0) {
+                            result = await sendBroadcastPush(pushForm);
+                        } else {
+                            try {
+                                const nicknames = await fetchNicknamesByGrades(pushGrades);
+                                result = await sendTargetedPush({ ...pushForm, nicknames });
+                            } catch (err) {
+                                result = { success: false, error: err.message || '대상 조회에 실패했습니다.' };
+                            }
+                        }
                         setPushResult(result);
                         setIsSendingPush(false);
                         // 발송 후 내역 새로고침
@@ -2811,7 +2822,7 @@ const AdminPage = () => {
                                         <span className="text-3xl">🔔</span>
                                         <div>
                                             <h3 className="font-black text-[var(--moca-text)] text-lg">푸시 알림 발송 확인</h3>
-                                            <p className="text-xs text-[var(--moca-text-3)]">전체 사용자에게 즉시 발송됩니다</p>
+                                            <p className="text-xs text-[var(--moca-text-3)]">{pushGrades.length ? `${pushGrades.join(', ')} 등급에게` : '전체 사용자에게'} 즉시 발송됩니다</p>
                                         </div>
                                     </div>
                                     <div className="bg-[var(--moca-bg)] rounded-xl p-4 mb-5 space-y-2">
@@ -2917,10 +2928,21 @@ const AdminPage = () => {
                                                 ))}
                                             </div>
                                         </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--moca-text-2)] mb-1">발송 대상 등급 <span className="font-normal text-[var(--moca-text-3)]">(선택 안 하면 전체)</span></label>
+                                            <div className="flex gap-2">
+                                                {['SILVER', 'GOLD', 'IMODEL', 'VIP'].map(g => (
+                                                    <button key={g} onClick={() => setPushGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
+                                                        className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
+                                                            pushGrades.includes(g) ? 'bg-[var(--moca-primary)] text-white border-[var(--moca-primary)]' : 'bg-[var(--moca-bg)] text-[var(--moca-text-2)] border-[var(--moca-border)] hover:border-[var(--moca-primary)]'
+                                                        }`}>{g}</button>
+                                                ))}
+                                            </div>
+                                        </div>
                                         <button onClick={() => { if (!pushForm.title.trim() || !pushForm.body.trim()) return; setPushConfirmOpen(true); setPushResult(null); }}
                                             disabled={isSendingPush || !pushForm.title.trim() || !pushForm.body.trim()}
                                             className="w-full py-3 rounded-xl bg-gradient-to-r from-[var(--moca-primary)] to-purple-600 text-white font-black text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                                            {isSendingPush ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</> : <><span className="material-symbols-outlined text-[18px]">send</span> 전체 사용자에게 발송</>}
+                                            {isSendingPush ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 발송 중...</> : <><span className="material-symbols-outlined text-[18px]">send</span> {pushGrades.length ? `${pushGrades.join('·')} 등급에게 발송` : '전체 사용자에게 발송'}</>}
                                         </button>
                                         {pushResult && (
                                             <div className={`rounded-xl p-4 text-sm font-bold flex items-start gap-3 ${pushResult.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>

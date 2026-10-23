@@ -183,6 +183,26 @@ export const sendTargetedPush = async ({ title, body, route = '/agencies', nickn
 
 
 /**
+ * 관리자 전용: 선택한 등급 회원의 닉네임 목록 조회 (등급 없음/BASIC은 SILVER로 간주)
+ * @param {string[]} grades - 예: ['GOLD', 'VIP']
+ * @returns {Promise<string[]>}
+ */
+export const fetchNicknamesByGrades = async (grades) => {
+  const nicknames = [];
+  // Supabase 기본 1000건 제한 때문에 페이지 단위로 끝까지 조회
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from('users').select('nickname, grade').range(from, from + 999);
+    if (error) throw error;
+    for (const u of data) {
+      const g = !u.grade || u.grade === 'BASIC' ? 'SILVER' : u.grade;
+      if (u.nickname && grades.includes(g)) nicknames.push(u.nickname);
+    }
+    if (data.length < 1000) break;
+  }
+  return nicknames;
+};
+
+/**
  * 관리자 전용: 푸시 발송 내역 조회
  * @param {number} limit - 조회할 최대 건수 (기본값: 10)
  * @returns {Promise<{data?: Array, error?: any}>}
