@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { sendBroadcastPush } from '../services/pushNotificationService';
-import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, findCastingsByTitle, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, getDdayInfo, markCastingPushed, getCastingShareUrl, getCastingShareText } from '../services/modelCastingService';
+import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, findCastingsByTitle, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, getDdayInfo, markCastingPushed, getCastingShareUrl } from '../services/modelCastingService';
 
 const CATEGORIES = [
     'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
@@ -318,10 +318,10 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
         if (error) { alert('마감 처리에 실패했습니다: ' + error.message); return; }
         onChanged();
     };
-    // 카톡 오픈채팅/카페/밴드 등에 바로 붙여넣을 수 있게 "제목(디데이) + 공유 링크"를 복사
+    // 바로가기/링크 입력란에 넣기 쉽도록 공유 URL만 복사
     const handleCopyLink = async () => {
         try {
-            await navigator.clipboard.writeText(`${getCastingShareText(casting)}\n${getCastingShareUrl(casting.id)}`);
+            await navigator.clipboard.writeText(getCastingShareUrl(casting.id));
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 2000);
         } catch {
