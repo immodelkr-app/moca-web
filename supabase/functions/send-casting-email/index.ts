@@ -63,23 +63,25 @@ serve(async (req) => {
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif; background: #f0f0f5; padding: 32px 24px; width: 100% !important; }
-    .wrap { width: 100%; max-width: 720px; margin: 0 auto; }
+    .wrap { width: 100%; max-width: 600px; margin: 0 auto; }
     .card { background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 12px 48px rgba(0,0,0,0.14); }
-    .header { background: linear-gradient(135deg, #6C63FF 0%, #A78BFA 100%); padding: 36px 48px 30px; }
+    .header { background: linear-gradient(135deg, #6C63FF 0%, #A78BFA 100%); padding: 32px 36px 28px; }
     .header-badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 5px 14px; font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 700; letter-spacing: 0.5px; margin-bottom: 14px; }
     .header h1 { color: #ffffff; font-size: 26px; font-weight: 800; line-height: 1.3; }
     .header h1 span { opacity: 0.75; font-size: 15px; font-weight: 500; display: block; margin-bottom: 6px; }
-    .body { padding: 36px 48px; }
+    .body { padding: 32px 36px; }
     .greeting { font-size: 15px; color: #555; line-height: 1.9; margin-bottom: 28px; border-left: 4px solid #A78BFA; padding-left: 16px; }
     .greeting strong { color: #222; }
     /* 스펙 섹션 */
     .section-title { font-size: 11px; color: #7C3AED; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
     .section-title::after { content: ''; flex: 1; height: 1px; background: #ede9ff; }
     .specs { margin-bottom: 28px; }
-    .specs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .spec-item { background: #ede9ff; border: 1px solid #c4b5fd; border-radius: 12px; padding: 12px 16px; }
-    .spec-label { font-size: 10px; color: #7C3AED; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .spec-value { font-size: 17px; font-weight: 800; color: #111827; }
+    /* Gmail은 CSS grid 미지원 → table로 구성 */
+    .spec-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e0d9ff; border-radius: 12px; background: #f8f7ff; }
+    .spec-table td { padding: 13px 18px; border-bottom: 1px solid #e8e3ff; font-size: 15px; }
+    .spec-table tr:last-child td { border-bottom: none; }
+    .spec-label { width: 30%; font-size: 12px; color: #7C3AED; font-weight: 700; }
+    .spec-value { font-weight: 800; color: #111827; }
     /* 경력 섹션 */
     .career { margin-bottom: 28px; }
     .career-item { background: #f8f7ff; border: 1px solid #e0d9ff; border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
@@ -88,7 +90,7 @@ serve(async (req) => {
     /* 버튼 */
     .portfolio-btn { display: block; background: linear-gradient(135deg, #6C63FF, #818CF8); color: #ffffff !important; text-decoration: none; padding: 20px 28px; border-radius: 16px; text-align: center; font-weight: 800; font-size: 17px; letter-spacing: -0.3px; margin-bottom: 20px; }
     .portfolio-btn:hover { opacity: 0.92; }
-    .footer { background: #fafafa; border-top: 1px solid #f0f0f0; padding: 20px 48px; text-align: center; }
+    .footer { background: #fafafa; border-top: 1px solid #f0f0f0; padding: 20px 36px; text-align: center; }
     .footer p { font-size: 12px; color: #C0C0C0; line-height: 1.7; }
     .footer strong { color: #A78BFA; }
     @media only screen and (max-width: 600px) {
@@ -96,7 +98,6 @@ serve(async (req) => {
       .body { padding: 24px 20px !important; }
       .header { padding: 24px 20px 20px !important; }
       .footer { padding: 16px 20px !important; }
-      .specs-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
@@ -122,13 +123,13 @@ serve(async (req) => {
         <!-- 모델 프로필 스펙 -->
         <div class="specs">
           <div class="section-title">모델 프로필</div>
-          <div class="specs-grid">
-            ${modelAge ? `<div class="spec-item"><div class="spec-label">출생년도</div><div class="spec-value">${esc(modelAge)}년생${manAge ? ` (만 ${manAge}세)` : ''}</div></div>` : ""}
-            ${modelHeight ? `<div class="spec-item"><div class="spec-label">키</div><div class="spec-value">${esc(modelHeight)}cm</div></div>` : ""}
-            ${modelWeight ? `<div class="spec-item"><div class="spec-label">몸무게</div><div class="spec-value">${esc(modelWeight)}kg</div></div>` : ""}
-            ${modelShoeSize ? `<div class="spec-item"><div class="spec-label">신발사이즈</div><div class="spec-value">${esc(modelShoeSize)}mm</div></div>` : ""}
-            ${modelPhone ? `<div class="spec-item"><div class="spec-label">연락처</div><div class="spec-value">${esc(modelPhone)}</div></div>` : ""}
-          </div>
+          <table class="spec-table" cellspacing="0" cellpadding="0">
+            ${modelAge ? `<tr><td class="spec-label">출생년도</td><td class="spec-value">${esc(modelAge)}년생${manAge ? ` (만 ${manAge}세)` : ''}</td></tr>` : ""}
+            ${modelHeight ? `<tr><td class="spec-label">키</td><td class="spec-value">${esc(modelHeight)}cm</td></tr>` : ""}
+            ${modelWeight ? `<tr><td class="spec-label">몸무게</td><td class="spec-value">${esc(modelWeight)}kg</td></tr>` : ""}
+            ${modelShoeSize ? `<tr><td class="spec-label">신발사이즈</td><td class="spec-value">${esc(modelShoeSize)}mm</td></tr>` : ""}
+            ${modelPhone ? `<tr><td class="spec-label">연락처</td><td class="spec-value">${esc(modelPhone)}</td></tr>` : ""}
+          </table>
         </div>
 
         <!-- 경력 -->
