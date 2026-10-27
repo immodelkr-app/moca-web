@@ -136,6 +136,21 @@ const ClassPosterUploader = ({ value, onChange, onError }) => {
     );
 };
 
+// 앞쪽 SILVER가 등급 매칭 실패 시 기본 금액이 되므로(ClassDetailPage myPriceInfo) 순서 유지
+const DEFAULT_PRICING = [
+    { grade_label: '🥈 SILVER', price: 50000 },
+    { grade_label: '🌟 GOLD', price: 30000 },
+    { grade_label: '🌸 아임모델', price: 20000 },
+    { grade_label: '👑 전속모델', price: 10000 },
+    { grade_label: '👤 일반', price: 50000 },
+];
+const GRADE_KEYS = ['SILVER', 'GOLD', '아임모델', '전속', '일반'];
+// 기존 클래스에 없는 등급 행만 기본값으로 채움
+const withMissingGrades = (rows) => [...rows, ...DEFAULT_PRICING.filter(d => {
+    const k = GRADE_KEYS.find(k => d.grade_label.toUpperCase().includes(k));
+    return !rows.some(r => r.grade_label.toUpperCase().includes(k));
+})];
+
 const AdminClasses = () => {
     const [view, setView] = useState('list');
     const [classes, setClasses] = useState([]);
@@ -266,7 +281,7 @@ const AdminClasses = () => {
         setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', video_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '', supplies: '', date_options: [], date_select_mode: 'multi' });
         setFormError('');
         setEditingClassId(null);
-        setPricing([{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
+        setPricing(DEFAULT_PRICING);
         setPriceType('flat');
     };
 
@@ -307,7 +322,7 @@ const AdminClasses = () => {
             date_select_mode: cls.date_select_mode === 'single' ? 'single' : 'multi'
         });
         const hasPricing = cls.class_pricing && cls.class_pricing.length > 0;
-        setPricing(hasPricing ? cls.class_pricing.map(p => ({ grade_label: p.grade_label, price: p.price })) : [{ grade_label: '🥈 SILVER', price: 50000 }, { grade_label: '🌟 GOLD', price: 30000 }, { grade_label: '👑 전속모델', price: 10000 }]);
+        setPricing(hasPricing ? withMissingGrades(cls.class_pricing.map(p => ({ grade_label: p.grade_label, price: p.price }))) : DEFAULT_PRICING);
         setPriceType(hasPricing ? 'grade' : 'flat');
         setView('create');
     };
@@ -1238,19 +1253,19 @@ const AdminClasses = () => {
                                                     <span className="text-[10px] text-slate-400 font-bold">회원 등급에 따라 자동으로 금액이 차등 청구됩니다.</span>
                                                 </div>
                                                 {pricing.map((p, idx) => {
-                                                    const gradeColors = { 'SILVER': { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-600', focus: 'focus:border-blue-400' }, 'GOLD': { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-600', focus: 'focus:border-amber-400' } };
-                                                    const key = p.grade_label.toUpperCase().includes('SILVER') ? 'SILVER' : p.grade_label.toUpperCase().includes('GOLD') ? 'GOLD' : 'DEFAULT';
+                                                    const gradeColors = { 'SILVER': { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-600', focus: 'focus:border-blue-400' }, 'GOLD': { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-600', focus: 'focus:border-amber-400' }, '아임모델': { bg: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-100 text-purple-600', focus: 'focus:border-purple-400' }, '일반': { bg: 'bg-slate-50', border: 'border-slate-200', badge: 'bg-slate-200 text-slate-600', focus: 'focus:border-slate-400' } };
+                                                    const key = ['SILVER', 'GOLD', '아임모델', '일반'].find(k => p.grade_label.toUpperCase().includes(k)) || 'DEFAULT';
                                                     const c = gradeColors[key] || { bg: 'bg-indigo-50', border: 'border-indigo-200', badge: 'bg-indigo-100 text-indigo-600', focus: 'focus:border-indigo-400' };
                                                     return (
-                                                        <div key={idx} className={`flex items-center gap-4 p-4 rounded-2xl border ${c.bg} ${c.border}`}>
-                                                            <span className={`px-3 py-1 rounded-full text-xs font-black whitespace-nowrap ${c.badge}`}>{p.grade_label}</span>
+                                                        <div key={idx} className={`flex items-center gap-3 p-3 rounded-2xl border ${c.bg} ${c.border}`}>
+                                                            <span className={`w-28 shrink-0 text-center px-3 py-1 rounded-full text-xs font-black whitespace-nowrap ${c.badge}`}>{p.grade_label}</span>
                                                             <input
                                                                 type="number" min="0" step="1000"
                                                                 required
                                                                 value={p.price}
                                                                 onChange={e => setPricing(prev => prev.map((item, i) => i === idx ? { ...item, price: e.target.value } : item))}
                                                                 placeholder="0"
-                                                                className={`flex-1 bg-white border rounded-xl px-4 py-2.5 text-sm font-black outline-none transition-all ${c.border} ${c.focus}`}
+                                                                className={`flex-1 min-w-0 bg-white border rounded-xl px-4 py-2.5 text-sm font-black outline-none transition-all ${c.border} ${c.focus}`}
                                                             />
                                                             <span className="text-xs font-bold text-slate-500 whitespace-nowrap">원</span>
                                                         </div>
