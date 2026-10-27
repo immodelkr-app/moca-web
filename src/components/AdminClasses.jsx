@@ -144,7 +144,9 @@ const DEFAULT_PRICING = [
     { grade_label: '👑 전속모델', price: 10000 },
     { grade_label: '👤 일반', price: 50000 },
 ];
-const GRADE_KEYS = ['SILVER', 'GOLD', '아임모델', '전속', '일반'];
+// 금액 대신 상담으로 안내하는 클래스. price_info에 이 문구가 그대로 저장·노출됨 (DB 변경 없음)
+const CONSULT_PRICE = '상담문의';
+const GRADE_KEYS =['SILVER', 'GOLD', '아임모델', '전속', '일반'];
 // 기존 클래스에 없는 등급 행만 기본값으로 채움
 const withMissingGrades = (rows) => [...rows, ...DEFAULT_PRICING.filter(d => {
     const k = GRADE_KEYS.find(k => d.grade_label.toUpperCase().includes(k));
@@ -199,7 +201,9 @@ const AdminClasses = () => {
         const classTitle = selectedClass?.title || '클래스';
         
         let price = '';
-        if (type === 'option1') {
+        if (selectedClass?.price_info === CONSULT_PRICE) {
+            price = CONSULT_PRICE;
+        } else if (type === 'option1') {
             price = app.applied_price !== undefined && app.applied_price !== null
                 ? (app.applied_price === 0 ? '무료' : `${app.applied_price.toLocaleString()}원`)
                 : (selectedClass?.price_info || '무료');
@@ -323,7 +327,7 @@ const AdminClasses = () => {
         });
         const hasPricing = cls.class_pricing && cls.class_pricing.length > 0;
         setPricing(hasPricing ? withMissingGrades(cls.class_pricing.map(p => ({ grade_label: p.grade_label, price: p.price }))) : DEFAULT_PRICING);
-        setPriceType(hasPricing ? 'grade' : 'flat');
+        setPriceType(hasPricing ? 'grade' : cls.price_info === CONSULT_PRICE ? 'consult' : 'flat');
         setView('create');
     };
 
@@ -375,6 +379,8 @@ const AdminClasses = () => {
         let finalPriceInfo = newClass.price_info;
         if (priceType === 'grade') {
             finalPriceInfo = '등급별 차등';
+        } else if (priceType === 'consult') {
+            finalPriceInfo = CONSULT_PRICE;
         }
         const finalPricing = priceType === 'grade' ? pricing : [];
 
@@ -1228,10 +1234,19 @@ const AdminClasses = () => {
                                                 >
                                                     등급별 차등 적용
                                                 </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPriceType('consult')}
+                                                    className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all ${priceType === 'consult' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}
+                                                >
+                                                    상담 문의
+                                                </button>
                                             </div>
                                         </div>
 
-                                        {priceType === 'flat' ? (
+                                        {priceType === 'consult' ? (
+                                            <p className="animate-fadeIn text-[11px] text-slate-500 font-bold">* 참가비 대신 "{CONSULT_PRICE}"로 표기됩니다. 신청 후 상담을 통해 금액을 안내하세요.</p>
+                                        ) : priceType === 'flat' ? (
                                             <div className="animate-fadeIn">
                                                 <label className="block text-sm font-black text-slate-700 mb-2.5">참가비 금액 (원)</label>
                                                 <input
