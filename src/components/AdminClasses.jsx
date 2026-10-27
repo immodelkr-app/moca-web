@@ -1312,7 +1312,7 @@ const AdminClasses = () => {
                                         className="w-full bg-slate-50 border-2 border-slate-200 focus:bg-white rounded-2xl px-5 py-4 text-sm font-bold transition-all outline-none resize-none leading-relaxed focus:border-moca-primary focus:ring-1 focus:ring-moca-primary/20"
                                     />
                                     <p className="text-[11px] font-bold text-slate-400 mt-2 leading-relaxed">
-                                        서식: <b>*제목</b> 굵은 소제목 · <b>1) 제목</b> 번호 소제목 · <b>-항목</b> 불릿(앞에 공백 2칸이면 들여쓰기) · <b>: 설명</b> 보조 설명 · <b>**강조**</b> 굵게
+                                        서식: <b>*제목</b> 굵은 소제목 · <b>1) 제목</b> 번호 소제목 · <b>-항목</b> 불릿(앞에 공백 2칸이면 들여쓰기) · <b>: 설명</b> 보조 설명 · <b>**강조**</b> 굵게 · <b>✓항목</b> 체크 불릿 · <b>1~4주: 내용</b> 기간 칩
                                     </p>
                                     {newClass.description.trim() && (
                                         <div className="mt-3 p-4 bg-white border border-slate-200 rounded-2xl">
