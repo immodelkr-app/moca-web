@@ -2,13 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CastingDdayBadge from './CastingDdayBadge';
 import CastingConsentCard from './CastingConsentCard';
-import { fetchCastings, fetchCastingViewCounts, getCastingStatus, sortCastingsByDeadline } from '../services/modelCastingService';
+import { fetchCastings, fetchCastingViewCounts, formatDeadlineKo, getCastingStatus, sortCastingsByDeadline } from '../services/modelCastingService';
 
 const STATUS_LABEL = {
     open: { label: '모집중', className: 'bg-[#EDE9FE] text-[#7C3AED]' },
     closed: { label: '마감', className: 'bg-[#F3F4F6] text-[#6B7280]' },
     cancelled: { label: '취소됨', className: 'bg-[#FEE2E2] text-[#DC2626]' },
 };
+
+const GENDER_LABEL = { male: '남성', female: '여성', any: '성별무관' };
+const uniq = (arr) => [...new Set(arr.filter(Boolean))].join(', ');
+const ageOf = (r) => r.age_text || ((r.age_min || r.age_max) ? `${r.age_min || ''}~${r.age_max || ''}세` : '');
 
 const ModelCastingBoard = () => {
     const navigate = useNavigate();
@@ -60,10 +64,23 @@ const ModelCastingBoard = () => {
                                         <span className="px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] text-[10px] font-bold">{c.category}</span>
                                         {c.source_type === 'external' && <span className="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고</span>}
                                     </div>
-                                    <h3 className="font-black text-[#1F1235] text-[15px] leading-snug">{c.title}</h3>
-                                    <p className="text-[11px] text-[#9CA3AF] font-bold mt-1.5">
-                                        {c.companies?.company_name || c.producer_name || '업체'} · 모집 {totalHeadcount}명 · 조회 {viewCounts[c.id] ?? 0}명
-                                    </p>
+                                    <h3 className="font-black text-[#1F1235] text-[15px] leading-snug pb-3 border-b border-dashed border-[#E5E7EB]">{c.title}</h3>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 mt-3">
+                                        {[
+                                            ['제작', c.companies?.company_name || c.producer_name || '업체'],
+                                            ['역할', uniq((c.model_casting_roles || []).map((r) => r.role_name))],
+                                            ['성별', uniq((c.model_casting_roles || []).map((r) => GENDER_LABEL[r.gender] || '성별무관'))],
+                                            ['연령', uniq((c.model_casting_roles || []).map(ageOf))],
+                                            ['출연료', uniq((c.model_casting_roles || []).map((r) => r.pay))],
+                                            ['마감', c.deadline ? formatDeadlineKo(c.deadline) : '상시'],
+                                        ].map(([label, value]) => (
+                                            <div key={label} className="min-w-0">
+                                                <p className="text-[11px] text-[#9CA3AF] font-bold">{label}</p>
+                                                <p className="text-[13px] font-bold text-[#1F1235] truncate">{value || '-'}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-[11px] text-[#9CA3AF] font-bold mt-3">모집 {totalHeadcount}명 · 조회 {viewCounts[c.id] ?? 0}명</p>
                                 </button>
                             );
                         })}
