@@ -115,32 +115,32 @@ const ClassListPage = () => {
                             <div
                                 key={cls.id}
                                 onClick={() => navigate(`/home/class/${cls.id}`)}
-                                className={`bg-white rounded-3xl overflow-hidden shadow-moca-sm active:scale-[0.98] transition-all relative border ${isCompleted ? 'border-green-100 opacity-80' : 'border-[#E8E0FA]'}`}
+                                className={`bg-white rounded-2xl overflow-hidden shadow-moca-sm active:scale-[0.98] transition-all relative border flex flex-col ${isCompleted ? 'border-green-100 opacity-80' : 'border-[#E8E0FA]'}`}
                             >
                                 {/* 신청완료 배지 */}
                                 {isApplied && !isCompleted && (
-                                    <div className="absolute top-4 right-4 z-10 bg-[#7C3AED] text-white px-3 py-1.5 rounded-full text-[10px] font-black shadow-lg flex items-center gap-1">
+                                    <div className="absolute top-2 right-2 z-10 bg-[#7C3AED] text-white px-2 py-1 rounded-full text-[9px] font-black shadow-lg flex items-center gap-0.5 whitespace-nowrap">
                                         <span className="material-symbols-outlined text-[12px]">check_circle</span>
                                         신청완료
                                     </div>
                                 )}
                                 {/* 완료 배지 */}
                                 {isCompleted && (
-                                    <div className="absolute top-4 right-4 z-10 bg-green-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black shadow-lg flex items-center gap-1">
+                                    <div className="absolute top-2 right-2 z-10 bg-green-500 text-white px-2 py-1 rounded-full text-[9px] font-black shadow-lg flex items-center gap-0.5 whitespace-nowrap">
                                         <span className="material-symbols-outlined text-[12px]">task_alt</span>
                                         종료됨
                                     </div>
                                 )}
                                 {/* 정원마감 배지 */}
                                 {isFull && (
-                                    <div className="absolute top-4 right-4 z-10 bg-slate-700 text-white px-3 py-1.5 rounded-full text-[10px] font-black shadow-lg flex items-center gap-1">
+                                    <div className="absolute top-2 right-2 z-10 bg-slate-700 text-white px-2 py-1 rounded-full text-[9px] font-black shadow-lg flex items-center gap-0.5 whitespace-nowrap">
                                         <span className="material-symbols-outlined text-[12px]">block</span>
                                         모집마감
                                     </div>
                                 )}
-                                <div className={`${cls.image_url ? '' : 'aspect-[2/1]'} w-full bg-[#F8F5FF] relative overflow-hidden`}>
+                                <div className={`aspect-[4/5] w-full bg-[#F8F5FF] relative overflow-hidden`}>
                                     {cls.image_url ? (
-                                        <img src={cls.image_url} alt={cls.title} className={`w-full h-auto block ${isCompleted ? 'grayscale-[30%]' : 'opacity-90'}`} />
+                                        <img src={cls.image_url} alt={cls.title} className={`w-full h-full object-cover object-top block ${isCompleted ? 'grayscale-[30%]' : 'opacity-90'}`} />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center">
                                             <span className="material-symbols-outlined text-[#E8E0FA] text-6xl">school</span>
@@ -158,38 +158,38 @@ const ClassListPage = () => {
                                             ended: 'bg-gray-400'
                                         };
                                         return (
-                                            <div className={`absolute top-3 left-3 z-10 ${ddayColors[dday.type]} text-white px-3 py-1.5 rounded-full text-[11px] font-black shadow-lg backdrop-blur-sm`}>
+                                            <div className={`absolute top-2 left-2 z-10 ${ddayColors[dday.type]} text-white px-2 py-1 rounded-full text-[10px] whitespace-nowrap font-black shadow-lg backdrop-blur-sm`}>
                                                 {dday.label}
                                             </div>
                                         );
                                     })()}
                                 </div>
-                                <div className="p-6">
-                                    <div className="mb-4">
-                                        <div className="flex flex-wrap gap-1.5 mb-3">
-                                            <span className="inline-block px-3 py-1 rounded-full bg-[#F3E8FF] text-[#7C3AED] text-[10px] font-black">
+                                <div className="p-3 flex-1 flex flex-col">
+                                    <div className="mb-2">
+                                        <div className="flex flex-wrap gap-1 mb-2">
+                                            <span className="inline-block px-2 py-0.5 rounded-full bg-[#F3E8FF] text-[#7C3AED] text-[9px] font-black">
                                                 {cls.schedule_type === 'weekly' ? '정기강좌' : '원데이'}
                                             </span>
-                                            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black ${getClassGradeBadgeClass(cls.target_grade)}`}>
+                                            <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black ${getClassGradeBadgeClass(cls.target_grade)}`}>
                                                 {getClassGradeLabel(cls.target_grade)}
                                             </span>
                                         </div>
-                                        <h3 className="text-[#5B4E7A] font-black text-[18px] sm:text-xl leading-snug mb-2 break-keep">{cls.title}</h3>
-                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                            <p className="text-[#7C3AED] text-[13px] font-bold flex items-center gap-1.5">
-                                                <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+                                        <h3 className="text-[#5B4E7A] font-black text-[13px] leading-snug mb-1.5 break-keep line-clamp-2">{cls.title}</h3>
+                                        <div className="flex flex-col gap-0.5">
+                                            <p className="text-[#7C3AED] text-[11px] font-bold flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">calendar_today</span>
                                                 {cls.class_date?.replace(/(\d{1,2}:\d{2}):\d{2}$/, '$1')}
                                             </p>
                                             {cls.location && (
-                                                <p className="text-[#7C3AED] text-[13px] font-bold flex items-center gap-1.5">
-                                                    <span className="material-symbols-outlined text-[16px]">location_on</span>
+                                                <p className="text-[#7C3AED] text-[11px] font-bold flex items-center gap-1">
+                                                    <span className="material-symbols-outlined text-[14px]">location_on</span>
                                                     {cls.location}
                                                 </p>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="border-t border-[#E8E0FA] pt-4 mt-2">
-                                        <div className={`w-full flex items-center justify-center gap-1.5 py-3.5 rounded-xl font-black text-[14px] ${isCompleted ? 'bg-green-50 text-green-600' : isFull ? 'bg-slate-100 text-slate-400' : 'bg-[#F8F5FF] text-[#7C3AED]'}`}>
+                                    <div className="border-t border-[#E8E0FA] pt-2 mt-auto">
+                                        <div className={`w-full flex items-center justify-center gap-1 py-2 rounded-lg font-black text-[12px] ${isCompleted ? 'bg-green-50 text-green-600' : isFull ? 'bg-slate-100 text-slate-400' : 'bg-[#F8F5FF] text-[#7C3AED]'}`}>
                                             {isCompleted ? '후기 보기' : isFull ? '모집이 마감되었습니다' : '클래스 확인하기'}
                                             <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                                         </div>
@@ -209,7 +209,7 @@ const ClassListPage = () => {
                                         <h3 className="text-base font-black text-[#5B4E7A]">진행 중인 클래스</h3>
                                         <span className="text-xs font-bold text-slate-400">{activeClasses.length}개</span>
                                     </div>
-                                    <div className="grid grid-cols-1 gap-6">
+                                    <div className="grid grid-cols-2 gap-3 items-stretch">
                                         {activeClasses.map(cls => <ClassCard key={cls.id} cls={cls} />)}
                                     </div>
                                 </div>
@@ -222,7 +222,7 @@ const ClassListPage = () => {
                                         <h3 className="text-base font-black text-[#5B4E7A]">완료된 클래스</h3>
                                         <span className="text-xs font-bold text-slate-400">{completedClasses.length}개</span>
                                     </div>
-                                    <div className="grid grid-cols-1 gap-6">
+                                    <div className="grid grid-cols-2 gap-3 items-stretch">
                                         {completedClasses.map(cls => <ClassCard key={cls.id} cls={cls} />)}
                                     </div>
                                 </div>
