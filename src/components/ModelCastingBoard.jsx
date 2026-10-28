@@ -58,11 +58,11 @@ const ModelCastingBoard = () => {
                                     onClick={() => navigate(`/home/castings/${c.id}`)}
                                     className="w-full text-left rounded-2xl border border-[#E8E0FA] bg-white p-4 shadow-2xs hover:border-[#D8B4FE] active:scale-[0.99] transition-all"
                                 >
-                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
+                                    <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                                        <span className={`px-2 py-0.5 whitespace-nowrap rounded-full text-[10px] font-black ${status.className}`}>{status.label}</span>
                                         <CastingDdayBadge casting={c} />
-                                        <span className="px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] text-[10px] font-bold">{c.category}</span>
-                                        {c.source_type === 'external' && <span className="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고</span>}
+                                        <span className="px-2 py-0.5 whitespace-nowrap rounded-full bg-[#F3F4F6] text-[#6B7280] text-[10px] font-bold">{c.category}</span>
+                                        {c.source_type === 'external' && <span className="px-2 py-0.5 whitespace-nowrap rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고</span>}
                                     </div>
                                     <h3 className="font-black text-[#1F1235] text-[15px] leading-snug pb-3 border-b border-dashed border-[#E5E7EB]">{c.title}</h3>
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 mt-3">
@@ -76,7 +76,7 @@ const ModelCastingBoard = () => {
                                         ].map(([label, value]) => (
                                             <div key={label} className="min-w-0">
                                                 <p className="text-[11px] text-[#9CA3AF] font-bold">{label}</p>
-                                                <p className="text-[13px] font-bold text-[#1F1235] truncate">{value || '-'}</p>
+                                                <p className="text-[13px] font-bold text-[#1F1235] line-clamp-2 break-keep">{value || '-'}</p>
                                             </div>
                                         ))}
                                     </div>

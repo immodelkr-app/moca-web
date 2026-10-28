@@ -14,7 +14,7 @@ const CastingDdayBadge = ({ casting }) => {
     const info = getDdayInfo(casting);
     if (!info) return null;
     return (
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${TONE_CLASS[info.tone]}`}>{info.label}</span>
+        <span className={`px-2 py-0.5 whitespace-nowrap rounded-full text-[10px] font-black ${TONE_CLASS[info.tone]}`}>{info.label}</span>
     );
 };
 
