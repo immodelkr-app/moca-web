@@ -138,9 +138,9 @@ const ClassListPage = () => {
                                         모집마감
                                     </div>
                                 )}
-                                <div className={`aspect-[4/5] w-full bg-[#F8F5FF] relative overflow-hidden`}>
+                                <div className={`aspect-[3/4] w-full bg-[#F8F5FF] relative overflow-hidden`}>
                                     {cls.image_url ? (
-                                        <img src={cls.image_url} alt={cls.title} className={`w-full h-full object-cover object-top block ${isCompleted ? 'grayscale-[30%]' : 'opacity-90'}`} />
+                                        <img src={cls.image_url} alt={cls.title} className={`w-full h-full object-contain block ${isCompleted ? 'grayscale-[30%]' : 'opacity-90'}`} />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center">
                                             <span className="material-symbols-outlined text-[#E8E0FA] text-6xl">school</span>
@@ -176,13 +176,13 @@ const ClassListPage = () => {
                                         </div>
                                         <h3 className="text-[#5B4E7A] font-black text-[13px] leading-snug mb-1.5 break-keep line-clamp-2">{cls.title}</h3>
                                         <div className="flex flex-col gap-0.5">
-                                            <p className="text-[#7C3AED] text-[11px] font-bold flex items-center gap-1">
-                                                <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                                            <p className="text-[#7C3AED] text-[11px] font-bold flex items-start gap-1">
+                                                <span className="material-symbols-outlined text-[14px] shrink-0">calendar_today</span>
                                                 {cls.class_date?.replace(/(\d{1,2}:\d{2}):\d{2}$/, '$1')}
                                             </p>
                                             {cls.location && (
-                                                <p className="text-[#7C3AED] text-[11px] font-bold flex items-center gap-1">
-                                                    <span className="material-symbols-outlined text-[14px]">location_on</span>
+                                                <p className="text-[#7C3AED] text-[11px] font-bold flex items-start gap-1">
+                                                    <span className="material-symbols-outlined text-[14px] shrink-0">location_on</span>
                                                     {cls.location}
                                                 </p>
                                             )}
