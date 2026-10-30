@@ -130,7 +130,7 @@ const AdminClassAuditionPresent = () => {
 
             {isClosed && revealStage !== 'none' ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-10 animate-fadeIn">
-                    <div className="flex flex-col sm:flex-row items-center gap-10">
+                    <div className="flex flex-col items-center gap-10">
                         {subGroup.length > 0 && (
                             <div className="flex flex-col items-center gap-4 animate-fadeIn">
                                 <p className="text-slate-300 font-black text-lg tracking-widest">🥈 SUB</p>
