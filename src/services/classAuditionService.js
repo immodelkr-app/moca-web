@@ -195,3 +195,12 @@ export const subscribeToAuditionVotes = (classId, onChange) => {
 
     return () => supabase.removeChannel(channel);
 };
+
+// 동률 처리: 최다득표(메인) 그룹과 그 다음 득표(서브) 그룹으로 나눈다. tally는 득표순 정렬 상태여야 한다.
+export const splitWinners = (tally) => {
+    const top = tally[0]?.voteCount;
+    const main = top !== undefined ? tally.filter(t => t.voteCount === top) : [];
+    const rest = tally.filter(t => t.voteCount !== top);
+    const sub = rest.length ? rest.filter(t => t.voteCount === rest[0].voteCount) : [];
+    return { main, sub };
+};
