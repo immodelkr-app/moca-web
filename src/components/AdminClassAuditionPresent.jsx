@@ -118,8 +118,9 @@ const AdminClassAuditionPresent = () => {
     return (
         <div className="min-h-screen bg-slate-950 text-white px-6 py-10 lg:px-16 lg:py-14 flex flex-col">
             <div className="flex items-center justify-between mb-8">
-                <Link to="/admin" className="text-[12px] font-bold text-white/40 hover:text-white/70">← 어드민으로 돌아가기</Link>
-                <span className={`px-3 py-1 rounded-full text-[11px] font-black ${isClosed ? 'bg-indigo-500/20 text-indigo-300' : 'bg-green-500/20 text-green-300'}`}>
+                {/* 새 탭으로 열렸으므로 탭을 닫아 원래 클래스 화면으로 복귀. shortcut: 직접 URL로 연 경우 close가 막히면 /admin 링크로 이동 */}
+                <Link to="/admin" onClick={(e) => { if (window.opener) { e.preventDefault(); window.close(); } }} className="text-[12px] font-bold text-white/40 hover:text-white/70">✕ 닫기</Link>
+    <span className={`px-3 py-1 rounded-full text-[11px] font-black ${isClosed ? 'bg-indigo-500/20 text-indigo-300' : 'bg-green-500/20 text-green-300'}`}>
                     {isClosed ? '마감됨' : '투표 진행 중'}
                 </span>
             </div>
