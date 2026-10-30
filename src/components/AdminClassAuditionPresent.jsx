@@ -120,7 +120,7 @@ const AdminClassAuditionPresent = () => {
             <div className="flex items-center justify-between mb-8">
                 {/* 새 탭으로 열렸으므로 탭을 닫아 원래 클래스 화면으로 복귀. shortcut: 직접 URL로 연 경우 close가 막히면 /admin 링크로 이동 */}
                 <Link to="/admin" onClick={(e) => { if (window.opener) { e.preventDefault(); window.close(); } }} className="text-[12px] font-bold text-white/40 hover:text-white/70">✕ 닫기</Link>
-    <span className={`px-3 py-1 rounded-full text-[11px] font-black ${isClosed ? 'bg-indigo-500/20 text-indigo-300' : 'bg-green-500/20 text-green-300'}`}>
+                <span className={`px-3 py-1 rounded-full text-[11px] font-black ${isClosed ? 'bg-indigo-500/20 text-indigo-300' : 'bg-green-500/20 text-green-300'}`}>
                     {isClosed ? '마감됨' : '투표 진행 중'}
                 </span>
             </div>
@@ -129,15 +129,15 @@ const AdminClassAuditionPresent = () => {
             <p className="text-center text-white/40 font-bold text-sm mb-12">오디션 심사 · 가상 캐스팅</p>
 
             {isClosed && revealStage !== 'none' ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-10 animate-fadeIn">
-                    <div className="flex flex-col items-center gap-10">
+                <div className="flex-1 flex flex-col items-center justify-center gap-6 animate-fadeIn">
+                    <div className="flex flex-col items-center gap-8">
                         {subGroup.length > 0 && (
                             <div className="flex flex-col items-center gap-4 animate-fadeIn">
                                 <p className="text-slate-300 font-black text-lg tracking-widest">🥈 SUB</p>
                                 <div className="flex flex-wrap items-center justify-center gap-6">
                                     {subGroup.map(entry => (
                                         <div key={entry.id} className="flex flex-col items-center gap-3">
-                                            <div className="w-40 h-40 lg:w-52 lg:h-52 rounded-[28px] overflow-hidden border-4 border-slate-400 shadow-xl">
+                                            <div className="w-[18vh] h-[18vh] min-w-[110px] min-h-[110px] rounded-[28px] overflow-hidden border-4 border-slate-400 shadow-xl">
                                                 {entry.photo_url ? <img src={entry.photo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800 flex items-center justify-center text-4xl font-black">{entry.entry_number}</div>}
                                             </div>
                                             <p className="text-xl font-black">{entry.entry_number}번{entry.display_name ? ` · ${entry.display_name}` : ''}</p>
@@ -153,7 +153,7 @@ const AdminClassAuditionPresent = () => {
                                 <div className="flex flex-wrap items-center justify-center gap-6">
                                     {mainGroup.map(entry => (
                                         <div key={entry.id} className="flex flex-col items-center gap-3">
-                                            <div className="w-56 h-56 lg:w-72 lg:h-72 rounded-[32px] overflow-hidden border-4 border-amber-400 shadow-2xl shadow-amber-400/30">
+                                            <div className="w-[28vh] h-[28vh] min-w-[150px] min-h-[150px] rounded-[32px] overflow-hidden border-4 border-amber-400 shadow-2xl shadow-amber-400/30">
                                                 {entry.photo_url ? <img src={entry.photo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800 flex items-center justify-center text-6xl font-black">{entry.entry_number}</div>}
                                             </div>
                                             <p className="text-2xl font-black">{entry.entry_number}번{entry.display_name ? ` · ${entry.display_name}` : ''}</p>
