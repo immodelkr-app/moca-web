@@ -10,6 +10,7 @@ import {
 } from '../services/classService';
 import { supabase } from '../services/supabaseClient';
 import { sendBulkMessage } from '../services/solapiService';
+import { sendBroadcastPush, sendTargetedPush, fetchNicknamesByGrades } from '../services/pushNotificationService';
 import AdminClassAudition from './AdminClassAudition';
 import ClassDescription from './ClassDescription';
 import { getVideoEmbedUrl } from '../utils/videoEmbed';
@@ -163,6 +164,27 @@ const AdminClasses = () => {
     const [successMsg, setSuccessMsg] = useState('');
     const [error, setError] = useState('');
     const [editingClassId, setEditingClassId] = useState(null);
+    const [notifyOnCreate, setNotifyOnCreate] = useState(false);
+
+    // 신청 가능 등급이 ALL이면 전체, 아니면 해당 등급 회원에게만 앱푸시 (User.grade: 전속모델=VIP)
+    const pushNewClass = async (cls) => {
+        const grades = parseClassGrades(cls.target_grade);
+        const push = { title: '🎓 새 클래스가 열렸어요', body: cls.title, route: '/home/class' };
+        if (grades[0] === 'ALL') return sendBroadcastPush(push);
+        // 아임모델·전속모델은 동급: 하나만 선택돼도 둘 다 발송 (회원 등급값은 IMODEL / VIP)
+        const userGrades = grades.flatMap(g => g === 'GOLD' ? ['GOLD'] : ['IMODEL', 'VIP']);
+        return sendTargetedPush({ ...push, nicknames: await fetchNicknamesByGrades(userGrades) });
+    };
+
+    const handleSendClassPush = async (cls) => {
+        if (!window.confirm(`[${cls.title}] 새 클래스 알림을 앱푸시로 발송할까요?`)) return;
+        try {
+            const res = await pushNewClass(cls);
+            alert(res.success ? `✅ 발송 완료 (성공 ${res.successCount ?? 0}건 / 실패 ${res.failCount ?? 0}건)` : '발송 실패: ' + res.error);
+        } catch (err) {
+            alert('발송 실패: ' + err.message);
+        }
+    };
     const [pricing, setPricing] = useState([]);
     const [priceType, setPriceType] = useState('flat'); // 'flat' | 'grade'
 
@@ -398,11 +420,21 @@ const AdminClasses = () => {
                 resetForm();
             }
         } else {
-            const { error } = await createClass(classPayload, finalPricing);
+            const { data: created, error } = await createClass(classPayload, finalPricing);
             if (error) {
                 setFormError(error.message);
             } else {
-                setSuccessMsg('✅ 클래스가 성공적으로 개설되었습니다!');
+                let pushMsg = '';
+                if (notifyOnCreate && created) {
+                    try {
+                        const res = await pushNewClass(created);
+                        pushMsg = res.success ? ` (앱푸시 ${res.successCount ?? 0}건 발송)` : ` (앱푸시 실패: ${res.error})`;
+                    } catch (err) {
+                        pushMsg = ` (앱푸시 실패: ${err.message})`;
+                    }
+                }
+                setNotifyOnCreate(false);
+                setSuccessMsg('✅ 클래스가 성공적으로 개설되었습니다!' + pushMsg);
                 setView('list');
                 loadClasses();
                 resetForm();
@@ -932,6 +964,10 @@ const AdminClasses = () => {
                                                         <span className="material-symbols-outlined text-[18px] mb-0.5">share</span>
                                                         <span className="text-[9px]">공유</span>
                                                     </button>
+                                                    <button onClick={() => handleSendClassPush(cls)} className="flex-1 flex flex-col items-center justify-center py-2 rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-orange-600 hover:bg-orange-50 hover:border-orange-200 transition-all font-bold">
+                                                        <span className="material-symbols-outlined text-[18px] mb-0.5">notifications_active</span>
+                                                        <span className="text-[9px]">알림</span>
+                                                    </button>
                                                     <button onClick={() => handleEditClass(cls)} className="flex-1 flex flex-col items-center justify-center py-2 rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all font-bold">
                                                         <span className="material-symbols-outlined text-[18px] mb-0.5">edit</span>
                                                         <span className="text-[9px]">수정</span>
@@ -1339,6 +1375,13 @@ const AdminClasses = () => {
                                 </div>
 
                                 {formError && <p className="text-red-500 text-sm font-bold">{formError}</p>}
+
+                                {!editingClassId && (
+                                    <label className="flex items-center gap-2 text-sm font-bold cursor-pointer">
+                                        <input type="checkbox" checked={notifyOnCreate} onChange={e => setNotifyOnCreate(e.target.checked)} />
+                                        개설과 함께 앱푸시 발송 (신청 가능 등급 회원에게)
+                                    </label>
+                                )}
 
                                 <div className="flex gap-4 pt-4">
                                     <button type="button" onClick={() => { resetForm(); setView('list'); }} className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-sm rounded-2xl transition-all">취소</button>
