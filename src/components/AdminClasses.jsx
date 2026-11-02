@@ -965,7 +965,7 @@ const AdminClasses = () => {
                                                         <span className="text-[9px]">공유</span>
                                                     </button>
                                                     <button onClick={() => handleSendClassPush(cls)} className="flex-1 flex flex-col items-center justify-center py-2 rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-orange-600 hover:bg-orange-50 hover:border-orange-200 transition-all font-bold">
-                                                        <span className="material-symbols-outlined text-[18px] mb-0.5">notifications_active</span>
+                                                        <span className="material-symbols-outlined text-[18px] mb-0.5">campaign</span>
                                                         <span className="text-[9px]">알림</span>
                                                     </button>
                                                     <button onClick={() => handleEditClass(cls)} className="flex-1 flex flex-col items-center justify-center py-2 rounded-2xl border border-[var(--moca-border)] text-[var(--moca-text-3)] hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all font-bold">
