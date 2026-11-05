@@ -110,7 +110,7 @@ const Layout = () => {
         <div className="min-h-screen flex overflow-x-hidden w-full max-w-[100vw]" style={{ backgroundColor: 'var(--moca-bg)' }}>
 
             {/* ── PC 사이드바 (lg 이상) ── */}
-            <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-white border-r border-[#E8E0FA] fixed left-0 top-0 z-50 shadow-moca">
+            <aside className="hidden lg:flex flex-col w-64 h-screen bg-white border-r border-[#E8E0FA] fixed left-0 top-0 z-50 shadow-moca">
                 {/* 로고 & 유저 */}
                 <div className="px-6 py-7 border-b border-[#E8E0FA] flex flex-col items-center text-center">
                     <span className="text-4xl moca-brand-logo text-[#1F1235] tracking-tight pb-1">MOCA</span>

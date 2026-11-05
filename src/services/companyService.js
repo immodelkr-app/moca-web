@@ -3,6 +3,7 @@
  * 업체(구인자) 계정 관련 - 가입, 사업자등록증 첨부, 인증 상태 조회
  */
 import { supabase } from './supabaseClient';
+import { notifyAdmin } from './solapiService';
 
 /**
  * 사업자등록증 파일을 Storage에 업로드하고 공개 URL 반환
@@ -107,6 +108,8 @@ export const registerCompany = async ({
         }])
         .select()
         .single();
+
+    if (!error) notifyAdmin(`[모카] 업체 인증 신청: ${companyName} (${contactName} ${contactPhone})`);
 
     return { data, error };
 };

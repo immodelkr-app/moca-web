@@ -73,7 +73,7 @@ const ModelCastingDetailPage = () => {
                         {isExternal && <span className="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] text-[10px] font-black">외부 공고</span>}
                     </div>
                     <h2 className="text-xl font-black text-[#1F1235] leading-snug">{casting.title}</h2>
-                    <p className="text-[12px] text-[#9CA3AF] font-bold mt-1.5">{casting.companies?.company_name || casting.producer_name || '업체'}{viewCount !== null && ` · 조회 ${viewCount}명`}</p>
+                    <p className="text-[12px] text-[#9CA3AF] font-bold mt-1.5">{casting.companies?.company_name || casting.producer_name || '업체'}{casting.companies?.verification_status === 'verified' && <span className="ml-1.5 inline-flex items-center gap-0.5 text-[#7C3AED]"><span className="material-symbols-outlined text-[13px]">verified</span>모카 인증업체</span>}{viewCount !== null && ` · 조회 ${viewCount}명`}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -136,14 +136,15 @@ const ModelCastingDetailPage = () => {
                     </a>
                 )}
 
+                {casting.apply_guide && (
+                    <div>
+                        <h3 className="text-[13px] font-black text-[#1F1235] mb-1.5">{isExternal ? '지원 방법' : '업체 연락처 · 지원 방법'}</h3>
+                        <p className="whitespace-pre-wrap text-[#1F1235] text-sm leading-relaxed bg-[#FAF8FF] rounded-2xl p-4">{casting.apply_guide}</p>
+                    </div>
+                )}
+
                 {isExternal && (
                     <>
-                        {casting.apply_guide && (
-                            <div>
-                                <h3 className="text-[13px] font-black text-[#1F1235] mb-1.5">지원 방법</h3>
-                                <p className="whitespace-pre-wrap text-[#1F1235] text-sm leading-relaxed bg-[#FAF8FF] rounded-2xl p-4">{casting.apply_guide}</p>
-                            </div>
-                        )}
 
                         {casting.source_url && (
                             <a

@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getUser } from '../services/userService';
 import { getCompanyByUserId, uploadCastingAttachment } from '../services/companyService';
 import { createCasting, updateCasting, fetchCastingDetail } from '../services/modelCastingService';
-import { checkVerificationStatus } from '../services/emailVerificationService';
 
 const CATEGORIES = [
     'TV광고', '뮤직비디오', '화보촬영', 'TV프로그램',
@@ -30,7 +29,6 @@ const CompanyCastingForm = () => {
     const [initLoading, setInitLoading] = useState(isEditMode);
     const [error, setError] = useState('');
     const [existingAttachmentUrl, setExistingAttachmentUrl] = useState(null);
-    const [emailVerified, setEmailVerified] = useState(null);
 
     const [form, setForm] = useState({
         category: CATEGORIES[0],
@@ -40,6 +38,7 @@ const CompanyCastingForm = () => {
         shootLocation: '',
         description: '',
         contractType: '',
+        applyGuide: '',
         deadline: '',
         attachmentFile: null,
     });
@@ -47,11 +46,6 @@ const CompanyCastingForm = () => {
 
     useEffect(() => {
         getCompanyByUserId(user.id).then(({ data }) => setCompany(data));
-        if (user?.email) {
-            checkVerificationStatus(user.email).then(({ verified }) => setEmailVerified(!!verified));
-        } else {
-            setEmailVerified(false);
-        }
     }, [user?.id]);
 
     useEffect(() => {
@@ -66,6 +60,7 @@ const CompanyCastingForm = () => {
                 shootLocation: data.shoot_location || '',
                 description: data.description || '',
                 contractType: data.contract_type || '',
+                applyGuide: data.apply_guide || '',
                 deadline: data.deadline,
                 attachmentFile: null,
             });
@@ -96,6 +91,10 @@ const CompanyCastingForm = () => {
         e.preventDefault();
         if (!company) return;
 
+        if (!user?.email) {
+            setError('업체 계정에 이메일이 등록되어 있지 않아 지원자 프로필을 받을 수 없습니다. 고객센터로 문의해 이메일을 등록해 주세요.');
+            return;
+        }
         if (!form.title || !form.deadline) {
             setError('제목과 모집 마감일은 필수입니다.');
             return;
@@ -124,6 +123,7 @@ const CompanyCastingForm = () => {
                 description: form.description,
                 attachmentUrl,
                 contractType: form.contractType,
+                applyGuide: form.applyGuide,
                 deadline: form.deadline,
                 roles: roles.map((r) => ({
                     roleName: r.roleName,
@@ -161,18 +161,6 @@ const CompanyCastingForm = () => {
                 <p className="text-xs text-[#9CA3AF] font-bold">인증은 영업일 기준 1~2일 소요됩니다.</p>
                 <button onClick={() => navigate('/company/castings')} className="mt-2 px-4 py-2 rounded-xl bg-[#F3E8FF] text-[#7C3AED] font-black text-xs">
                     목록으로
-                </button>
-            </div>
-        );
-    }
-
-    if (!isEditMode && emailVerified === false) {
-        return (
-            <div className="py-16 text-center space-y-3">
-                <p className="text-sm font-black text-[#1F1235]">이메일 인증 완료 후 게시글을 등록할 수 있어요.</p>
-                <p className="text-xs text-[#9CA3AF] font-bold">지원자 프로필을 이메일로 받으려면 먼저 이메일 인증이 필요합니다.</p>
-                <button onClick={() => navigate('/company/castings')} className="mt-2 px-4 py-2 rounded-xl bg-[#F3E8FF] text-[#7C3AED] font-black text-xs">
-                    목록에서 인증하기
                 </button>
             </div>
         );
@@ -226,6 +214,13 @@ const CompanyCastingForm = () => {
                     <label className={labelClass}>상세 설명</label>
                     <textarea rows={5} placeholder="촬영 내용, 업로드 경로, 지원요건 등을 자유롭게 작성해 주세요."
                         value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        className={`${inputClass} resize-none`} />
+                </div>
+
+                <div className="space-y-1.5">
+                    <label className={labelClass}>업체 연락처 · 지원 방법 (선택)</label>
+                    <textarea rows={3} placeholder="예) 문의: 010-0000-0000 / 카카오톡 오픈채팅 링크 / 포트폴리오 첨부 방법 등. '지원하기'를 누른 모델의 프로필은 가입하신 이메일로 자동 전달됩니다."
+                        value={form.applyGuide} onChange={(e) => setForm({ ...form, applyGuide: e.target.value })}
                         className={`${inputClass} resize-none`} />
                 </div>
 

@@ -103,6 +103,7 @@ export const createCasting = async ({
     description,
     attachmentUrl,
     contractType,
+    applyGuide,
     deadline,
     roles = [],
 }) => {
@@ -128,6 +129,7 @@ export const createCasting = async ({
             description: description || null,
             attachment_url: attachmentUrl || null,
             contract_type: contractType || null,
+            apply_guide: applyGuide || null,
             deadline,
             status: 'open',
         }])
@@ -172,6 +174,7 @@ export const updateCasting = async (castingId, {
     description,
     attachmentUrl,
     contractType,
+    applyGuide,
     deadline,
     roles = [],
 }) => {
@@ -185,6 +188,7 @@ export const updateCasting = async (castingId, {
         shoot_location: shootLocation || null,
         description: description || null,
         contract_type: contractType || null,
+        apply_guide: applyGuide || null,
         deadline,
         updated_at: new Date().toISOString(),
     };
