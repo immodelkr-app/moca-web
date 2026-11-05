@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient';
 import { updateGradeInCore } from '../lib/imCoreAuth';
 import { sendTargetedPush } from './pushNotificationService';
-import { notifyAdmin } from './solapiService';
+import { notifyAdmin, sendBulkMessage } from './solapiService';
 
 // --- Partners ---
 export const fetchPartners = async () => {
@@ -360,10 +360,20 @@ export const fetchCompanies = async (status) => {
  */
 export const approveCompany = async (companyId) => {
     if (!supabase) return { error: new Error('Supabase not configured') };
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('companies')
         .update({ verification_status: 'verified', verified_at: new Date().toISOString() })
-        .eq('id', companyId);
+        .eq('id', companyId)
+        .select('company_name, contact_phone')
+        .single();
+
+    // 승인 안내 SMS (실패해도 승인 자체는 유지)
+    if (!error && data?.contact_phone) {
+        sendBulkMessage(
+            [data.contact_phone.replace(/\D/g, '')],
+            `[모카] ${data.company_name} 업체 인증이 승인되었습니다. 모카 앱에 로그인하시면 '내 모카캐스팅'에서 모델 모집 공고를 바로 등록하실 수 있습니다.`
+        ).catch((err) => console.warn('[adminService] 업체 승인 SMS 발송 실패:', err.message));
+    }
     return { error };
 };
 
