@@ -371,7 +371,7 @@ export const approveCompany = async (companyId) => {
     if (!error && data?.contact_phone) {
         sendBulkMessage(
             [data.contact_phone.replace(/\D/g, '')],
-            `[모카] ${data.company_name} 업체 인증이 승인되었습니다. 모카 앱에 로그인하시면 '내 모카캐스팅'에서 모델 모집 공고를 바로 등록하실 수 있습니다.`
+            `[모카] ${data.company_name} 업체 인증이 승인되었습니다. 모카 앱에 로그인하시면 '모카캐스팅'에서 모델 모집 공고를 바로 등록하실 수 있습니다.`
         ).catch((err) => console.warn('[adminService] 업체 승인 SMS 발송 실패:', err.message));
     }
     return { error };
