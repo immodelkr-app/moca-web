@@ -112,7 +112,7 @@ serve(async (req) => {
         if (action === "test") {
             const to = String(body.to ?? "").trim();
             if (!EMAIL_RE.test(to)) return json({ success: false, error: "받는 이메일 형식이 올바르지 않습니다." });
-            const r = await sendOne(apiKey, to, withAdPrefix(`[테스트] ${body.subject ?? "모카캐스팅 업체 안내"}`), "테스트업체", "test", senderAddress);
+            const r = await sendOne(apiKey, to, `[테스트] ${withAdPrefix(String(body.subject ?? "모카캐스팅 업체 안내"))}`, "테스트업체", "test", senderAddress);
             return r.ok ? json({ success: true }) : json({ success: false, error: r.error });
         }
 
