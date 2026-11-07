@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { sendBroadcastPush } from '../services/pushNotificationService';
+import { extractContacts } from '../utils/castingContacts';
+import AdminOutreachEmail from './AdminOutreachEmail';
 import { fetchCastings, importExternalCasting, createExternalCasting, updateExternalCasting, findCastingsByTitle, closeCasting, deleteCasting, getCastingStatus, todayKst, fetchCastingEventStats, getDdayInfo, markCastingPushed, getCastingShareUrl } from '../services/modelCastingService';
 
 const CATEGORIES = [
@@ -447,19 +449,8 @@ const CastingDetailModal = ({ casting, stats, onClose, onChanged }) => {
     );
 };
 
-// 등록된 공고에서 업체명/연락처/지원 이메일을 중복 없이 모아 보여주는 패널 (내부 참고/내보내기 전용).
-// 주의: apply_email은 모델이 "이메일로 지원하기"를 누를 때 쓰라고 만든 값(20261011_05 마이그레이션 주석)이라
-// 여기서도 화면에 보여주고 CSV로 내려받는 것만 하고, 발송 기능은 붙이지 않는다.
-// 외부 공고는 apply_email 컬럼이 비어 있고 연락처가 "지원 방법 안내" 문구에만 있어서, 문구에서 이메일/전화번호를 뽑아 쓴다.
-const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g;
-const PHONE_RE = /(?:\+?82[-.\s]?)?0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}/g;
-const extractContacts = (text) => {
-    const src = text || '';
-    const emails = [...new Set(src.match(EMAIL_RE) || [])];
-    const phones = [...new Set((src.replace(EMAIL_RE, ' ').match(PHONE_RE) || []).map((p) => p.trim()))];
-    return { emails, phones };
-};
-
+// 등록된 공고에서 업체명/연락처/지원 이메일을 중복 없이 모아 보여주는 패널 (확인/CSV 내보내기용).
+// 홍보 메일 발송은 별도 패널(AdminOutreachEmail)에서 한다. 외부 공고는 apply_email 이 비어 있어 문구에서 이메일/전화번호를 뽑는다.
 const CastingContactsPanel = ({ castings }) => {
     const rows = React.useMemo(() => {
         const list = (castings || []).map((c) => {
@@ -530,7 +521,7 @@ const CastingContactsPanel = ({ castings }) => {
                     </button>
                 ))}
             </div>
-            <p className="text-[11px] text-[var(--moca-text-3)] mb-3">내부 참고/내보내기 용도입니다. 지원 이메일은 영업·홍보 발송에 쓰지 않습니다.</p>
+            <p className="text-[11px] text-[var(--moca-text-3)] mb-3">확인/내보내기 용도입니다. 홍보 메일 발송은 "홍보 메일 발송" 패널에서 합니다.</p>
             <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                     <thead>
@@ -569,6 +560,7 @@ const AdminModelCastings = () => {
     const [pushingId, setPushingId] = useState(null);
     const [pushStatus, setPushStatus] = useState({}); // { [castingId]: '발송 완료 · 성공 N건 / 실패 M건' | '발송 실패: ...' }
     const [showContacts, setShowContacts] = useState(false);
+    const [showOutreach, setShowOutreach] = useState(false);
 
     const load = async () => {
         setLoading(true);
@@ -609,11 +601,13 @@ const AdminModelCastings = () => {
                 <p className="text-sm font-black text-[var(--moca-text)]">전체 모카캐스팅 게시글 <span className="text-[var(--moca-primary)]">{castings.length}</span>건</p>
                 <div className="flex items-center gap-3">
                     <button onClick={() => setShowContacts((v) => !v)} className="text-xs font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">📇 업체 연락처 모음 {showContacts ? '숨기기' : '보기'}</button>
+                    <button onClick={() => setShowOutreach((v) => !v)} className="text-xs font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">📧 홍보 메일 발송 {showOutreach ? '숨기기' : '보기'}</button>
                     <button onClick={load} className="text-xs font-bold text-[var(--moca-text-3)] hover:text-[var(--moca-primary)]">새로고침</button>
                 </div>
             </div>
 
             {showContacts && <CastingContactsPanel castings={castings} />}
+            {showOutreach && <AdminOutreachEmail castings={castings} />}
 
             {loading ? (
                 <p className="text-sm text-[var(--moca-text-3)] font-bold py-10 text-center">불러오는 중...</p>
