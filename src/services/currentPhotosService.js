@@ -106,6 +106,15 @@ export const deleteCurrentPhoto = async (photoId, storagePath) => {
     return { success: true, error: null };
 };
 
+/** 대표사진 설정 (유저당 1장) */
+export const setMainPhoto = async (userId, photoId) => {
+    if (!isSupabaseEnabled() || !userId) return { success: false };
+    const { error: e1 } = await supabase.from('model_current_photos').update({ is_main: false }).eq('user_id', userId);
+    if (e1) return { success: false };
+    const { error: e2 } = await supabase.from('model_current_photos').update({ is_main: true }).eq('id', photoId);
+    return { success: !e2 };
+};
+
 /**
  * 관리자: 전체 모델 사진 목록 조회
  * @returns {Promise<Array>}

@@ -38,6 +38,9 @@ import CertificationFeed from './components/CertificationFeed';
 import CeoQuizBoard from './components/CeoQuizBoard';
 import SmartProfile from './components/SmartProfile';
 import QnABoard from './components/QnABoard';
+import PublicProfileList from './components/PublicProfileList';
+import PublicProfileDetail from './components/PublicProfileDetail';
+import MyPublicProfile from './components/MyPublicProfile';
 import ExclusiveContractPage from './components/ExclusiveContractPage';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
@@ -165,6 +168,8 @@ function AppContent() {
                         <Route path="castings/new" element={<CompanyCastingForm />} />
                         <Route path="castings/:id/edit" element={<CompanyCastingForm />} />
                         <Route path="castings/:id/applicants" element={<CompanyApplicants />} />
+                        <Route path="profiles" element={<PublicProfileList />} />
+                        <Route path="profiles/:id" element={<PublicProfileDetail />} />
                     </Route>
                 </Route>
 
@@ -185,6 +190,9 @@ function AppContent() {
                         <Route path="quiz" element={<CeoQuizBoard />} />
                         <Route path="smart-profile" element={<SmartProfile />} />
                         <Route path="qna" element={<QnABoard />} />
+                        <Route path="profiles" element={<PublicProfileList />} />
+                        <Route path="profiles/:id" element={<PublicProfileDetail />} />
+                        <Route path="my-profile" element={<MyPublicProfile />} />
 
                         <Route path="class" element={<ClassListPage />} />
                         <Route path="class/:id" element={<ClassDetailPage />} />
