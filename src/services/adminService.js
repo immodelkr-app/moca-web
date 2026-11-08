@@ -356,13 +356,13 @@ export const fetchCompanies = async (status) => {
 };
 
 /**
- * 업체 사업자 인증을 승인합니다 ("모카 인증업체" 배지 부여).
+ * 업체 사업자 인증을 승인합니다 ("모카 인증업체" 배지 부여). tier: 'business'(사업자등급) | 'brand'(브랜드등급)
  */
-export const approveCompany = async (companyId) => {
+export const approveCompany = async (companyId, tier = 'business') => {
     if (!supabase) return { error: new Error('Supabase not configured') };
     const { data, error } = await supabase
         .from('companies')
-        .update({ verification_status: 'verified', verified_at: new Date().toISOString() })
+        .update({ verification_status: 'verified', verified_at: new Date().toISOString(), tier })
         .eq('id', companyId)
         .select('company_name, contact_phone')
         .single();
@@ -386,5 +386,12 @@ export const rejectCompany = async (companyId, reason) => {
         .from('companies')
         .update({ verification_status: 'rejected', rejected_reason: reason || null })
         .eq('id', companyId);
+    return { error };
+};
+
+/** 인증완료 업체의 등급만 변경 */
+export const setCompanyTier = async (companyId, tier) => {
+    if (!supabase) return { error: new Error('Supabase not configured') };
+    const { error } = await supabase.from('companies').update({ tier }).eq('id', companyId);
     return { error };
 };

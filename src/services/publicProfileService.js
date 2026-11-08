@@ -1,13 +1,16 @@
 import { supabase } from './supabaseClient';
+import { getUser } from './userService';
+
+const viewerId = () => getUser()?.id || null;
 
 export const fetchPublicProfiles = async ({ gender = '', sort = 'recent' } = {}) => {
-    const { data, error } = await supabase.rpc('list_public_profiles', { p_gender: gender || null, p_sort: sort });
+    const { data, error } = await supabase.rpc('list_public_profiles', { p_gender: gender || null, p_sort: sort, p_viewer_id: viewerId() });
     if (error) { console.warn('[fetchPublicProfiles]', error.message); return []; }
     return data || [];
 };
 
 export const fetchPublicProfileDetail = async (id) => {
-    const { data, error } = await supabase.rpc('get_public_profile_detail', { p_id: id });
+    const { data, error } = await supabase.rpc('get_public_profile_detail', { p_id: id, p_viewer_id: viewerId() });
     if (error) { console.warn('[fetchPublicProfileDetail]', error.message); return null; }
     return data;
 };

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCompanies, approveCompany, rejectCompany } from '../services/adminService';
+import { fetchCompanies, approveCompany, rejectCompany, setCompanyTier } from '../services/adminService';
 
 const STATUS_TABS = [
     { value: 'pending', label: '심사대기' },
     { value: 'verified', label: '인증완료' },
     { value: 'rejected', label: '반려' },
 ];
+
+const TIER_LABEL = { business: '사업자등급', brand: '브랜드등급' };
 
 const AdminCompanyVerification = () => {
     const [statusFilter, setStatusFilter] = useState('pending');
@@ -21,10 +23,16 @@ const AdminCompanyVerification = () => {
 
     useEffect(() => { load(); }, [statusFilter]);
 
-    const handleApprove = async (companyId) => {
-        if (!window.confirm("이 업체를 '모카 인증업체'로 승인할까요?")) return;
-        const { error } = await approveCompany(companyId);
+    const handleApprove = async (companyId, tier) => {
+        if (!window.confirm(`이 업체를 '모카 인증업체(${TIER_LABEL[tier]})'로 승인할까요?`)) return;
+        const { error } = await approveCompany(companyId, tier);
         if (error) { alert('승인 실패: ' + error.message); return; }
+        load();
+    };
+
+    const handleChangeTier = async (companyId, tier) => {
+        const { error } = await setCompanyTier(companyId, tier);
+        if (error) { alert('등급 변경 실패: ' + error.message); return; }
         load();
     };
 
@@ -68,6 +76,9 @@ const AdminCompanyVerification = () => {
                                         <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold">
                                             {c.verification_type === 'affiliation' ? '소속확인형' : '사업자형'}
                                         </span>
+                                        {c.verification_status === 'verified' && c.tier && (
+                                            <span className="px-2 py-0.5 rounded-full bg-[#F3E8FF] text-[#7C3AED] text-[10px] font-black">{TIER_LABEL[c.tier]}</span>
+                                        )}
                                     </div>
                                     <p className="text-xs text-[var(--moca-text-3)] font-bold">
                                         {c.business_number ? `사업자번호 ${c.business_number}` : '사업자번호 없음(프리랜서)'} · 담당자 {c.contact_name} ({c.contact_phone})
@@ -87,8 +98,11 @@ const AdminCompanyVerification = () => {
                                 </div>
                                 {c.verification_status === 'pending' && (
                                     <div className="flex flex-col gap-1.5 flex-shrink-0">
-                                        <button onClick={() => handleApprove(c.id)} className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[11px] font-black hover:bg-emerald-600 transition-colors">
-                                            승인
+                                        <button onClick={() => handleApprove(c.id, 'business')} className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[11px] font-black hover:bg-emerald-600 transition-colors">
+                                            사업자등급 승인
+                                        </button>
+                                        <button onClick={() => handleApprove(c.id, 'brand')} className="px-3 py-1.5 rounded-lg bg-[#9333EA] text-white text-[11px] font-black hover:bg-[#7C3AED] transition-colors">
+                                            브랜드등급 승인
                                         </button>
                                         <button onClick={() => handleReject(c.id)} className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-600 text-[11px] font-black hover:bg-gray-300 transition-colors">
                                             반려
@@ -96,14 +110,24 @@ const AdminCompanyVerification = () => {
                                     </div>
                                 )}
                                 {c.verification_status === 'verified' && (
-                                    <button onClick={() => handleReject(c.id)} className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-600 text-[11px] font-black hover:bg-gray-300 transition-colors flex-shrink-0">
-                                        인증 취소
-                                    </button>
+                                    <div className="flex flex-col gap-1.5 flex-shrink-0">
+                                        <button onClick={() => handleChangeTier(c.id, c.tier === 'brand' ? 'business' : 'brand')} className="px-3 py-1.5 rounded-lg bg-[#F3E8FF] text-[#7C3AED] text-[11px] font-black hover:bg-[#E9D5FF] transition-colors">
+                                            {c.tier === 'brand' ? '사업자등급으로 변경' : '브랜드등급으로 변경'}
+                                        </button>
+                                        <button onClick={() => handleReject(c.id)} className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-600 text-[11px] font-black hover:bg-gray-300 transition-colors">
+                                            인증 취소
+                                        </button>
+                                    </div>
                                 )}
                                 {c.verification_status === 'rejected' && (
-                                    <button onClick={() => handleApprove(c.id)} className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[11px] font-black hover:bg-emerald-600 transition-colors flex-shrink-0">
-                                        재승인
-                                    </button>
+                                    <div className="flex flex-col gap-1.5 flex-shrink-0">
+                                        <button onClick={() => handleApprove(c.id, 'business')} className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-[11px] font-black hover:bg-emerald-600 transition-colors">
+                                            사업자등급 재승인
+                                        </button>
+                                        <button onClick={() => handleApprove(c.id, 'brand')} className="px-3 py-1.5 rounded-lg bg-[#9333EA] text-white text-[11px] font-black hover:bg-[#7C3AED] transition-colors">
+                                            브랜드등급 재승인
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>

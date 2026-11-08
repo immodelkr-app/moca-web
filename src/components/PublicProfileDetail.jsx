@@ -26,6 +26,11 @@ const PublicProfileDetail = () => {
                     {p.photo_urls.map(u => <img key={u} src={u} alt="" className="h-72 rounded-xl snap-start object-cover shrink-0" />)}
                 </div>
             )}
+            {p.limited ? (
+                <p className="text-xs text-[#7C3AED] bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-3 py-2.5 mb-4">
+                    상세 프로필(신체정보·경력·연락처)은 모카 인증 업체만 볼 수 있어요.
+                </p>
+            ) : (<>
             <div className="bg-white rounded-2xl border border-[#E8E0FA] px-4 py-2 mb-4">
                 <Row label="성별" value={p.gender} />
                 <Row label="나이" value={p.age && `${p.age}세`} />
@@ -39,6 +44,7 @@ const PublicProfileDetail = () => {
             </div>
             {p.intro && <Section title="소개" text={p.intro} />}
             {p.career && <Section title="경력" text={p.career} />}
+            </>)}
         </div>
     );
 };
