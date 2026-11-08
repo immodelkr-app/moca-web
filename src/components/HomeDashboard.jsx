@@ -243,14 +243,14 @@ const HomeDashboard = () => {
 
                     {/* 카드 1: 모델 프로필 (내 공개 프로필 설정) */}
                     <button
-                        onClick={() => navigate('/home/my-profile')}
+                        onClick={() => navigate('/home/profiles')}
                         className="flex flex-col items-center justify-start h-[200px] px-2 py-6 rounded-3xl bg-gradient-to-b from-[#FDF4FF] via-[#F5D0FE] to-[#F0ABFC] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
                     >
                         <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
                             <span className="material-symbols-outlined text-[#A21CAF] text-[34px]">badge</span>
                         </div>
                         <h3 className="text-lg whitespace-nowrap font-black text-[#1F1235] mb-1">모델 프로필</h3>
-                        <p className="text-[11px] font-bold text-[#A21CAF]/80 leading-tight">내 프로필 공개하고<br />캐스팅 기회 잡기</p>
+                        <p className="text-[11px] font-bold text-[#A21CAF]/80 leading-tight">다른 모델 프로필<br />둘러보기</p>
                     </button>
 
                     {/* 카드 2: 모카클래스 */}

@@ -24,7 +24,7 @@ const PublicProfileList = () => {
             <div className="flex items-end justify-between mb-4">
                 <h1 className="text-xl font-black text-[#1F1235]">모델 프로필 <span className="text-xs font-medium text-gray-400">{items ? `: ${items.length} posts` : ''}</span></h1>
                 {isModel && (
-                    <button onClick={() => navigate('/home/smart-profile')}
+                    <button onClick={() => navigate('/home/my-profile')}
                         className="px-3 py-2 rounded-lg bg-[#9333EA] text-white text-xs font-black">✎ 내 프로필 등록</button>
                 )}
             </div>
