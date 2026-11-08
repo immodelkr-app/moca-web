@@ -24,6 +24,7 @@ const COMMUNITY_ITEMS = [
     { icon: 'campaign', label: '모카캐스팅', route: '/home/castings', newKey: 'casting', color: 'text-[#7C3AED]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'photo_camera', label: '모카그램', route: '/home/cert', newKey: 'cert', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
     { icon: 'smart_display', label: '모카TV', route: '/home/tv', color: 'text-[#6D28D9]', bgLight: 'bg-[#EDE9FE]' },
+    { icon: 'quiz', label: '모카퀴즈', route: '/home/quiz', color: 'text-[#A21CAF]', bgLight: 'bg-[#FAE8FF]' },
     { icon: 'workspace_premium', label: '등급 신청하기', route: '/upgrade', color: 'text-[#D97706]', bgLight: 'bg-[#FEF3C7]' },
 ];
 
@@ -240,16 +241,16 @@ const HomeDashboard = () => {
             <div className="px-6 mb-8">
                 <div className="grid grid-cols-2 gap-4">
 
-                    {/* 카드 1: 모카퀴즈 */}
+                    {/* 카드 1: 모델 프로필 (내 공개 프로필 설정) */}
                     <button
-                        onClick={() => navigate('/home/quiz')}
+                        onClick={() => navigate('/home/my-profile')}
                         className="flex flex-col items-center justify-start h-[200px] px-2 py-6 rounded-3xl bg-gradient-to-b from-[#FDF4FF] via-[#F5D0FE] to-[#F0ABFC] border border-white/60 shadow-sm active:scale-95 transition-all text-center group"
                     >
                         <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center shadow-inner mb-4 group-hover:scale-105 transition-transform">
-                            <span className="material-symbols-outlined text-[#A21CAF] text-[34px]">quiz</span>
+                            <span className="material-symbols-outlined text-[#A21CAF] text-[34px]">badge</span>
                         </div>
-                        <h3 className="text-lg whitespace-nowrap font-black text-[#1F1235] mb-1">모카퀴즈</h3>
-                        <p className="text-[11px] font-bold text-[#A21CAF]/80 leading-tight">정답 맞추고<br />상품 받아가기</p>
+                        <h3 className="text-lg whitespace-nowrap font-black text-[#1F1235] mb-1">모델 프로필</h3>
+                        <p className="text-[11px] font-bold text-[#A21CAF]/80 leading-tight">내 프로필 공개하고<br />캐스팅 기회 잡기</p>
                     </button>
 
                     {/* 카드 2: 모카클래스 */}
