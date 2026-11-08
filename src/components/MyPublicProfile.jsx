@@ -56,7 +56,6 @@ const MyPublicProfile = () => {
             </div>
             <textarea className={input} rows={4} placeholder="자기소개" value={f.intro || ''} onChange={e => set('intro', e.target.value)} />
             <input className={input} placeholder="특기 (예: 댄스, 영어, 운전)" value={f.specialties || ''} onChange={e => set('specialties', e.target.value)} />
-            <textarea className={input} rows={5} placeholder="경력 (광고·영상·화보 등)" value={f.career || ''} onChange={e => set('career', e.target.value)} />
 
             <button onClick={() => navigate('/home/smart-profile')}
                 className="w-full py-3 rounded-xl bg-[#F3E8FF] text-[#7C3AED] text-sm font-black">

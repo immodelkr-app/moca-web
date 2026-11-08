@@ -26,9 +26,11 @@ const PublicProfileDetail = () => {
                     {p.photo_urls.map(u => <img key={u} src={u} alt="" className="h-72 rounded-xl snap-start object-cover shrink-0" />)}
                 </div>
             )}
+            {p.career_ad && <Section title="광고모델 경력" text={p.career_ad} />}
+            {p.career_other && <Section title="그외 경력" text={p.career_other} />}
             {p.limited ? (
                 <p className="text-xs text-[#7C3AED] bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-3 py-2.5 mb-4">
-                    상세 프로필(신체정보·경력·연락처)은 모카 인증 업체만 볼 수 있어요.
+                    경력 전체와 신체정보·연락처는 모카 인증 업체만 볼 수 있어요.
                 </p>
             ) : (<>
             <div className="bg-white rounded-2xl border border-[#E8E0FA] px-4 py-2 mb-4">
@@ -42,7 +44,6 @@ const PublicProfileDetail = () => {
                 <Row label="연락처" value={p.phone && <a href={`tel:${p.phone}`} className="text-[#7C3AED] underline">{p.phone}</a>} />
             </div>
             {p.intro && <Section title="소개" text={p.intro} />}
-            {p.career && <Section title="경력" text={p.career} />}
             </>)}
         </div>
     );
