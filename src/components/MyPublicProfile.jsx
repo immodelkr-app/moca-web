@@ -54,8 +54,6 @@ const MyPublicProfile = () => {
                         className={`px-4 py-1.5 rounded-full text-xs font-bold border ${f.gender === g ? 'bg-[#9333EA] text-white border-[#9333EA]' : 'bg-white border-[#E8E0FA]'}`}>{g}</button>
                 ))}
             </div>
-            <input className={input} type="number" inputMode="numeric" min="1950" max="2030" placeholder="활동년생 (예: 1999) - 실제 출생년도가 아니어도 돼요"
-                value={f.activity_year || ''} onChange={e => set('activity_year', e.target.value ? Number(e.target.value) : null)} />
             <textarea className={input} rows={4} placeholder="자기소개" value={f.intro || ''} onChange={e => set('intro', e.target.value)} />
             <input className={input} placeholder="특기 (예: 댄스, 영어, 운전)" value={f.specialties || ''} onChange={e => set('specialties', e.target.value)} />
             <textarea className={input} rows={5} placeholder="경력 (광고·영상·화보 등)" value={f.career || ''} onChange={e => set('career', e.target.value)} />
