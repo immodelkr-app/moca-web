@@ -50,7 +50,7 @@ const PublicProfileList = () => {
                                 <div className="py-2 text-center text-sm font-bold text-[#1F1235] border-b border-[#F0EAFB]">
                                     {p.display_name} <span className="text-[11px] font-medium text-gray-400">♡ {p.view_count}</span>
                                 </div>
-                                <div className="py-1.5 text-center text-xs text-[#5B4E7A]">{p.age ? `${p.age}세` : ' '}</div>
+                                <div className="py-1.5 text-center text-xs text-[#5B4E7A]">{p.activity_year ? `${p.activity_year}년생` : ' '}</div>
                             </button>
                         ))}
                     </div>

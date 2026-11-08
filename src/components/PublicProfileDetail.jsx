@@ -20,7 +20,7 @@ const PublicProfileDetail = () => {
     return (
         <div className="px-4 py-5">
             <button onClick={() => navigate(-1)} className="text-xs font-bold text-[#7C3AED] mb-3">← 목록</button>
-            <h1 className="text-xl font-black text-[#1F1235] mb-3">{p.display_name} <span className="text-xs text-gray-400 font-medium">조회 {p.view_count}</span></h1>
+            <h1 className="text-xl font-black text-[#1F1235] mb-3">{p.display_name} <span className="text-sm text-[#5B4E7A] font-bold">{p.activity_year && `${p.activity_year}년생`}</span> <span className="text-xs text-gray-400 font-medium">조회 {p.view_count}</span></h1>
             {p.photo_urls?.length > 0 && (
                 <div className="flex gap-2 overflow-x-auto snap-x mb-4">
                     {p.photo_urls.map(u => <img key={u} src={u} alt="" className="h-72 rounded-xl snap-start object-cover shrink-0" />)}
@@ -33,7 +33,6 @@ const PublicProfileDetail = () => {
             ) : (<>
             <div className="bg-white rounded-2xl border border-[#E8E0FA] px-4 py-2 mb-4">
                 <Row label="성별" value={p.gender} />
-                <Row label="나이" value={p.age && `${p.age}세`} />
                 <Row label="신장" value={p.height && `${p.height}cm`} />
                 <Row label="체중" value={p.weight && `${p.weight}kg`} />
                 <Row label="신발" value={p.shoe_size && `${p.shoe_size}mm`} />
