@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { getUser, updateSmartProfile } from '../services/userService';
+import { fetchMyPublicProfile } from '../services/publicProfileService';
 import {
     uploadCurrentPhoto,
     fetchUserCurrentPhotos,
@@ -46,6 +47,7 @@ const SmartProfile = () => {
     const [currentPhotos, setCurrentPhotos] = useState([]);
     const [currentPhotoUploading, setCurrentPhotoUploading] = useState(false);
     const [currentPhotoMsg, setCurrentPhotoMsg] = useState('');
+    const [askPublic, setAskPublic] = useState(false);
     const [selectedPhoto, setSelectedPhoto] = useState(null);
 
 
@@ -273,6 +275,8 @@ const SmartProfile = () => {
         setCurrentPhotoMsg('저장 완료!');
         setTimeout(() => setCurrentPhotoMsg(''), 3000);
         e.target.value = '';
+        // 업로드 직후, 아직 공개 전이면 공개 설정 안내
+        if (user?.id && !(await fetchMyPublicProfile(user.id))?.is_public) setAskPublic(true);
     };
 
     const handleDeleteCurrentPhoto = async (photo) => {
@@ -694,6 +698,12 @@ const SmartProfile = () => {
                             <span className="material-symbols-outlined text-[40px] mb-2">collections</span>
                             <p className="text-xs font-bold">아직 저장된 사진이 없어요</p>
                         </div>
+                    )}
+
+                    {askPublic && (
+                        <p className="mt-4 text-xs font-bold text-[#7C3AED] bg-[#F8F5FF] border border-[#E8E0FA] rounded-xl px-3 py-2.5">
+                            📸 사진이 저장됐어요! 아래 '모델 프로필 공개 설정'에서 프로필을 공개하면 모카 모델 프로필 목록에 노출돼요.
+                        </p>
                     )}
 
                     <button
