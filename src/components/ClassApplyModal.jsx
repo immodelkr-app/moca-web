@@ -4,7 +4,7 @@ import { fetchMyUnusedCoupons, fetchClassCouponUsageCount, markCouponUsed } from
 import { notifyAdmin } from '../services/solapiService';
 
 const GRADE_EMOJI = {
-    GUEST: '👤', MEMBER: '👤', SILVER: '🤍', GOLD: '👑', IMODEL: '🌸', VIP: '💎', 전속모델: '💎'
+    GUEST: '👤', MEMBER: '👤', SILVER: '🤍', GOLD: '👑', IMODEL: '🌸', VIP: '👑', 전속모델: '👑'
 };
 
 const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSuccess, isWaitlist = false, dateCounts = {} }) => {
@@ -44,7 +44,9 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
 
     const gradeKey = (currentUser?.grade || 'MEMBER').toUpperCase();
     const gradeEmoji = GRADE_EMOJI[gradeKey] || '👤';
-    const gradeDisplay = myPriceInfo?.grade_label || currentUser?.grade || 'MEMBER';
+    // 가격표 라벨이 없을 때 내부 등급코드(VIP/IMODEL)가 그대로 노출되지 않도록 한글 등급명으로 변환
+    const GRADE_NAME = { VIP: '전속모델', IMODEL: '아임모델' };
+    const gradeDisplay = myPriceInfo?.grade_label || GRADE_NAME[gradeKey] || currentUser?.grade || 'MEMBER';
 
     const handleSubmit = async (useCoupon = false) => {
         if (!canSubmit) {
