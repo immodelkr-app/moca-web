@@ -250,7 +250,7 @@ const HomeDashboard = () => {
                             <span className="material-symbols-outlined text-[#A21CAF] text-[34px]">badge</span>
                         </div>
                         <h3 className="text-lg whitespace-nowrap font-black text-[#1F1235] mb-1">모델 프로필</h3>
-                        <p className="text-[11px] font-bold text-[#A21CAF]/80 leading-tight">다른 모델 프로필<br />둘러보기</p>
+                        <p className="text-[11px] font-bold text-[#A21CAF]/80 leading-tight">모델 프로필<br />둘러보기</p>
                     </button>
 
                     {/* 카드 2: 모카클래스 */}
