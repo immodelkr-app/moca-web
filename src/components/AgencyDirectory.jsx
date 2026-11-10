@@ -103,26 +103,13 @@ const AgencyCard = ({ agency, index, onAction, onSend, onDetail, onTrend, sendIn
                     </div>
 
                     {/* Line 2: Status Badges Row (Visit record + Online reservation status) */}
-                    {(timeAgoStr || agency.reservation_url) && (
-                        <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                            {timeAgoStr && (
-                                <span className="text-[#7C3AED] text-[10px] font-bold bg-[#F3E8FF] py-0.5 px-2.5 rounded-full border border-[#E8E0FA] whitespace-nowrap flex items-center gap-1">
-                                    <span>🕒</span>
-                                    <span>{timeAgoStr}</span>
-                                </span>
-                            )}
-                            {(agency.reservation_url) && (
-                                <span className={`text-[10px] font-bold py-0.5 px-2.5 rounded-full border whitespace-nowrap flex items-center gap-1 ${
-                                    (agency.reservation_url).includes('kakao')
-                                        ? 'bg-yellow-50 text-amber-900 border-yellow-200'
-                                        : 'bg-[#F5F0FF] text-[#8B5CF6] border-[#E9D5FF]'
-                                }`}>
-                                    <span className="material-symbols-outlined text-[12px]">
-                                        {(agency.reservation_url).includes('kakao') ? 'chat' : 'language'}
-                                    </span>
-                                    <span>{(agency.reservation_url).includes('kakao') ? '카카오채널' : '온라인예약'}</span>
-                                </span>
-                            )}
+                    {/* 온라인예약 배지는 아래 액션 버튼과 중복이라 제거 */}
+                    {timeAgoStr && (
+                        <div className="mt-1.5">
+                            <span className="inline-flex items-center gap-1 text-[#7C3AED] text-[10px] font-bold bg-[#F3E8FF] py-0.5 px-2.5 rounded-full border border-[#E8E0FA] whitespace-nowrap">
+                                <span className="material-symbols-outlined text-[12px]">schedule</span>
+                                {timeAgoStr}
+                            </span>
                         </div>
                     )}
                 </div>
