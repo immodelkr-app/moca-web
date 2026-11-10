@@ -35,6 +35,19 @@ const PayTest = () => {
     // B안: 외부 브라우저(Chrome Custom Tab)에서 결제 → 성공 페이지에서 앱으로 복귀
     const payViaBrowser = () => Browser.open({ url: window.location.origin + '/paytest?auto=1' });
 
+    // 페이앱: 서버에서 결제요청 → payurl 을 크롬 커스텀 탭으로 열기
+    const payApp = async () => {
+        try {
+            const r = await fetch('/api/payapp-test', { method: 'POST' });
+            const j = await r.json();
+            if (!j.payurl) return add('페이앱 오류: ' + (j.error || '알 수 없음'));
+            add('결제요청 번호: ' + j.mul_no);
+            await Browser.open({ url: j.payurl });
+        } catch (e) {
+            add('페이앱 오류: ' + (e.message || e));
+        }
+    };
+
     useEffect(() => { if (auto && !result) pay(); }, []); // eslint-disable-line
 
     return (
@@ -43,6 +56,12 @@ const PayTest = () => {
             <p>플랫폼: {Capacitor.isNativePlatform() ? '앱(네이티브)' : '일반 브라우저'}</p>
             <p style={{ wordBreak: 'break-all', color: '#888', fontSize: 11 }}>{navigator.userAgent}</p>
 
+            {params.get('payapp') === 'return' && (
+                <div style={{ background: '#e8f7ee', padding: 12, borderRadius: 8, margin: '12px 0' }}>
+                    ✅ 페이앱 결제창 → returnurl 도착
+                    <a href="immodel://paytest" style={{ display: 'block', marginTop: 10, fontWeight: 900 }}>▶ 모카 앱으로 돌아가기</a>
+                </div>
+            )}
             {result === 'success' && (
                 <div style={{ background: '#e8f7ee', padding: 12, borderRadius: 8, margin: '12px 0' }}>
                     ✅ 결제창 왕복 성공 (success 리다이렉트 도착)
@@ -58,6 +77,7 @@ const PayTest = () => {
 
             <button onClick={pay} style={btn}>A안: 앱 화면 안에서 바로 결제</button>
             <button onClick={payViaBrowser} style={{ ...btn, background: '#0ea5e9' }}>B안: 외부 브라우저로 결제 후 복귀</button>
+            <button onClick={payApp} style={{ ...btn, background: '#10b981' }}>페이앱: 외부 브라우저로 결제 후 복귀 (1,000원)</button>
             {log.map((l, i) => <p key={i} style={{ color: '#c00' }}>{l}</p>)}
         </div>
     );
