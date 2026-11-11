@@ -400,7 +400,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                 ) : (
                                     <>
                                         <span className="material-symbols-outlined text-[20px]">{isWaitlist ? 'hourglass_top' : 'send'}</span>
-                                        {isWaitlist ? '대기 신청하기' : payFlow ? `${Number(myPrice).toLocaleString()}원 카드결제하고 신청하기` : '일반 신청하기'}
+                                        {isWaitlist ? '대기 신청하기' : payFlow ? `${Number(myPrice).toLocaleString()}원 결제하기` : '일반 신청하기'}
                                     </>
                                 )}
                             </button>

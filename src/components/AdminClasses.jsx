@@ -1289,7 +1289,7 @@ const AdminClasses = () => {
                                                     <button type="button" onClick={() => setNewClass({ ...newClass, online_payment: false })}
                                                         className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all ${!newClass.online_payment ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}>신청만 받기 (담당자 확인 후 안내)</button>
                                                     <button type="button" onClick={() => setNewClass({ ...newClass, online_payment: true })}
-                                                        className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all ${newClass.online_payment ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}>카드 결제하기 (결제 즉시 참석 확정)</button>
+                                                        className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all ${newClass.online_payment ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}>결제하기</button>
                                                 </div>
                                                 {newClass.online_payment && (
                                                     <p className="text-[11px] font-bold text-slate-400 mt-2 leading-relaxed">참가비가 0원이면 결제 없이 일반 신청으로 처리됩니다. 환불은 수업 시작 3일 전까지 전액, 이후 불가. 정원이 차면 결제는 자동 환불되고 대기로 전환됩니다.</p>
