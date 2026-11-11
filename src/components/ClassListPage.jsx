@@ -67,7 +67,7 @@ const ClassListPage = () => {
                 .from('class_applications')
                 .select('class_id, approval_status')
                 .eq('user_id', localUser.id);
-            if (apps) setMyApplications(apps.filter(a => a.approval_status !== 'cancelled').map(a => a.class_id));
+            if (apps) setMyApplications(apps.filter(a => !['cancelled', 'awaiting_payment'].includes(a.approval_status)).map(a => a.class_id));
         } else if (localUser) {
             setCurrentUser({ id: localUser.id, grade: localUser.grade || 'SILVER' });
         }

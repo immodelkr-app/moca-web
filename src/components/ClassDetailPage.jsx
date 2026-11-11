@@ -98,7 +98,7 @@ const ClassDetailPage = () => {
                         .eq('user_id', localUser.id)
                         .maybeSingle();
                     // 어드민이 취소한 신청은 미신청으로 취급 → 재신청 가능 (upsert로 기존 행 갱신)
-                    if (app && app.approval_status !== 'cancelled') {
+                    if (app && !['cancelled', 'awaiting_payment'].includes(app.approval_status)) {
                         setIsApplied(true);
                         setMyApplicationStatus(app.approval_status || null);
                         hasApplied = true;

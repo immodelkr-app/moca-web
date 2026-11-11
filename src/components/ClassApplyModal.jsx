@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { fetchMyUnusedCoupons, fetchClassCouponUsageCount, markCouponUsed } from '../services/attendanceService';
 import { notifyAdmin } from '../services/solapiService';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 
 const GRADE_EMOJI = {
     GUEST: '👤', MEMBER: '👤', SILVER: '🤍', GOLD: '👑', IMODEL: '🌸', VIP: '👑', 전속모델: '👑'
@@ -28,6 +30,24 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
     const [done, setDone] = useState(false);
     const [error, setError] = useState('');
     const [appliedWithCoupon, setAppliedWithCoupon] = useState(false);
+
+    // 카드결제 클래스: 신청서 제출 → 페이앱 결제창 → 서버 웹노티로 확정되면 approval_status='paid' (클라이언트는 상태만 확인)
+    const payFlow = !!cls?.online_payment && !isWaitlist && myPrice > 0;
+    const [payStage, setPayStage] = useState(null); // null | 'waiting' | 'paid' | 'waitlisted'
+    const [payUrl, setPayUrl] = useState('');
+    const [payApplicationId, setPayApplicationId] = useState(null);
+
+    const openPayUrl = (url) => (Capacitor.isNativePlatform() ? Browser.open({ url }) : window.location.assign(url));
+
+    useEffect(() => {
+        if (payStage !== 'waiting' || !payApplicationId) return;
+        const t = setInterval(async () => {
+            const { data } = await supabase.from('class_applications').select('approval_status').eq('id', payApplicationId).maybeSingle();
+            if (data?.approval_status === 'paid') { setPayStage('paid'); if (onSuccess) onSuccess(); }
+            else if (data?.approval_status === 'waitlisted') { setPayStage('waitlisted'); if (onSuccess) onSuccess(); }
+        }, 3000);
+        return () => clearInterval(t);
+    }, [payStage, payApplicationId]);
 
     // 참석 프리패스
     const [myCoupons, setMyCoupons] = useState([]);
@@ -61,16 +81,16 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
             const coupon = useCoupon ? myCoupons[0] : null;
 
             // Upsert: 중복 방지 (class_id + user_id unique)
-            const { error: insertErr } = await supabase
+            const { data: savedApp, error: insertErr } = await supabase
                 .from('class_applications')
                 .upsert({
                     class_id: cls.id,
                     user_id: currentUser.id,
                     grade_label: gradeDisplay,
                     applied_price: useCoupon ? 0 : myPrice,
-                    payment_type: isWaitlist ? 'waitlist' : (useCoupon ? 'coupon' : 'pending_confirm'),
+                    payment_type: isWaitlist ? 'waitlist' : (useCoupon ? 'coupon' : (payFlow ? 'payapp' : 'pending_confirm')),
                     payment_status: 'pending',
-                    approval_status: isWaitlist ? 'waitlisted' : 'pending',
+                    approval_status: isWaitlist ? 'waitlisted' : (payFlow && !useCoupon ? 'awaiting_payment' : 'pending'),
                     user_phone: currentUser.phone || '',
                     is_coupon_applied: !!useCoupon,
                     coupon_id: coupon?.id || null,
@@ -83,12 +103,29 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                         marketing_consent: agreedMarketing,
                         marketing_consent_at: agreedMarketing ? consentAt : null,
                     }),
-                }, { onConflict: 'class_id,user_id', ignoreDuplicates: false });
+                }, { onConflict: 'class_id,user_id', ignoreDuplicates: false })
+                .select('id')
+                .single();
 
             if (insertErr) throw insertErr;
 
             const dateText = hasDateOptions ? ` [${dateOptions.filter(o => selectedDateIds.includes(o.id)).map(o => o.label).join(', ')}]` : '';
-            notifyAdmin(`[모카] 클래스 신청: ${currentUser?.name || currentUser?.nickname || '회원'} - ${cls?.title || '클래스'}${dateText}${isWaitlist ? ' (대기)' : ''}`);
+            const usePay = payFlow && !useCoupon;
+            notifyAdmin(`[모카] 클래스 신청: ${currentUser?.name || currentUser?.nickname || '회원'} - ${cls?.title || '클래스'}${dateText}${isWaitlist ? ' (대기)' : ''}${usePay ? ' (카드결제 진행)' : ''}`);
+
+            if (usePay) {
+                const r = await fetch('/api/class-pay', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'begin', applicationId: savedApp.id, userId: currentUser.id }),
+                });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok || !j.payurl) throw new Error(j.error || '결제창을 열 수 없습니다.');
+                setPayApplicationId(savedApp.id);
+                setPayUrl(j.payurl);
+                setPayStage('waiting');
+                openPayUrl(j.payurl);
+                return;
+            }
 
             if (useCoupon && coupon) {
                 await markCouponUsed(coupon.id, cls.id);
@@ -109,7 +146,31 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
             <div className="fixed inset-0 bg-black/75 backdrop-blur-md" onClick={() => !submitting && onClose()} />
             <div className="relative w-full max-w-lg bg-white rounded-t-[40px] sm:rounded-[40px] shadow-2xl z-10 overflow-hidden animate-slideUp">
 
-                {done ? (
+                {payStage ? (
+                    <div className="px-10 pt-10 pb-[15vh] sm:pb-10 text-center">
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl ${payStage === 'paid' ? 'bg-indigo-600 shadow-indigo-500/30' : 'bg-amber-500 shadow-amber-500/30'}`}>
+                            {payStage === 'waiting'
+                                ? <div className="w-8 h-8 border-4 border-white/40 border-t-white rounded-full animate-spin" />
+                                : <span className="material-symbols-outlined text-4xl text-white">{payStage === 'paid' ? 'task_alt' : 'hourglass_top'}</span>}
+                        </div>
+                        {payStage === 'waiting' && (<>
+                            <h3 className="text-2xl font-black text-[var(--moca-text)] mb-3">결제를 진행해주세요</h3>
+                            <p className="text-[var(--moca-text-3)] text-sm font-bold leading-relaxed mb-8">결제창에서 결제를 마치고 앱으로 돌아오면<br />자동으로 신청이 확정됩니다.</p>
+                            <button onClick={() => openPayUrl(payUrl)} className="w-full bg-indigo-600 text-white font-black py-4 rounded-[24px] shadow-xl shadow-indigo-500/20 mb-3">결제창 다시 열기</button>
+                            <button onClick={onClose} className="w-full bg-gray-100 text-gray-500 font-black py-3 rounded-[24px]">닫기</button>
+                        </>)}
+                        {payStage === 'paid' && (<>
+                            <h3 className="text-2xl font-black text-[var(--moca-text)] mb-3">결제 완료! 참석이 확정되었습니다</h3>
+                            <p className="text-[var(--moca-text-3)] text-sm font-bold leading-relaxed mb-8">일정 안내는 <span className="text-indigo-600 font-black">카카오톡 또는 문자</span>로 보내드립니다.</p>
+                            <button onClick={onClose} className="w-full bg-indigo-600 text-white font-black py-4 rounded-[24px] shadow-xl shadow-indigo-500/20">확인했습니다</button>
+                        </>)}
+                        {payStage === 'waitlisted' && (<>
+                            <h3 className="text-2xl font-black text-[var(--moca-text)] mb-3">정원이 마감되어 대기로 접수되었어요</h3>
+                            <p className="text-[var(--moca-text-3)] text-sm font-bold leading-relaxed mb-8">결제하신 금액은 자동으로 전액 환불됩니다.<br />자리가 나면 순서대로 안내드립니다.</p>
+                            <button onClick={onClose} className="w-full bg-indigo-600 text-white font-black py-4 rounded-[24px] shadow-xl shadow-indigo-500/20">확인했습니다</button>
+                        </>)}
+                    </div>
+                ) : done ? (
                     /* ── 완료 화면 ── */
                     <div className="px-10 pt-10 pb-[15vh] sm:pb-10 text-center">
                         <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-indigo-500/30">
@@ -339,7 +400,7 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                                 ) : (
                                     <>
                                         <span className="material-symbols-outlined text-[20px]">{isWaitlist ? 'hourglass_top' : 'send'}</span>
-                                        {isWaitlist ? '대기 신청하기' : '일반 신청하기'}
+                                        {isWaitlist ? '대기 신청하기' : payFlow ? `${Number(myPrice).toLocaleString()}원 카드결제하고 신청하기` : '일반 신청하기'}
                                     </>
                                 )}
                             </button>
@@ -360,9 +421,15 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
                             )}
                         </div>
 
-                        <p className="text-[10px] text-center text-[var(--moca-text-3)] font-medium mt-3 leading-relaxed opacity-60">
-                            * 신청 즉시 담당자에게 알림이 전달되며,<br />영업일 기준 1일 내로 확인 및 승인 안내를 드립니다.
-                        </p>
+                        {payFlow ? (
+                            <p className="text-[10px] text-center text-[var(--moca-text-3)] font-medium mt-3 leading-relaxed opacity-60">
+                                * 결제가 완료되면 참석이 바로 확정됩니다.<br />환불은 수업 시작 3일 전까지 전액 가능하며, 이후에는 환불되지 않습니다.
+                            </p>
+                        ) : (
+                            <p className="text-[10px] text-center text-[var(--moca-text-3)] font-medium mt-3 leading-relaxed opacity-60">
+                                * 신청 즉시 담당자에게 알림이 전달되며,<br />영업일 기준 1일 내로 확인 및 승인 안내를 드립니다.
+                            </p>
+                        )}
                     </div>
                 )}
             </div>

@@ -274,7 +274,8 @@ const AdminClasses = () => {
         review_message: '',
         supplies: '',
         date_options: [],
-        date_select_mode: 'multi'
+        date_select_mode: 'multi',
+        online_payment: false
     });
 
     const [formError, setFormError] = useState('');
@@ -304,7 +305,7 @@ const AdminClasses = () => {
     };
 
     const resetForm = () => {
-        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', video_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '', supplies: '', date_options: [], date_select_mode: 'multi' });
+        setNewClass({ title: '', description: '', location: '', capacity: 20, coupon_capacity: 0, image_url: '', video_url: '', schedule_type: 'one_time', class_date: '', event_date: '', event_time: '', use_datetime_picker: true, start_date: '', end_date: '', day_of_week: [], start_time: '14:00', target_grade: 'ALL', price_info: '', review_message: '', supplies: '', date_options: [], date_select_mode: 'multi', online_payment: false });
         setFormError('');
         setEditingClassId(null);
         setPricing(DEFAULT_PRICING);
@@ -345,7 +346,8 @@ const AdminClasses = () => {
             review_message: cls.review_message || '',
             supplies: cls.supplies || '',
             date_options: (cls.date_options || []).map(o => ({ id: o.id, date: o.date, time: o.time, capacity: o.capacity })),
-            date_select_mode: cls.date_select_mode === 'single' ? 'single' : 'multi'
+            date_select_mode: cls.date_select_mode === 'single' ? 'single' : 'multi',
+            online_payment: !!cls.online_payment
         });
         const hasPricing = cls.class_pricing && cls.class_pricing.length > 0;
         setPricing(hasPricing ? withMissingGrades(cls.class_pricing.map(p => ({ grade_label: p.grade_label, price: p.price }))) : DEFAULT_PRICING);
@@ -407,7 +409,7 @@ const AdminClasses = () => {
         const finalPricing = priceType === 'grade' ? pricing : [];
 
         // 날짜 옵션형의 총 정원은 날짜별 정원 합계
-        const classPayload = { ...newClass, class_date: finalClassDate, price_info: finalPriceInfo, event_datetime: eventDatetime, review_message: newClass.review_message || null, date_options: dateOptions, ...(useOptions && { capacity: dateOptions.reduce((s, o) => s + o.capacity, 0) }) };
+        const classPayload = { ...newClass, class_date: finalClassDate, price_info: finalPriceInfo, event_datetime: eventDatetime, online_payment: priceType !== 'consult' && !!newClass.online_payment, review_message: newClass.review_message || null, date_options: dateOptions, ...(useOptions && { capacity: dateOptions.reduce((s, o) => s + o.capacity, 0) }) };
 
         if (editingClassId) {
             const { error } = await updateClass(editingClassId, classPayload, finalPricing);
@@ -1279,6 +1281,21 @@ const AdminClasses = () => {
                                                 </button>
                                             </div>
                                         </div>
+
+                                        {priceType !== 'consult' && (
+                                            <div>
+                                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3">신청 방식</label>
+                                                <div className="flex gap-2 p-1 bg-slate-200/50 rounded-2xl w-fit">
+                                                    <button type="button" onClick={() => setNewClass({ ...newClass, online_payment: false })}
+                                                        className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all ${!newClass.online_payment ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}>신청만 받기 (담당자 확인 후 안내)</button>
+                                                    <button type="button" onClick={() => setNewClass({ ...newClass, online_payment: true })}
+                                                        className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all ${newClass.online_payment ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-800'}`}>카드 결제하기 (결제 즉시 참석 확정)</button>
+                                                </div>
+                                                {newClass.online_payment && (
+                                                    <p className="text-[11px] font-bold text-slate-400 mt-2 leading-relaxed">참가비가 0원이면 결제 없이 일반 신청으로 처리됩니다. 환불은 수업 시작 3일 전까지 전액, 이후 불가. 정원이 차면 결제는 자동 환불되고 대기로 전환됩니다.</p>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {priceType === 'consult' ? (
                                             <p className="animate-fadeIn text-[11px] text-slate-500 font-bold">* 참가비 대신 "{CONSULT_PRICE}"로 표기됩니다. 신청 후 상담을 통해 금액을 안내하세요.</p>
