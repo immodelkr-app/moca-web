@@ -30,8 +30,8 @@ export const payRequest = ({ title, amount, phone, paymentId, classId }) => {
         cmd: 'payrequest', userid, goodname: title, price: String(amount),
         recvphone: phone || '01000000000', smsuse: 'n', // 결제요청 SMS는 보내지 않고 앱에서 결제창을 연다
         feedbackurl: `${SITE}/api/payapp-feedback`, checkretry: 'y',
-        returnurl: `${SITE}/open-app?path=${encodeURIComponent('class/' + classId)}`,
-        appurl: `immodel://class/${classId}`, var1: paymentId,
+        returnurl: `${SITE}/open-app?path=${encodeURIComponent('home/class/' + classId)}`,
+        appurl: `immodel://home/class/${classId}`, var1: paymentId,
     });
 };
 
