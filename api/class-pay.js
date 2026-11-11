@@ -1,4 +1,4 @@
-// 모카클래스 카드결제 API (클라이언트 → 서버). action: 'begin'(결제창 URL 발급) | 'refund'(사용자 환불)
+// 모카클래스 카드결제 API (클라이언트 → 서버). action: 'begin'(결제창 URL 발급) | 'refund_info'(환불 가능 여부) | 'refund'(사용자 환불)
 // 금액·환불가능 여부는 모두 DB RPC에서 서버가 판단한다. 클라이언트가 보낸 금액은 쓰지 않는다.
 import { payRequest, cancelPayment, rpc } from './_payapp.js';
 
@@ -16,6 +16,11 @@ export default async function handler(req, res) {
             if (out.state !== '1') return res.status(400).json({ error: out.errorMessage || '결제 요청에 실패했습니다.' });
             await rpc('class_pay_attach', { p_payment_id: b.payment_id, p_mul_no: out.mul_no });
             return res.status(200).json({ payurl: out.payurl });
+        }
+
+        if (action === 'refund_info') { // 참석취소 화면용: 환불 가능 여부만 반환(결제번호 등은 노출하지 않음)
+            const info = await rpc('class_pay_refund_info', { p_application_id: applicationId, p_user_id: userId });
+            return res.status(200).json({ refundable: !!info.refundable, amount: info.amount, start_at: info.start_at });
         }
 
         if (action === 'refund') {

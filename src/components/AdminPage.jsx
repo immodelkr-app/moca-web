@@ -6,6 +6,7 @@ import { updateGradeInCore } from '../lib/imCoreAuth';
 import AdminUpgradeRequests from './AdminUpgradeRequests';
 import AdminPopups from './AdminPopups';
 import AdminClasses from './AdminClasses';
+import AdminClassPayments from './AdminClassPayments';
 import AdminHomepage, { FONT_OPTIONS, FONT_SIZE_OPTIONS, GRADIENT_OPTIONS, HIGHLIGHT_STYLE_OPTIONS } from './AdminHomepage';
 import AdminAIMarketing from './AdminAIMarketing';
 import AdminContractViewerModal from './AdminContractViewerModal';
@@ -1072,6 +1073,13 @@ const AdminPage = () => {
                             }`}
                     >
                         🎓 모카 클래스
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('class-payments')}
+                        className={`pb-3 px-3 text-[13px] font-bold transition-all border-b-2 rounded-t-lg ${activeTab === 'class-payments' ? 'border-indigo-500 text-indigo-700 bg-indigo-50' : 'border-transparent text-gray-500 hover:text-[var(--moca-text)] hover:bg-gray-50'
+                            }`}
+                    >
+                        💳 클래스 결제
                     </button>
                     <button
                         onClick={() => setActiveTab('subscriptions')}
@@ -3278,6 +3286,10 @@ const AdminPage = () => {
 
                 {activeTab === 'classes' && (
                     <AdminClasses />
+                )}
+
+                {activeTab === 'class-payments' && (
+                    <AdminClassPayments adminKey={ADMIN_PASSWORD} />
                 )}
 
                 {/* ── 📝 전속계약 관리 탭 ── */}

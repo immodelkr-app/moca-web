@@ -5,6 +5,7 @@ import { checkClassGradeEligibility, getClassGradeBadgeClass, getClassGradeLabel
 import { saveClassCalendarEvent, fetchPublicFeedback, fetchUserFeedback, fetchActiveApplicationCount, fetchDateOptionCounts } from '../services/classService';
 import { getUser, syncUserGrade } from '../services/userService';
 import ClassApplyModal from './ClassApplyModal';
+import ClassCancelModal from './ClassCancelModal';
 import ClassDescription from './ClassDescription';
 import ClassFeedbackModal from './ClassFeedbackModal';
 import ClassAuditionSection from './ClassAuditionSection';
@@ -55,6 +56,8 @@ const ClassDetailPage = () => {
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [isApplied, setIsApplied] = useState(false);
     const [myApplicationStatus, setMyApplicationStatus] = useState(null);
+    const [myApp, setMyApp] = useState(null); // { id, payment_type } - 결제 참석취소용
+    const [showCancelModal, setShowCancelModal] = useState(false);
     const [showWaitlistModal, setShowWaitlistModal] = useState(false);
     const [applicantCount, setApplicantCount] = useState(0);
     const [dateCounts, setDateCounts] = useState({});
@@ -93,7 +96,7 @@ const ClassDetailPage = () => {
                 if (localUser.id) {
                     const { data: app } = await supabase
                         .from('class_applications')
-                        .select('id, approval_status')
+                        .select('id, approval_status, payment_type')
                         .eq('class_id', cleanId)
                         .eq('user_id', localUser.id)
                         .maybeSingle();
@@ -101,6 +104,7 @@ const ClassDetailPage = () => {
                     if (app && !['cancelled', 'awaiting_payment'].includes(app.approval_status)) {
                         setIsApplied(true);
                         setMyApplicationStatus(app.approval_status || null);
+                        setMyApp({ id: app.id, payment_type: app.payment_type });
                         hasApplied = true;
                     }
                 }
@@ -582,10 +586,17 @@ const ClassDetailPage = () => {
                                 대기 신청 완료
                             </button>
                         ) : isApplied ? (
-                            <button disabled className="flex-1 bg-indigo-100 text-indigo-500 border border-indigo-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined font-black">task_alt</span>
-                                신청 완료
-                            </button>
+                            <div className="flex-1 flex flex-col gap-2">
+                                <button disabled className="w-full bg-indigo-100 text-indigo-500 border border-indigo-200 py-4 rounded-[24px] lg:rounded-[28px] font-black text-base lg:text-lg flex items-center justify-center gap-2">
+                                    <span className="material-symbols-outlined font-black">task_alt</span>
+                                    {myApplicationStatus === 'paid' && myApp?.payment_type === 'payapp' ? '결제 완료 · 참석 확정' : '신청 완료'}
+                                </button>
+                                {myApplicationStatus === 'paid' && myApp?.payment_type === 'payapp' && (
+                                    <button onClick={() => setShowCancelModal(true)} className="w-full py-3 rounded-[24px] text-sm font-black text-red-500 bg-red-50 border border-red-100">
+                                        참석 취소
+                                    </button>
+                                )}
+                            </div>
                         ) : isFull ? (
                             <button
                                 onClick={() => {
@@ -640,7 +651,17 @@ const ClassDetailPage = () => {
                     myPrice={myPrice}
                     dateCounts={dateCounts}
                     onClose={() => setShowApplyModal(false)}
-                    onSuccess={(st) => { setIsApplied(true); setMyApplicationStatus(st || 'pending'); fetchActiveApplicationCount(cleanId).then(({ count }) => setApplicantCount(count || 0)); refreshDateCounts(); }}
+                    onSuccess={(st) => { setIsApplied(true); setMyApplicationStatus(st || 'pending'); supabase.from('class_applications').select('id, payment_type').eq('class_id', cleanId).eq('user_id', currentUser.id).maybeSingle().then(({ data }) => data && setMyApp(data)); fetchActiveApplicationCount(cleanId).then(({ count }) => setApplicantCount(count || 0)); refreshDateCounts(); }}
+                />
+            )}
+
+            {showCancelModal && myApp?.id && (
+                <ClassCancelModal
+                    cls={cls}
+                    applicationId={myApp.id}
+                    userId={currentUser?.id}
+                    onClose={() => setShowCancelModal(false)}
+                    onCancelled={() => { setIsApplied(false); setMyApplicationStatus(null); setMyApp(null); fetchActiveApplicationCount(cleanId).then(({ count }) => setApplicantCount(count || 0)); refreshDateCounts(); }}
                 />
             )}
 
