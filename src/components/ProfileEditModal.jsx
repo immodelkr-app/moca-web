@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { getUser, updateUserProfile, updateMasterUserIdInSupabase } from '../services/userService';
 import { getPasskeyStatus, registerPasskey } from '../services/passkeyService';
@@ -9,7 +10,8 @@ import ModelBeautyBanner from './ModelBeautyBanner';
 
 const USER_KEY = 'i_model_user';
 
-const ProfileEditModal = ({ onClose, onUpdateSuccess, onOpenMyClasses }) => {
+const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
+    const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
@@ -317,6 +319,13 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess, onOpenMyClasses }) => {
                 {/* Scrollable Form Content */}
                 <div className="flex-1 overflow-y-auto px-6 py-6">
                     <form id="profileEditForm" onSubmit={handleSubmit} className="space-y-5 pb-4">
+                        {/* ── 🎓 내 클래스 (신청·결제·참석취소) ── */}
+                        <button type="button" onClick={() => { onClose(); navigate('/home/my-classes'); }}
+                            className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl bg-[#F3EEFF] border border-[#E1D3FD] text-[#1F1235] text-sm font-black">
+                            <span>🎓 내 클래스 (신청·결제 내역)</span>
+                            <span className="material-symbols-outlined text-[18px] text-[#9333EA]">chevron_right</span>
+                        </button>
+
                         {/* 이름 */}
                         <div className="space-y-1.5">
                             <label className="text-[#5B4E7A] text-[11px] font-black ml-1 uppercase tracking-wider">이름 (실명)</label>
@@ -507,15 +516,6 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess, onOpenMyClasses }) => {
                                 </>
                             )}
                         </div>
-
-                        {/* ── 🎓 내 클래스 (신청·결제·참석취소) ── */}
-                        {onOpenMyClasses && (
-                            <button type="button" onClick={onOpenMyClasses}
-                                className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl bg-[#F3EEFF] border border-[#E1D3FD] text-[#1F1235] text-sm font-black">
-                                <span>🎓 내 클래스 (신청·결제 내역)</span>
-                                <span className="material-symbols-outlined text-[18px] text-[#9333EA]">chevron_right</span>
-                            </button>
-                        )}
 
                         {/* ── 🎟️ 참석 프리패스 (출석체크 리워드) ── */}
                         <div className="pt-4 border-t border-[#E8E0FA] mt-2">

@@ -335,7 +335,6 @@ const Layout = () => {
                 {isProfileModalOpen && (
                     <ProfileEditModal
                         onClose={() => setIsProfileModalOpen(false)}
-                        onOpenMyClasses={() => { setIsProfileModalOpen(false); navigate('/home/my-classes'); }}
                         onUpdateSuccess={() => {
                             setIsProfileModalOpen(false);
                             window.location.reload();
