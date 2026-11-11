@@ -93,7 +93,8 @@ export async function getPointsBalance(masterUserId) {
     const data = await res.json();
     return {
       success: data.success,
-      balance: data.balance ?? 0,
+      // 서버(/api/points/balance)는 integratedPoints 로 응답한다. balance 만 읽으면 항상 0P 로 표시되던 버그.
+      balance: data.integratedPoints ?? data.balance ?? 0,
     };
   } catch (err) {
     console.error('[imCoreAuth] getPointsBalance 실패:', err);
