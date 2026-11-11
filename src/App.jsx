@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import ClassListPage from './components/ClassListPage';
 import ClassDetailPage from './components/ClassDetailPage';
+import MyClassesPage from './components/MyClassesPage';
 import ClassSharePage from './components/ClassSharePage';
 import OpenAppRedirect from './components/OpenAppRedirect';
 import OutreachRedirectPage from './components/OutreachRedirectPage';
@@ -196,6 +197,7 @@ function AppContent() {
 
                         <Route path="class" element={<ClassListPage />} />
                         <Route path="class/:id" element={<ClassDetailPage />} />
+                        <Route path="my-classes" element={<MyClassesPage />} />
 
                         <Route path="castings" element={<CastingGoldGuard><ModelCastingBoard /></CastingGoldGuard>} />
                         <Route path="castings/:id" element={<CastingGoldGuard><ModelCastingDetailPage /></CastingGoldGuard>} />
