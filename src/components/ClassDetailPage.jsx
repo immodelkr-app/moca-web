@@ -640,7 +640,7 @@ const ClassDetailPage = () => {
                     myPrice={myPrice}
                     dateCounts={dateCounts}
                     onClose={() => setShowApplyModal(false)}
-                    onSuccess={() => { setIsApplied(true); setMyApplicationStatus('pending'); setApplicantCount(c => c + 1); refreshDateCounts(); }}
+                    onSuccess={(st) => { setIsApplied(true); setMyApplicationStatus(st || 'pending'); fetchActiveApplicationCount(cleanId).then(({ count }) => setApplicantCount(count || 0)); refreshDateCounts(); }}
                 />
             )}
 

@@ -41,12 +41,17 @@ const ClassApplyModal = ({ cls, currentUser, myPriceInfo, myPrice, onClose, onSu
 
     useEffect(() => {
         if (payStage !== 'waiting' || !payApplicationId) return;
+        let finished = false; // 앱 복귀 시 밀린 타이머가 한꺼번에 실행돼도 완료 처리는 한 번만
         const t = setInterval(async () => {
             const { data } = await supabase.from('class_applications').select('approval_status').eq('id', payApplicationId).maybeSingle();
-            if (data?.approval_status === 'paid') { setPayStage('paid'); if (onSuccess) onSuccess(); }
-            else if (data?.approval_status === 'waitlisted') { setPayStage('waitlisted'); if (onSuccess) onSuccess(); }
+            const st = data?.approval_status;
+            if (finished || (st !== 'paid' && st !== 'waitlisted')) return;
+            finished = true;
+            clearInterval(t);
+            setPayStage(st === 'paid' ? 'paid' : 'waitlisted');
+            if (onSuccess) onSuccess(st);
         }, 3000);
-        return () => clearInterval(t);
+        return () => { finished = true; clearInterval(t); };
     }, [payStage, payApplicationId]);
 
     // 참석 프리패스
