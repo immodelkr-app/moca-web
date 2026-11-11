@@ -83,6 +83,7 @@ const AdminClassPayments = ({ adminKey }) => {
                                     <td className="px-3 py-3 whitespace-nowrap font-bold">{fmt(r.paid_at || r.created_at)}</td>
                                     <td className="px-3 py-3 font-black min-w-[140px]">
                                         {r.class_title}
+                                        {r.class_deleted && <span className="ml-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px] font-black">삭제된 클래스</span>}
                                         {(r.selected_dates || []).length > 0 && <div className="font-bold text-[var(--moca-text-3)]">{r.selected_dates.map(d => d.label).join(' / ')}</div>}
                                     </td>
                                     <td className="px-3 py-3 whitespace-nowrap font-bold">{r.user_name || r.user_nickname || '-'}<div className="text-[var(--moca-text-3)]">{r.user_phone || ''}</div></td>
