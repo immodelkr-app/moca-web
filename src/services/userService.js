@@ -240,6 +240,8 @@ export const signInWithSocial = async (provider) => {
     if (error) throw error;
 };
 
+export const MOCA_SESSION_TOKEN_KEY = 'moca_session_token';
+
 /**
  * 사용자 로그인 로직
  * @param {string} nickname
@@ -306,6 +308,16 @@ export const loginUser = async (nickname, password) => {
                 console.warn('[userService] im-core-auth SSO 동기화 실패 (비중단):', syncErr.message);
             }
         }
+
+        // 모델뷰티 자동 로그인용 서버 서명 토큰 발급 (실패해도 로그인은 그대로 진행)
+        try {
+            const r = await fetch('/api/moca-session', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nickname, passwordHash: hash }),
+            });
+            const j = r.ok ? await r.json() : null;
+            if (j?.token) localStorage.setItem(MOCA_SESSION_TOKEN_KEY, j.token);
+        } catch (e) { /* 토큰 없으면 모델뷰티는 일반 로그인으로 열림 */ }
 
         return { user: data, error: null };
     } else {
@@ -392,6 +404,7 @@ export const resetUserPassword = async (nickname, phone, newPassword) => {
 export const logoutUser = async () => {
     // 1. 로컬 저장소를 먼저 비워 UI가 즉시 반응하게 함
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(MOCA_SESSION_TOKEN_KEY);
 
     // 2. Supabase 세션 종료 (await으로 완전히 종료 후 반환)
     try {

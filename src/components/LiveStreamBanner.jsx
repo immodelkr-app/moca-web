@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useModelBeautyDeepLink } from '../hooks/useModelBeautyDeepLink';
+import { openModelBeautyWithLogin } from '../hooks/useModelBeautyDeepLink';
 import { fetchModelBeautyLiveStreams } from '../services/liveStreamService';
 import { useCountdownLabel } from '../hooks/useCountdownLabel';
 
@@ -38,13 +38,12 @@ const UpcomingModelBeautyCard = ({ stream, onOpen }) => {
 };
 
 // 모델뷰티에서 지금 진행 중인 라이브방송 + 예고(방송 예정)를 모카 홈에 노출한다.
-// 시청/채팅/구매는 전부 모델뷰티 쪽에서 처리되므로, 이 컴포넌트는 노출과 딥링크
-// (모델뷰티 앱의 해당 라이브 상세로 바로 이동)만 담당한다.
+// 시청/채팅/구매는 전부 모델뷰티 쪽에서 처리되므로, 이 컴포넌트는 노출과 이동만 담당한다.
+// 이동은 모카 로그인 그대로 모델뷰티 웹 라이브 상세로 자동 로그인(티켓)해서 들어간다.
 const LiveStreamBanner = () => {
     const [streams, setStreams] = useState([]);
     const [upcoming, setUpcoming] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { openApp, showInstallModal, handleInstall, handleContinueWeb, closeModal } = useModelBeautyDeepLink();
 
     useEffect(() => {
         let mounted = true;
@@ -76,7 +75,7 @@ const LiveStreamBanner = () => {
                         {streams.slice(0, 2).map((s) => (
                             <button
                                 key={s.id}
-                                onClick={() => openApp(`/live/${s.id}`)}
+                                onClick={() => openModelBeautyWithLogin(`/live/${s.id}`)}
                                 className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-md active:scale-[0.98] transition-all text-left bg-gradient-to-br from-gray-800 to-gray-900"
                             >
                                 {s.coverImageUrl && (
@@ -117,42 +116,8 @@ const LiveStreamBanner = () => {
 
                     <div className="flex flex-col gap-3">
                         {upcoming.slice(0, 2).map((s) => (
-                            <UpcomingModelBeautyCard key={s.id} stream={s} onOpen={() => openApp(`/live/${s.id}`)} />
+                            <UpcomingModelBeautyCard key={s.id} stream={s} onOpen={() => openModelBeautyWithLogin(`/live/${s.id}`)} />
                         ))}
-                    </div>
-                </div>
-            )}
-
-            {showInstallModal && (
-                <div
-                    className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50 px-6"
-                    onClick={closeModal}
-                >
-                    <div
-                        className="w-full max-w-sm bg-white rounded-3xl p-6 text-center shadow-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-[#F3E8FF] flex items-center justify-center">
-                            <span className="text-2xl">🔴</span>
-                        </div>
-                        <h3 className="text-lg font-black text-[#1F1235] mb-2">모델뷰티 앱 설치하기</h3>
-                        <p className="text-sm font-medium text-[#6B7280] leading-relaxed mb-6">
-                            앱을 설치하면 라이브방송 시청과<br />채팅에 바로 참여할 수 있어요!
-                        </p>
-                        <div className="space-y-2.5">
-                            <button
-                                onClick={handleInstall}
-                                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 text-white font-black active:scale-[0.98] transition-all"
-                            >
-                                앱 설치하기
-                            </button>
-                            <button
-                                onClick={handleContinueWeb}
-                                className="w-full py-3.5 rounded-2xl bg-gray-100 text-gray-500 font-bold active:scale-[0.98] transition-all"
-                            >
-                                웹으로 계속하기
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}

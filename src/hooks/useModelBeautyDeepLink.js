@@ -1,4 +1,7 @@
 import { useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { MOCA_SESSION_TOKEN_KEY } from '../services/userService';
 
 const MODELBEAUTY_SCHEME = 'modelbeauty://open';
 const MODELBEAUTY_WEB = 'https://modelbeauty.kr';
@@ -63,3 +66,27 @@ export const useModelBeautyDeepLink = () => {
 };
 
 export const MODELBEAUTY_WEB_URL = MODELBEAUTY_WEB;
+
+/**
+ * 모카 로그인 상태 그대로 모델뷰티 웹 페이지(예: 라이브 상품 /products/slug)를 연다.
+ * 서버에서 60초짜리 티켓 URL을 받아 이동하며, 토큰이 없거나 실패하면 티켓 없이 일반 주소로 연다
+ * (그 경우 모델뷰티에서 직접 로그인). 반환값은 이동한 URL.
+ */
+export const openModelBeautyWithLogin = async (path = '/') => {
+    let url = `${MODELBEAUTY_WEB}${path}`;
+    try {
+        const token = localStorage.getItem(MOCA_SESSION_TOKEN_KEY);
+        if (token) {
+            const r = await fetch('/api/mb-ticket', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, path }),
+            });
+            const j = r.ok ? await r.json() : null;
+            if (j?.url) url = j.url;
+        }
+    } catch (e) { /* 일반 주소로 진행 */ }
+    // 앱에서는 크롬 커스텀 탭(앱 안 느낌, 결제 앱 왕복 가능), 웹에서는 같은 창 이동
+    if (Capacitor.isNativePlatform()) await Browser.open({ url });
+    else window.location.href = url;
+    return url;
+};
