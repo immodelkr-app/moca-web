@@ -3,7 +3,6 @@ import ClassListPage from './components/ClassListPage';
 import ClassDetailPage from './components/ClassDetailPage';
 import ClassSharePage from './components/ClassSharePage';
 import OpenAppRedirect from './components/OpenAppRedirect';
-import PayTest from './components/PayTest';
 import OutreachRedirectPage from './components/OutreachRedirectPage';
 import OutreachUnsubscribePage from './components/OutreachUnsubscribePage';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -157,7 +156,6 @@ function AppContent() {
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/open-app" element={<OpenAppRedirect />} />
-                <Route path="/paytest" element={<PayTest />} />
                 <Route path="/r/:token" element={<OutreachRedirectPage />} />
                 <Route path="/unsubscribe/:token" element={<OutreachUnsubscribePage />} />
                 <Route path="/class" element={<ClassSharePage />} />

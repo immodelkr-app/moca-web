@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     if (!isValidLinkval(b.linkval)) return res.status(200).send('FAIL');
     console.log('[payapp-feedback]', JSON.stringify({ mul_no: b.mul_no, pay_state: b.pay_state, price: b.price, var1: b.var1, pay_type: b.pay_type }));
 
-    // 테스트 결제(/paytest) 등 클래스 결제가 아닌 통보는 확인만 하고 종료
+    // 클래스 결제가 아닌 통보(var1이 결제ID가 아님)는 확인만 하고 종료
     if (!/^[0-9a-f-]{36}$/i.test(b.var1 || '') && b.pay_state === '4') return res.status(200).send('SUCCESS');
 
     try {
