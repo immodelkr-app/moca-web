@@ -45,6 +45,27 @@ serve(async (req) => {
   }
 
   try {
+    // 어드민 방송-상품 연결용: 모델뷰티 공개 상품 목록(노출용 필드만)
+    const body = await req.json().catch(() => ({}));
+    if (body?.action === "products") {
+      const r = await fetch("https://modelbeauty.kr/api/products?limit=100", { headers: { Accept: "application/json" } });
+      const j = r.ok ? await r.json() : null;
+      const items = Array.isArray(j?.data?.items) ? j.data.items : [];
+      const data = items
+        .filter((p: any) => p.isActive)
+        .map((p: any) => ({
+          slug: p.slug,
+          name: p.name,
+          image: p.images?.[0]?.url ?? null,
+          basePrice: p.basePrice,
+          salePrice: p.salePrice,
+        }));
+      return new Response(JSON.stringify({ success: true, data }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
+      });
+    }
+
     const [liveList, scheduledList] = await Promise.all([
       fetchByStatus("live"),
       fetchByStatus("scheduled"),

@@ -8,6 +8,7 @@ import { openLiveViewerPresence, closeLiveViewerPresence, bumpLivePeakViewers } 
 import { getUserGrade, getUser } from '../services/userService';
 import { useCountdownLabel } from '../hooks/useCountdownLabel';
 import MocaLiveEngagement from './MocaLiveEngagement';
+import { MocaLiveProductCards } from './MocaLiveProducts';
 
 const GOLD_OR_ABOVE = ['GOLD', 'IMODEL', 'VIP'];
 
@@ -350,6 +351,7 @@ const MocaLiveBanner = () => {
                                 />
                             )}
                         </div>
+                        <MocaLiveProductCards slugs={live.mb_products} />
                         <MocaLiveEngagement liveId={live.id} />
                     </div>
                 </div>

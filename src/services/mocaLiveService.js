@@ -202,6 +202,13 @@ export const updateMocaLiveStream = async (id, { title, streamType, youtubeVideo
     return { data, error };
 };
 
+// 방송에 연결한 모델뷰티 상품(카드 노출용 스냅샷 배열) 저장
+export const updateMocaLiveProducts = async (id, products) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+    const { error } = await supabase.from('moca_live_streams').update({ mb_products: products }).eq('id', id);
+    return { error };
+};
+
 // 클래스 전용 방송(class_id가 있는 방송)을 볼 수 있는지 - 해당 클래스에 참석 확정('paid')된 회원만 true.
 // SECURITY NOTE: 재생 URL 자체는 moca_live_streams 테이블에서 공개 조회되므로(이 앱은 auth.uid()
 // 세션이 없어 RLS로 회원 구분 불가) 이 검사는 앱 화면 단의 접근 제한이다.

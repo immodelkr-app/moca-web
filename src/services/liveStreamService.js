@@ -23,5 +23,18 @@ export const fetchModelBeautyLiveStreams = async () => {
     }
 };
 
+// 어드민용 - 방송에 연결할 수 있는 모델뷰티 판매중 상품 목록 (live-proxy 경유, CORS 우회)
+export const fetchModelBeautyProducts = async () => {
+    if (!supabase) return [];
+    try {
+        const { data, error } = await supabase.functions.invoke('live-proxy', { body: { action: 'products' } });
+        if (error) throw error;
+        return data?.success && Array.isArray(data.data) ? data.data : [];
+    } catch (e) {
+        console.warn('[liveStreamService] 모델뷰티 상품 조회 실패:', e.message || e);
+        return [];
+    }
+};
+
 // 기존 호출부 호환용 - 지금 진행 중인 라이브만 필요할 때
 export const fetchLiveStreams = async () => (await fetchModelBeautyLiveStreams()).live;

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchMocaLiveStreamById, goLive, stopLive } from '../services/mocaLiveService';
 import { AdminMocaLiveControlPanel, LiveViewerCount } from './AdminMocaLive';
+import { AdminMocaLiveProducts } from './MocaLiveProducts';
 import { ADMIN_PASSWORD, ADMIN_AUTH_SESSION_KEY } from './AdminPage';
 
 // /admin/moca-live-control/:id - 방송 목록 테이블 안에 접혀 들어가던 컨트롤 패널(채팅+게임+고정댓글)을
@@ -113,6 +114,8 @@ const AdminMocaLiveControlPage = () => {
                     {toggling ? '처리 중...' : stream.is_live ? '방송 종료' : '🔴 라이브 시작'}
                 </button>
             </div>
+
+            <AdminMocaLiveProducts liveId={stream.id} initial={stream.mb_products} />
 
             <AdminMocaLiveControlPanel
                 liveId={stream.id}
