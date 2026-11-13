@@ -13,6 +13,40 @@ const SOLAPI_SECRET_KEY = Deno.env.get("SOLAPI_SECRET_KEY") ?? "";
 const PF_ID             = Deno.env.get("SOLAPI_PF_ID") ?? ""; // 카톡 채널 PF ID
 const SOLAPI_SENDER     = "01055439674"; // 인증된 발신번호 (고정)
 
+// 🛡️ 발송 남용 방지: 이 함수는 anon 키로 누구나 호출할 수 있으므로
+//  - 관리자 알림(admin_notify)은 수신자를 서버가 관리자 번호로 고정하고 길이·시간당 횟수를 제한하며,
+//  - 그 밖의 모든 발송(문자/알림톡/친구톡)은 관리자 키(adminKey)를 서버에서 확인한 뒤에만 보낸다.
+// shortcut: 관리자 키가 클라이언트 번들(VITE_ADMIN_PASSWORD)에 들어 있어 비밀이 아님, 진짜 관리자 로그인(서버 세션)으로 교체할 때까지의 임시 방어.
+const ADMIN_NOTIFY_PHONE = "01090424521";
+const ADMIN_NOTIFY_MAX_LEN = 300;
+const ADMIN_NOTIFY_MAX_PER_HOUR = 60;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SERVICE_KEY  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+const dbCall = (path: string, init: RequestInit = {}) =>
+    fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        ...init,
+        headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', ...(init.headers || {}) },
+    });
+
+async function isAdminKey(key: unknown): Promise<boolean> {
+    if (typeof key !== 'string' || !key) return false;
+    const r = await dbCall('rpc/admin_key_ok', { method: 'POST', body: JSON.stringify({ p_key: key }) });
+    return r.ok && (await r.json()) === true;
+}
+
+// 최근 1시간 관리자 알림 발송 수가 한도 안이면 기록하고 true
+async function takeAdminNotifySlot(): Promise<boolean> {
+    const since = new Date(Date.now() - 3600_000).toISOString();
+    const r = await dbCall(`sms_notify_log?select=id&created_at=gte.${since}`);
+    if (!r.ok || (await r.json()).length >= ADMIN_NOTIFY_MAX_PER_HOUR) return false;
+    await dbCall('sms_notify_log', { method: 'POST', body: JSON.stringify({}) });
+    return true;
+}
+
+const denied = (error: string) =>
+    new Response(JSON.stringify({ success: false, error }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
 // 쏠라피 인증 헤더 생성기 (Web Crypto API 사용)
 async function getSolapiAuth() {
     const date = new Date().toISOString();
@@ -116,7 +150,24 @@ serve(async (req) => {
         }
 
         const payload = await req.json()
-        const type = payload.type || 'sms'
+        let type = payload.type || 'sms'
+
+        // 구버전 앱(관리자 키 없이 notifyAdmin을 sms로 보내던 클라이언트) 호환:
+        // 수신자가 관리자 번호 하나뿐인 sms는 관리자 알림으로 취급한다.
+        const onlyAdminPhone = Array.isArray(payload.phoneNumbers) && payload.phoneNumbers.length === 1
+            && String(payload.phoneNumbers[0]).replace(/\D/g, '') === ADMIN_NOTIFY_PHONE;
+        if (type === 'sms' && onlyAdminPhone && !payload.adminKey) type = 'admin_notify';
+
+        if (type === 'admin_notify') {
+            const text = String(payload.message ?? '').slice(0, ADMIN_NOTIFY_MAX_LEN);
+            if (!text) return denied('메시지 내용이 없습니다.');
+            if (!(await takeAdminNotifySlot())) return denied('관리자 알림 발송 한도를 초과했습니다.');
+            return await sendMany([{ to: ADMIN_NOTIFY_PHONE, from: SOLAPI_SENDER, text }], '관리자 알림');
+        }
+
+        if (!(await isAdminKey(payload.adminKey))) {
+            return denied('권한이 없습니다.');
+        }
 
         if (type === 'kakao') {
             const { receivers, templateCode, templateId: payloadTemplateId } = payload

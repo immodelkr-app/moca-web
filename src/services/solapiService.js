@@ -1,5 +1,9 @@
 import { supabase } from './supabaseClient';
 
+// 발송 함수(aligo-send)가 서버에서 확인하는 관리자 키. 관리자 화면에서만 쓰이는 발송 호출에 붙는다.
+// (AdminPage의 ADMIN_PASSWORD와 같은 값 — AdminPage를 import하면 순환/번들이 커져 같은 env를 직접 읽는다)
+const ADMIN_KEY = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024';
+
 /**
  * 솔라피 카카오 알림톡 발송 (템플릿 심사 필요)
  * @param {string} templateCode 솔라피에 등록된 템플릿 ID
@@ -11,7 +15,8 @@ export const sendAlimtalk = async (templateCode, receivers) => {
             body: {
                 type: 'kakao',
                 templateCode,
-                receivers
+                receivers,
+                adminKey: ADMIN_KEY
             }
         });
 
@@ -38,7 +43,7 @@ export const sendAlimtalk = async (templateCode, receivers) => {
 export const sendFriendtalk = async (receivers) => {
     try {
         const { data, error } = await supabase.functions.invoke('aligo-send', {
-            body: { type: 'friendtalk', receivers }
+            body: { type: 'friendtalk', receivers, adminKey: ADMIN_KEY }
         });
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || '친구톡 발송 실패');
@@ -49,8 +54,6 @@ export const sendFriendtalk = async (receivers) => {
     }
 };
 
-// 관리자 알림 수신 번호 (회원가입/게시판질문/클래스신청/등급신청/모델캐스팅 등록 시 SMS 발송)
-const ADMIN_NOTIFY_PHONE = '01090424521';
 
 /**
  * 관리자에게 신규 이벤트 알림 SMS 발송 (best-effort — 실패해도 원 작업 흐름에는 영향 없음)
@@ -58,7 +61,9 @@ const ADMIN_NOTIFY_PHONE = '01090424521';
  */
 export const notifyAdmin = async (message) => {
     try {
-        await sendBulkMessage([ADMIN_NOTIFY_PHONE], message);
+        // 수신자는 서버가 관리자 번호로 고정한다(요청에 번호를 싣지 않음). 길이·횟수도 서버에서 제한.
+        const { data, error } = await supabase.functions.invoke('aligo-send', { body: { type: 'admin_notify', message } });
+        if (error || !data?.success) throw error || new Error(data?.error || '발송 실패');
     } catch (err) {
         console.warn('[solapiService] 관리자 알림 발송 실패:', err.message);
     }
@@ -72,7 +77,7 @@ export const notifyAdmin = async (message) => {
 export const sendBulkMessage = async (phoneNumbers, message) => {
     try {
         const { data, error } = await supabase.functions.invoke('aligo-send', {
-            body: { phoneNumbers, message, type: 'sms' }
+            body: { phoneNumbers, message, type: 'sms', adminKey: ADMIN_KEY }
         });
 
         if (error) {
