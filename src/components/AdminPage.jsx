@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
+import { USER_COLS } from '../services/userColumns';
 import { GRADE_INFO, GRADE_EMOJI, logoutUser } from '../services/userService';
 import { updateGradeInCore } from '../lib/imCoreAuth';
 import AdminUpgradeRequests from './AdminUpgradeRequests';
@@ -227,7 +228,7 @@ const AdminPage = () => {
             // 1. 회원 데이터
             const { data: usersData, error: fetchUsersError } = await supabase
                 .from('users')
-                .select('*')
+                .select(USER_COLS)
                 .order('created_at', { ascending: false });
 
             if (fetchUsersError) throw fetchUsersError;
@@ -667,10 +668,8 @@ const AdminPage = () => {
         setUpdatingId(userId);
         setSuccessMsg('');
         try {
-            const { error: deleteError } = await supabase
-                .from('users')
-                .delete()
-                .eq('id', userId);
+            // 회원 삭제는 직접 DELETE가 막혀 있어 관리자 키를 확인하는 RPC로 처리
+            const { error: deleteError } = await supabase.rpc('admin_delete_user', { p_admin_key: ADMIN_PASSWORD, p_id: userId });
 
             if (deleteError) throw deleteError;
             setUsers(prev => prev.filter(u => u.id !== userId));

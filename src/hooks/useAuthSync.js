@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { saveUser } from '../services/userService';
+import { USER_COLS } from '../services/userColumns';
 import { syncUserWithCore } from '../lib/imCoreAuth';
 
 export const useAuthSync = () => {
@@ -94,13 +95,13 @@ export const useAuthSync = () => {
             try {
                 // 1. 현재 UUID 계정 확인
                 const { data: currentRecord } = await supabase
-                    .from('users').select('*').eq('id', user.id).maybeSingle();
+                    .from('users').select(USER_COLS).eq('id', user.id).maybeSingle();
 
                 // 2. 이메일로 기존 계정 검색 (이메일이 있는 경우만)
                 let emailRecords = [];
                 if (email) {
                     const { data: byEmail } = await supabase
-                        .from('users').select('*').eq('email', email);
+                        .from('users').select(USER_COLS).eq('email', email);
                     emailRecords = byEmail || [];
                 }
 
@@ -157,7 +158,7 @@ export const useAuthSync = () => {
                     };
 
                     const { data: created, error: insertError } = await supabase
-                        .from('users').insert([newUser]).select().single();
+                        .from('users').insert([newUser]).select(USER_COLS).single();
                     if (insertError) {
                         console.warn('[useAuthSync] Insert failed, saving locally:', insertError.message);
                     }

@@ -100,12 +100,7 @@ export const loginWithPasskey = async () => {
 
         // 3. users 테이블에서 nickname + password_hash로 계정 조회 (일반 로그인과 동일한 방식)
         const { data: dbUser, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('nickname', credentials.username)
-            .eq('password_hash', credentials.password)
-            .order('created_at', { ascending: false })
-            .limit(1)
+            .rpc('login_user', { p_nickname: credentials.username, p_hash: credentials.password })
             .maybeSingle();
 
         if (error || !dbUser) throw error || new Error('등록된 계정을 찾을 수 없습니다.');

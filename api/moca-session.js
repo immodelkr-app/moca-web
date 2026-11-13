@@ -13,11 +13,12 @@ export default async function handler(req, res) {
 
     try {
         const url = process.env.VITE_SUPABASE_URL, key = process.env.VITE_SUPABASE_ANON_KEY;
-        const q = new URLSearchParams({
-            select: 'id,phone,nickname,name', nickname: `eq.${nickname}`, password_hash: `eq.${passwordHash}`,
-            order: 'created_at.desc', limit: '1',
+        // password_hash 직접 조회는 DB에서 막혀 있어 login_user RPC로 닉네임+해시를 대조한다
+        const r = await fetch(`${url}/rest/v1/rpc/login_user`, {
+            method: 'POST',
+            headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ p_nickname: nickname, p_hash: passwordHash }),
         });
-        const r = await fetch(`${url}/rest/v1/users?${q}`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
         const [user] = (await r.json().catch(() => [])) || [];
         if (!r.ok || !user) return res.status(401).json({ error: '인증에 실패했습니다.' });
 

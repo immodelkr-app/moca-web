@@ -8,6 +8,7 @@ import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { Capacitor } from '@capacitor/core';
 import { syncUserWithCore, updateGradeInCore } from '../lib/imCoreAuth';
 import { notifyAdmin } from './solapiService';
+import { USER_COLS } from './userColumns';
 export { syncUserWithCore };
 
 const USER_KEY = 'i_model_user';
@@ -93,8 +94,11 @@ export const saveUserToSupabase = async (userData) => {
             gender: userData.gender || null,
             user_type: userData.user_type || 'model',
         }])
-        .select()
+        .select(USER_COLS)
         .single();
+
+    // password_hash는 DB에서 읽을 수 없으므로 세션용으로 방금 만든 해시를 직접 붙인다
+    if (!error && data) data.password_hash = userData.password ? simpleHash(userData.password) : '';
 
     if (!error && data) {
         notifyAdmin(`[모카] 신규 회원가입: ${userData.name || userData.nickname || '이름없음'} (${userData.phone || '연락처없음'})`);
@@ -253,14 +257,8 @@ export const loginUser = async (nickname, password) => {
     const hash = simpleHash(password);
 
     if (isSupabaseEnabled()) {
-        const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('nickname', nickname)
-            .eq('password_hash', hash)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        // password_hash 직접 조회는 막혀 있어 RPC로 닉네임+해시를 서버에서 대조한다
+        const { data, error } = await supabase.rpc('login_user', { p_nickname: nickname, p_hash: hash }).maybeSingle();
 
         if (error || !data) {
             return { user: null, error: { message: '닉네임 또는 비밀번호가 일치하지 않습니다.' } };
@@ -351,28 +349,14 @@ export const resetUserPassword = async (nickname, phone, newPassword) => {
     const newHash = simpleHash(newPassword);
 
     if (isSupabaseEnabled()) {
-        // 본인 확인을 먼저 진행
-        const { data: user, error: findError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('nickname', nickname)
-            .eq('phone', phone)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        // 본인 확인(닉네임+연락처)과 변경을 서버 RPC 한 번에 처리
+        const { data: ok, error: rpcError } = await supabase.rpc('reset_password', { p_nickname: nickname, p_phone: phone, p_new_hash: newHash });
 
-        if (findError || !user) {
-            return { success: false, error: { message: '일치하는 통합 정보를 찾을 수 없습니다.' } };
-        }
-
-        // 일치할 경우 비밀번호 업데이트
-        const { error: updateError } = await supabase
-            .from('users')
-            .update({ password_hash: newHash })
-            .eq('id', user.id);
-
-        if (updateError) {
+        if (rpcError) {
             return { success: false, error: { message: '비밀번호 재설정 중 오류가 발생했습니다.' } };
+        }
+        if (!ok) {
+            return { success: false, error: { message: '일치하는 통합 정보를 찾을 수 없습니다.' } };
         }
 
         return { success: true, error: null };
@@ -448,7 +432,7 @@ export const syncUserGrade = async () => {
         // [개선] 닉네임으로 모든 레코드를 가져와서 가장 '높은 등급'을 가진 정보를 우선함
         const { data: dbRows, error: fetchError } = await supabase
             .from('users')
-            .select('*')
+            .select(USER_COLS)
             .eq('nickname', user.nickname)
             .order('created_at', { ascending: false });
 
@@ -661,10 +645,12 @@ export const updateSmartProfile = async (userId, profileData) => {
  */
 export const updateUserProfile = async (userId, updateData) => {
     const patches = { ...updateData };
+    let newPasswordHash = null;
     if (patches.password) {
-        patches.password_hash = simpleHash(patches.password);
+        newPasswordHash = simpleHash(patches.password);
         delete patches.password;
     }
+    delete patches.password_hash; // 해시 직접 수정은 막혀 있어 아래 set_password RPC로만 변경
 
     let targetId = userId;
     const currentUser = getUser();
@@ -690,11 +676,23 @@ export const updateUserProfile = async (userId, updateData) => {
 
     if (isSupabaseEnabled() && targetId && targetId.length > 20) { // UUID check
         console.log('[updateUserProfile] Updating DB record with ID:', targetId);
-        const { data, error } = await supabase
-            .from('users')
-            .update(patches)
+        // 비밀번호 변경은 현재 세션의 닉네임+해시로 본인 확인하는 RPC로 처리
+        if (newPasswordHash) {
+            const { data: changed, error: pwError } = await supabase.rpc('set_password', {
+                p_nickname: currentUser?.nickname || null,
+                p_current_hash: currentUser?.password_hash || null,
+                p_new_hash: newPasswordHash,
+            });
+            if (pwError || !changed) {
+                return { error: { message: '비밀번호를 변경할 수 없습니다. 다시 로그인한 뒤 시도해 주세요.' } };
+            }
+        }
+
+        // 비밀번호만 바꾸는 경우 patches가 비어 update가 불가하므로 조회로 대체
+        const base = supabase.from('users');
+        const { data, error } = await (Object.keys(patches).length ? base.update(patches) : base.select(USER_COLS))
             .eq('id', targetId)
-            .select()
+            .select(USER_COLS)
             .single();
 
         if (error) {
@@ -705,6 +703,8 @@ export const updateUserProfile = async (userId, updateData) => {
             }
             return { error: { message: `정부 수정 중 오류가 발생했습니다: ${error.message || '알 수 없는 에러'}` } };
         }
+
+        if (newPasswordHash) data.password_hash = newPasswordHash;
 
         // 업데이트 된 정보 로컬스토리지 최신화
         if (currentUser && (currentUser.id === targetId || currentUser.nickname === data.nickname)) {

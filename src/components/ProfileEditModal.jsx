@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { getUser, updateUserProfile, updateMasterUserIdInSupabase } from '../services/userService';
+import { USER_COLS } from '../services/userColumns';
 import { getPasskeyStatus, registerPasskey } from '../services/passkeyService';
 import { getPointsBalance, getPointsHistory, syncUserWithCore } from '../lib/imCoreAuth';
 import { fetchMyCoupons } from '../services/attendanceService';
@@ -56,12 +57,13 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                 try {
                     const { data: dbRows } = await supabase
                         .from('users')
-                        .select('*')
+                        .select(USER_COLS)
                         .eq('nickname', currentUser.nickname)
                         .order('created_at', { ascending: false })
                         .limit(1);
                     if (dbRows && dbRows.length > 0) {
-                        currentUser = dbRows[0];
+                        // password_hash는 DB에서 읽을 수 없으므로 기존 세션 값을 유지
+                        currentUser = { ...dbRows[0], password_hash: currentUser.password_hash };
                         // 세션 갱신 (1시간 연장)
                         const refreshed = {
                             ...currentUser,
@@ -84,7 +86,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                             console.log('[ProfileEditModal] Session expired, fetching from DB by nickname:', nickname);
                             const { data: dbRows } = await supabase
                                 .from('users')
-                                .select('*')
+                                .select(USER_COLS)
                                 .eq('nickname', nickname)
                                 .order('created_at', { ascending: false })
                                 .limit(1);
