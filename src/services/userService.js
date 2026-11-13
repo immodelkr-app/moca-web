@@ -345,20 +345,27 @@ export const loginUser = async (nickname, password) => {
  * @param {string} newPassword 
  * @returns {Promise<{success: boolean, error: object|null}>}
  */
-export const resetUserPassword = async (nickname, phone, newPassword) => {
+// 비밀번호 재설정 1단계: 닉네임+연락처가 일치하면 서버(password-reset 함수)가 인증번호를 문자로 발송
+export const sendPasswordResetCode = async (nickname, phone) => {
+    if (!isSupabaseEnabled()) return { success: true, error: null }; // 로컬 fallback은 인증 없음
+    const { data, error } = await supabase.functions.invoke('password-reset', { body: { action: 'send', nickname, phone } });
+    if (error || !data?.success) {
+        return { success: false, error: { message: data?.error || '인증번호 발송에 실패했습니다.' } };
+    }
+    return { success: true, error: null };
+};
+
+// 비밀번호 재설정 2단계: 문자로 받은 인증번호가 맞을 때만 서버가 비밀번호를 교체
+export const resetUserPassword = async (nickname, phone, code, newPassword) => {
     const newHash = simpleHash(newPassword);
 
     if (isSupabaseEnabled()) {
-        // 본인 확인(닉네임+연락처)과 변경을 서버 RPC 한 번에 처리
-        const { data: ok, error: rpcError } = await supabase.rpc('reset_password', { p_nickname: nickname, p_phone: phone, p_new_hash: newHash });
-
-        if (rpcError) {
-            return { success: false, error: { message: '비밀번호 재설정 중 오류가 발생했습니다.' } };
+        const { data, error } = await supabase.functions.invoke('password-reset', {
+            body: { action: 'reset', nickname, phone, code, newHash },
+        });
+        if (error || !data?.success) {
+            return { success: false, error: { message: data?.error || '비밀번호 재설정 중 오류가 발생했습니다.' } };
         }
-        if (!ok) {
-            return { success: false, error: { message: '일치하는 통합 정보를 찾을 수 없습니다.' } };
-        }
-
         return { success: true, error: null };
     } else {
         // 로컬 fallback

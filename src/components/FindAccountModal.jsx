@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { findNicknameByNameAndPhone, maskNickname, resetUserPassword } from '../services/userService';
+import { findNicknameByNameAndPhone, maskNickname, resetUserPassword, sendPasswordResetCode } from '../services/userService';
 
 /**
  * 아이디 찾기 / 비밀번호 찾기 통합 모달
@@ -20,6 +20,7 @@ const FindAccountModal = ({ mode, onClose, onLoginWithNickname }) => {
     const [pwStep, setPwStep] = useState(1);          // 1: 본인확인, 2: 새 비밀번호 설정
     const [pwNickname, setPwNickname] = useState('');
     const [pwPhone, setPwPhone] = useState('');
+    const [pwCode, setPwCode] = useState('');
     const [pwNew, setPwNew] = useState('');
     const [pwConfirm, setPwConfirm] = useState('');
     const [pwError, setPwError] = useState('');
@@ -50,7 +51,7 @@ const FindAccountModal = ({ mode, onClose, onLoginWithNickname }) => {
         }
     };
 
-    // ── 비밀번호 찾기 Step1: 본인 확인 ──
+    // ── 비밀번호 찾기 Step1: 인증번호 문자 발송 ──
     const handleVerify = async (e) => {
         e.preventDefault();
         if (!pwNickname.trim() || !pwPhone.trim()) {
@@ -59,33 +60,11 @@ const FindAccountModal = ({ mode, onClose, onLoginWithNickname }) => {
         }
         setPwLoading(true);
         setPwError('');
-        // resetUserPassword로 빈 비밀번호 체크 대신, findNicknameByNameAndPhone 방식과 유사하게
-        // 닉네임 + 연락처 매칭을 직접 확인 (resetUserPassword는 step2에서 최종 호출)
         try {
-            const { supabase, isSupabaseEnabled } = await import('../services/supabaseClient');
-            if (isSupabaseEnabled()) {
-                const { data, error } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('nickname', pwNickname.trim())
-                    .eq('phone', pwPhone.trim())
-                    .limit(1)
-                    .maybeSingle();
-                if (error || !data) {
-                    setPwError('아이디 또는 연락처가 일치하지 않습니다.');
-                    setPwLoading(false);
-                    return;
-                }
-            } else {
-                // localStorage fallback
-                const usersListRaw = localStorage.getItem('i_model_users_list');
-                const usersList = JSON.parse(usersListRaw || '[]');
-                const found = usersList.find(u => u.nickname === pwNickname.trim() && u.phone === pwPhone.trim());
-                if (!found) {
-                    setPwError('아이디 또는 연락처가 일치하지 않습니다.');
-                    setPwLoading(false);
-                    return;
-                }
+            const { success, error } = await sendPasswordResetCode(pwNickname.trim(), pwPhone.trim());
+            if (!success) {
+                setPwError(error?.message || '인증번호 발송에 실패했습니다.');
+                return;
             }
             setPwStep(2);
         } catch {
@@ -95,9 +74,13 @@ const FindAccountModal = ({ mode, onClose, onLoginWithNickname }) => {
         }
     };
 
-    // ── 비밀번호 찾기 Step2: 새 비밀번호 설정 ──
+    // ── 비밀번호 찾기 Step2: 인증번호 + 새 비밀번호 ──
     const handleResetPassword = async (e) => {
         e.preventDefault();
+        if (!pwCode.trim()) {
+            setPwError('문자로 받은 인증번호를 입력해 주세요.');
+            return;
+        }
         if (pwNew.length < 4) {
             setPwError('비밀번호는 4자 이상이어야 합니다.');
             return;
@@ -109,7 +92,7 @@ const FindAccountModal = ({ mode, onClose, onLoginWithNickname }) => {
         setPwLoading(true);
         setPwError('');
         try {
-            const { success, error } = await resetUserPassword(pwNickname.trim(), pwPhone.trim(), pwNew);
+            const { success, error } = await resetUserPassword(pwNickname.trim(), pwPhone.trim(), pwCode.trim(), pwNew);
             if (!success) {
                 setPwError(error?.message || '비밀번호 변경에 실패했습니다.');
             } else {
@@ -141,7 +124,7 @@ const FindAccountModal = ({ mode, onClose, onLoginWithNickname }) => {
                         {/* 비밀번호 찾기 step2에서 뒤로 가기 */}
                         {mode === 'password' && pwStep === 2 && !pwSuccess && (
                             <button
-                                onClick={() => { setPwStep(1); setPwError(''); setPwNew(''); setPwConfirm(''); }}
+                                onClick={() => { setPwStep(1); setPwError(''); setPwCode(''); setPwNew(''); setPwConfirm(''); }}
                                 className="mr-1 text-[#9CA3AF] hover:text-[#9333EA] transition-colors"
                             >
                                 <span className="material-symbols-outlined text-[20px]">arrow_back</span>
@@ -151,7 +134,7 @@ const FindAccountModal = ({ mode, onClose, onLoginWithNickname }) => {
                             {mode === 'id' ? 'person_search' : 'lock_reset'}
                         </span>
                         <h2 className="text-lg font-black text-[#1F1235]">
-                            {mode === 'id' ? '아이디 찾기' : (pwSuccess ? '변경 완료' : pwStep === 1 ? '비밀번호 찾기' : '새 비밀번호 설정')}
+                            {mode === 'id' ? '아이디 찾기' : (pwSuccess ? '변경 완료' : pwStep === 1 ? '비밀번호 찾기' : '인증 및 새 비밀번호')}
                         </h2>
                     </div>
                     <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#1F1235] transition-colors">
@@ -230,7 +213,7 @@ const FindAccountModal = ({ mode, onClose, onLoginWithNickname }) => {
                     {mode === 'password' && pwStep === 1 && !pwSuccess && (
                         <form onSubmit={handleVerify} className="space-y-4">
                             <p className="text-xs text-[#5B4E7A] font-medium leading-relaxed mb-2">
-                                가입 시 입력하신 <strong>아이디</strong>와 <strong>연락처</strong>로 본인 확인을 진행합니다.
+                                가입 시 입력하신 <strong>아이디</strong>와 <strong>연락처</strong>를 입력하면, 해당 연락처로 인증번호 문자를 보내드립니다.
                             </p>
                             <input
                                 type="text"
@@ -257,9 +240,9 @@ const FindAccountModal = ({ mode, onClose, onLoginWithNickname }) => {
                                 {pwLoading ? (
                                     <span className="flex items-center justify-center gap-2">
                                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        확인 중...
+                                        발송 중...
                                     </span>
-                                ) : '본인 확인'}
+                                ) : '인증번호 받기'}
                             </button>
                         </form>
                     )}
@@ -269,15 +252,24 @@ const FindAccountModal = ({ mode, onClose, onLoginWithNickname }) => {
                         <form onSubmit={handleResetPassword} className="space-y-4">
                             <div className="flex items-center gap-2 bg-[#F3E8FF] rounded-xl px-4 py-3 mb-1">
                                 <span className="material-symbols-outlined text-[#9333EA] text-[16px]">check_circle</span>
-                                <p className="text-xs font-black text-[#9333EA]">본인 확인 완료 — {pwNickname}</p>
+                                <p className="text-xs font-black text-[#9333EA]">인증번호를 문자로 보냈어요 (5분 내 입력)</p>
                             </div>
+                            <input
+                                type="tel"
+                                inputMode="numeric"
+                                placeholder="인증번호 6자리"
+                                value={pwCode}
+                                onChange={e => setPwCode(e.target.value.replace(/[^0-9]/g, ''))}
+                                className={inputClass}
+                                maxLength={6}
+                                autoFocus
+                            />
                             <input
                                 type="password"
                                 placeholder="새 비밀번호 (4자 이상)"
                                 value={pwNew}
                                 onChange={e => setPwNew(e.target.value)}
                                 className={inputClass}
-                                autoFocus
                                 minLength={4}
                             />
                             <input
