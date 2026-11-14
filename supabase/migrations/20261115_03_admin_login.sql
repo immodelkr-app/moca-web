@@ -50,10 +50,11 @@ BEGIN
                 = '676944ce4309a957ac1464d36f5489b03a96bfce5230ebfa43b86c6892a1734f';
   END IF;
   IF NOT v_ok THEN
+    -- 오류를 던지면 실패 기록도 롤백돼 횟수 제한이 무력화되므로 NULL을 반환한다
     INSERT INTO admin_login_fails DEFAULT VALUES;
-    RAISE EXCEPTION 'invalid' USING ERRCODE = 'P0001';
+    RETURN NULL;
   END IF;
-  DELETE FROM admin_login_fails;
+  DELETE FROM admin_login_fails WHERE true; -- API 경로는 WHERE 없는 DELETE를 거부한다(safeupdate)
   DELETE FROM admin_sessions WHERE expires_at < now();
   v_token := encode(gen_random_bytes(32), 'hex');
   INSERT INTO admin_sessions VALUES (encode(sha256(convert_to(v_token, 'UTF8')), 'hex'), now() + interval '12 hours');
@@ -77,7 +78,7 @@ BEGIN
   INSERT INTO admin_config VALUES ('password_bcrypt', crypt(p_new, gen_salt('bf', 10)))
     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
   INSERT INTO admin_config VALUES ('legacy_disabled', '1') ON CONFLICT (key) DO NOTHING;
-  DELETE FROM admin_sessions;
+  DELETE FROM admin_sessions WHERE true;
 END $$;
 
 REVOKE ALL ON FUNCTION admin_login(text), admin_logout(text), admin_token_valid(text), admin_set_password(text) FROM public;
