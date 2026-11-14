@@ -32,6 +32,10 @@ const simpleHash = (str) => {
  * 사용자의 현재 플랫폼 정보를 Supabase users 테이블에 동기화
  * @param {string} userId 
  */
+// 등급·운영진·user_type·SSO id는 서버 RPC로만 바뀐다(20261115 잠금). 프로필 수정 payload에 섞여 있으면 update 전체가 거부되므로 제거.
+const PROTECTED_USER_FIELDS = ['id', 'created_at', 'grade', 'grade_expires_at', 'is_staff_judge', 'user_type', 'master_user_id'];
+const stripProtectedUserFields = (obj) => { PROTECTED_USER_FIELDS.forEach((k) => delete obj[k]); return obj; };
+
 export const syncPlatformWithSupabase = async (userId) => {
     if (!supabase || !userId) return;
     const platform = Capacitor.getPlatform(); // 'android' | 'ios' | 'web'
@@ -114,9 +118,7 @@ export const saveUserToSupabase = async (userData) => {
                 name: userData.name || userData.nickname,
             });
             if (syncResult?.success && syncResult?.masterUserId) {
-                await supabase.from('users')
-                    .update({ master_user_id: syncResult.masterUserId })
-                    .eq('id', data.id);
+                await supabase.rpc('set_master_user_id', { p_id: data.id, p_master: syncResult.masterUserId });
                 data.master_user_id = syncResult.masterUserId;
                 console.log('[userService] im-core-auth SSO 동기화 완료 (회원가입):', syncResult.masterUserId);
             }
@@ -270,10 +272,7 @@ export const loginUser = async (nickname, password) => {
             const expiresAt = new Date(data.grade_expires_at);
             if (now > expiresAt) {
                 // 만료됨 -> 강등
-                const { error: downgradeError } = await supabase
-                    .from('users')
-                    .update({ grade: 'SILVER', grade_expires_at: null })
-                    .eq('id', data.id);
+                const { error: downgradeError } = await supabase.rpc('expire_user_grade', { p_id: data.id });
 
                 if (!downgradeError) {
                     data.grade = 'SILVER';
@@ -296,9 +295,7 @@ export const loginUser = async (nickname, password) => {
                     grade: data.grade, // 아임모델 공화국에 등급 전달
                 });
                 if (syncResult?.success && syncResult?.masterUserId) {
-                    await supabase.from('users')
-                        .update({ master_user_id: syncResult.masterUserId })
-                        .eq('id', data.id);
+                    await supabase.rpc('set_master_user_id', { p_id: data.id, p_master: syncResult.masterUserId });
                     data.master_user_id = syncResult.masterUserId;
                     console.log('[userService] im-core-auth SSO 동기화 완료 (로그인):', syncResult.masterUserId);
                 }
@@ -475,10 +472,7 @@ export const syncUserGrade = async () => {
                 const expiresAt = new Date(data.grade_expires_at);
                 if (now > expiresAt) {
                     console.log(`[syncUserGrade] Grade Expired (${data.grade_expires_at}). Downgrading to SILVER.`);
-                    const { error: updateError } = await supabase
-                        .from('users')
-                        .update({ grade: 'SILVER', grade_expires_at: null })
-                        .eq('id', data.id);
+                    const { error: updateError } = await supabase.rpc('expire_user_grade', { p_id: data.id });
                     if (!updateError) {
                         currentGrade = 'SILVER';
                         // 아임모델 공화국에 실시간 등급 강등 반영
@@ -627,7 +621,8 @@ export const updateSmartProfile = async (userId, profileData) => {
         }
 
         if (targetId && typeof targetId === 'string' && targetId.length > 20) {
-            const { photo_base64, ...supabaseFields } = profileData;
+            const { photo_base64, ...rest } = profileData;
+            const supabaseFields = stripProtectedUserFields(rest);
             const { error } = await supabase
                 .from('users')
                 .update(supabaseFields)
@@ -658,6 +653,7 @@ export const updateUserProfile = async (userId, updateData) => {
         delete patches.password;
     }
     delete patches.password_hash; // 해시 직접 수정은 막혀 있어 아래 set_password RPC로만 변경
+    stripProtectedUserFields(patches);
 
     let targetId = userId;
     const currentUser = getUser();
@@ -801,10 +797,7 @@ export const maskNickname = (nickname) => {
 export const updateMasterUserIdInSupabase = async (userId, masterUserId) => {
     if (!isSupabaseEnabled() || !userId || !masterUserId) return;
     try {
-        const { error } = await supabase
-            .from('users')
-            .update({ master_user_id: masterUserId })
-            .eq('id', userId);
+        const { error } = await supabase.rpc('set_master_user_id', { p_id: userId, p_master: masterUserId });
         if (error) {
             console.warn('[updateMasterUserIdInSupabase] 업데이트 실패:', error.message);
         } else {

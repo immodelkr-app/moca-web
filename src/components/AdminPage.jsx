@@ -354,10 +354,12 @@ const AdminPage = () => {
                 updates.grade_expires_at = null; // 만료일 없이 수동 부여
             }
 
-            const { error: updateError } = await supabase
-                .from('users')
-                .update(updates)
-                .eq('id', userId);
+            const { error: updateError } = await supabase.rpc('admin_set_grade', {
+                p_admin_key: ADMIN_PASSWORD,
+                p_id: userId,
+                p_grade: newGrade,
+                p_expires: updates.grade_expires_at ?? null,
+            });
 
             if (updateError) throw updateError;
             setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
@@ -434,10 +436,11 @@ const AdminPage = () => {
     const handleToggleStaffJudge = async (userId, nextValue) => {
         setUpdatingId(userId);
         try {
-            const { error: updateError } = await supabase
-                .from('users')
-                .update({ is_staff_judge: nextValue })
-                .eq('id', userId);
+            const { error: updateError } = await supabase.rpc('admin_set_staff_judge', {
+                p_admin_key: ADMIN_PASSWORD,
+                p_id: userId,
+                p_value: nextValue,
+            });
             if (updateError) throw updateError;
             setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_staff_judge: nextValue } : u));
             setSelectedUserForDetail(prev => (prev && prev.id === userId) ? { ...prev, is_staff_judge: nextValue } : prev);

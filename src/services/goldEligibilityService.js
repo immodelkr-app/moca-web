@@ -72,15 +72,14 @@ const autoUpgradeToGold = async (user) => {
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + AUTO_UPGRADE_MONTHS);
 
-    const { error } = await supabase
-        .from('users')
-        .update({ grade: 'GOLD', grade_expires_at: expiresAt.toISOString() })
-        .eq('nickname', userNickname);
+    // 서버가 댓글 수 조건을 직접 확인하고 승급한다 (false면 조건 미달 또는 이미 상위 등급)
+    const { data: done, error } = await supabase.rpc('auto_upgrade_gold', { p_nickname: userNickname });
 
     if (error) {
         console.error('[goldEligibilityService] autoUpgradeToGold error:', error);
         return false;
     }
+    if (!done) return false;
 
     logGradeChange({
         userId: user.id,

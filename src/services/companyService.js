@@ -84,10 +84,7 @@ export const registerCompany = async ({
 }) => {
     if (!supabase) return { data: null, error: new Error('Supabase not configured') };
 
-    const { error: userTypeError } = await supabase
-        .from('users')
-        .update({ user_type: 'company' })
-        .eq('id', userId);
+    const { error: userTypeError } = await supabase.rpc('become_company', { p_id: userId });
 
     if (userTypeError) return { data: null, error: userTypeError };
 

@@ -116,7 +116,7 @@ export const useAuthSync = () => {
                 if (currentRecord) {
                     // 기존 소셜 계정이 있으면 등급만 업데이트
                     if (gradePriority[bestGrade] > (gradePriority[currentRecord.grade] || 0)) {
-                        await supabase.from('users').update({ grade: bestGrade }).eq('id', user.id);
+                        await supabase.rpc('claim_social_grade');
                         currentRecord.grade = bestGrade;
                     }
                     const mergedUser = { ...currentRecord, ...bestRecord, id: user.id };
@@ -132,9 +132,7 @@ export const useAuthSync = () => {
                                 grade: mergedUser.grade || bestGrade, // 아임모델 공화국에 등급 전달
                             });
                             if (syncResult?.success && syncResult?.masterUserId) {
-                                await supabase.from('users')
-                                    .update({ master_user_id: syncResult.masterUserId })
-                                    .eq('id', currentRecord.id);
+                                await supabase.rpc('set_master_user_id', { p_id: currentRecord.id, p_master: syncResult.masterUserId });
                                 saveUser({ ...mergedUser, master_user_id: syncResult.masterUserId });
                                 console.log('[useAuthSync] im-core-auth SSO 동기화 완료:', syncResult.masterUserId);
                             }
@@ -162,6 +160,11 @@ export const useAuthSync = () => {
                     if (insertError) {
                         console.warn('[useAuthSync] Insert failed, saving locally:', insertError.message);
                     }
+                    // 가입 INSERT의 등급은 서버가 SILVER로 고정하므로, 같은 이메일의 기존 최고 등급은 RPC로 이어받는다
+                    if (created && bestGrade !== created.grade) {
+                        const { data: claimed } = await supabase.rpc('claim_social_grade');
+                        if (claimed) created.grade = claimed;
+                    }
                     const savedUser = created || newUser;
                     saveUser(savedUser);
 
@@ -176,9 +179,7 @@ export const useAuthSync = () => {
                                 grade: savedUser.grade || bestGrade, // 아임모델 공화국에 등급 전달
                             });
                             if (syncResult?.success && syncResult?.masterUserId) {
-                                await supabase.from('users')
-                                    .update({ master_user_id: syncResult.masterUserId })
-                                    .eq('id', savedUser.id);
+                                await supabase.rpc('set_master_user_id', { p_id: savedUser.id, p_master: syncResult.masterUserId });
                                 saveUser({ ...savedUser, master_user_id: syncResult.masterUserId });
                                 console.log('[useAuthSync] im-core-auth SSO 동기화 완료 (신규):', syncResult.masterUserId);
                             }
