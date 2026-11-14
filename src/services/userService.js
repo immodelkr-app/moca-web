@@ -270,6 +270,9 @@ export const loginUser = async (nickname, password) => {
         // password_hash 직접 조회는 막혀 있어 RPC로 닉네임+해시를 서버에서 대조한다
         const { data, error } = await supabase.rpc('login_user', { p_nickname: nickname, p_hash: hash }).maybeSingle();
 
+        if (error?.message?.includes('locked')) {
+            return { user: null, error: { message: '로그인 시도가 너무 많습니다. 15분 뒤에 다시 시도하거나 비밀번호 찾기를 이용해 주세요.' } };
+        }
         if (error || !data) {
             return { user: null, error: { message: '닉네임 또는 비밀번호가 일치하지 않습니다.' } };
         }
