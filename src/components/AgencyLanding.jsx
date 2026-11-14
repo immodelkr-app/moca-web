@@ -976,7 +976,7 @@ const AgencyLanding = () => {
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
-                        <DaumPostcode onComplete={handleCompletePostcode} style={{ height: '450px' }} />
+                        <DaumPostcode scriptUrl="https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" onComplete={handleCompletePostcode} style={{ height: '450px' }} />
                     </div>
                 </div>
             )}
