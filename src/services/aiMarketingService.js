@@ -3,6 +3,8 @@
  * AI 마케팅 분석 탭 - Claude API 연동, 프롬프트 빌더, 로컬 설정 저장
  */
 
+import { getAdminToken } from './adminAuth';
+
 const MODEL_STORAGE = 'i_model_ai_marketing_model';
 
 export const CLAUDE_MODELS = [
@@ -21,8 +23,6 @@ const MODEL_PRICING = {
 export const getSavedModel = () => localStorage.getItem(MODEL_STORAGE) || CLAUDE_MODELS[0].id;
 export const saveModel = (model) => localStorage.setItem(MODEL_STORAGE, model);
 
-// 어드민 로그인 비밀번호와 동일한 값 — 서버 프록시(/api/claude-marketing)에 요청 출처를 알리는 용도
-const ADMIN_TOKEN = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024';
 
 /**
  * Claude Messages API를 서버 프록시(/api/claude-marketing)를 통해 호출합니다.
@@ -35,7 +35,7 @@ export async function callClaude({ model, system, prompt, maxTokens = 1500 }) {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
-                'x-admin-token': ADMIN_TOKEN,
+                'x-admin-token': getAdminToken(),
             },
             body: JSON.stringify({ model, system, prompt, maxTokens }),
         });

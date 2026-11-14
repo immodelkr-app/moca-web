@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchMocaLiveStreamById, goLive, stopLive } from '../services/mocaLiveService';
 import { AdminMocaLiveControlPanel, LiveViewerCount } from './AdminMocaLive';
 import { AdminMocaLiveProducts } from './MocaLiveProducts';
-import { ADMIN_PASSWORD, ADMIN_AUTH_SESSION_KEY } from './AdminPage';
+import { getAdminToken, adminLogin } from '../services/adminAuth';
 
 // /admin/moca-live-control/:id - 방송 목록 테이블 안에 접혀 들어가던 컨트롤 패널(채팅+게임+고정댓글)을
 // 전체 화면으로 분리한 전용 페이지. 방송 중엔 이 화면 하나만 띄워놓고 계속 보게 된다.
@@ -11,7 +11,7 @@ import { ADMIN_PASSWORD, ADMIN_AUTH_SESSION_KEY } from './AdminPage';
 const AdminMocaLiveControlPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [authenticated, setAuthenticated] = useState(() => window.sessionStorage.getItem(ADMIN_AUTH_SESSION_KEY) === '1');
+    const [authenticated, setAuthenticated] = useState(() => !!getAdminToken());
     const [passwordInput, setPasswordInput] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
@@ -30,13 +30,13 @@ const AdminMocaLiveControlPage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authenticated, id]);
 
-    const handlePasswordSubmit = (e) => {
+    const handlePasswordSubmit = async (e) => {
         e.preventDefault();
-        if (passwordInput === ADMIN_PASSWORD) {
-            window.sessionStorage.setItem(ADMIN_AUTH_SESSION_KEY, '1');
+        const res = await adminLogin(passwordInput);
+        if (res.ok) {
             setAuthenticated(true);
         } else {
-            setPasswordError('비밀번호가 틀렸습니다.');
+            setPasswordError(res.locked ? '시도 횟수를 초과했습니다. 15분 뒤 다시 시도해 주세요.' : '비밀번호가 틀렸습니다.');
         }
     };
 

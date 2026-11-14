@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { getAdminToken, adminLogin, adminLogout } from '../services/adminAuth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { USER_COLS } from '../services/userColumns';
@@ -27,14 +28,10 @@ import AdminAttendanceCoupons from './AdminAttendanceCoupons';
 import AdminCeoQuiz from './AdminCeoQuiz';
 import AdminMocaLive from './AdminMocaLive';
 
-export const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024'; // 관리자 비밀번호 (.env에 VITE_ADMIN_PASSWORD 설정 권장)
-// 모카TV 라이브 컨트롤 페이지(별도 라우트)와 로그인 상태를 공유하기 위한 세션 플래그.
-// AdminPage에서 로그인하면 라이브 컨트롤 페이지로 이동해도 비밀번호를 다시 묻지 않는다.
-export const ADMIN_AUTH_SESSION_KEY = 'moca_admin_auth';
 
 const AdminPage = () => {
     const navigate = useNavigate();
-    const [authenticated, setAuthenticated] = useState(() => window.sessionStorage.getItem(ADMIN_AUTH_SESSION_KEY) === '1');
+    const [authenticated, setAuthenticated] = useState(() => !!getAdminToken());
     const [passwordInput, setPasswordInput] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
@@ -187,7 +184,7 @@ const AdminPage = () => {
 
     const handleLogout = () => {
         logoutUser();
-        window.sessionStorage.removeItem(ADMIN_AUTH_SESSION_KEY);
+        adminLogout();
         setAuthenticated(false);
         navigate('/');
     };
@@ -204,14 +201,14 @@ const AdminPage = () => {
     }, [activeTab]);
 
     // 관리자 로그인
-    const handlePasswordSubmit = (e) => {
+    const handlePasswordSubmit = async (e) => {
         e.preventDefault();
-        if (passwordInput === ADMIN_PASSWORD) {
-            window.sessionStorage.setItem(ADMIN_AUTH_SESSION_KEY, '1');
+        const res = await adminLogin(passwordInput);
+        if (res.ok) {
             setAuthenticated(true);
             fetchData();
         } else {
-            setPasswordError('비밀번호가 틀렸습니다.');
+            setPasswordError(res.locked ? '시도 횟수를 초과했습니다. 15분 뒤 다시 시도해 주세요.' : '비밀번호가 틀렸습니다.');
         }
     };
 
@@ -355,7 +352,7 @@ const AdminPage = () => {
             }
 
             const { error: updateError } = await supabase.rpc('admin_set_grade', {
-                p_admin_key: ADMIN_PASSWORD,
+                p_admin_key: getAdminToken(),
                 p_id: userId,
                 p_grade: newGrade,
                 p_expires: updates.grade_expires_at ?? null,
@@ -437,7 +434,7 @@ const AdminPage = () => {
         setUpdatingId(userId);
         try {
             const { error: updateError } = await supabase.rpc('admin_set_staff_judge', {
-                p_admin_key: ADMIN_PASSWORD,
+                p_admin_key: getAdminToken(),
                 p_id: userId,
                 p_value: nextValue,
             });
@@ -672,7 +669,7 @@ const AdminPage = () => {
         setSuccessMsg('');
         try {
             // 회원 삭제는 직접 DELETE가 막혀 있어 관리자 키를 확인하는 RPC로 처리
-            const { error: deleteError } = await supabase.rpc('admin_delete_user', { p_admin_key: ADMIN_PASSWORD, p_id: userId });
+            const { error: deleteError } = await supabase.rpc('admin_delete_user', { p_admin_key: getAdminToken(), p_id: userId });
 
             if (deleteError) throw deleteError;
             setUsers(prev => prev.filter(u => u.id !== userId));
@@ -1105,7 +1102,7 @@ const AdminPage = () => {
                         onClick={async () => {
                             setActiveTab('qna');
                             setQnaLoading(true);
-                            const data = await fetchAllQnaPostsForAdmin(ADMIN_PASSWORD);
+                            const data = await fetchAllQnaPostsForAdmin(getAdminToken());
                             setQnaPosts(data);
                             setQnaLoading(false);
                         }}
@@ -3291,7 +3288,7 @@ const AdminPage = () => {
                 )}
 
                 {activeTab === 'class-payments' && (
-                    <AdminClassPayments adminKey={ADMIN_PASSWORD} />
+                    <AdminClassPayments adminKey={getAdminToken()} />
                 )}
 
                 {/* ── 📝 전속계약 관리 탭 ── */}
@@ -3963,7 +3960,7 @@ const AdminPage = () => {
                     const handleReply = async (post) => {
                         const reply = getReplyText(post).trim();
                         if (!reply) return;
-                        const { data, error } = await updateAdminReply(ADMIN_PASSWORD, post.id, reply);
+                        const { data, error } = await updateAdminReply(getAdminToken(), post.id, reply);
                         if (error) {
                             alert(`답변 저장에 실패했습니다: ${error}`);
                             return;
@@ -3976,7 +3973,7 @@ const AdminPage = () => {
 
                     const handleDeleteReply = async (post) => {
                         if (!window.confirm('답변을 삭제하시겠습니까?')) return;
-                        const { data, error } = await updateAdminReply(ADMIN_PASSWORD, post.id, null);
+                        const { data, error } = await updateAdminReply(getAdminToken(), post.id, null);
                         if (error) {
                             alert(`답변 삭제에 실패했습니다: ${error}`);
                             return;
@@ -3987,7 +3984,7 @@ const AdminPage = () => {
 
                     const handleDeletePost = async (postId, title) => {
                         if (!window.confirm(`"${title}" 게시글을 삭제하시겠습니까?`)) return;
-                        const { error } = await deleteQnaPostAsAdmin(ADMIN_PASSWORD, postId);
+                        const { error } = await deleteQnaPostAsAdmin(getAdminToken(), postId);
                         if (error) {
                             alert(`게시글 삭제에 실패했습니다: ${error}`);
                             return;
@@ -4022,7 +4019,7 @@ const AdminPage = () => {
                                     <button
                                         onClick={async () => {
                                             setQnaLoading(true);
-                                            const data = await fetchAllQnaPostsForAdmin(ADMIN_PASSWORD);
+                                            const data = await fetchAllQnaPostsForAdmin(getAdminToken());
                                             setQnaPosts(data);
                                             setQnaLoading(false);
                                         }}

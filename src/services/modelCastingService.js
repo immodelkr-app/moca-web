@@ -3,6 +3,7 @@
  * 모델캐스팅(업체 구인 게시판) - 게시글/역할/지원 CRUD
  */
 import { supabase } from './supabaseClient';
+import { getAdminToken } from './adminAuth';
 import { notifyAdmin } from './solapiService';
 
 export const MONTHLY_POSTING_LIMIT = 3;
@@ -337,7 +338,6 @@ export const updateExternalCasting = async (castingId, {
 };
 
 
-const ADMIN_TOKEN = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024';
 
 /**
  * 외부 공고 링크를 서버(/api/import-casting)에서 읽어 등록용 JSON으로 변환
@@ -351,7 +351,7 @@ export const importExternalCasting = async ({ url, text }) => {
     try {
         res = await fetch('/api/import-casting', {
             method: 'POST',
-            headers: { 'content-type': 'application/json', 'x-admin-token': ADMIN_TOKEN },
+            headers: { 'content-type': 'application/json', 'x-admin-token': getAdminToken() },
             body: JSON.stringify({ url, text }),
         });
     } catch {
@@ -550,7 +550,7 @@ export const fetchCastingViewCounts = async () => {
  */
 export const fetchCastingEventStats = async () => {
     if (!supabase) return {};
-    const { data, error } = await supabase.rpc('casting_events_admin_stats', { p_admin_key: ADMIN_TOKEN });
+    const { data, error } = await supabase.rpc('casting_events_admin_stats', { p_admin_key: getAdminToken() });
     if (error) {
         console.warn('[fetchCastingEventStats] 오류:', error);
         return {};

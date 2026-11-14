@@ -17,7 +17,23 @@
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL = 'claude-sonnet-5';
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const ADMIN_TOKEN = process.env.VITE_ADMIN_PASSWORD || 'immodel2024';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+
+// 관리자 로그인(admin_login RPC)이 발급한 세션 토큰인지 DB에서 확인
+async function isAdminToken(token) {
+    if (!token || typeof token !== 'string' || !SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
+    try {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_token_valid`, {
+            method: 'POST',
+            headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'content-type': 'application/json' },
+            body: JSON.stringify({ p_token: token }),
+        });
+        return r.ok && (await r.json()) === true;
+    } catch {
+        return false;
+    }
+}
 
 // SSRF 방지: 서버가 직접 가져오는 것은 허용된 출처만 (그 외 주소는 저장만 하고 읽지 않는다)
 const FETCHABLE_SOURCES = {
@@ -87,7 +103,7 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
-    if (req.headers['x-admin-token'] !== ADMIN_TOKEN) {
+    if (!(await isAdminToken(req.headers['x-admin-token']))) {
         return res.status(401).json({ error: '인증되지 않은 요청입니다.' });
     }
     if (!ANTHROPIC_API_KEY) {

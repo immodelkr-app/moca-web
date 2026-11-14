@@ -1,11 +1,10 @@
 import { supabase } from './supabaseClient';
 
-// 업체 대상 홍보 메일 (관리자 전용). 서버(outreach-email 함수)가 관리자 키를 검증한다.
-const ADMIN_KEY = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024';
 
+import { getAdminToken } from './adminAuth';
 const call = async (payload) => {
     try {
-        const { data, error } = await supabase.functions.invoke('outreach-email', { body: { adminKey: ADMIN_KEY, ...payload } });
+        const { data, error } = await supabase.functions.invoke('outreach-email', { body: { adminKey: getAdminToken(), ...payload } });
         if (error) return { success: false, error: error.message || '서버 통신 중 오류가 발생했습니다.' };
         return data || { success: false, error: '응답이 비어 있습니다.' };
     } catch (err) {

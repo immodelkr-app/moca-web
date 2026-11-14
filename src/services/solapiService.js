@@ -1,9 +1,7 @@
 import { supabase } from './supabaseClient';
 
-// 발송 함수(aligo-send)가 서버에서 확인하는 관리자 키. 관리자 화면에서만 쓰이는 발송 호출에 붙는다.
-// (AdminPage의 ADMIN_PASSWORD와 같은 값 — AdminPage를 import하면 순환/번들이 커져 같은 env를 직접 읽는다)
-const ADMIN_KEY = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024';
 
+import { getAdminToken } from './adminAuth';
 /**
  * 솔라피 카카오 알림톡 발송 (템플릿 심사 필요)
  * @param {string} templateCode 솔라피에 등록된 템플릿 ID
@@ -16,7 +14,7 @@ export const sendAlimtalk = async (templateCode, receivers) => {
                 type: 'kakao',
                 templateCode,
                 receivers,
-                adminKey: ADMIN_KEY
+                adminKey: getAdminToken()
             }
         });
 
@@ -43,7 +41,7 @@ export const sendAlimtalk = async (templateCode, receivers) => {
 export const sendFriendtalk = async (receivers) => {
     try {
         const { data, error } = await supabase.functions.invoke('aligo-send', {
-            body: { type: 'friendtalk', receivers, adminKey: ADMIN_KEY }
+            body: { type: 'friendtalk', receivers, adminKey: getAdminToken() }
         });
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || '친구톡 발송 실패');
@@ -77,7 +75,7 @@ export const notifyAdmin = async (message) => {
 export const sendBulkMessage = async (phoneNumbers, message) => {
     try {
         const { data, error } = await supabase.functions.invoke('aligo-send', {
-            body: { phoneNumbers, message, type: 'sms', adminKey: ADMIN_KEY }
+            body: { phoneNumbers, message, type: 'sms', adminKey: getAdminToken() }
         });
 
         if (error) {

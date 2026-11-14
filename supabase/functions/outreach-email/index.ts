@@ -10,8 +10,18 @@ const corsHeaders = {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// 관리자 비밀번호 sha256 (DB 함수 _qna_assert_admin 과 동일 값. 관리자 비번 변경 시 함께 바꿔야 함)
-const ADMIN_KEY_HASH = "676944ce4309a957ac1464d36f5489b03a96bfce5230ebfa43b86c6892a1734f";
+// 관리자 키(로그인으로 발급된 세션 토큰) 검증은 DB의 admin_key_ok RPC(service_role 전용)에 맡긴다
+async function isAdminKey(key: unknown): Promise<boolean> {
+    if (typeof key !== "string" || !key) return false;
+    const url = Deno.env.get("SUPABASE_URL") ?? "";
+    const sk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const r = await fetch(`${url}/rest/v1/rpc/admin_key_ok`, {
+        method: "POST",
+        headers: { apikey: sk, Authorization: `Bearer ${sk}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ p_key: key }),
+    });
+    return r.ok && (await r.json()) === true;
+}
 
 const SITE = "https://immoca.kr";
 const FROM = "아임모카 <immodel@immodel.kr>";
@@ -85,7 +95,7 @@ serve(async (req) => {
         const body = await req.json();
         const { action, adminKey } = body;
 
-        if ((await sha256Hex(String(adminKey ?? ""))) !== ADMIN_KEY_HASH) {
+        if (!(await isAdminKey(adminKey))) {
             return json({ success: false, error: "관리자 인증에 실패했습니다." });
         }
 

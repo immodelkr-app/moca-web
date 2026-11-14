@@ -1,10 +1,9 @@
 import { supabase } from './supabaseClient';
+import { getAdminToken } from './adminAuth';
 import { updateGradeInCore } from '../lib/imCoreAuth';
 import { sendTargetedPush } from './pushNotificationService';
 import { notifyAdmin, sendBulkMessage } from './solapiService';
 
-// 다른 서비스(modelCastingService 등)와 같은 방식. 번들에 포함돼 비밀은 아님 -> 서버 관리자 로그인 과제에서 해결.
-const ADMIN_KEY = import.meta.env.VITE_ADMIN_PASSWORD || 'immodel2024';
 
 // --- Partners ---
 export const fetchPartners = async () => {
@@ -150,7 +149,7 @@ export const approveContract = async (contractId, memberPhone) => {
 
     // Supabase .or() 필터 사용 (전화번호가 01012345678 또는 010-1234-5678 또는 원본과 일치하는 경우)
     const { data: updatedUsers, error: gradeError } = await supabase.rpc('admin_set_vip_by_phones', {
-        p_admin_key: ADMIN_KEY,
+        p_admin_key: getAdminToken(),
         p_phones: [cleanedPhone, formattedPhone, memberPhone],
     });
 
@@ -294,7 +293,7 @@ export const approveUpgradeRequest = async (requestId, userNickname, months) => 
 
     // 4. 사용자 등급 업데이트 (닉네임으로 식별)
     const { error: gradeError } = await supabase.rpc('admin_set_grade_by_nickname', {
-        p_admin_key: ADMIN_KEY,
+        p_admin_key: getAdminToken(),
         p_nickname: userNickname,
         p_grade: 'GOLD',
         p_expires: expirationDate.toISOString(),

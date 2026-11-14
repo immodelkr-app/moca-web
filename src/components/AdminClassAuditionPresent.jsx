@@ -2,13 +2,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { fetchVoteTally, subscribeToAuditionVotes } from '../services/classAuditionService';
-import { ADMIN_PASSWORD, ADMIN_AUTH_SESSION_KEY } from './AdminPage';
+import { getAdminToken, adminLogin } from '../services/adminAuth';
 
 // /admin/classes/:classId/audition/present - 오디션 심사 결과를 TV/빔프로젝터에 띄우는 전용 화면.
 // AdminMocaLiveControlPage와 동일하게 /admin과 인증 세션을 공유한다.
 const AdminClassAuditionPresent = () => {
     const { classId } = useParams();
-    const [authenticated, setAuthenticated] = useState(() => window.sessionStorage.getItem(ADMIN_AUTH_SESSION_KEY) === '1');
+    const [authenticated, setAuthenticated] = useState(() => !!getAdminToken());
     const [passwordInput, setPasswordInput] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
@@ -58,13 +58,13 @@ const AdminClassAuditionPresent = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [revealStage]);
 
-    const handlePasswordSubmit = (e) => {
+    const handlePasswordSubmit = async (e) => {
         e.preventDefault();
-        if (passwordInput === ADMIN_PASSWORD) {
-            window.sessionStorage.setItem(ADMIN_AUTH_SESSION_KEY, '1');
+        const res = await adminLogin(passwordInput);
+        if (res.ok) {
             setAuthenticated(true);
         } else {
-            setPasswordError('비밀번호가 틀렸습니다.');
+            setPasswordError(res.locked ? '시도 횟수를 초과했습니다. 15분 뒤 다시 시도해 주세요.' : '비밀번호가 틀렸습니다.');
         }
     };
 
