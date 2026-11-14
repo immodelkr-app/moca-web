@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
-import { saveUser } from '../services/userService';
-import { USER_COLS } from '../services/userColumns';
+import { saveUser, getMyUsers } from '../services/userService';
+import { USER_COLS_SAFE } from '../services/userColumns';
 import { syncUserWithCore } from '../lib/imCoreAuth';
 
 export const useAuthSync = () => {
@@ -94,14 +94,14 @@ export const useAuthSync = () => {
 
             try {
                 // 1. 현재 UUID 계정 확인
-                const { data: currentRecord } = await supabase
-                    .from('users').select(USER_COLS).eq('id', user.id).maybeSingle();
+                // (소셜 로그인 세션으로 본인 확인 — 닉네임/해시 없이 auth.uid() 기준)
+                const { data: myRows } = await getMyUsers('', '');
+                const currentRecord = myRows.find((r) => r.id === user.id) || null;
 
                 // 2. 이메일로 기존 계정 검색 (이메일이 있는 경우만)
                 let emailRecords = [];
                 if (email) {
-                    const { data: byEmail } = await supabase
-                        .from('users').select(USER_COLS).eq('email', email);
+                    const { data: byEmail } = await supabase.rpc('get_my_email_users');
                     emailRecords = byEmail || [];
                 }
 
@@ -156,7 +156,7 @@ export const useAuthSync = () => {
                     };
 
                     const { data: created, error: insertError } = await supabase
-                        .from('users').insert([newUser]).select(USER_COLS).single();
+                        .from('users').insert([newUser]).select(USER_COLS_SAFE).single();
                     if (insertError) {
                         console.warn('[useAuthSync] Insert failed, saving locally:', insertError.message);
                     }

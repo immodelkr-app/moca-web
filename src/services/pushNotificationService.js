@@ -2,6 +2,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { supabase } from './supabaseClient';
 import { Capacitor } from '@capacitor/core';
 import { getUser } from './userService';
+import { adminListUsers } from './adminAuth';
 
 export const syncPushTokenWithSupabase = async (userId) => {
   if (!supabase) return;
@@ -233,12 +234,10 @@ export const fetchUsersWithoutPushToken = async () => {
   const registeredIds = [...new Set((tokenData || []).map(t => t.user_id))];
 
   // 2. 전화번호가 있는 전체 회원 조회 (last_platform 조회 추가)
-  const { data: allUsers, error: usersError } = await supabase
-    .from('users')
-    .select('id, name, phone, last_platform, marketing_consent')
-    .not('phone', 'is', null)
-    .neq('phone', '');
+  const { data: usersRaw, error: usersError } = await adminListUsers();
   if (usersError) return { data: [], error: usersError };
+  const allUsers = usersRaw.filter(u => u.phone)
+    .map(({ id, name, phone, last_platform, marketing_consent }) => ({ id, name, phone, last_platform, marketing_consent }));
 
   // 3. 클라이언트 측에서 미등록 필터링
   const noPushUsers = (allUsers || []).filter(u => !registeredIds.includes(u.id));
@@ -256,11 +255,10 @@ export const fetchUsersWithoutPushToken = async () => {
  */
 export const fetchAllUsersWithPhone = async () => {
   if (!supabase) return { data: [], error: 'Supabase not initialized' };
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, name, phone, marketing_consent')
-    .not('phone', 'is', null)
-    .neq('phone', '');
-  return { data: data || [], error };
+  const { data, error } = await adminListUsers();
+  return {
+    data: data.filter(u => u.phone).map(({ id, name, phone, marketing_consent }) => ({ id, name, phone, marketing_consent })),
+    error,
+  };
 };
 

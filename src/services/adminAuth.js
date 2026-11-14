@@ -28,3 +28,24 @@ export const adminLogout = async () => {
     try { window.sessionStorage.removeItem(ADMIN_AUTH_SESSION_KEY); } catch { /* noop */ }
     if (token && supabase) await supabase.rpc('admin_logout', { p_token: token }).catch(() => {});
 };
+
+/** 관리자: 전체 회원(연락처 포함, password_hash 제외). users 직접 조회 대신 사용. */
+export const adminListUsers = async () => {
+    if (!supabase) return { data: [], error: new Error('Supabase not configured') };
+    const { data, error } = await supabase.rpc('admin_list_users', { p_admin_key: getAdminToken() });
+    return { data: Array.isArray(data) ? data : [], error };
+};
+
+/** 관리자: user_id가 있는 행들의 users 객체에 phone/email을 채워 넣는다(수강신청·업체 목록 등 조인 결과용). */
+export const attachUserPhones = async (rows) => {
+    const list = rows || [];
+    const ids = [...new Set(list.map((r) => r.user_id).filter(Boolean))];
+    if (!supabase || ids.length === 0) return list;
+    const { data } = await supabase.rpc('admin_user_contacts', { p_admin_key: getAdminToken(), p_ids: ids });
+    const byId = new Map((data || []).map((c) => [c.r_id, c]));
+    list.forEach((r) => {
+        const c = byId.get(r.user_id);
+        if (c) r.users = { ...(r.users || {}), phone: c.r_phone, email: c.r_email };
+    });
+    return list;
+};

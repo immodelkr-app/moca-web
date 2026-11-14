@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
-import { getUser, updateUserProfile, updateMasterUserIdInSupabase } from '../services/userService';
-import { USER_COLS } from '../services/userColumns';
+import { getUser, updateUserProfile, updateMasterUserIdInSupabase, getMyUsers } from '../services/userService';
 import { getPasskeyStatus, registerPasskey } from '../services/passkeyService';
 import { getPointsBalance, getPointsHistory, syncUserWithCore } from '../lib/imCoreAuth';
 import { fetchMyCoupons } from '../services/attendanceService';
@@ -55,12 +54,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
             // 실시간 DB 데이터로 세션 최신화 (master_user_id, phone 등)
             if (isSupabaseEnabled() && currentUser?.nickname) {
                 try {
-                    const { data: dbRows } = await supabase
-                        .from('users')
-                        .select(USER_COLS)
-                        .eq('nickname', currentUser.nickname)
-                        .order('created_at', { ascending: false })
-                        .limit(1);
+                    const { data: dbRows } = await getMyUsers(currentUser.nickname, currentUser.password_hash);
                     if (dbRows && dbRows.length > 0) {
                         // password_hash는 DB에서 읽을 수 없으므로 기존 세션 값을 유지
                         currentUser = { ...dbRows[0], password_hash: currentUser.password_hash };
@@ -84,12 +78,7 @@ const ProfileEditModal = ({ onClose, onUpdateSuccess }) => {
                         const nickname = typeof parsed === 'object' ? parsed?.nickname : parsed;
                         if (nickname && isSupabaseEnabled()) {
                             console.log('[ProfileEditModal] Session expired, fetching from DB by nickname:', nickname);
-                            const { data: dbRows } = await supabase
-                                .from('users')
-                                .select(USER_COLS)
-                                .eq('nickname', nickname)
-                                .order('created_at', { ascending: false })
-                                .limit(1);
+                            const { data: dbRows } = await getMyUsers(nickname, typeof parsed === 'object' ? parsed?.password_hash : '');
                             if (dbRows && dbRows.length > 0) {
                                 currentUser = dbRows[0];
                                 // 세션 갱신 (1시간 연장)

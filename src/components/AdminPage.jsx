@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { getAdminToken, adminLogin, adminLogout } from '../services/adminAuth';
+import { getAdminToken, adminLogin, adminLogout, adminListUsers } from '../services/adminAuth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { USER_COLS } from '../services/userColumns';
 import { GRADE_INFO, GRADE_EMOJI, logoutUser } from '../services/userService';
 import { updateGradeInCore } from '../lib/imCoreAuth';
 import AdminUpgradeRequests from './AdminUpgradeRequests';
@@ -223,10 +222,7 @@ const AdminPage = () => {
             }
 
             // 1. 회원 데이터
-            const { data: usersData, error: fetchUsersError } = await supabase
-                .from('users')
-                .select(USER_COLS)
-                .order('created_at', { ascending: false });
+            const { data: usersData, error: fetchUsersError } = await adminListUsers();
 
             if (fetchUsersError) throw fetchUsersError;
             setUsers(usersData || []);

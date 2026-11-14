@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { getAdminToken } from './adminAuth';
+import { getAdminToken, attachUserPhones } from './adminAuth';
 import { updateGradeInCore } from '../lib/imCoreAuth';
 import { sendTargetedPush } from './pushNotificationService';
 import { notifyAdmin, sendBulkMessage } from './solapiService';
@@ -348,11 +348,11 @@ export const fetchCompanies = async (status) => {
     if (!supabase) return { data: [], error: new Error('Supabase not configured') };
     let query = supabase
         .from('companies')
-        .select('*, users(email, nickname)')
+        .select('*, users(nickname)')
         .order('created_at', { ascending: false });
     if (status) query = query.eq('verification_status', status);
     const { data, error } = await query;
-    return { data: data || [], error };
+    return { data: await attachUserPhones(data || []), error };
 };
 
 /**

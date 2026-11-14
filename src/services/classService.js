@@ -3,6 +3,7 @@
  * MOCA 클래스 관리 및 신청 관련 서비스
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { attachUserPhones } from './adminAuth';
 
 // 클래스 목록 가져오기
 export const fetchClasses = async () => {
@@ -185,11 +186,11 @@ export const fetchApplications = async (classId) => {
         .from('class_applications')
         .select(`
             *,
-            users (nickname, name, phone, grade)
+            users (nickname, name, grade)
         `)
         .eq('class_id', classId)
         .order('created_at', { ascending: false });
-    return { data, error };
+    return { data: data ? await attachUserPhones(data) : data, error };
 };
 
 // 모든 신청자 목록 가져오기 (어드민용 종합)
@@ -200,10 +201,10 @@ export const fetchAllApplications = async () => {
         .select(`
             *,
             classes (title),
-            users (nickname, name, phone, grade)
+            users (nickname, name, grade)
         `)
         .order('created_at', { ascending: false });
-    return { data, error };
+    return { data: data ? await attachUserPhones(data) : data, error };
 };
 
 // ──────────────────────────────────────────────
@@ -298,11 +299,11 @@ export const fetchPaidApplicants = async (classId) => {
     if (!isSupabaseEnabled()) return { data: [], error: null };
     const { data, error } = await supabase
         .from('class_applications')
-        .select('*, users(id, name, nickname, phone, grade)')
+        .select('*, users(id, name, nickname, grade)')
         .eq('class_id', classId)
         .eq('approval_status', 'paid')
         .order('paid_at', { ascending: false });
-    return { data: data || [], error };
+    return { data: await attachUserPhones(data || []), error };
 };
 
 export const recordThankYouSent = async (classId) => {
@@ -427,10 +428,11 @@ export const getClassNonReviewers = async (classId) => {
     // 1. 수강확정(paid) 참석자
     const { data: attendees, error: attErr } = await supabase
         .from('class_applications')
-        .select('user_id, user_phone, users(id, name, nickname, phone, grade)')
+        .select('user_id, user_phone, users(id, name, nickname, grade)')
         .eq('class_id', classId)
         .eq('approval_status', 'paid');
     if (attErr) return { data: [], error: attErr };
+    await attachUserPhones(attendees);
 
     // 2. 이미 후기 작성한 사용자
     const { data: reviewers, error: revErr } = await supabase

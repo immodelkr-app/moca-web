@@ -4,6 +4,7 @@
  */
 import { supabase } from './supabaseClient';
 import { getAdminToken } from './adminAuth';
+import { getUser } from './userService';
 import { notifyAdmin } from './solapiService';
 
 export const MONTHLY_POSTING_LIMIT = 3;
@@ -465,9 +466,14 @@ export const fetchCastingDetail = async (castingId) => {
     if (!supabase) return { data: null, error: new Error('Supabase not configured') };
     const { data, error } = await supabase
         .from('model_castings')
-        .select('*, companies(company_name, contact_name, verification_status, users(email)), model_casting_roles(*), model_casting_applications(count)')
+        .select('*, companies(company_name, contact_name, verification_status), model_casting_roles(*), model_casting_applications(count)')
         .eq('id', castingId)
         .single();
+    // 업체 연락 이메일은 users를 직접 조인할 수 없어 공고 단위 RPC로 가져온다
+    if (data?.companies) {
+        const { data: email } = await supabase.rpc('casting_contact_email', { p_casting_id: castingId });
+        data.companies.users = { email: email || '' };
+    }
     return { data, error };
 };
 
@@ -680,12 +686,14 @@ export const fetchMyApplications = async (modelUserId) => {
  */
 export const fetchApplicationsForCasting = async (castingId) => {
     if (!supabase) return { data: [], error: new Error('Supabase not configured') };
-    const { data, error } = await supabase
-        .from('model_casting_applications')
-        .select('*, users(name, nickname, phone, height, weight, portfolio_link)')
-        .eq('casting_id', castingId)
-        .order('applied_at', { ascending: false });
-    return { data: data || [], error };
+    // 지원자 연락처는 서버가 호출자가 공고를 올린 업체인지 확인한 뒤 내려준다
+    const me = getUser();
+    const { data, error } = await supabase.rpc('casting_applicants', {
+        p_casting_id: castingId,
+        p_nickname: me?.nickname || '',
+        p_hash: me?.password_hash || '',
+    });
+    return { data: Array.isArray(data) ? data : [], error };
 };
 
 /**

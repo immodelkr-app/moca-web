@@ -6,6 +6,7 @@
  *       유효 출석일 누적 30일 도달 시 어드민이 확인 후 프리패스 수동 발급
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { adminListUsers } from './adminAuth';
 
 export const COUPON_GOAL_DAYS = 30;
 
@@ -184,14 +185,15 @@ export const fetchAttendanceCandidates = async () => {
     if (!isSupabaseEnabled()) return { data: [], error: null };
 
     const [usersRes, checksRes, couponsRes] = await Promise.all([
-        supabase.from('users').select('id, nickname, name, phone, grade, user_type').eq('user_type', 'model'),
+        adminListUsers(),
         supabase.from('attendance_checks').select('user_id, check_date'),
         supabase.from('attendance_coupons').select('user_id'),
     ]);
 
     if (usersRes.error) return { data: [], error: usersRes.error };
 
-    const users = usersRes.data || [];
+    const users = (usersRes.data || []).filter(u => u.user_type === 'model')
+        .map(({ id, nickname, name, phone, grade, user_type }) => ({ id, nickname, name, phone, grade, user_type }));
     // 유저별 출석일 Set
     const checksByUser = {};
     (checksRes.data || []).forEach(r => {

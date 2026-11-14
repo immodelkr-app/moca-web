@@ -8,7 +8,7 @@ import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { Capacitor } from '@capacitor/core';
 import { syncUserWithCore, updateGradeInCore } from '../lib/imCoreAuth';
 import { notifyAdmin } from './solapiService';
-import { USER_COLS } from './userColumns';
+import { USER_COLS_SAFE, CONTACT_COLS } from './userColumns';
 export { syncUserWithCore };
 
 const USER_KEY = 'i_model_user';
@@ -32,6 +32,13 @@ const simpleHash = (str) => {
  * 사용자의 현재 플랫폼 정보를 Supabase users 테이블에 동기화
  * @param {string} userId 
  */
+/** 본인 행(연락처 포함) 조회. 닉네임+비밀번호 해시(또는 소셜 로그인 세션)로 서버가 본인 확인한다. 최신순. */
+export const getMyUsers = async (nickname, hash) => {
+    if (!supabase) return { data: [], error: null };
+    const { data, error } = await supabase.rpc('get_my_users', { p_nickname: nickname || '', p_hash: hash || '' });
+    return { data: Array.isArray(data) ? data : [], error };
+};
+
 // 등급·운영진·user_type·SSO id는 서버 RPC로만 바뀐다(20261115 잠금). 프로필 수정 payload에 섞여 있으면 update 전체가 거부되므로 제거.
 const PROTECTED_USER_FIELDS = ['id', 'created_at', 'grade', 'grade_expires_at', 'is_staff_judge', 'user_type', 'master_user_id'];
 const stripProtectedUserFields = (obj) => { PROTECTED_USER_FIELDS.forEach((k) => delete obj[k]); return obj; };
@@ -68,17 +75,12 @@ export const saveUserToSupabase = async (userData) => {
     // (기존 DB에 하이픈 유무가 섞여 있어 두 형태 모두 비교)
     const phoneDigits = (userData.phone || '').replace(/\D/g, '');
     if (phoneDigits.length >= 10) {
-        const hyphenated = phoneDigits.length === 11
-            ? `${phoneDigits.slice(0, 3)}-${phoneDigits.slice(3, 7)}-${phoneDigits.slice(7)}`
-            : phoneDigits;
-        const { data: dupRows, error: dupErr } = await supabase
-            .from('users')
-            .select('id')
-            .in('phone', [phoneDigits, hyphenated])
-            .eq('user_type', userData.user_type || 'model')
-            .limit(1);
+        const { data: inUse, error: dupErr } = await supabase.rpc('phone_in_use', {
+            p_phone: userData.phone,
+            p_user_type: userData.user_type || 'model',
+        });
         if (dupErr) return { data: null, error: dupErr };
-        if (dupRows && dupRows.length > 0) {
+        if (inUse) {
             return { data: null, error: { message: '이미 가입된 전화번호입니다. 아이디·비밀번호 찾기를 이용해 주세요.' } };
         }
     }
@@ -98,11 +100,17 @@ export const saveUserToSupabase = async (userData) => {
             gender: userData.gender || null,
             user_type: userData.user_type || 'model',
         }])
-        .select(USER_COLS)
+        .select(USER_COLS_SAFE)
         .single();
 
-    // password_hash는 DB에서 읽을 수 없으므로 세션용으로 방금 만든 해시를 직접 붙인다
-    if (!error && data) data.password_hash = userData.password ? simpleHash(userData.password) : '';
+    // password_hash·연락처는 DB에서 바로 읽을 수 없으므로 세션용으로 방금 입력한 값을 직접 붙인다
+    if (!error && data) {
+        data.password_hash = userData.password ? simpleHash(userData.password) : '';
+        data.phone = userData.phone;
+        data.address = userData.address;
+        data.address_detail = userData.address_detail || userData.detailAddress || null;
+        data.email = userData.email || null;
+    }
 
     if (!error && data) {
         notifyAdmin(`[모카] 신규 회원가입: ${userData.name || userData.nickname || '이름없음'} (${userData.phone || '연락처없음'})`);
@@ -434,11 +442,7 @@ export const syncUserGrade = async () => {
 
     try {
         // [개선] 닉네임으로 모든 레코드를 가져와서 가장 '높은 등급'을 가진 정보를 우선함
-        const { data: dbRows, error: fetchError } = await supabase
-            .from('users')
-            .select(USER_COLS)
-            .eq('nickname', user.nickname)
-            .order('created_at', { ascending: false });
+        const { data: dbRows, error: fetchError } = await getMyUsers(user.nickname, user.password_hash);
 
         if (fetchError) {
             console.error('[syncUserGrade] DB Fetch Error:', fetchError);
@@ -654,6 +658,9 @@ export const updateUserProfile = async (userId, updateData) => {
     }
     delete patches.password_hash; // 해시 직접 수정은 막혀 있어 아래 set_password RPC로만 변경
     stripProtectedUserFields(patches);
+    // 연락처 열은 직접 수정이 막혀 있어 update_my_contact RPC로 따로 보낸다
+    const contactPatch = {};
+    CONTACT_COLS.forEach((k) => { if (k in patches) { contactPatch[k] = patches[k]; delete patches[k]; } });
 
     let targetId = userId;
     const currentUser = getUser();
@@ -679,6 +686,20 @@ export const updateUserProfile = async (userId, updateData) => {
 
     if (isSupabaseEnabled() && targetId && targetId.length > 20) { // UUID check
         console.log('[updateUserProfile] Updating DB record with ID:', targetId);
+        // 연락처 수정(비밀번호도 같이 바꾸는 경우 현재 해시로 본인 확인해야 하므로 비밀번호 변경보다 먼저)
+        if (Object.keys(contactPatch).length) {
+            const { error: contactErr } = await supabase.rpc('update_my_contact', {
+                p_nickname: currentUser?.nickname || '',
+                p_hash: currentUser?.password_hash || '',
+                p_id: targetId,
+                p_patch: contactPatch,
+            });
+            if (contactErr) {
+                console.error('[updateUserProfile] update_my_contact error:', contactErr);
+                return { error: { message: '연락처를 수정할 수 없습니다. 다시 로그인한 뒤 시도해 주세요.' } };
+            }
+        }
+
         // 비밀번호 변경은 현재 세션의 닉네임+해시로 본인 확인하는 RPC로 처리
         if (newPasswordHash) {
             const { data: changed, error: pwError } = await supabase.rpc('set_password', {
@@ -693,9 +714,9 @@ export const updateUserProfile = async (userId, updateData) => {
 
         // 비밀번호만 바꾸는 경우 patches가 비어 update가 불가하므로 조회로 대체
         const base = supabase.from('users');
-        const { data, error } = await (Object.keys(patches).length ? base.update(patches) : base.select(USER_COLS))
+        const { data: row, error } = await (Object.keys(patches).length ? base.update(patches) : base.select(USER_COLS_SAFE))
             .eq('id', targetId)
-            .select(USER_COLS)
+            .select(USER_COLS_SAFE)
             .single();
 
         if (error) {
@@ -707,6 +728,7 @@ export const updateUserProfile = async (userId, updateData) => {
             return { error: { message: `정부 수정 중 오류가 발생했습니다: ${error.message || '알 수 없는 에러'}` } };
         }
 
+        const data = { ...row, ...contactPatch }; // 방금 저장한 연락처 값을 세션에 반영
         if (newPasswordHash) data.password_hash = newPasswordHash;
 
         // 업데이트 된 정보 로컬스토리지 최신화
@@ -747,19 +769,12 @@ export const updateUserProfile = async (userId, updateData) => {
  */
 export const findNicknameByNameAndPhone = async (name, phone) => {
     if (isSupabaseEnabled()) {
-        const { data, error } = await supabase
-            .from('users')
-            .select('nickname')
-            .eq('name', name)
-            .eq('phone', phone)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        const { data: nickname, error } = await supabase.rpc('find_nickname', { p_name: name, p_phone: phone });
 
-        if (error || !data) {
+        if (error || !nickname) {
             return { nickname: null, error: { message: '일치하는 회원 정보를 찾을 수 없습니다.\n입력하신 이름과 연락처를 다시 확인해 주세요.' } };
         }
-        return { nickname: data.nickname, error: null };
+        return { nickname, error: null };
     } else {
         // localStorage fallback
         const usersListRaw = localStorage.getItem(USERS_LIST_KEY);
