@@ -237,6 +237,19 @@ const MocaLiveBanner = () => {
         };
     }, [showPlayer, live?.id]);
 
+    // 가로로 보기: 전체화면 + 가로 잠금 시도. 방향 잠금을 못 하는 기기(iOS 등)는 전체화면만 적용된다.
+    const playerRef = useRef(null);
+    const handleLandscape = async () => {
+        try {
+            if (!document.fullscreenElement) await playerRef.current?.requestFullscreen?.();
+            await screen.orientation?.lock?.('landscape');
+        } catch (e) { /* 미지원 기기: 무시 */ }
+    };
+    const closePlayer = () => {
+        try { screen.orientation?.unlock?.(); if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { /* 무시 */ }
+        setShowPlayer(false);
+    };
+
     const handleShare = async () => {
         const shareData = {
             title: `🔴 모카TV 라이브 - ${live.title}`,
@@ -318,11 +331,13 @@ const MocaLiveBanner = () => {
 
             {showPlayer && (
                 <div
-                    className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/90 px-4 py-6 overflow-y-auto"
-                    onClick={() => setShowPlayer(false)}
+                    ref={playerRef}
+                    className="fixed inset-0 z-[1100] bg-black overflow-y-auto landscape:overflow-hidden"
                 >
-                    <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-3 px-1">
+                    {/* 세로: 영상 위 / 제품·채팅 아래. 가로: 영상 좌(전체높이) / 제품·채팅 우측 패널 */}
+                    <div className="w-full max-w-3xl mx-auto landscape:max-w-none landscape:flex landscape:h-full">
+                      <div className="landscape:relative landscape:flex-[6] landscape:min-w-0 landscape:h-full">
+                        <div className="flex items-center justify-between h-12 px-4 landscape:absolute landscape:top-0 landscape:inset-x-0 landscape:z-10 landscape:bg-gradient-to-b landscape:from-black/70 landscape:to-transparent">
                             <div className="flex items-center gap-2 min-w-0">
                                 <h4 className="text-white font-black text-sm truncate">{live.title}</h4>
                                 {viewerCount > 0 && (
@@ -333,12 +348,16 @@ const MocaLiveBanner = () => {
                                 <button onClick={handleShare} className={shareSuccess ? 'text-emerald-400' : 'text-white/80 hover:text-white'}>
                                     <span className="material-symbols-outlined text-[22px]">{shareSuccess ? 'check' : 'ios_share'}</span>
                                 </button>
-                                <button onClick={() => setShowPlayer(false)} className="text-white/80 hover:text-white">
+                                <button onClick={handleLandscape} className="text-white/80 hover:text-white" aria-label="가로로 보기">
+                                    <span className="material-symbols-outlined text-[22px]">screen_rotation</span>
+                                </button>
+                                <button onClick={closePlayer} className="text-white/80 hover:text-white" aria-label="닫기">
                                     <span className="material-symbols-outlined text-[26px]">close</span>
                                 </button>
                             </div>
                         </div>
-                        <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black">
+                        {/* 화면 높이 기준 전체화면형: 세로 영상도 크게, 가로 모드에서는 화면 전체 높이 */}
+                        <div className="w-full h-[62dvh] landscape:h-full bg-black">
                             {live.stream_type === 'rtmp' ? (
                                 <RtmpPlayer src={live.playback_url} title={live.title} />
                             ) : (
@@ -351,8 +370,11 @@ const MocaLiveBanner = () => {
                                 />
                             )}
                         </div>
-                        <MocaLiveProductCards slugs={live.mb_products} />
-                        <MocaLiveEngagement liveId={live.id} />
+                      </div>
+                      <div className="px-4 pb-6 landscape:flex-[4] landscape:min-w-0 landscape:h-full landscape:overflow-y-auto landscape:pt-3 landscape:bg-[#111]">
+                            <MocaLiveProductCards slugs={live.mb_products} />
+                            <MocaLiveEngagement liveId={live.id} />
+                      </div>
                     </div>
                 </div>
             )}
