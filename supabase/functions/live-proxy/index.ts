@@ -56,7 +56,8 @@ serve(async (req) => {
         .map((p: any) => ({
           slug: p.slug,
           name: p.name,
-          image: p.images?.[0]?.url ?? null,
+          // 모델뷰티는 일부 상품 이미지를 상대경로(/images/..)로 저장 → 모카에서 깨지므로 절대주소로 변환
+          image: p.images?.[0]?.url ? new URL(p.images[0].url, "https://modelbeauty.kr").href : null,
           basePrice: p.basePrice,
           salePrice: p.salePrice,
         }));
