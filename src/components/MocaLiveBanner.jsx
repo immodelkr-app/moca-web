@@ -348,8 +348,12 @@ const MocaLiveBanner = () => {
                                 <button onClick={handleShare} className={shareSuccess ? 'text-emerald-400' : 'text-white/80 hover:text-white'}>
                                     <span className="material-symbols-outlined text-[22px]">{shareSuccess ? 'check' : 'ios_share'}</span>
                                 </button>
-                                <button onClick={handleLandscape} className="text-white/80 hover:text-white" aria-label="가로로 보기">
-                                    <span className="material-symbols-outlined text-[22px]">screen_rotation</span>
+                                {/* 가로 화면에선 불필요. 아이콘 폰트 서브셋에 screen_rotation이 없어 글자로 깨지므로 인라인 SVG 사용 */}
+                                <button onClick={handleLandscape} className="text-white/80 hover:text-white landscape:hidden" aria-label="가로로 보기">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="3" y="8" width="13" height="9" rx="1.5" />
+                                        <path d="M19 6a5 5 0 0 1 2 4M21 10l-2 .5M19 6l-.5 2" />
+                                    </svg>
                                 </button>
                                 <button onClick={closePlayer} className="text-white/80 hover:text-white" aria-label="닫기">
                                     <span className="material-symbols-outlined text-[26px]">close</span>
