@@ -336,7 +336,7 @@ const MocaLiveBanner = () => {
                 >
                     {/* 세로: 영상 위 / 제품·채팅 아래. 가로: 영상 좌(전체높이) / 제품·채팅 우측 패널 */}
                     <div className="w-full max-w-3xl mx-auto landscape:max-w-none landscape:flex landscape:h-full">
-                      <div className="landscape:relative landscape:flex-[6] landscape:min-w-0 landscape:h-full">
+                      <div className="landscape:relative landscape:flex-1 landscape:min-w-0 landscape:h-full">
                         <div className="flex items-center justify-between h-12 px-4 landscape:absolute landscape:top-0 landscape:inset-x-0 landscape:z-10 landscape:bg-gradient-to-b landscape:from-black/70 landscape:to-transparent">
                             <div className="flex items-center gap-2 min-w-0">
                                 <h4 className="text-white font-black text-sm truncate">{live.title}</h4>
@@ -371,7 +371,7 @@ const MocaLiveBanner = () => {
                             )}
                         </div>
                       </div>
-                      <div className="px-4 pb-6 landscape:flex-[4] landscape:min-w-0 landscape:h-full landscape:overflow-y-auto landscape:pt-3 landscape:bg-[#111]">
+                      <div className="px-4 pb-6 landscape:flex-none landscape:w-[30%] landscape:min-w-[320px] landscape:h-full landscape:overflow-y-auto landscape:pt-3 landscape:bg-[#111]">
                             <MocaLiveProductCards slugs={live.mb_products} />
                             <MocaLiveEngagement liveId={live.id} />
                       </div>
