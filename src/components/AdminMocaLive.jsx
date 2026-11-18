@@ -7,7 +7,7 @@ import {
 } from '../services/mocaLiveService';
 import { fetchClasses } from '../services/classService';
 import { fetchUsersWithoutPushToken } from '../services/pushNotificationService';
-import { sendFriendtalk } from '../services/solapiService';
+import { sendFriendtalk, sendBulkMessage } from '../services/solapiService';
 import {
     fetchQuizzesForLive, createLiveQuiz, openLiveQuiz, closeLiveQuiz, archiveLiveQuiz,
     fetchCorrectAnswererNicknames, fetchQuizAnswerStats,
@@ -21,6 +21,7 @@ import {
     bumpLivePeakViewers, fetchLiveEngagementSummary,
     fetchBannedWords, addBannedWord, removeBannedWord,
     fetchAuctionsForLive, createAuction, cancelAuction, archiveAuction, finalizeAuction,
+    fetchAuctionWinnerInfo, passAuctionToNext,
 } from '../services/mocaLiveEngagementService';
 import { grantWinnerPoints } from '../services/quizService';
 
@@ -767,6 +768,31 @@ const AdminMocaLiveAuctionPanel = ({ liveId, streamerName }) => {
         await load();
     };
 
+    // 낙찰자에게 결제 안내 문자 (앱을 이탈한 경우 대비). 낙찰자 연락처는 서버가 관리자 확인 후 내려준다.
+    const handleNotifyWinner = async (a) => {
+        const { data, error } = await fetchAuctionWinnerInfo(a.id);
+        if (error || !data?.phone) { flash('낙찰자 연락처를 찾을 수 없습니다.'); return; }
+        if (!window.confirm(`${data.nickname}님(${data.phone})에게 결제 안내 문자를 보낼까요?`)) return;
+        const left = Math.max(0, Math.round((new Date(data.deadline).getTime() - Date.now()) / 60000));
+        try {
+            await sendBulkMessage([data.phone], `[아임모델 모카] 경매 낙찰을 축하드려요! 🎉
+[${a.product_name}] ${won(data.price)}
+결제 가능 시간이 약 ${left}분 남았어요. 모카 앱 방송 화면에서 결제해주세요.
+https://immoca.kr/open-app?path=home/dashboard`);
+            flash('📩 결제 안내 문자를 보냈습니다.');
+        } catch (e) { flash('문자 발송 실패: ' + (e.message || '')); }
+    };
+
+    const handlePass = async (a) => {
+        if (!window.confirm('현재 낙찰자를 건너뛰고 차순위 입찰자에게 넘길까요? (차순위자에게 30분 결제기한이 새로 주어집니다)')) return;
+        const { data, error } = await passAuctionToNext(a.id);
+        if (error) { flash('넘기기 실패: ' + (error.message || '')); return; }
+        flash(data?.next ? `차순위 ${data.nickname}님(${won(data.price)})에게 넘겼습니다.` : '남은 입찰자가 없어 유찰 처리되었습니다.');
+        await load();
+    };
+
+    const PAY_LABEL = { awaiting: '💳 결제 대기', paid: '✅ 결제 완료', passed: '유찰(차순위 없음)', cancelled: '결제 취소됨' };
+
     const inputCls = 'px-3 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]';
 
     return (
@@ -843,9 +869,23 @@ const AdminMocaLiveAuctionPanel = ({ liveId, streamerName }) => {
                                     {a.winner_nickname ? `🏆 낙찰: ${a.winner_nickname} · ${won(a.winning_price)}` : '유찰 (입찰자 없음)'}
                                 </p>
                             )}
+                            {a.status === 'closed' && PAY_LABEL[a.pay_status] && (
+                                <p className="text-[11.5px] font-bold text-[var(--moca-text)] mt-1">
+                                    {PAY_LABEL[a.pay_status]}
+                                    {a.pay_status === 'awaiting' && a.pay_deadline && ` · 기한 ${new Date(a.pay_deadline).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })}${new Date(a.pay_deadline).getTime() < Date.now() ? ' (지남)' : ''}`}
+                                    {a.pay_status === 'paid' && ` · ${a.pay_type === 'points' ? '포인트' : '카드'} ${won(a.pay_card_amount)}${a.pay_points > 0 ? ` + ${a.pay_points.toLocaleString('ko-KR')}P` : ''}`}
+                                    {a.pay_status === 'paid' && a.pay_points > 0 && !a.points_deducted && <span className="text-red-500"> ⚠️ 포인트 차감 확인 필요</span>}
+                                </p>
+                            )}
                             <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[var(--moca-border)] mt-2">
                                 {a.status === 'open' && (
                                     <button onClick={() => handleCancel(a)} className="text-[12px] font-black text-[var(--moca-text-3)]">🚫 취소</button>
+                                )}
+                                {a.status === 'closed' && a.pay_status === 'awaiting' && (
+                                    <>
+                                        <button onClick={() => handleNotifyWinner(a)} className="text-[12px] font-black text-violet-600">📩 결제 안내 문자</button>
+                                        <button onClick={() => handlePass(a)} className="text-[12px] font-black text-amber-600">⏭ 차순위로 넘기기</button>
+                                    </>
                                 )}
                                 {a.status === 'closed' && (
                                     <button onClick={() => handleArchive(a)} className="text-[12px] font-black text-slate-400 hover:text-slate-600">🗄 내리기</button>

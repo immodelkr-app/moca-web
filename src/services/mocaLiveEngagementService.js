@@ -1,4 +1,5 @@
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { getAdminToken } from './adminAuth';
 
 /**
  * 모카TV 라이브 소통 기능 (실시간 채팅 / 하트 / 실시간 퀴즈 / 숫자 맞추기).
@@ -766,13 +767,14 @@ export const fetchAuctionBids = async (auctionId, limit = 5) => {
     return data || [];
 };
 
-export const placeAuctionBid = async (auctionId, nickname, amount) => {
-    if (!isSupabaseEnabled() || !auctionId || !nickname) return { result: null, error: new Error('입찰 불가') };
+export const placeAuctionBid = async (auctionId, nickname, amount, userId) => {
+    if (!isSupabaseEnabled() || !auctionId || !nickname || !userId) return { result: null, error: new Error('로그인이 필요합니다.') };
 
     const { data, error } = await supabase.rpc('place_moca_live_auction_bid', {
         p_auction_id: auctionId,
         p_nickname: nickname,
         p_amount: amount,
+        p_user_id: userId,
     });
 
     if (error) return { result: null, error };
@@ -807,51 +809,59 @@ export const fetchAuctionsForLive = async (liveId) => {
     return data || [];
 };
 
-// 등록과 동시에 시작. ends_at은 서버 시각 기준으로 계산해야 하므로 오프셋을 반영한다.
+// 운영자 작업은 모두 관리자 토큰을 서버가 확인하는 RPC로 한다 (경매 테이블 직접 쓰기는 막혀 있음).
+// 등록과 동시에 시작. 종료시각은 서버 시간 기준으로 서버가 계산한다.
 export const createAuction = async (liveId, { productName, startPrice, minIncrement, durationSec, maxExtensions }) => {
     if (!isSupabaseEnabled() || !liveId) return { error: new Error('생성 불가') };
 
-    const offset = await fetchServerClockOffset();
-    const endsAt = new Date(Date.now() + offset + durationSec * 1000).toISOString();
-
-    const { data, error } = await supabase
-        .from('moca_live_auction')
-        .insert([{
-            live_id: liveId,
-            product_name: productName,
-            start_price: startPrice,
-            min_increment: minIncrement,
-            max_extensions: maxExtensions,
-            ends_at: endsAt,
-        }])
-        .select()
-        .single();
+    const { data, error } = await supabase.rpc('admin_create_moca_live_auction', {
+        p_admin_key: getAdminToken(),
+        p_live_id: liveId,
+        p_product_name: productName,
+        p_start_price: startPrice,
+        p_min_increment: minIncrement,
+        p_duration_sec: durationSec,
+        p_max_extensions: maxExtensions,
+    });
 
     return { data, error };
 };
 
 export const cancelAuction = async (auctionId) => {
     if (!isSupabaseEnabled()) return { error: new Error('취소 불가') };
-
-    const { error } = await supabase
-        .from('moca_live_auction')
-        .update({ status: 'cancelled', closed_at: new Date().toISOString() })
-        .eq('id', auctionId)
-        .eq('status', 'open');
-
+    const { error } = await supabase.rpc('admin_cancel_moca_live_auction', { p_admin_key: getAdminToken(), p_auction_id: auctionId });
     return { error };
 };
 
 // 시청자 화면에서 내리기(보관) - 낙찰 기록은 어드민에 그대로 남는다
 export const archiveAuction = async (auctionId) => {
     if (!isSupabaseEnabled()) return { error: new Error('보관 불가') };
-
-    const { error } = await supabase
-        .from('moca_live_auction')
-        .update({ status: 'archived' })
-        .eq('id', auctionId);
-
+    const { error } = await supabase.rpc('admin_archive_moca_live_auction', { p_admin_key: getAdminToken(), p_auction_id: auctionId });
     return { error };
+};
+
+// 낙찰자 연락처 (결제 안내 문자용)
+export const fetchAuctionWinnerInfo = async (auctionId) => {
+    const { data, error } = await supabase.rpc('admin_auction_winner_info', { p_admin_key: getAdminToken(), p_auction_id: auctionId });
+    return { data, error };
+};
+
+// 미결제 낙찰자를 건너뛰고 차순위 입찰자에게 30분 결제기한으로 넘김
+export const passAuctionToNext = async (auctionId) => {
+    const { data, error } = await supabase.rpc('admin_pass_moca_live_auction', { p_admin_key: getAdminToken(), p_auction_id: auctionId });
+    return { data, error };
+};
+
+// 낙찰자 결제 시작 → 페이앱 결제창 주소 (금액·검증은 서버가 판단, 포인트만 선택값)
+export const beginAuctionPayment = async (auctionId, userId, usePoints) => {
+    const r = await fetch('/api/auction-pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auctionId, userId, usePoints }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || '결제를 시작할 수 없습니다.');
+    return j; // { payurl } 또는 { done: true } (포인트 전액 결제)
 };
 
 // --- 채팅 금칙어 관리 - 등록된 단어는 DB 트리거(mask_moca_live_chat_message)가 채팅 INSERT

@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { getUser } from '../services/userService';
+import { getPointsBalance } from '../lib/imCoreAuth';
 import {
     fetchVisibleAuction, subscribeToAuction, fetchAuctionBids, placeAuctionBid,
-    finalizeAuction, fetchServerClockOffset,
+    finalizeAuction, fetchServerClockOffset, beginAuctionPayment,
 } from '../services/mocaLiveEngagementService';
 
 const maskName = (name) => (name ? `${name.slice(0, 1)}${'*'.repeat(Math.max(1, Math.min(name.length - 1, 3)))}` : '');
@@ -17,6 +21,14 @@ const MocaLiveAuctionCard = ({ liveId, myNickname }) => {
     const [error, setError] = useState('');
     const offsetRef = useRef(0);
     const finalizingRef = useRef(false);
+
+    const me = getUser();
+    const myUserId = me?.id;
+    const [payLeftSec, setPayLeftSec] = useState(0);
+    const [balance, setBalance] = useState(0);
+    const [pointsInput, setPointsInput] = useState('0');
+    const [paying, setPaying] = useState(false);
+    const [payError, setPayError] = useState('');
 
     useEffect(() => {
         if (!liveId) return;
@@ -65,6 +77,19 @@ const MocaLiveAuctionCard = ({ liveId, myNickname }) => {
         return () => clearInterval(timer);
     }, [auction?.id, auction?.ends_at, auction?.status, liveId]);
 
+    const isWinnerPaying = !!auction && auction.status === 'closed' && auction.pay_status === 'awaiting' && auction.winner_user_id === myUserId;
+
+    // 낙찰자: 결제 기한(30분) 카운트다운 + 보유 포인트 조회
+    useEffect(() => {
+        if (!isWinnerPaying) return;
+        const tick = () => setPayLeftSec(Math.max(0, Math.ceil((new Date(auction.pay_deadline).getTime() - (Date.now() + offsetRef.current)) / 1000)));
+        tick();
+        const timer = setInterval(tick, 1000);
+        if (me?.master_user_id) getPointsBalance(me.master_user_id).then((r) => setBalance(r.balance || 0)).catch(() => {});
+        return () => clearInterval(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isWinnerPaying, auction?.pay_deadline]);
+
     if (!auction) return null;
 
     const isOpen = auction.status === 'open';
@@ -80,7 +105,7 @@ const MocaLiveAuctionCard = ({ liveId, myNickname }) => {
         if (!Number.isInteger(amount) || amount < minBid) { setError(`${won(minBid)} 이상 입력해주세요.`); return; }
 
         setSubmitting(true);
-        const { result, error: err } = await placeAuctionBid(auction.id, myNickname, amount);
+        const { result, error: err } = await placeAuctionBid(auction.id, myNickname, amount, myUserId);
         setSubmitting(false);
 
         if (err) { setError(err.message || '입찰에 실패했습니다.'); return; }
@@ -90,6 +115,28 @@ const MocaLiveAuctionCard = ({ liveId, myNickname }) => {
             bid_count: a.bid_count + 1, ends_at: result.ends_at, extensions_used: result.extensions_used,
         } : a));
         fetchAuctionBids(auction.id).then(setBids);
+    };
+
+    const price = auction.winning_price || 0;
+    const usePoints = Math.min(Math.max(0, Number(pointsInput) || 0), Math.min(balance, price));
+    const cardAmount = price - usePoints;
+    const cardTooSmall = cardAmount > 0 && cardAmount < 1000;
+
+    const handlePay = async () => {
+        setPayError('');
+        if (cardTooSmall) { setPayError('카드 결제 금액은 1,000원 이상이어야 해요. 포인트 사용액을 줄이거나 전액 사용해주세요.'); return; }
+        setPaying(true);
+        try {
+            const r = await beginAuctionPayment(auction.id, myUserId, usePoints);
+            if (r.done) { setAuction(await fetchVisibleAuction(liveId)); return; }
+            // 결제창은 앱에서는 인앱 브라우저로, 웹에서는 같은 창으로 연다 (결제 후 모카 홈으로 복귀)
+            if (Capacitor.isNativePlatform()) await Browser.open({ url: r.payurl });
+            else window.location.assign(r.payurl);
+        } catch (e) {
+            setPayError(e.message || '결제를 시작할 수 없습니다.');
+        } finally {
+            setPaying(false);
+        }
     };
 
     const fmtTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -159,6 +206,55 @@ const MocaLiveAuctionCard = ({ liveId, myNickname }) => {
                         </p>
                     ))}
                 </div>
+            )}
+
+            {isWinnerPaying && (
+                <div className="mt-2.5 p-3 rounded-xl bg-[#F8F4FF] border border-[#E8E0FA]">
+                    <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-[12px] font-black text-[#1F1235]">낙찰 결제 · {won(price)}</p>
+                        <span className={`text-[12px] font-black tabular-nums ${payLeftSec <= 300 ? 'text-red-500' : 'text-[#9333EA]'}`}>
+                            ⏱ {fmtTime(payLeftSec)}
+                        </span>
+                    </div>
+                    {payLeftSec === 0 ? (
+                        <p className="text-[11px] font-bold text-red-500">결제 가능 시간이 지났어요. 운영자에게 문의해주세요.</p>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[11px] font-bold text-[#5B4E7A] whitespace-nowrap">포인트 사용</span>
+                                <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    value={pointsInput}
+                                    onChange={(e) => setPointsInput(e.target.value)}
+                                    min="0"
+                                    className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-[#E8E0FA] text-[12px] font-bold"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setPointsInput(String(Math.min(balance, price)))}
+                                    className="px-2.5 py-1.5 rounded-lg bg-white border border-[#E8E0FA] text-[#9333EA] text-[11px] font-black whitespace-nowrap"
+                                >
+                                    전액
+                                </button>
+                            </div>
+                            <p className="text-[10.5px] font-bold text-[#9CA3AF] mb-2">보유 {balance.toLocaleString('ko-KR')}P · 카드 결제 {won(cardAmount)}</p>
+                            <button
+                                type="button"
+                                onClick={handlePay}
+                                disabled={paying}
+                                className="w-full py-2.5 rounded-xl bg-[#9333EA] text-white text-[13px] font-black disabled:opacity-40"
+                            >
+                                {paying ? '결제창 여는 중...' : cardAmount === 0 ? '포인트로 결제하기' : `${won(cardAmount)} 결제하기`}
+                            </button>
+                            <p className="text-[10px] text-[#9CA3AF] mt-1.5">결제 후 방송 화면으로 돌아오세요.</p>
+                        </>
+                    )}
+                    {payError && <p className="text-[11px] font-bold text-red-500 mt-1.5">{payError}</p>}
+                </div>
+            )}
+            {auction.status === 'closed' && auction.pay_status === 'paid' && auction.winner_user_id === myUserId && (
+                <p className="text-[12px] font-black text-emerald-600 mt-2">✅ 결제가 완료되었어요. 상품 안내를 기다려주세요.</p>
             )}
 
             {auction.status === 'closed' && (

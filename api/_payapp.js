@@ -35,6 +35,18 @@ export const payRequest = ({ title, amount, phone, paymentId, classId }) => {
     });
 };
 
+// 경매 낙찰 결제: var2='auction' 으로 웹노티에서 클래스 결제와 구분한다. 결제 후 방송이 있는 홈으로 복귀.
+export const payRequestAuction = ({ title, amount, phone, auctionId }) => {
+    const { userid } = env();
+    return post({
+        cmd: 'payrequest', userid, goodname: `경매 낙찰: ${title}`.slice(0, 100), price: String(amount),
+        recvphone: phone || '01000000000', smsuse: 'n',
+        feedbackurl: `${SITE}/api/payapp-feedback`, checkretry: 'y',
+        returnurl: `${SITE}/open-app?path=${encodeURIComponent('home/dashboard')}`,
+        appurl: 'immodel://home/dashboard', var1: auctionId, var2: 'auction',
+    });
+};
+
 // 정산 전(D+5 이내): 즉시 취소. 정산 후: 환불 요청(정산금 반환 필요)
 export const cancelPayment = ({ mulNo, memo, settled }) =>
     signed(settled ? 'paycancelreq' : 'paycancel', { mul_no: mulNo, cancelmemo: memo, partcancel: '0' });
