@@ -263,7 +263,7 @@ const MocaLiveEngagement = ({ liveId }) => {
     };
 
     return (
-        <div className="w-full flex flex-col gap-2 mt-2">
+        <div className="w-full flex flex-col gap-2 mt-2 landscape:flex-1 landscape:min-h-0">
             {/* 키워드 정답 맞추기 카드 - 참여는 채팅 입력 그대로, 별도 제출 UI 없음 */}
             {keywordEvent && (
                 <div className="rounded-2xl bg-white/95 backdrop-blur px-4 py-3 shadow-lg">
@@ -399,7 +399,7 @@ const MocaLiveEngagement = ({ liveId }) => {
             )}
 
             {/* 채팅 + 하트 */}
-            <div className="rounded-2xl bg-black/40 backdrop-blur overflow-hidden flex flex-col">
+            <div className="rounded-2xl bg-black/40 backdrop-blur overflow-hidden flex flex-col landscape:flex-1 landscape:min-h-0">
                 {pinned && (
                     <div className="flex items-start gap-1.5 px-3 py-2 bg-amber-400/15 border-b border-amber-400/20">
                         <span className="text-[12px] flex-shrink-0 mt-0.5">📌</span>
@@ -411,7 +411,7 @@ const MocaLiveEngagement = ({ liveId }) => {
                         </p>
                     </div>
                 )}
-                <div className="h-40 overflow-y-auto px-3 py-2 flex flex-col gap-1.5 hide-scrollbar">
+                <div className="h-40 landscape:h-auto landscape:flex-1 landscape:min-h-[10rem] overflow-y-auto px-3 py-2 flex flex-col gap-1.5 hide-scrollbar">
                     {messages.length === 0 && (
                         <p className="text-[11px] text-white/50 font-bold text-center py-4">첫 채팅을 남겨보세요!</p>
                     )}
