@@ -9,6 +9,8 @@ import {
     fetchPinnedMessage, subscribeToPinnedMessage,
 } from '../services/mocaLiveEngagementService';
 
+import MocaLiveAuctionCard from './MocaLiveAuctionCard';
+
 let heartUid = 0;
 
 // 모카TV 라이브 시청 중 소통 기능: 실시간 채팅 + 하트 + 실시간 퀴즈.
@@ -264,6 +266,8 @@ const MocaLiveEngagement = ({ liveId }) => {
 
     return (
         <div className="w-full flex flex-col gap-2 mt-2 landscape:flex-1 landscape:min-h-0">
+            <MocaLiveAuctionCard liveId={liveId} myNickname={myNickname} />
+
             {/* 키워드 정답 맞추기 카드 - 참여는 채팅 입력 그대로, 별도 제출 UI 없음 */}
             {keywordEvent && (
                 <div className="rounded-2xl bg-white/95 backdrop-blur px-4 py-3 shadow-lg">

@@ -708,6 +708,152 @@ export const fetchKeywordEventWinnerNicknames = async (eventId) => {
     return (data || []).map((r) => r.user_nickname);
 };
 
+// --- 경매 (입찰/연장/마감 판정은 전부 서버 RPC에서 서버 시간으로 수행) ---
+
+// 서버-클라이언트 시계 차이(ms). 카운트다운 = ends_at - (Date.now() + offset)
+export const fetchServerClockOffset = async () => {
+    if (!isSupabaseEnabled()) return 0;
+    const t0 = Date.now();
+    const { data, error } = await supabase.rpc('moca_server_now');
+    if (error || !data) return 0;
+    return new Date(data).getTime() - (t0 + Date.now()) / 2;
+};
+
+export const fetchVisibleAuction = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return null;
+
+    const { data, error } = await supabase
+        .from('moca_live_auction')
+        .select('*')
+        .eq('live_id', liveId)
+        .in('status', ['open', 'closed'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 경매 조회 실패:', error);
+        return null;
+    }
+    return data;
+};
+
+export const subscribeToAuction = (liveId, onChange) => {
+    if (!isSupabaseEnabled() || !liveId) return () => {};
+
+    const channel = supabase
+        .channel(`moca_live_auction_${liveId}`)
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'moca_live_auction', filter: `live_id=eq.${liveId}` },
+            (payload) => onChange(payload.new)
+        )
+        .subscribe();
+
+    return () => supabase.removeChannel(channel);
+};
+
+export const fetchAuctionBids = async (auctionId, limit = 5) => {
+    if (!isSupabaseEnabled() || !auctionId) return [];
+
+    const { data } = await supabase
+        .from('moca_live_auction_bids')
+        .select('id, user_nickname, amount, created_at')
+        .eq('auction_id', auctionId)
+        .order('amount', { ascending: false })
+        .limit(limit);
+
+    return data || [];
+};
+
+export const placeAuctionBid = async (auctionId, nickname, amount) => {
+    if (!isSupabaseEnabled() || !auctionId || !nickname) return { result: null, error: new Error('입찰 불가') };
+
+    const { data, error } = await supabase.rpc('place_moca_live_auction_bid', {
+        p_auction_id: auctionId,
+        p_nickname: nickname,
+        p_amount: amount,
+    });
+
+    if (error) return { result: null, error };
+    return { result: data?.[0] || null, error: null };
+};
+
+// 시간이 끝났으면 서버가 마감·당첨자 확정 (멱등 - 시청자/운영자 누구든 호출 가능)
+export const finalizeAuction = async (auctionId) => {
+    if (!isSupabaseEnabled() || !auctionId) return null;
+
+    const { data, error } = await supabase.rpc('finalize_moca_live_auction', { p_auction_id: auctionId });
+    if (error) {
+        console.error('[mocaLiveEngagementService] 경매 마감 실패:', error);
+        return null;
+    }
+    return data?.[0] || null;
+};
+
+export const fetchAuctionsForLive = async (liveId) => {
+    if (!isSupabaseEnabled() || !liveId) return [];
+
+    const { data, error } = await supabase
+        .from('moca_live_auction')
+        .select('*')
+        .eq('live_id', liveId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 관리자 경매 목록 조회 실패:', error);
+        return [];
+    }
+    return data || [];
+};
+
+// 등록과 동시에 시작. ends_at은 서버 시각 기준으로 계산해야 하므로 오프셋을 반영한다.
+export const createAuction = async (liveId, { productName, startPrice, minIncrement, durationSec, maxExtensions }) => {
+    if (!isSupabaseEnabled() || !liveId) return { error: new Error('생성 불가') };
+
+    const offset = await fetchServerClockOffset();
+    const endsAt = new Date(Date.now() + offset + durationSec * 1000).toISOString();
+
+    const { data, error } = await supabase
+        .from('moca_live_auction')
+        .insert([{
+            live_id: liveId,
+            product_name: productName,
+            start_price: startPrice,
+            min_increment: minIncrement,
+            max_extensions: maxExtensions,
+            ends_at: endsAt,
+        }])
+        .select()
+        .single();
+
+    return { data, error };
+};
+
+export const cancelAuction = async (auctionId) => {
+    if (!isSupabaseEnabled()) return { error: new Error('취소 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_auction')
+        .update({ status: 'cancelled', closed_at: new Date().toISOString() })
+        .eq('id', auctionId)
+        .eq('status', 'open');
+
+    return { error };
+};
+
+// 시청자 화면에서 내리기(보관) - 낙찰 기록은 어드민에 그대로 남는다
+export const archiveAuction = async (auctionId) => {
+    if (!isSupabaseEnabled()) return { error: new Error('보관 불가') };
+
+    const { error } = await supabase
+        .from('moca_live_auction')
+        .update({ status: 'archived' })
+        .eq('id', auctionId);
+
+    return { error };
+};
+
 // --- 채팅 금칙어 관리 - 등록된 단어는 DB 트리거(mask_moca_live_chat_message)가 채팅 INSERT
 // 시점에 같은 글자수의 *로 자동 치환한다 (어느 클라이언트로 보내든 항상 마스킹됨) ---
 

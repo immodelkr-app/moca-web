@@ -20,6 +20,7 @@ import {
     openLiveViewerPresence, closeLiveViewerPresence,
     bumpLivePeakViewers, fetchLiveEngagementSummary,
     fetchBannedWords, addBannedWord, removeBannedWord,
+    fetchAuctionsForLive, createAuction, cancelAuction, archiveAuction, finalizeAuction,
 } from '../services/mocaLiveEngagementService';
 import { grantWinnerPoints } from '../services/quizService';
 
@@ -691,6 +692,173 @@ const AdminMocaLiveNumberGamePanel = ({ liveId, streamerName }) => {
     );
 };
 
+const EMPTY_AUCTION_FORM = { productName: '', startPrice: '5000', minIncrement: '500', durationSec: '60', maxExtensions: '2' };
+
+// 경매 관리 - 상품/시작가/입찰단위/시간을 정해 시작하면 즉시 시청자에게 노출. 마감·당첨자 확정은 서버가 한다.
+// (결제 연결은 2단계 - 지금은 낙찰자에게 운영자가 직접 안내)
+const AdminMocaLiveAuctionPanel = ({ liveId, streamerName }) => {
+    const [auctions, setAuctions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [form, setForm] = useState(EMPTY_AUCTION_FORM);
+    const [saving, setSaving] = useState(false);
+    const [msg, setMsg] = useState('');
+
+    const load = async () => {
+        // 시간이 지난 open 경매는 서버에 마감 확정을 요청한 뒤 목록을 읽는다
+        const first = await fetchAuctionsForLive(liveId);
+        const expired = first.filter((a) => a.status === 'open' && new Date(a.ends_at).getTime() <= Date.now());
+        if (expired.length) await Promise.all(expired.map((a) => finalizeAuction(a.id)));
+        setAuctions(expired.length ? await fetchAuctionsForLive(liveId) : first);
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        load();
+        const poll = setInterval(load, 3000);
+        return () => clearInterval(poll);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [liveId]);
+
+    const flash = (text) => { setMsg(text); setTimeout(() => setMsg(''), 3500); };
+    const hasOpen = auctions.some((a) => a.status === 'open');
+    const won = (n) => `${Number(n).toLocaleString('ko-KR')}원`;
+
+    const handleStart = async () => {
+        const startPrice = Number(form.startPrice);
+        const minIncrement = Number(form.minIncrement);
+        const durationSec = Number(form.durationSec);
+        const maxExtensions = Number(form.maxExtensions);
+        if (!form.productName.trim()) { flash('상품명을 입력해주세요.'); return; }
+        if (!Number.isInteger(startPrice) || startPrice <= 0) { flash('시작가를 올바르게 입력해주세요.'); return; }
+        if (!Number.isInteger(minIncrement) || minIncrement <= 0) { flash('최소 입찰 단위를 올바르게 입력해주세요.'); return; }
+        if (!Number.isInteger(durationSec) || durationSec < 10) { flash('경매 시간은 10초 이상이어야 합니다.'); return; }
+        if (!Number.isInteger(maxExtensions) || maxExtensions < 0) { flash('연장 횟수를 올바르게 입력해주세요.'); return; }
+        if (hasOpen) { flash('이미 진행 중인 경매가 있습니다. 먼저 취소하거나 마감을 기다려주세요.'); return; }
+
+        setSaving(true);
+        const productName = form.productName.trim();
+        const { error } = await createAuction(liveId, { productName, startPrice, minIncrement, durationSec, maxExtensions });
+        setSaving(false);
+        if (error) { flash('시작 실패: ' + (error.message || '')); return; }
+
+        setForm(EMPTY_AUCTION_FORM);
+        flash('🔨 경매가 시작되었습니다. 설명이 채팅·고정 댓글에 올라갔어요.');
+        await announceGameToViewers(
+            liveId,
+            streamerName,
+            `🔨 경매 시작! [${productName}] ${won(startPrice)}부터, ${durationSec}초 동안 진행돼요. 가장 높은 금액을 입찰하면 낙찰! 마감 직전 입찰하면 시간이 연장됩니다.`
+        );
+        await load();
+    };
+
+    const handleCancel = async (a) => {
+        if (!window.confirm('진행 중인 경매를 취소할까요? (낙찰자 없이 종료됩니다)')) return;
+        const { error } = await cancelAuction(a.id);
+        if (error) { flash('취소 실패: ' + (error.message || '')); return; }
+        flash('경매가 취소되었습니다.');
+        await load();
+    };
+
+    const handleArchive = async (a) => {
+        if (!window.confirm('이 경매를 시청자 화면에서 내릴까요? (낙찰 기록은 어드민에 그대로 남습니다)')) return;
+        const { error } = await archiveAuction(a.id);
+        if (error) { flash('보관 실패: ' + (error.message || '')); return; }
+        flash('🗄 시청자 화면에서 내려갔습니다.');
+        await load();
+    };
+
+    const inputCls = 'px-3 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]';
+
+    return (
+        <div className="bg-[var(--moca-surface-2)] rounded-2xl p-5 lg:p-6 mt-3">
+            <p className="text-[14px] font-black text-[var(--moca-text)] mb-4">🔨 경매 관리</p>
+
+            {msg && (
+                <div className="mb-4 px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold">
+                    {msg}
+                </div>
+            )}
+
+            {!hasOpen && (
+                <div className="bg-white rounded-2xl p-4 lg:p-5 mb-4 space-y-3">
+                    <input
+                        value={form.productName}
+                        onChange={(e) => setForm((f) => ({ ...f, productName: e.target.value }))}
+                        placeholder="상품명 (예: 필메 스튜디오 촬영권)"
+                        className={`w-full ${inputCls}`}
+                    />
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                        {[
+                            ['startPrice', '시작가(원)'],
+                            ['minIncrement', '최소 입찰 단위(원)'],
+                            ['durationSec', '경매 시간(초)'],
+                            ['maxExtensions', '최대 연장 횟수'],
+                        ].map(([key, label]) => (
+                            <label key={key} className="text-[10.5px] font-bold text-[var(--moca-text-3)]">
+                                {label}
+                                <input
+                                    value={form[key]}
+                                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                                    type="number"
+                                    className={`w-full mt-1 ${inputCls}`}
+                                />
+                            </label>
+                        ))}
+                    </div>
+                    <p className="text-[10.5px] text-[var(--moca-text-3)]">마감 10초 전 입찰이 들어오면 +10초씩, 최대 연장 횟수까지만 늘어납니다.</p>
+                    <button
+                        onClick={handleStart}
+                        disabled={saving}
+                        className="w-full py-3 rounded-lg bg-[var(--moca-primary)] text-white text-[13px] font-black disabled:opacity-50"
+                    >
+                        {saving ? '시작 중...' : '🔨 경매 시작'}
+                    </button>
+                </div>
+            )}
+
+            {loading ? (
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">불러오는 중...</p>
+            ) : auctions.length === 0 ? (
+                <p className="text-[12px] text-[var(--moca-text-3)] font-bold py-5 text-center">등록된 경매가 없습니다.</p>
+            ) : (
+                <div className="space-y-3">
+                    {auctions.map((a) => (
+                        <div key={a.id} className="bg-white rounded-2xl p-4 lg:p-5">
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                                <p className="text-[13.5px] font-bold text-[var(--moca-text)]">{a.product_name}</p>
+                                <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black ${
+                                    a.status === 'open' ? 'bg-red-100 text-red-700'
+                                    : a.status === 'closed' ? 'bg-gray-100 text-gray-500'
+                                    : 'bg-slate-100 text-slate-400'
+                                }`}>
+                                    {a.status === 'open' ? '🔴 진행 중' : a.status === 'closed' ? '마감' : a.status === 'archived' ? '🗄 보관됨' : '취소됨'}
+                                </span>
+                            </div>
+                            <p className="text-[11px] text-[var(--moca-text-3)]">
+                                시작가 {won(a.start_price)} · 입찰 {a.bid_count}회 · 연장 {a.extensions_used}/{a.max_extensions}
+                                {a.current_price != null && ` · 현재가 ${won(a.current_price)} (${a.current_bidder})`}
+                            </p>
+                            {a.status !== 'open' && a.status !== 'cancelled' && (
+                                <p className="text-[12px] font-black text-emerald-600 mt-1.5">
+                                    {a.winner_nickname ? `🏆 낙찰: ${a.winner_nickname} · ${won(a.winning_price)}` : '유찰 (입찰자 없음)'}
+                                </p>
+                            )}
+                            <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[var(--moca-border)] mt-2">
+                                {a.status === 'open' && (
+                                    <button onClick={() => handleCancel(a)} className="text-[12px] font-black text-[var(--moca-text-3)]">🚫 취소</button>
+                                )}
+                                {a.status === 'closed' && (
+                                    <button onClick={() => handleArchive(a)} className="text-[12px] font-black text-slate-400 hover:text-slate-600">🗄 내리기</button>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 // description은 DB에 저장하지 않고 시작 시 채팅/고정 댓글 문구에만 쓰는 선택 입력 (문제 내용 안내용)
 const EMPTY_KEYWORD_EVENT_FORM = { keyword: '', prizeLabel: '', winnerCount: '1', description: '' };
 
@@ -1195,6 +1363,7 @@ export const AdminMocaLiveControlPanel = ({ liveId, streamerName, chatHeightClas
 
     const TABS = [
         { id: 'pinned', label: '📌 고정댓글' },
+        { id: 'auction', label: '🔨 경매' },
         { id: 'keyword', label: '💬 정답 맞추기' },
         { id: 'number', label: '🔢 숫자 맞추기' },
         { id: 'quiz', label: '🎮 실시간 퀴즈' },
@@ -1260,7 +1429,8 @@ export const AdminMocaLiveControlPanel = ({ liveId, streamerName, chatHeightClas
                     ))}
                 </div>
                 {tab === 'pinned' && <AdminMocaLivePinnedOnlyPanel liveId={liveId} chat={chat} />}
-                {tab === 'keyword' && <AdminMocaLiveKeywordEventPanel liveId={liveId} streamerName={streamerName} />}
+                {tab === 'auction' && <AdminMocaLiveAuctionPanel liveId={liveId} streamerName={streamerName} />}
+                {tab === 'keyword' &&<AdminMocaLiveKeywordEventPanel liveId={liveId} streamerName={streamerName} />}
                 {tab === 'number' && <AdminMocaLiveNumberGamePanel liveId={liveId} streamerName={streamerName} />}
                 {tab === 'quiz' && <AdminMocaLiveQuizPanel liveId={liveId} streamerName={streamerName} />}
             </div>
