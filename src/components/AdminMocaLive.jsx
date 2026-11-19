@@ -12,7 +12,7 @@ import {
     fetchQuizzesForLive, createLiveQuiz, openLiveQuiz, closeLiveQuiz, archiveLiveQuiz,
     fetchCorrectAnswererNicknames, fetchQuizAnswerStats,
     fetchNumberGamesForLive, createNumberGame, cancelNumberGame, endNumberGameNow, archiveNumberGame,
-    fetchNumberGameWinnerNicknames,
+    fetchNumberGameWinnerNicknames, fetchNumberGameEntriesByGame,
     fetchKeywordEventsForLive, createKeywordEvent, cancelKeywordEvent, endKeywordEventNow, archiveKeywordEvent,
     fetchKeywordEventWinnerNicknames,
     fetchLiveChatMessages, subscribeToLiveChat, sendLiveChatMessage, clearLiveChat,
@@ -463,11 +463,13 @@ const AdminMocaLiveNumberGamePanel = ({ liveId, streamerName }) => {
     const [msg, setMsg] = useState('');
     const [grantingGameId, setGrantingGameId] = useState(null);
     const [grantAmount, setGrantAmount] = useState('100');
+    const [entriesByGame, setEntriesByGame] = useState({});
 
     const load = async () => {
         setLoading(true);
         const data = await fetchNumberGamesForLive(liveId);
         setGames(data);
+        setEntriesByGame(await fetchNumberGameEntriesByGame(data.map((g) => g.id)));
         setLoading(false);
     };
 
@@ -652,8 +654,18 @@ const AdminMocaLiveNumberGamePanel = ({ liveId, streamerName }) => {
                                 </span>
                             </div>
                             <p className="text-[11px] text-[var(--moca-text-3)] mb-3">
-                                당첨 {g.current_winner_count}/{g.winner_count}명
+                                당첨 {g.current_winner_count}/{g.winner_count}명 · 참여 {(entriesByGame[g.id] || []).length}명
                             </p>
+                            {(entriesByGame[g.id] || []).length > 0 && (
+                                <div className="mb-3 max-h-40 overflow-y-auto rounded-lg bg-[var(--moca-bg)] px-3 py-2 flex flex-col gap-1">
+                                    {entriesByGame[g.id].map((e) => (
+                                        <p key={e.user_nickname} className="text-[12px] text-[var(--moca-text)]">
+                                            {e.is_winner ? '🏆' : e.is_correct ? '✅' : '▫️'} <span className="font-bold">{e.user_nickname}</span> · {e.guess}
+                                            {e.is_winner ? ` (${e.winner_rank}번째 당첨)` : e.is_correct ? ' (정답, 인원 마감 후 제출)' : ''}
+                                        </p>
+                                    ))}
+                                </div>
+                            )}
 
                             <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[var(--moca-border)] mt-2">
                                 {g.status === 'open' && (

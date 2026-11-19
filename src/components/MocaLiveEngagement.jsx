@@ -142,12 +142,7 @@ const MocaLiveEngagement = ({ liveId }) => {
             const q = await fetchVisibleQuiz(liveId);
             if (!mounted) return;
             setQuiz(q);
-            if (q) {
-                const ans = await fetchMyQuizAnswer(q.id, myNickname);
-                if (mounted && ans) setMyAnswer(ans);
-            } else {
-                setMyAnswer(null);
-            }
+            if (!q) setMyAnswer(null);
         };
         load();
         // Realtime 누락 대비 폴링 보강 (내 제출 내역은 값이 있을 때만 덮어써 낙관적 UI를 지우지 않음)
@@ -183,12 +178,7 @@ const MocaLiveEngagement = ({ liveId }) => {
             const g = await fetchVisibleNumberGame(liveId);
             if (!mounted) return;
             setNumberGame(g);
-            if (g) {
-                const entry = await fetchMyNumberGameEntry(g.id, myNickname);
-                if (mounted && entry) setMyNumberEntry(entry);
-            } else {
-                setMyNumberEntry(null);
-            }
+            if (!g) setMyNumberEntry(null);
         };
         load();
         const poll = setInterval(load, 4000);
@@ -202,6 +192,41 @@ const MocaLiveEngagement = ({ liveId }) => {
         return () => { mounted = false; clearInterval(poll); unsubscribe(); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [liveId]);
+
+    // 퀴즈/키워드 이벤트도 id가 바뀌면 이전 내 기록을 버리고 새로 조회
+    const quizId = quiz?.id;
+    useEffect(() => {
+        setMyAnswer(null);
+        if (!quizId) return;
+        let mounted = true;
+        fetchMyQuizAnswer(quizId, myNickname).then((ans) => { if (mounted && ans) setMyAnswer(ans); });
+        return () => { mounted = false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [quizId]);
+    const keywordEventId = keywordEvent?.id;
+    useEffect(() => {
+        setMyKeywordEntry(null);
+        if (!keywordEventId) return;
+        let mounted = true;
+        fetchMyKeywordEntry(keywordEventId, myNickname).then((entry) => { if (mounted && entry) setMyKeywordEntry(entry); });
+        return () => { mounted = false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [keywordEventId]);
+
+    // 게임이 바뀌면(연달아 두 번째 게임 등) 이전 게임의 제출 기록/입력값을 버리고 새 게임 기준으로 다시 조회
+    const numberGameId = numberGame?.id;
+    useEffect(() => {
+        setMyNumberEntry(null);
+        setGuessInput('');
+        setGuessError('');
+        if (!numberGameId) return;
+        let mounted = true;
+        fetchMyNumberGameEntry(numberGameId, myNickname).then((entry) => {
+            if (mounted && entry) setMyNumberEntry(entry);
+        });
+        return () => { mounted = false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [numberGameId]);
 
     const handleSubmitGuess = async (e) => {
         e.preventDefault();
@@ -235,12 +260,7 @@ const MocaLiveEngagement = ({ liveId }) => {
             const ev = await fetchVisibleKeywordEvent(liveId);
             if (!mounted) return;
             setKeywordEvent(ev);
-            if (ev) {
-                const entry = await fetchMyKeywordEntry(ev.id, myNickname);
-                if (mounted && entry) setMyKeywordEntry(entry);
-            } else {
-                setMyKeywordEntry(null);
-            }
+            if (!ev) setMyKeywordEntry(null);
         };
         load();
         const poll = setInterval(load, 4000);

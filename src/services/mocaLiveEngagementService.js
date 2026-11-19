@@ -533,6 +533,23 @@ export const archiveNumberGame = async (gameId) => {
     return { error };
 };
 
+// 어드민용: 게임별 전체 참여자(닉네임/제출 숫자/정답·당첨 여부). 응답은 { [gameId]: entries[] }
+export const fetchNumberGameEntriesByGame = async (gameIds) => {
+    if (!isSupabaseEnabled() || !gameIds?.length) return {};
+
+    const { data, error } = await supabase
+        .from('moca_live_number_game_entries')
+        .select('game_id, user_nickname, guess, is_correct, is_winner, winner_rank, answered_at')
+        .in('game_id', gameIds)
+        .order('answered_at', { ascending: true });
+
+    if (error) {
+        console.error('[mocaLiveEngagementService] 숫자맞추기 참여자 조회 실패:', error);
+        return {};
+    }
+    return (data || []).reduce((acc, r) => { (acc[r.game_id] ||= []).push(r); return acc; }, {});
+};
+
 export const fetchNumberGameWinnerNicknames = async (gameId) => {
     if (!isSupabaseEnabled() || !gameId) return [];
 
