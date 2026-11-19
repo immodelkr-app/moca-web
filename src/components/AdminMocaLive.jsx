@@ -790,7 +790,7 @@ const AdminMocaLiveAuctionPanel = ({ liveId, streamerName }) => {
             await sendBulkMessage([data.phone], `[아임모델 모카] 경매 낙찰을 축하드려요! 🎉
 [${a.product_name}] ${won(data.price)}
 결제 가능 시간이 약 ${left}분 남았어요. 모카 앱 방송 화면에서 결제해주세요.
-https://immoca.kr/open-app?path=home/dashboard`);
+https://immoca.kr/open-app?path=home/dashboard%3FopenLive%3D1`);
             flash('📩 결제 안내 문자를 보냈습니다.');
         } catch (e) { flash('문자 발송 실패: ' + (e.message || '')); }
     };

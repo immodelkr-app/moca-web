@@ -164,6 +164,15 @@ const MocaLiveBanner = () => {
     useEffect(() => { liveRef.current = live; }, [live]);
     useEffect(() => { showPlayerRef.current = showPlayer; }, [showPlayer]);
 
+    // 낙찰 안내 문자 링크(?openLive=1)로 들어오면 방송 화면(결제 카드)을 바로 연다. 한 번만.
+    const autoOpenedRef = useRef(false);
+    useEffect(() => {
+        if (autoOpenedRef.current || !live) return;
+        if (new URLSearchParams(window.location.search).get('openLive') !== '1') return;
+        autoOpenedRef.current = true;
+        setShowPlayer(true);
+    }, [live]);
+
     // 클래스 전용 방송(class_id)은 해당 클래스 참석 확정자만 볼 수 있다. null = 확인 중.
     const [classAccess, setClassAccess] = useState(null);
     useEffect(() => {
