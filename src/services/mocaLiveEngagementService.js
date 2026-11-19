@@ -828,7 +828,7 @@ export const fetchAuctionsForLive = async (liveId) => {
 
 // 운영자 작업은 모두 관리자 토큰을 서버가 확인하는 RPC로 한다 (경매 테이블 직접 쓰기는 막혀 있음).
 // 등록과 동시에 시작. 종료시각은 서버 시간 기준으로 서버가 계산한다.
-export const createAuction = async (liveId, { productName, startPrice, minIncrement, durationSec, maxExtensions }) => {
+export const createAuction = async (liveId, { productName, startPrice, minIncrement, durationSec, maxExtensions, maxPrice = null }) => {
     if (!isSupabaseEnabled() || !liveId) return { error: new Error('생성 불가') };
 
     const { data, error } = await supabase.rpc('admin_create_moca_live_auction', {
@@ -839,6 +839,7 @@ export const createAuction = async (liveId, { productName, startPrice, minIncrem
         p_min_increment: minIncrement,
         p_duration_sec: durationSec,
         p_max_extensions: maxExtensions,
+        p_max_price: maxPrice,
     });
 
     return { data, error };

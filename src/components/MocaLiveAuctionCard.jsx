@@ -93,7 +93,8 @@ const MocaLiveAuctionCard = ({ liveId, myNickname }) => {
     if (!auction) return null;
 
     const isOpen = auction.status === 'open';
-    const minBid = auction.bid_count === 0 ? auction.start_price : auction.current_price + auction.min_increment;
+    const rawMinBid = auction.bid_count === 0 ? auction.start_price : auction.current_price + auction.min_increment;
+    const minBid = auction.max_price ? Math.min(rawMinBid, auction.max_price) : rawMinBid; // 상한가 자체는 항상 입찰 가능
     const iAmTop = auction.current_bidder === myNickname;
     const iWon = auction.status === 'closed' && auction.winner_nickname === myNickname;
     const urgent = isOpen && remainingSec <= 10;
@@ -103,6 +104,7 @@ const MocaLiveAuctionCard = ({ liveId, myNickname }) => {
         setError('');
         const amount = Number(amountInput);
         if (!Number.isInteger(amount) || amount < minBid) { setError(`${won(minBid)} 이상 입력해주세요.`); return; }
+        if (auction.max_price && amount > auction.max_price) { setError(`상한가는 ${won(auction.max_price)}이에요.`); return; }
 
         setSubmitting(true);
         const { result, error: err } = await placeAuctionBid(auction.id, myNickname, amount, myUserId);
@@ -162,6 +164,9 @@ const MocaLiveAuctionCard = ({ liveId, myNickname }) => {
                     : <>현재가 <span className="text-[#9333EA] text-[15px] font-black">{won(auction.current_price)}</span> · {maskName(auction.current_bidder)}{iAmTop && ' (나)'}</>}
                 <span className="text-[#9CA3AF]"> · 입찰 {auction.bid_count}회</span>
             </p>
+            {isOpen && auction.max_price && (
+                <p className="text-[10.5px] font-bold text-[#9333EA] mt-0.5">상한가 {won(auction.max_price)} · 이 금액으로 입찰하면 즉시 낙찰!</p>
+            )}
             {isOpen && urgent && auction.extensions_used < auction.max_extensions && (
                 <p className="text-[10.5px] font-bold text-red-500 mt-0.5">마지막 {auction.extension_sec}초 안에 입찰하면 시간이 연장돼요!</p>
             )}

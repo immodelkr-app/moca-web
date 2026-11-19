@@ -705,7 +705,7 @@ const AdminMocaLiveNumberGamePanel = ({ liveId, streamerName }) => {
     );
 };
 
-const EMPTY_AUCTION_FORM = { productName: '', startPrice: '5000', minIncrement: '500', durationSec: '60', maxExtensions: '2' };
+const EMPTY_AUCTION_FORM = { productName: '', startPrice: '5000', minIncrement: '500', durationSec: '60', maxExtensions: '2', maxPrice: '' };
 
 // 경매 관리 - 상품/시작가/입찰단위/시간을 정해 시작하면 즉시 시청자에게 노출. 마감·당첨자 확정은 서버가 한다.
 // (결제 연결은 2단계 - 지금은 낙찰자에게 운영자가 직접 안내)
@@ -746,11 +746,13 @@ const AdminMocaLiveAuctionPanel = ({ liveId, streamerName }) => {
         if (!Number.isInteger(minIncrement) || minIncrement <= 0) { flash('최소 입찰 단위를 올바르게 입력해주세요.'); return; }
         if (!Number.isInteger(durationSec) || durationSec < 10) { flash('경매 시간은 10초 이상이어야 합니다.'); return; }
         if (!Number.isInteger(maxExtensions) || maxExtensions < 0) { flash('연장 횟수를 올바르게 입력해주세요.'); return; }
+        const maxPrice = form.maxPrice.trim() === '' ? null : Number(form.maxPrice);
+        if (maxPrice !== null && (!Number.isInteger(maxPrice) || maxPrice <= startPrice)) { flash('상한가는 시작가보다 큰 숫자여야 합니다. (상한가 없이 하려면 비워두세요)'); return; }
         if (hasOpen) { flash('이미 진행 중인 경매가 있습니다. 먼저 취소하거나 마감을 기다려주세요.'); return; }
 
         setSaving(true);
         const productName = form.productName.trim();
-        const { error } = await createAuction(liveId, { productName, startPrice, minIncrement, durationSec, maxExtensions });
+        const { error } = await createAuction(liveId, { productName, startPrice, minIncrement, durationSec, maxExtensions, maxPrice });
         setSaving(false);
         if (error) { flash('시작 실패: ' + (error.message || '')); return; }
 
@@ -759,7 +761,7 @@ const AdminMocaLiveAuctionPanel = ({ liveId, streamerName }) => {
         await announceGameToViewers(
             liveId,
             streamerName,
-            `🔨 경매 시작! [${productName}] ${won(startPrice)}부터, ${durationSec}초 동안 진행돼요. 가장 높은 금액을 입찰하면 낙찰! 마감 직전 입찰하면 시간이 연장됩니다.`
+            `🔨 경매 시작! [${productName}] ${won(startPrice)}부터, ${durationSec}초 동안 진행돼요. 가장 높은 금액을 입찰하면 낙찰! 마감 직전 입찰하면 시간이 연장됩니다.${maxPrice ? ` 상한가 ${won(maxPrice)} 입찰 시 즉시 낙찰!` : ''}`
         );
         await load();
     };
@@ -831,6 +833,7 @@ https://immoca.kr/open-app?path=home/dashboard%3FopenLive%3D1`);
                             ['minIncrement', '최소 입찰 단위(원)'],
                             ['durationSec', '경매 시간(초)'],
                             ['maxExtensions', '최대 연장 횟수'],
+                            ['maxPrice', '상한가(원, 비우면 없음)'],
                         ].map(([key, label]) => (
                             <label key={key} className="text-[10.5px] font-bold text-[var(--moca-text-3)]">
                                 {label}
