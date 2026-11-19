@@ -4,6 +4,7 @@
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { getAdminToken } from './adminAuth';
+import { shrinkImage } from './certificationService';
 
 const CLASS_BUCKET = 'class-images';
 
@@ -23,6 +24,7 @@ export const fetchAuditionEntries = async (classId) => {
 
 export const uploadAuditionPhoto = async (file) => {
     if (!isSupabaseEnabled()) return { url: null, error: 'Supabase not connected' };
+    file = await shrinkImage(file);
     const ext = file.name.split('.').pop();
     const fileName = `audition_${Date.now()}.${ext}`;
     const { error: uploadErr } = await supabase.storage

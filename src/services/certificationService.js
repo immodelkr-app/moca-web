@@ -123,6 +123,13 @@ export const compressImage = (file, { maxWidth = 1280, maxHeight = 1280, quality
     });
 };
 
+// 업로드 전 용량 축소(Storage 전송량 절감). jpeg/png/webp만, 그 외(gif 등)는 원본 유지
+export const shrinkImage = (file) =>
+    /^image\/(jpeg|png|webp)$/.test(file?.type)
+        ? compressImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.85 })
+        : Promise.resolve(file);
+
+
 // ─────────────────────────────────────────────
 //  이미지 업로드
 // ─────────────────────────────────────────────

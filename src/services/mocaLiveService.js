@@ -1,5 +1,6 @@
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { sendBroadcastPush, sendTargetedPush } from './pushNotificationService';
+import { shrinkImage } from './certificationService';
 
 /**
  * 모카 자체 라이브방송(김대표 소통/교육) 서비스.
@@ -34,6 +35,7 @@ export const extractYoutubeVideoId = (input) => {
 export const uploadMocaLiveCover = async (file) => {
     if (!isSupabaseEnabled()) return { url: null, error: new Error('Supabase not connected') };
     try {
+        file = await shrinkImage(file);
         const ext = file.name.split('.').pop();
         const filePath = `moca-live-covers/${Date.now()}.${ext}`;
 

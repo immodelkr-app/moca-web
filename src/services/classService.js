@@ -4,6 +4,7 @@
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { attachUserPhones } from './adminAuth';
+import { shrinkImage } from './certificationService';
 
 // 클래스 목록 가져오기
 export const fetchClasses = async () => {
@@ -371,6 +372,7 @@ export const submitFeedback = async ({ classId, userId, rating, comment, imageUr
 
 export const uploadFeedbackImage = async (file) => {
     if (!isSupabaseEnabled()) return { url: null, error: 'Supabase not connected' };
+    file = await shrinkImage(file);
     const ext = file.name.split('.').pop();
     const fileName = `feedback_${Date.now()}.${ext}`;
     const { error: uploadErr } = await supabase.storage

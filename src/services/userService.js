@@ -9,6 +9,7 @@ import { Capacitor } from '@capacitor/core';
 import { syncUserWithCore, updateGradeInCore } from '../lib/imCoreAuth';
 import { notifyAdmin } from './solapiService';
 import { USER_COLS_SAFE, CONTACT_COLS } from './userColumns';
+import { shrinkImage } from './certificationService';
 export { syncUserWithCore };
 
 const USER_KEY = 'i_model_user';
@@ -571,6 +572,7 @@ export const GRADE_EMOJI = {
  */
 export const uploadProfilePhoto = async (file, userNickname) => {
     if (!isSupabaseEnabled()) return { url: null, error: 'Supabase 미설정' };
+    file = await shrinkImage(file);
     const ext = file.name.split('.').pop();
     const path = `profiles/${userNickname}_${Date.now()}.${ext}`;
     const { error } = await supabase.storage

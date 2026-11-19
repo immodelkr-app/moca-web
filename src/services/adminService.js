@@ -3,6 +3,7 @@ import { getAdminToken, attachUserPhones } from './adminAuth';
 import { updateGradeInCore } from '../lib/imCoreAuth';
 import { sendTargetedPush } from './pushNotificationService';
 import { notifyAdmin, sendBulkMessage } from './solapiService';
+import { shrinkImage } from './certificationService';
 
 
 // --- Partners ---
@@ -33,6 +34,7 @@ export const deletePartner = async (id) => {
 export const uploadPartnerImage = async (file) => {
     if (!supabase) return { url: null, error: new Error('Supabase not configured') };
     try {
+        file = await shrinkImage(file);
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}_partner_${Math.random().toString(36).slice(2)}.${fileExt}`;
         const filePath = `partners/${fileName}`;

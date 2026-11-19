@@ -15,6 +15,7 @@ import AdminClassAudition from './AdminClassAudition';
 import ClassDescription from './ClassDescription';
 import { getVideoEmbedUrl } from '../utils/videoEmbed';
 import { CLASS_GRADE_OPTIONS, parseClassGrades, toggleClassGrade } from '../utils/classGrade';
+import { shrinkImage } from '../services/certificationService';
 
 const CLASS_BUCKET = 'class-images';
 const MAX_FILE_MB = 10;
@@ -84,6 +85,7 @@ const ClassPosterUploader = ({ value, onChange, onError }) => {
         if (!supabase) { onChange(localUrl); return; }
         setUploading(true);
         try {
+            file = await shrinkImage(file);
             const ext = file.name.split('.').pop();
             const fileName = `poster_${Date.now()}.${ext}`;
             const { error: uploadErr } = await supabase.storage

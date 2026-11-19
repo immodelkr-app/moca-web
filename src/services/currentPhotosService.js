@@ -4,6 +4,7 @@
  * Supabase Storage(moca_assets 버킷) + model_current_photos 테이블 사용
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { shrinkImage } from './certificationService';
 
 const BUCKET = 'moca_assets';
 const FOLDER = 'current-photos';
@@ -16,6 +17,8 @@ const FOLDER = 'current-photos';
  */
 export const uploadCurrentPhoto = async (file, user) => {
     if (!isSupabaseEnabled()) return { url: null, error: 'Supabase 미설정' };
+
+    file = await shrinkImage(file);
 
     const ext = file.name.split('.').pop();
     const path = `${FOLDER}/${user.id || user.nickname}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
