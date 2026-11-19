@@ -137,6 +137,7 @@ const ClassAuditionSection = ({ classId, auditionStatus, currentUser }) => {
                                         {entry.photo_url ? <img src={entry.photo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl font-black text-slate-300">{entry.entry_number}</div>}
                                     </div>
                                     <p className="text-xs font-black text-slate-700">{entry.entry_number}번</p>
+                                    {entry.display_name && <p className="text-[11px] font-bold text-slate-500 truncate">{entry.display_name}</p>}
                                     {isSelected && (
                                         <span className="absolute top-1 right-1 w-5 h-5 rounded-full bg-fuchsia-500 text-white flex items-center justify-center">
                                             <span className="material-symbols-outlined text-[14px]">check</span>
