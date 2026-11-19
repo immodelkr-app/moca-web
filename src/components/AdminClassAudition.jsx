@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     fetchAuditionEntries, uploadAuditionPhoto, createAuditionEntry, deleteAuditionEntry,
-    openAudition, closeAudition, reopenAuditionDraft, fetchVoteTally, splitWinners,
+    openAudition, closeAudition, reopenAuditionDraft, fetchVoteTally, splitWinners, resetAuditionVotes,
 } from '../services/classAuditionService';
 
 const MAX_FILE_MB = 10;
@@ -122,6 +122,19 @@ const AdminClassAudition = ({ classData, onStatusChange }) => {
         }
     };
 
+    // 재오디션(예: 수업 시작 때/끝날 때 두 번): 투표만 지우고 참가자는 유지한 채 등록 단계로 되돌림
+    const handleResetVotes = async () => {
+        if (!window.confirm('투표 기록을 전부 지우고 다시 진행할까요?\n(참가자 등록은 유지되지만 지금까지의 투표 결과는 사라집니다. 필요하면 먼저 결과를 캡처해 두세요.)')) return;
+        setIsSubmitting(true);
+        const { error: err } = await resetAuditionVotes(classData.id);
+        setIsSubmitting(false);
+        if (err) { showError('초기화 실패: ' + (err.message || String(err))); return; }
+        setAuditionStatus('draft');
+        setTally([]);
+        onStatusChange?.(classData.id, 'draft');
+        showSuccess('✅ 투표가 초기화되었습니다. 투표 시작을 눌러 다시 진행하세요.');
+    };
+
     const openPresentation = () => {
         window.open(`/admin/classes/${classData.id}/audition/present`, '_blank');
     };
@@ -174,6 +187,11 @@ const AdminClassAudition = ({ classData, onStatusChange }) => {
                     <button onClick={openPresentation} className="flex-1 py-3 rounded-2xl bg-fuchsia-600 text-white font-black text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2">
                         <span className="material-symbols-outlined text-[18px]">cast</span>
                         프레젠테이션 화면 열기 (결과 리빌)
+                    </button>
+                )}
+                {auditionStatus === 'closed' && (
+                    <button disabled={isSubmitting} onClick={handleResetVotes} className="py-3 px-4 rounded-2xl bg-white border border-slate-200 text-slate-600 font-black text-sm hover:bg-slate-50 transition-all disabled:opacity-50">
+                        🔄 재오디션 (투표 초기화)
                     </button>
                 )}
             </div>

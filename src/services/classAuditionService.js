@@ -3,6 +3,7 @@
  * 모카클래스 오디션 심사/투표 관련 서비스
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { getAdminToken } from './adminAuth';
 
 const CLASS_BUCKET = 'class-images';
 
@@ -91,6 +92,13 @@ export const reopenAuditionDraft = async (classId) => {
         .select()
         .single();
     return { data, error };
+};
+
+// 재오디션: 이 클래스 투표만 삭제하고 참가자 등록(draft) 단계로 되돌린다 (참가자는 유지)
+export const resetAuditionVotes = async (classId) => {
+    if (!isSupabaseEnabled()) return { error: 'Supabase not connected' };
+    const { error } = await supabase.rpc('admin_reset_class_audition_votes', { p_admin_key: getAdminToken(), p_class_id: classId });
+    return { error };
 };
 
 // ──────────────────────────────────────────────
