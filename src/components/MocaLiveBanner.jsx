@@ -375,7 +375,7 @@ const MocaLiveBanner = () => {
                             )}
                         </div>
                       </div>
-                      <div className="px-4 pb-6 landscape:flex landscape:flex-col landscape:flex-none landscape:w-[30%] landscape:min-w-[320px] landscape:h-full landscape:overflow-y-auto landscape:pt-3 landscape:bg-[#111]">
+                      <div className="px-4 pb-6 landscape:flex landscape:flex-col landscape:flex-none landscape:w-[30%] landscape:min-w-[320px] landscape:h-full landscape:overflow-y-auto landscape:overflow-x-hidden landscape:pt-3 landscape:pb-3 landscape:bg-[#111]">
                             <MocaLiveProductCards slugs={live.mb_products} />
                             <MocaLiveEngagement liveId={live.id} />
                       </div>

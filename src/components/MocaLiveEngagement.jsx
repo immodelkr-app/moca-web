@@ -440,7 +440,7 @@ const MocaLiveEngagement = ({ liveId }) => {
                         onChange={(e) => setInputValue(e.target.value)}
                         placeholder="응원 메시지를 남겨보세요"
                         maxLength={200}
-                        className="flex-1 bg-white/10 rounded-full px-3.5 py-2 text-[12.5px] text-white placeholder-white/40 outline-none font-medium"
+                        className="flex-1 min-w-0 bg-white/10 rounded-full px-3.5 py-2 text-[12.5px] text-white placeholder-white/40 outline-none font-medium"
                     />
                     <button
                         type="submit"
