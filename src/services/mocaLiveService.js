@@ -108,7 +108,9 @@ export const fetchUpcomingMocaLive = async () => {
             .from('moca_live_streams')
             .select('*')
             .eq('is_live', false)
-            .not('scheduled_at', 'is', null)
+            // 종료된 방송도 scheduled_at이 남아 있어, 오래된 건 제외하지 않으면 가장 오래된 종료 방송이 먼저 잡혀 새 예고가 가려진다
+            // shortcut: 12시간 넘게 지연된 예고는 숨김, 더 길게 필요하면 값 조정
+            .gte('scheduled_at', new Date(Date.now() - 12 * 3600 * 1000).toISOString())
             .order('scheduled_at', { ascending: true })
             .limit(1)
             .maybeSingle();
