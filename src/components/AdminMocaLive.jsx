@@ -915,7 +915,7 @@ https://immoca.kr/open-app?path=home/dashboard%3FopenLive%3D1`);
 };
 
 // description은 DB에 저장하지 않고 시작 시 채팅/고정 댓글 문구에만 쓰는 선택 입력 (문제 내용 안내용)
-const EMPTY_KEYWORD_EVENT_FORM = { keyword: '', prizeLabel: '', winnerCount: '1', description: '' };
+const EMPTY_KEYWORD_EVENT_FORM = { keyword: '', prizeLabel: '', winnerCount: '1', description: '', choicesText: '' };
 
 // 키워드 정답 맞추기 관리 - 문제/보기 없이 정답 키워드 한 단어만 등록. 방송에서 말로 질문하고,
 // 시청자가 채팅에 그 단어가 들어간 메시지를 치면 (평소 채팅 그대로) 자동으로 당첨 처리됨.
@@ -950,7 +950,8 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId, streamerName }) => {
         setSaving(true);
         const prizeLabel = form.prizeLabel.trim();
         const description = form.description.trim();
-        const { error } = await createKeywordEvent(liveId, { keyword, prizeLabel, winnerCount });
+        const choices = form.choicesText.split('\n').map((s) => s.trim()).filter(Boolean);
+        const { error } = await createKeywordEvent(liveId, { keyword, prizeLabel, winnerCount, choices });
         setSaving(false);
         if (error) { flash('시작 실패: ' + (error.message || '')); return; }
 
@@ -960,7 +961,7 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId, streamerName }) => {
         await announceGameToViewers(
             liveId,
             streamerName,
-            `💬 정답 맞추기 게임 진행 중! ${description ? `${description} ` : '방송에서 나오는 질문을 듣고 '}정답을 채팅창에 입력해 주세요. 정답을 맞힌 선착순 ${winnerCount}명 당첨!${prize}`
+            `💬 정답 맞추기 게임 진행 중! ${description ? `${description} ` : '방송에서 나오는 질문을 듣고 '}${choices.length ? `보기: ${choices.map((c, i) => `${i + 1}) ${c}`).join(' ')} ` : ''}정답을 채팅창에 입력해 주세요. 정답을 맞힌 선착순 ${winnerCount}명 당첨!${prize}`
         );
         await load();
     };
@@ -1047,6 +1048,13 @@ const AdminMocaLiveKeywordEventPanel = ({ liveId, streamerName }) => {
                         value={form.description}
                         onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                         placeholder="게임 설명 (선택, 예: 오늘 소개한 브랜드 이름은?) - 채팅/고정 댓글에 올라가요"
+                        className="w-full px-4 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
+                    />
+                    <textarea
+                        value={form.choicesText}
+                        onChange={(e) => setForm((f) => ({ ...f, choicesText: e.target.value }))}
+                        rows={3}
+                        placeholder={'보기 (선택, 한 줄에 하나씩) - 시청자 화면에 표시돼요\n예)\n아임모델\n아임모카'}
                         className="w-full px-4 py-2.5 rounded-lg border border-[var(--moca-border)] text-[13px]"
                     />
                     <div className="flex items-center gap-2">
@@ -1385,10 +1393,20 @@ export const AdminMocaLiveControlPanel = ({ liveId, streamerName, chatHeightClas
 
     useEffect(() => {
         loadChat();
+        const merge = (prev, incoming) => {
+            const seen = new Set(prev.map((m) => m.id));
+            const fresh = incoming.filter((m) => !seen.has(m.id));
+            return fresh.length ? [...prev, ...fresh].slice(-100) : prev;
+        };
         const unsubscribe = subscribeToLiveChat(liveId, (newMsg) => {
-            setChat((prev) => [...prev.slice(-99), newMsg]);
+            setChat((prev) => merge(prev, [newMsg]));
         });
-        return unsubscribe;
+        // Realtime이 조용히 끊겨도 채팅이 올라오도록 폴링 보강 (id 기준 중복 제거)
+        const poll = setInterval(async () => {
+            const latest = await fetchLiveChatMessages(liveId, 30);
+            setChat((prev) => merge(prev, latest));
+        }, 3000);
+        return () => { clearInterval(poll); unsubscribe(); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [liveId]);
 

@@ -303,6 +303,13 @@ const MocaLiveEngagement = ({ liveId }) => {
                     <p className="text-[12.5px] font-bold text-[#5B4E7A] mb-1 leading-snug">
                         방송에서 나온 정답을 채팅창에 그대로 쳐보세요! 정답이 들어있으면 자동으로 당첨돼요.
                     </p>
+                    {keywordEvent.choices?.length > 0 && (
+                        <ol className="mb-1.5 space-y-1">
+                            {keywordEvent.choices.map((c, i) => (
+                                <li key={i} className="px-3 py-1.5 rounded-lg bg-[#F5F0FF] text-[12px] font-bold text-[#1F1235]">{i + 1}. {c}</li>
+                            ))}
+                        </ol>
+                    )}
                     {keywordEvent.prize_label && (
                         <p className="text-[11px] font-bold text-[#9333EA] mb-1">🎁 {keywordEvent.prize_label}</p>
                     )}

@@ -572,7 +572,7 @@ export const fetchNumberGameWinnerNicknames = async (gameId) => {
 // keyword 컬럼은 절대 포함하지 않는다 (호스트가 방송에서 말로 알려주는 방식이라 완전 기밀은
 // 아니지만, 미리 읽고 유리하게 시도하는 걸 막기 위해 동일한 안전 컬럼 규칙 적용)
 const SAFE_KEYWORD_EVENT_COLUMNS =
-    'id, live_id, prize_label, winner_count, current_winner_count, status, created_at, opened_at, closed_at';
+    'id, live_id, prize_label, choices, winner_count, current_winner_count, status, created_at, opened_at, closed_at';
 
 export const fetchVisibleKeywordEvent = async (liveId) => {
     if (!isSupabaseEnabled() || !liveId) return null;
@@ -657,13 +657,14 @@ export const fetchKeywordEventsForLive = async (liveId) => {
 };
 
 // 등록과 동시에 바로 시작 (숫자맞추기와 동일하게 별도 draft 단계 없음)
-export const createKeywordEvent = async (liveId, { keyword, prizeLabel, winnerCount }) => {
+export const createKeywordEvent = async (liveId, { keyword, prizeLabel, winnerCount, choices }) => {
     if (!isSupabaseEnabled() || !liveId) return { error: new Error('생성 불가') };
 
     const { data, error } = await supabase
         .from('moca_live_keyword_event')
         .insert([{
             live_id: liveId,
+            choices: choices?.length ? choices : null,
             keyword: keyword.trim(),
             prize_label: prizeLabel || null,
             winner_count: winnerCount || 1,
